@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_METRONOME_BPM, metronomeTempoMap, parseSongInfo, songInfoFromPlayback } from "./models.js";
+import {
+  DEFAULT_METRONOME_BPM,
+  metronomeTempoMap,
+  parseSongInfo,
+  songDisplayName,
+  songInfoFromPlayback
+} from "./models.js";
 
 describe("parseSongInfo", () => {
   it("defaults metronome bpm to 120 and time signature to 4/4", () => {
@@ -86,6 +92,17 @@ describe("songInfoFromPlayback", () => {
       scale: "MINOR",
       style: "MID"
     });
+  });
+});
+
+describe("songDisplayName", () => {
+  it("prefers the song title and composes Turkish letters", () => {
+    expect(
+      songDisplayName({
+        title: "Evvel Zaman İçinde",
+        folder: "Evvel Zaman Ic%CC%A7inde"
+      })
+    ).toBe("Evvel Zaman İçinde");
   });
 });
 

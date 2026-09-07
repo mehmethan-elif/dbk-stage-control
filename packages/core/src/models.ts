@@ -251,14 +251,16 @@ export function metronomeSongView(song: Song): Song {
   };
 }
 
+function visibleSongName(value: string | undefined): string {
+  return value?.normalize("NFC").trim() ?? "";
+}
+
 export function songDisplayName(song: Pick<Song, "title" | "folder"> | undefined): string {
-  const name = song?.folder?.trim() || song?.title?.trim();
-  return name || "—";
+  return visibleSongName(song?.title) || visibleSongName(song?.folder) || "—";
 }
 
 export function songPlaybackName(song: Pick<Song, "title" | "folder"> | undefined): string {
-  const name = song?.title?.trim() || song?.folder?.trim();
-  return name || "—";
+  return visibleSongName(song?.title) || visibleSongName(song?.folder) || "—";
 }
 
 export interface Musician {

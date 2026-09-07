@@ -4,11 +4,16 @@ import { readPracticeFileBuffer } from "./store";
 
 let audio: HTMLAudioElement | null = null;
 let objectUrl: string | null = null;
+let loadedSongId: string | null = null;
 let timeListener: ((time: number, ended: boolean) => void) | null = null;
 
 function element(): HTMLAudioElement {
   if (!audio) {
     audio = new Audio();
+    audio.preload = "auto";
+    audio.playsInline = true;
+    audio.setAttribute("playsinline", "true");
+    audio.setAttribute("webkit-playsinline", "true");
     audio.addEventListener("timeupdate", () => timeListener?.(audio?.currentTime ?? 0, false));
     audio.addEventListener("ended", () => timeListener?.(audio?.duration || 0, true));
   }
@@ -29,6 +34,11 @@ export function stopPracticeAudio(): void {
     URL.revokeObjectURL(objectUrl);
     objectUrl = null;
   }
+  loadedSongId = null;
+}
+
+export function isPracticeAudioLoaded(songId: string): boolean {
+  return loadedSongId === songId && Boolean(audio?.src);
 }
 
 export async function loadPracticeAudio(songId: string, files: string[]): Promise<boolean> {
@@ -38,17 +48,19 @@ export async function loadPracticeAudio(songId: string, files: string[]): Promis
     return false;
   }
   const folder = folderForSong(songId);
-  const data = await readPracticeFileBuffer(folder, path);
+  const data =
+    (await readPracticeFileBuffer(folder, path)) ?? (await readPracticeFileBuffer(songId, path));
   if (!data) {
     stopPracticeAudio();
     return false;
   }
-  stopPracticeAudio();
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
   const type = path.toLowerCase().endsWith(".mp3") ? "audio/mpeg" : "audio/flac";
   objectUrl = URL.createObjectURL(new Blob([data], { type }));
   const node = element();
+  node.pause();
   node.src = objectUrl;
-  await node.load();
+  loadedSongId = songId;
   return true;
 }
 

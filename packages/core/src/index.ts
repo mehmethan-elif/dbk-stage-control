@@ -118,8 +118,13 @@ export {
   filterPracticeFiles,
   isMasterPracticeAudio,
   isPracticeFile,
+  isSafePracticeFolder,
+  normalizePracticeName,
+  practiceExportFolder,
+  practiceFolderSlug,
   practiceMasterAudio,
-  practiceSongFolder
+  practiceSongFolder,
+  samePracticeFolder
 } from "./practice-files.js";
 
 export { MemoryLibraryRepository } from "./persistence.js";

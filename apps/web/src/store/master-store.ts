@@ -38,6 +38,7 @@ import { loadLibraryIndex, readSongFile, setLibraryFileOverride } from "../nativ
 import { practiceGig } from "../practice/gig";
 import { downloadBytes, exportPracticeZip } from "../practice/export";
 import {
+  isPracticeAudioLoaded,
   loadPracticeAudio,
   onPracticeTime,
   pausePracticeAudio,
@@ -439,8 +440,10 @@ function firstSongEntryId(gig: Gig | undefined): string | null {
 
 async function practiceFileOverride(songId: string, relPath: string): Promise<ArrayBuffer | null> {
   const song = useMasterStore.getState().songs.find((item) => item.id === songId);
-  const folder = song?.folder ?? songId;
-  return readPracticeFileBuffer(folder, relPath);
+  return (
+    (await readPracticeFileBuffer(song?.folder ?? songId, relPath)) ??
+    (await readPracticeFileBuffer(songId, relPath))
+  );
 }
 
 function applyPracticeSongs(
@@ -669,6 +672,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
           songMix
         });
         if (options?.syncHost) connectSync(get, set);
+        else if (selected) void loadPracticeAudio(selected, fileIndex[selected] ?? []);
         return;
       }
       const local = await loadLocalLibrary();
@@ -728,15 +732,18 @@ export const useMasterStore = create<MasterState>((set, get) => {
 
     selectPracticeSong: (songId) => {
       if (get().clientSession === "stage") return;
-      stopPracticeAudio();
       const { songs, fileIndex } = get();
       set(applyPracticeSongs(songs, fileIndex, songId));
+      void loadPracticeAudio(songId, fileIndex[songId] ?? []);
     },
 
     reloadPracticeLibrary: async () => {
       const index = await loadPracticeLibrary();
       const current = get().gigs[0]?.setlist.find(isSongEntry)?.songId;
-      set(applyPracticeSongs(index.songs, index.fileIndex, current));
+      const next = applyPracticeSongs(index.songs, index.fileIndex, current);
+      set(next);
+      const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
+      if (songId) void loadPracticeAudio(songId, index.fileIndex[songId] ?? []);
     },
 
     importPracticePackage: async (file) => {
@@ -797,10 +804,23 @@ export const useMasterStore = create<MasterState>((set, get) => {
           }
         });
       });
-      const ok = await loadPracticeAudio(entry.songId, state.fileIndex[entry.songId] ?? []);
-      if (!ok) return;
+      const files = state.fileIndex[entry.songId] ?? [];
+      if (!isPracticeAudioLoaded(entry.songId)) {
+        const ok = await loadPracticeAudio(entry.songId, files);
+        if (!ok) return;
+      }
       seekPracticeAudio(state.previewTime);
-      await playPracticeAudio();
+      try {
+        await playPracticeAudio();
+      } catch {
+        const ok = await loadPracticeAudio(entry.songId, files);
+        if (!ok) return;
+        try {
+          await playPracticeAudio();
+        } catch {
+          return;
+        }
+      }
       set({
         playback: { ...get().playback, state: PlaybackState.Playing }
       });

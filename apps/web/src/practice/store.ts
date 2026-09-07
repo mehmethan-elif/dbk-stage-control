@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import { parseSongInfo, type Song } from "@dbk/core";
+import { fileNameOf, parseSongInfo, samePracticeFolder, type Song } from "@dbk/core";
 import { registerSongFolder, type LibraryIndex } from "../native/library";
 
 const DB_NAME = "dbk-practice";
@@ -34,19 +34,35 @@ export function practiceFileKey(folder: string, path: string): string {
 }
 
 export async function writePracticeFile(folder: string, path: string, data: ArrayBuffer): Promise<void> {
+  const keyFolder = folder.normalize("NFC");
+  const keyPath = path.normalize("NFC");
   const database = await db();
   await database.put("files", {
-    key: practiceFileKey(folder, path),
-    folder,
-    path,
+    key: practiceFileKey(keyFolder, keyPath),
+    folder: keyFolder,
+    path: keyPath,
     size: data.byteLength,
     data
   });
 }
 
 export async function readPracticeFileBuffer(folder: string, path: string): Promise<ArrayBuffer | null> {
-  const row = await (await db()).get("files", practiceFileKey(folder, path));
-  return row?.data ?? null;
+  const database = await db();
+  const exact = await database.get("files", practiceFileKey(folder, path));
+  if (exact) return exact.data;
+  const nfcKey = practiceFileKey(folder.normalize("NFC"), path.normalize("NFC"));
+  if (nfcKey !== practiceFileKey(folder, path)) {
+    const nfc = await database.get("files", nfcKey);
+    if (nfc) return nfc.data;
+  }
+  const wantPath = fileNameOf(path).toLowerCase();
+  const rows = await database.getAll("files");
+  for (const row of rows) {
+    if (samePracticeFolder(row.folder, folder) && fileNameOf(row.path).toLowerCase() === wantPath) {
+      return row.data;
+    }
+  }
+  return null;
 }
 
 export async function listPracticeFiles(folder: string): Promise<string[]> {
@@ -124,7 +140,10 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
       ? ({
           ...packed,
           folder,
-          title: typeof packed.title === "string" && packed.title.trim() ? packed.title : folder,
+          title:
+            typeof packed.title === "string" && packed.title.trim()
+              ? packed.title.normalize("NFC")
+              : folder,
           id: typeof packed.id === "string" && packed.id.length > 0 ? packed.id : folder,
           info
         } as Song)

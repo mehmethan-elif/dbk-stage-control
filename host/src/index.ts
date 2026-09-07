@@ -253,17 +253,24 @@ function scanPracticeLibrary(): {
   return { songs };
 }
 
+function namesMatch(left: string, right: string): boolean {
+  return left === right || left.normalize("NFC") === right.normalize("NFC");
+}
+
 function findSongDirectory(head: string): string | null {
   if (!existsSync(LIBRARY)) return null;
   const direct = join(LIBRARY, head);
   if (existsSync(direct) && statSync(direct).isDirectory()) return direct;
+  const nfcHead = head.normalize("NFC");
+  const nfcDirect = join(LIBRARY, nfcHead);
+  if (nfcDirect !== direct && existsSync(nfcDirect) && statSync(nfcDirect).isDirectory()) return nfcDirect;
   for (const folder of readdirSync(LIBRARY)) {
     if (folder.startsWith(".")) continue;
     const dir = join(LIBRARY, folder);
     if (!statSync(dir).isDirectory()) continue;
-    if (folder === head) return dir;
+    if (namesMatch(folder, head)) return dir;
     const packed = readSongJson(dir);
-    if (packed && packed.id === head) return dir;
+    if (packed && typeof packed.id === "string" && namesMatch(packed.id, head)) return dir;
   }
   return null;
 }

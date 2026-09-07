@@ -1,5 +1,5 @@
-import { filterPracticeFiles, type Song } from "@dbk/core";
-import { folderForSong, readSongFile } from "../native/library";
+import { filterPracticeFiles, practiceExportFolder, type Song } from "@dbk/core";
+import { readSongFile } from "../native/library";
 import { buildPracticeZip, practiceZipName } from "./zip";
 
 export async function exportPracticeZip(
@@ -11,7 +11,7 @@ export async function exportPracticeZip(
   const files: { path: string; data: Uint8Array }[] = [];
   for (const song of songs) {
     if (wanted && !wanted.has(song.id)) continue;
-    const folder = folderForSong(song.id) || song.folder || song.id;
+    const folder = practiceExportFolder(song);
     const listed = filterPracticeFiles(fileIndex[song.id] ?? []);
     for (const rel of listed) {
       try {

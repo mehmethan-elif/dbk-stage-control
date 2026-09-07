@@ -3,8 +3,11 @@ import {
   filterPracticeFiles,
   isMasterPracticeAudio,
   isPracticeFile,
+  practiceExportFolder,
+  practiceFolderSlug,
   practiceMasterAudio,
-  practiceSongFolder
+  practiceSongFolder,
+  samePracticeFolder
 } from "./practice-files.js";
 
 describe("practice files", () => {
@@ -38,5 +41,15 @@ describe("practice files", () => {
   it("reads the song folder from a zip path", () => {
     expect(practiceSongFolder("songs/Biz/song.json")).toBe("Biz");
     expect(practiceSongFolder("Biz/Master.mp3")).toBe("Biz");
+  });
+
+  it("slugs Turkish letters and spaces for zip folders", () => {
+    expect(practiceFolderSlug("Evvel Zaman İçinde")).toBe("evvel_zaman_icinde");
+    expect(practiceFolderSlug("Evvel Zaman İçinde")).toBe("evvel_zaman_icinde");
+    expect(practiceExportFolder({ id: "evvel_zaman_i_c_inde", folder: "Evvel Zaman İçinde" })).toBe(
+      "evvel_zaman_i_c_inde"
+    );
+    expect(practiceExportFolder({ id: "Biz", folder: "Biz" })).toBe("Biz");
+    expect(samePracticeFolder("Evvel Zaman İçinde", "Evvel Zaman İçinde")).toBe(true);
   });
 });

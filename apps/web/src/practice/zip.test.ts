@@ -16,4 +16,14 @@ describe("practice zip", () => {
       "Biz/song.json"
     ]);
   });
+
+  it("keeps Turkish folder names composed", () => {
+    const nfd = "Evvel Zaman İçinde";
+    const bytes = zipSync({
+      [`${nfd}/song.json`]: strToU8('{"id":"evvel_zaman_i_c_inde","title":"Evvel Zaman İçinde"}'),
+      [`${nfd}/Master.mp3`]: new Uint8Array([1, 2, 3])
+    });
+    const entries = entriesFromZip(bytes);
+    expect(entries.every((entry) => entry.folder === "Evvel Zaman İçinde")).toBe(true);
+  });
 });

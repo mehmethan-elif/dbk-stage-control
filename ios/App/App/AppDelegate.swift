@@ -184,8 +184,27 @@ final class PracticeShareServer {
         let folder = parts[0]
         let name = parts[parts.count - 1]
         guard isPracticeFile(name), !folder.contains(".."), !name.contains("..") else { return nil }
-        let url = documentsSongs().appendingPathComponent(folder, isDirectory: true).appendingPathComponent(name)
-        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+        let root = documentsSongs()
+        let exact = root.appendingPathComponent(folder, isDirectory: true).appendingPathComponent(name)
+        if FileManager.default.fileExists(atPath: exact.path) { return exact }
+        let folders = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey])) ?? []
+        for dir in folders {
+            guard (try? dir.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else { continue }
+            let sameName = dir.lastPathComponent.compare(folder, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+            var sameId = false
+            let songJson = dir.appendingPathComponent("song.json")
+            if let data = try? Data(contentsOf: songJson),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let rawId = json["id"] as? String {
+                sameId = rawId.compare(folder, options: [.caseInsensitive]) == .orderedSame
+            }
+            guard sameName || sameId else { continue }
+            let listed = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+            if let match = listed.first(where: { $0.lastPathComponent.compare(name, options: [.caseInsensitive]) == .orderedSame }) {
+                return match
+            }
+        }
+        return nil
     }
 
     private static func webFile(_ path: String) -> URL? {
