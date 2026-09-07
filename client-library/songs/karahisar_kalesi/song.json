@@ -2,5 +2,11 @@
   "id": "Karahisar Kalesi",
   "version": 1,
   "title": "Karahisar Kalesi",
-  "folder": "karahisar_kalesi"
+  "folder": "karahisar_kalesi",
+  "duration": 0,
+  "assets": [],
+  "tempoMap": [
+    { "time": 0, "measure": 1, "bpm": 120, "numerator": 4, "denominator": 4 }
+  ],
+  "sections": []
 }

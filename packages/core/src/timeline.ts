@@ -41,9 +41,9 @@ export function secondsPerBeat(point: TempoPoint): number {
   return secondsPerMeasure(point) / point.numerator;
 }
 
-export function measureStartTimes(map: TempoPoint[], duration: number): number[] {
+export function measureStartTimes(map: TempoPoint[] | undefined, duration: number): number[] {
   const end = Math.max(0, duration);
-  const points = map.length > 0 ? [...map].sort((a, b) => a.time - b.time) : [DEFAULT_TEMPO];
+  const points = map && map.length > 0 ? [...map].sort((a, b) => a.time - b.time) : [DEFAULT_TEMPO];
   const starts: number[] = [];
   for (let index = 0; index < points.length; index++) {
     const point = points[index];

@@ -119,7 +119,22 @@ export function publishClientLibrary(gigs: unknown = []): PublishedLibrarySummar
         files.push({ path: name, size: data.byteLength, hash: sha256(data) });
       }
       if (!files.some((file) => file.path.toLowerCase() === "song.json")) {
-        const body = Buffer.from(`${JSON.stringify({ id, version: 1, title, folder: destFolder }, null, 2)}\n`);
+        const body = Buffer.from(
+          `${JSON.stringify(
+            {
+              id,
+              version: 1,
+              title,
+              folder: destFolder,
+              duration: 0,
+              assets: [],
+              tempoMap: [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }],
+              sections: []
+            },
+            null,
+            2
+          )}\n`
+        );
         writeFileSync(join(destDir, "song.json"), body);
         files.push({ path: "song.json", size: body.byteLength, hash: sha256(body) });
       }

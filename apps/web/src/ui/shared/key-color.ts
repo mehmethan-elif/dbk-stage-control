@@ -198,7 +198,7 @@ function bpmHue(bpm: number): number {
 }
 
 function primaryTempo(song: Pick<Song, "tempoMap">): { numerator: number; denominator: number; bpm: number } | undefined {
-  const point = song.tempoMap.find((entry) => entry.bpm > 0 || (entry.numerator > 0 && entry.denominator > 0));
+  const point = song.tempoMap?.find((entry) => entry.bpm > 0 || (entry.numerator > 0 && entry.denominator > 0));
   if (!point) return undefined;
   return { numerator: point.numerator, denominator: point.denominator, bpm: point.bpm };
 }

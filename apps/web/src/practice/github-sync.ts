@@ -81,7 +81,11 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
           id: song.id,
           version: 1,
           title: publishedSongTitle(song),
-          folder: song.folder
+          folder: song.folder,
+          duration: 0,
+          assets: [],
+          tempoMap: [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }],
+          sections: []
         },
         null,
         2

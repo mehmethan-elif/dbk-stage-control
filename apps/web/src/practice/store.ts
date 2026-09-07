@@ -195,18 +195,25 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
         // keep default info
       }
     }
+    const base = stubSong(folder);
     const song = packed
       ? ({
+          ...base,
           ...packed,
           folder,
           title:
             typeof packed.title === "string" && packed.title.trim()
               ? packed.title.normalize("NFC")
-              : folder,
+              : base.title,
           id: typeof packed.id === "string" && packed.id.length > 0 ? packed.id : folder,
+          assets: Array.isArray(packed.assets) ? packed.assets : base.assets,
+          tempoMap:
+            Array.isArray(packed.tempoMap) && packed.tempoMap.length > 0 ? packed.tempoMap : base.tempoMap,
+          sections: Array.isArray(packed.sections) ? packed.sections : base.sections,
+          duration: typeof packed.duration === "number" ? packed.duration : base.duration,
           info
         } as Song)
-      : stubSong(folder);
+      : base;
     registerSongFolder(song.id, folder);
     registerSongFolder(folder, folder);
     const existing = songs.find((item) => item.id === song.id);
