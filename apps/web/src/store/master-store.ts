@@ -35,7 +35,7 @@ import type { DeviceKind, LoadGigMessage, SyncMessage } from "@dbk/protocol";
 import { loadLocalLibrary, saveGig, deleteGig } from "../persist/indexed-db";
 import { seedGig } from "../persist/seed";
 import { loadLibraryIndex, readSongFile, setLibraryFileOverride } from "../native/library";
-import { practiceGig } from "../practice/gig";
+import { practiceEntryId, practiceGig } from "../practice/gig";
 import { downloadBytes, exportPracticeZip } from "../practice/export";
 import {
   isPracticeAudioLoaded,
@@ -47,8 +47,9 @@ import {
   seekPracticeAudio,
   stopPracticeAudio
 } from "../practice/playback";
+import { syncPublishedLibrary } from "../practice/github-sync";
 import { practiceHostFromInput, pullPracticeFromHost } from "../practice/pull";
-import { loadPracticeLibrary, readPracticeFileBuffer } from "../practice/store";
+import { loadPracticeLibrary, readPracticeFileBuffer, readPublishedGigs } from "../practice/store";
 import { importPracticeFileList, importPracticeZip } from "../practice/zip";
 import { loadSongMixers, saveSongMixer } from "../ui/master/song-mixer";
 import { updateSongSettings } from "../ui/master/song-settings";
@@ -154,6 +155,7 @@ interface MasterState {
   joinAddress: string | null;
   clientSession: ClientSession;
   practiceBusy: string | null;
+  libraryStatus: string | null;
   masterPage: MasterPage;
   setlistOpen: boolean;
   autoScroll: boolean;
@@ -180,6 +182,8 @@ interface MasterState {
   importPracticePackage: (file: Blob) => Promise<void>;
   importPracticeFolder: (files: Iterable<File>) => Promise<void>;
   pullPracticeLibrary: (host?: string) => Promise<void>;
+  syncClientLibrary: () => Promise<void>;
+  publishClientLibrary: () => Promise<void>;
   exportPracticePackage: (songIds?: string[]) => Promise<void>;
   playPractice: () => Promise<void>;
   pausePractice: () => void;
@@ -462,20 +466,30 @@ function practiceClock(
   };
 }
 
-function applyPracticeSongs(
+function applyClientLibrary(
   songs: Song[],
   fileIndex: Record<string, string[]>,
+  publishedGigs: Gig[] = [],
   keepSongId?: string | null
 ): Pick<MasterState, "songs" | "fileIndex" | "gigs" | "gigId" | "selectedEntryId" | "previewTime" | "hostOk"> {
-  const keep = keepSongId && songs.some((song) => song.id === keepSongId) ? keepSongId : songs[0]?.id;
-  const current = keep ? songs.filter((song) => song.id === keep) : [];
-  const gig = practiceGig(current);
+  const usable = publishedGigs.filter((gig) =>
+    gig.setlist.some((entry) => isSongEntry(entry) && songs.some((song) => song.id === entry.songId))
+  );
+  const gig = usable[0] ?? practiceGig(songs);
+  const gigs = usable.length ? usable : gig.setlist.length ? [gig] : [];
+  const keep =
+    keepSongId && songs.some((song) => song.id === keepSongId)
+      ? keepSongId
+      : gig.setlist.find((entry) => isSongEntry(entry) && songs.some((song) => song.id === entry.songId))
+          ?.songId ?? songs[0]?.id;
+  const selected =
+    gig.setlist.find((entry) => isSongEntry(entry) && entry.songId === keep)?.entryId ?? firstSongEntryId(gig);
   return {
     songs,
     fileIndex,
-    gigs: current.length ? [gig] : [],
-    gigId: current.length ? gig.id : null,
-    selectedEntryId: firstSongEntryId(gig),
+    gigs,
+    gigId: gigs[0]?.id ?? null,
+    selectedEntryId: selected,
     previewTime: 0,
     hostOk: true
   };
@@ -621,6 +635,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     joinAddress: null,
     clientSession: "practice",
     practiceBusy: null,
+    libraryStatus: null,
     masterPage: "prep",
     setlistOpen: true,
     autoScroll: true,
@@ -663,6 +678,20 @@ export const useMasterStore = create<MasterState>((set, get) => {
           } else {
             hostOk = true;
           }
+          if (songs.length === 0 && !isNativeApp()) {
+            set({ practiceBusy: "Updating library…" });
+            try {
+              await syncPublishedLibrary();
+              const again = await loadPracticeLibrary();
+              songs = again.songs;
+              fileIndex = again.fileIndex;
+              hostOk = true;
+            } catch {
+              hostOk = true;
+            } finally {
+              set({ practiceBusy: null });
+            }
+          }
         } else {
           const index = await loadLibraryIndex();
           songs = index.songs;
@@ -677,10 +706,12 @@ export const useMasterStore = create<MasterState>((set, get) => {
         engine.replaceSongMix(songId, bank);
       }
       if (kind === "client") {
+        const published = await readPublishedGigs();
         const selected = options?.syncHost ? null : songs[0]?.id;
+        const next = applyClientLibrary(songs, fileIndex, published, selected);
         set({
           ready: true,
-          ...applyPracticeSongs(songs, fileIndex, selected),
+          ...next,
           hostOk,
           masterPage: "lyrics",
           clientSession: options?.syncHost ? "stage" : "practice",
@@ -688,7 +719,11 @@ export const useMasterStore = create<MasterState>((set, get) => {
           songMix
         });
         if (options?.syncHost) connectSync(get, set);
-        else if (selected) void loadPracticeAudio(selected, fileIndex[selected] ?? []);
+        else {
+          const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
+          if (songId) void loadPracticeAudio(songId, fileIndex[songId] ?? []);
+          void get().syncClientLibrary();
+        }
         return;
       }
       const local = await loadLocalLibrary();
@@ -734,31 +769,39 @@ export const useMasterStore = create<MasterState>((set, get) => {
       stopPracticeAudio();
       const { songs, fileIndex, selectedEntryId, gigs } = get();
       const current = selectedEntryId
-        ? gigs[0]?.setlist.find((item) => item.entryId === selectedEntryId)
+        ? gigs.find((gig) => gig.setlist.some((item) => item.entryId === selectedEntryId))
+            ?.setlist.find((item) => item.entryId === selectedEntryId)
         : undefined;
       const keep = current && isSongEntry(current) ? current.songId : songs[0]?.id;
       set({
         syncHost: null,
         clientSession: "practice",
         setlistOpen: false,
-        syncConnected: false,
-        ...applyPracticeSongs(songs, fileIndex, keep)
+        syncConnected: false
+      });
+      void readPublishedGigs().then((published) => {
+        set(applyClientLibrary(get().songs, get().fileIndex, published, keep));
       });
     },
 
     selectPracticeSong: (songId) => {
       if (get().clientSession === "stage") return;
-      const { songs, fileIndex } = get();
-      set(applyPracticeSongs(songs, fileIndex, songId));
-      void loadPracticeAudio(songId, fileIndex[songId] ?? []);
+      const gig = currentGig(get()) ?? get().gigs[0];
+      const entry = gig?.setlist.find((item) => isSongEntry(item) && item.songId === songId);
+      set({
+        selectedEntryId: entry?.entryId ?? practiceEntryId(songId),
+        previewTime: 0
+      });
+      void loadPracticeAudio(songId, get().fileIndex[songId] ?? []);
     },
 
     reloadPracticeLibrary: async () => {
       const index = await loadPracticeLibrary();
-      const current = get().gigs[0]?.setlist.find(isSongEntry)?.songId;
-      const next = applyPracticeSongs(index.songs, index.fileIndex, current);
+      const published = await readPublishedGigs();
+      const current = (currentGig(get()) ?? get().gigs[0])?.setlist.find(isSongEntry)?.songId;
+      const next = applyClientLibrary(index.songs, index.fileIndex, published, current);
       set(next);
-      const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
+      const songId = next.gigs.find((gig) => gig.id === next.gigId)?.setlist.find(isSongEntry)?.songId;
       if (songId) void loadPracticeAudio(songId, index.fileIndex[songId] ?? []);
     },
 
@@ -794,6 +837,54 @@ export const useMasterStore = create<MasterState>((set, get) => {
       }
     },
 
+    syncClientLibrary: async () => {
+      if (get().clientSession === "stage") return;
+      set({ practiceBusy: "Updating library…" });
+      try {
+        const result = await syncPublishedLibrary();
+        await get().reloadPracticeLibrary();
+        set({
+          libraryStatus:
+            result.files > 0
+              ? `Updated ${result.files} files.`
+              : result.gigs === 0 && result.songs === 0
+                ? "No published library yet."
+                : "Library up to date."
+        });
+      } catch (error) {
+        set({
+          libraryStatus: error instanceof Error ? error.message : "Could not update library."
+        });
+      } finally {
+        set({ practiceBusy: null });
+      }
+    },
+
+    publishClientLibrary: async () => {
+      if (get().deviceKind === "client") return;
+      set({ practiceBusy: "Publishing…" });
+      try {
+        const response = await fetch("/client-library/publish", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ gigs: get().gigs })
+        });
+        if (!response.ok) {
+          throw new Error("Publish from the Mac with npm run dev, then push main.");
+        }
+        const result = (await response.json()) as { songs?: number; files?: number };
+        set({
+          libraryStatus: `Published ${result.songs ?? 0} songs. Push main so phones update.`
+        });
+      } catch (error) {
+        set({
+          libraryStatus: error instanceof Error ? error.message : "Could not publish."
+        });
+      } finally {
+        set({ practiceBusy: null });
+      }
+    },
+
     exportPracticePackage: async (songIds) => {
       if (get().deviceKind === "client") return;
       set({ practiceBusy: "Exporting…" });
@@ -808,7 +899,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     playPractice: async () => {
       const state = get();
       const entry = state.selectedEntryId
-        ? state.gigs[0]?.setlist.find((item) => item.entryId === state.selectedEntryId)
+        ? currentGig(state)?.setlist.find((item) => item.entryId === state.selectedEntryId)
         : undefined;
       if (!entry || !isSongEntry(entry)) return;
       onPracticeTime((time, ended) => {
@@ -869,7 +960,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     pausePractice: () => {
       pausePracticeAudio();
       const entry = get().selectedEntryId
-        ? get().gigs[0]?.setlist.find((item) => item.entryId === get().selectedEntryId)
+        ? currentGig(get())?.setlist.find((item) => item.entryId === get().selectedEntryId)
         : undefined;
       set({
         playback: {
@@ -886,7 +977,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     seekPractice: (time) => {
       seekPracticeAudio(time);
       const entry = get().selectedEntryId
-        ? get().gigs[0]?.setlist.find((item) => item.entryId === get().selectedEntryId)
+        ? currentGig(get())?.setlist.find((item) => item.entryId === get().selectedEntryId)
         : undefined;
       set({
         previewTime: time,

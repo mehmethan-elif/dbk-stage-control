@@ -1,15 +1,29 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import { fileNameOf, parseSongInfo, practiceMasterAudio, samePracticeFolder, type Song } from "@dbk/core";
+import { fileNameOf, parseSongInfo, practiceMasterAudio, samePracticeFolder, type Gig, type Song } from "@dbk/core";
 import { registerSongFolder, type LibraryIndex } from "../native/library";
 
 const DB_NAME = "dbk-practice";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+const GIGS_KEY = "published-gigs";
+
+interface PracticeFileRow {
+  key: string;
+  folder: string;
+  path: string;
+  size: number;
+  hash?: string;
+  data: ArrayBuffer;
+}
 
 interface PracticeDB extends DBSchema {
   files: {
     key: string;
-    value: { key: string; folder: string; path: string; size: number; data: ArrayBuffer };
+    value: PracticeFileRow;
     indexes: { folder: string };
+  };
+  meta: {
+    key: string;
+    value: unknown;
   };
 }
 
@@ -23,6 +37,9 @@ function db() {
           const store = database.createObjectStore("files", { keyPath: "key" });
           store.createIndex("folder", "folder");
         }
+        if (!database.objectStoreNames.contains("meta")) {
+          database.createObjectStore("meta");
+        }
       }
     });
   }
@@ -33,7 +50,12 @@ export function practiceFileKey(folder: string, path: string): string {
   return `${folder}/${path}`;
 }
 
-export async function writePracticeFile(folder: string, path: string, data: ArrayBuffer): Promise<void> {
+export async function writePracticeFile(
+  folder: string,
+  path: string,
+  data: ArrayBuffer,
+  hash?: string
+): Promise<void> {
   const keyFolder = folder.normalize("NFC");
   const keyPath = path.normalize("NFC");
   const database = await db();
@@ -42,6 +64,7 @@ export async function writePracticeFile(folder: string, path: string, data: Arra
     folder: keyFolder,
     path: keyPath,
     size: data.byteLength,
+    hash,
     data
   });
 }
@@ -70,15 +93,36 @@ export async function listPracticeFiles(folder: string): Promise<string[]> {
   return rows.map((row) => row.path);
 }
 
-export async function listPracticeManifest(): Promise<Record<string, { path: string; size: number }[]>> {
+export async function listPracticeManifest(): Promise<
+  Record<string, { path: string; size: number; hash?: string }[]>
+> {
   const rows = await (await db()).getAll("files");
-  const out: Record<string, { path: string; size: number }[]> = {};
+  const out: Record<string, { path: string; size: number; hash?: string }[]> = {};
   for (const row of rows) {
     const list = out[row.folder] ?? [];
-    list.push({ path: row.path, size: row.size });
+    list.push({ path: row.path, size: row.size, hash: row.hash });
     out[row.folder] = list;
   }
   return out;
+}
+
+export async function deletePracticeFile(folder: string, path: string): Promise<void> {
+  await (await db()).delete("files", practiceFileKey(folder.normalize("NFC"), path.normalize("NFC")));
+}
+
+export async function deletePracticeFolder(folder: string): Promise<void> {
+  const database = await db();
+  const rows = await database.getAllFromIndex("files", "folder", folder);
+  for (const row of rows) await database.delete("files", row.key);
+}
+
+export async function writePublishedGigs(gigs: Gig[]): Promise<void> {
+  await (await db()).put("meta", gigs, GIGS_KEY);
+}
+
+export async function readPublishedGigs(): Promise<Gig[]> {
+  const raw = await (await db()).get("meta", GIGS_KEY);
+  return Array.isArray(raw) ? (raw as Gig[]) : [];
 }
 
 function decodeText(data: ArrayBuffer): string {

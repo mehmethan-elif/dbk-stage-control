@@ -1,0 +1,15 @@
+{
+  "view": {
+    "bpm": 120,
+    "numerator": 4,
+    "denominator": 4,
+    "duration": 195,
+    "key": "B",
+    "scale": "MINOR",
+    "style": "SLOW"
+  },
+  "notaSections": {
+    "version": 1,
+    "rects": []
+  }
+}

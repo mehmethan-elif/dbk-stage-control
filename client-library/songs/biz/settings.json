@@ -1,0 +1,123 @@
+{
+  "view": {
+    "bpm": 132,
+    "numerator": 4,
+    "denominator": 4,
+    "beats": [
+      true,
+      false,
+      false,
+      false
+    ],
+    "duration": 176.363636,
+    "key": "D",
+    "scale": "MINOR",
+    "style": "MID"
+  },
+  "mixer": {
+    "Click": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Kick": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Bass": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Drums": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Perc": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Keys": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Pluck": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Guitar": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Melody": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "String": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Choir": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    },
+    "Main": {
+      "gainDb": 0,
+      "muted": false,
+      "solo": false
+    }
+  },
+  "notes": {
+    "drums": "asdff"
+  },
+  "notaSections": {
+    "version": 1,
+    "rects": [
+      {
+        "id": "rect_26291c5b-e1b3-46fe-866c-890b523ab4b1",
+        "name": "ARA",
+        "page": 0,
+        "x": 0.08323447668112799,
+        "y": 0.037900535870516186,
+        "w": 0.2559652928416486,
+        "h": 0.1935148731408574
+      },
+      {
+        "id": "rect_c78f3159-3f5a-45d8-b527-c62ec8273141",
+        "name": "SAN",
+        "page": 0,
+        "x": 0.1174498373101952,
+        "y": 0.40488517060367457,
+        "w": 0.10213903199566163,
+        "h": 0.16471648075240597
+      },
+      {
+        "id": "rect_1b0ca09c-37c4-46b3-bf1c-f6aa1bf9859d",
+        "name": "CEV",
+        "page": 0,
+        "x": 0.4608524267895878,
+        "y": 0.7553062117235345,
+        "w": 0.2303292773861172,
+        "h": 0.179849354768154
+      },
+      {
+        "id": "rect_711b22c0-dc99-43ca-9d45-7c17c36cdda0",
+        "name": "FINAL",
+        "page": 0,
+        "x": 0.0767011252711497,
+        "y": 0.7441103455818022,
+        "w": 0.3882951464208243,
+        "h": 0.1969507327209099
+      }
+    ]
+  }
+}

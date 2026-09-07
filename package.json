@@ -20,7 +20,8 @@
     "pages:build": "VITE_PUBLIC_CLIENT=1 npm run build -w @dbk/web",
     "ios": "npm run build -w @dbk/web && npx cap sync ios",
     "ios:open": "npx cap open ios",
-    "fixtures": "node scripts/generate-fixtures.mjs"
+    "fixtures": "node scripts/generate-fixtures.mjs",
+    "publish:library": "npx tsx scripts/publish-client-library.mjs"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.1",

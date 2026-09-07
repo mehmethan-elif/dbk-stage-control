@@ -1,0 +1,17 @@
+{
+  "view": {
+    "bpm": 110,
+    "numerator": 4,
+    "denominator": 4,
+    "beats": [
+      true,
+      false,
+      false,
+      false
+    ],
+    "duration": 174.545455,
+    "key": "D",
+    "scale": "MINOR",
+    "style": "MID"
+  }
+}

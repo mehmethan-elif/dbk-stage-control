@@ -14,8 +14,9 @@ export function PrepView() {
   const setSongQuery = useMasterStore((s) => s.setSongQuery);
   const setGigId = useMasterStore((s) => s.setGigId);
   const saveSetlist = useMasterStore((s) => s.saveSetlist);
-  const exportPracticePackage = useMasterStore((s) => s.exportPracticePackage);
+  const publishClientLibrary = useMasterStore((s) => s.publishClientLibrary);
   const practiceBusy = useMasterStore((s) => s.practiceBusy);
+  const libraryStatus = useMasterStore((s) => s.libraryStatus);
   const deleteCurrentSetlist = useMasterStore((s) => s.deleteCurrentSetlist);
   const gig = useMasterStore(currentGig);
   const [dialog, setDialog] = useState<"select" | "save" | "delete" | null>(null);
@@ -92,11 +93,12 @@ export function PrepView() {
           <button
             type="button"
             className="lyrics-btn prep-export-btn"
-            disabled={!gig || Boolean(practiceBusy)}
-            onClick={() => void exportPracticePackage()}
+            disabled={Boolean(practiceBusy)}
+            onClick={() => void publishClientLibrary()}
           >
-            {practiceBusy ?? "Export practice zip"}
+            {practiceBusy ?? "Publish band library"}
           </button>
+          {libraryStatus ? <p className="meta">{libraryStatus}</p> : null}
         </section>
       </div>
 

@@ -1,0 +1,15 @@
+{
+  "view": {
+    "bpm": 120,
+    "numerator": 4,
+    "denominator": 4,
+    "beats": [
+      true,
+      false,
+      false,
+      false
+    ],
+    "startMode": "COUNT",
+    "key": "B"
+  }
+}

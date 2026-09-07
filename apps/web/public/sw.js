@@ -21,7 +21,12 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET") return;
-  if (url.pathname.includes("/library") || url.pathname.includes("/practice") || url.pathname.includes("/sync")) {
+  if (
+    url.pathname.includes("/library") ||
+    url.pathname.includes("/practice") ||
+    url.pathname.includes("/client-library") ||
+    url.pathname.includes("/sync")
+  ) {
     return;
   }
   if (url.origin !== self.location.origin) return;

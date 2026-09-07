@@ -18,36 +18,30 @@ npm run dev
 
 The Mac host on port 8787 serves the song library, practice files, and WebSocket sync.
 
-## How band members get the page (from home)
+## How band members get songs
 
 Send them one public link. They do not need your Wi-Fi for this.
 
-1. Put this project on GitHub and push `main` (the **Band page** Action publishes the player only — no stems).
-2. Repo **Settings → Pages → Source: GitHub Actions**.
-3. After the Action finishes, the player is:
+1. Add `Master.mp3` (or `.flac`) next to the stems in each `library/songs/<Song>/` folder.
+2. On the Mac master: **Preparation → Publish band library**.
+3. Push `main`. The Band page Action publishes the player plus charts, Master mix, settings, and setlists — never stems.
+4. After the Action finishes, the player is:
 
    `https://mehmethan-elif.github.io/dbk-stage-control/client`
-4. Send that link in WhatsApp.
-5. They open it on their own Wi-Fi → Share → **Add to Home Screen**.
-6. You send a practice zip (WhatsApp or iCloud). They open **DBK** → **Import zip**.
+5. Send that link in WhatsApp.
+6. They open it on their own Wi-Fi → Share → **Add to Home Screen**.
 
-The public page is only the player. Songs stay in the zip. Stems never go online.
+The first open downloads **DBK Stage Control** into the page. Later opens only fetch new or changed files. No zip.
 
-You can still use the LAN address at rehearsal if you want (`http://<mac-ip>:5173/client` or `http://<ipad-ip>:8788/client`).
+The repo is public, so anyone with the link can get the Master mix and charts. Stems stay on your Mac/iPads.
 
-## How you send songs (WhatsApp)
+## How you publish updates
 
-Master **Preparation** → **Export practice zip**. That zip is charts plus `Master.mp3` / `Master.flac` only. Stems stay on your iPad.
-
-1. You export / zip the practice folder and send it on WhatsApp.
-2. They download the zip on the tablet.
-3. They open the **DBK** home-screen icon.
-4. They tap **Import zip** and pick the WhatsApp file.
-   Or they unzip it in Files first, then tap **Use this folder** and pick that folder.
-
-The zip is only the songs. Opening the unzipped folder in Files does not start DBK. They open DBK, then point it at the zip or folder. After that the songs stay in the player.
-
-Add `Master.mp3` (or `.flac`) next to the stems in each `library/songs/<Song>/` folder when you prep a song.
+1. Add or change songs on the Mac (charts, `song.json`, `settings.json`, `Master.mp3`).
+2. Build the setlist you want the band to see.
+3. **Publish band library** (or `npm run publish:library`).
+4. Push `main`.
+5. Band tablets open DBK — or tap **SONGS → Check for updates**.
 
 ## On stage
 
@@ -55,8 +49,6 @@ Add `Master.mp3` (or `.flac`) next to the stems in each `library/songs/<Song>/` 
 2. Put every tablet on the same Wi-Fi or the master hotspot.
 3. Band tablets: home-screen **DBK** → **SONGS** → **Join stage** (your iPad address).
 4. Only playhead, selection, and setlist metadata go over LAN. They do not play backing stems.
-
-**Update from master** on LAN pulls missing practice files over Wi-Fi (still no stems).
 
 ## Master iPad app (you)
 

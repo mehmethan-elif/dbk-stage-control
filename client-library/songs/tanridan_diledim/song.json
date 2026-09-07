@@ -1,0 +1,32 @@
+{
+  "id": "tanrä_dan_diledim",
+  "version": 1,
+  "title": "TanrÄ±dan Diledim",
+  "duration": 24,
+  "clickDuration": 24,
+  "nextSongAt": 24,
+  "key": "D",
+  "scale": "MINOR",
+  "style": "MID",
+  "tags": ["reaper-export"],
+  "tempoMap": [
+    { "time": 0, "measure": 1, "bpm": 120, "numerator": 4, "denominator": 4 }
+  ],
+  "sections": [
+    { "name": "SERBEST", "start": 0, "end": 2 },
+    { "name": "COUNT", "start": 2, "end": 4 },
+    { "name": "SAN B", "start": 4, "end": 8 },
+    { "name": "ARA", "start": 8, "end": 12 },
+    { "name": "SERBEST", "start": 12, "end": 14 },
+    { "name": "COUNT", "start": 14, "end": 16 },
+    { "name": "SAN B", "start": 16, "end": 20 },
+    { "name": "ARA", "start": 20, "end": 24 }
+  ],
+  "lyrics": [],
+  "chords": [],
+  "patterns": [],
+  "assets": [
+    { "id": "click", "kind": "audio", "path": "Click.flac", "hash": "sha256:pending", "audioRole": "click", "bus": "CUE", "label": "Click" }
+  ]
+}
+

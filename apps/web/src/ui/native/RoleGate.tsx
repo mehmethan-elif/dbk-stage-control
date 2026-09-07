@@ -56,8 +56,8 @@ export function RoleGate(props: {
         </div>
       )}
       <p className="role-gate-help">
-        Master keeps the full stem library on this iPad. Band members open the LAN address in a browser, add it
-        to the home screen, and import a practice zip (charts + Master.mp3) — not this Xcode app.
+        Master keeps the full stem library on this iPad. Band members open the public page, add it to the home
+        screen, and DBK downloads charts plus Master.mp3 — not this Xcode app.
       </p>
     </div>
   );
@@ -73,8 +73,8 @@ export function LibraryMissing(props: { master: boolean }) {
       </p>
       <p className="role-gate-help">
         The folder must contain <code>songs</code>, same as on your computer. {props.master
-          ? "Master plays stems from this copy and can export a practice zip for the band."
-          : "Use the browser page on band tablets. Import a practice zip there."}
+          ? "Master plays stems from this copy. Publish the band library from the Mac."
+          : "Use the browser page on band tablets. It downloads the published library."}
       </p>
     </div>
   );

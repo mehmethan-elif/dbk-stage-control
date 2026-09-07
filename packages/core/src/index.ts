@@ -127,6 +127,12 @@ export {
   samePracticeFolder
 } from "./practice-files.js";
 
+export {
+  CLIENT_LIBRARY_NAME,
+  needsClientLibraryDownload
+} from "./client-library.js";
+export type { ClientLibraryFile, ClientLibraryIndex, ClientLibrarySong } from "./client-library.js";
+
 export { MemoryLibraryRepository } from "./persistence.js";
 export type { LibraryRepository, LibrarySnapshot } from "./persistence.js";
 

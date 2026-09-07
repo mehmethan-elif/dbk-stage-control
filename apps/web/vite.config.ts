@@ -1,7 +1,16 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  cpSync,
+  createReadStream,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync
+} from "node:fs";
 
 const rootPkg = JSON.parse(readFileSync(path.resolve(__dirname, "../../package.json"), "utf8")) as {
   version: string;
@@ -15,11 +24,15 @@ function pagesFallback(): Plugin {
     closeBundle() {
       const dist = path.resolve(__dirname, "dist");
       const index = path.join(dist, "index.html");
+      const library = path.resolve(__dirname, "../../client-library");
       try {
         copyFileSync(index, path.join(dist, "404.html"));
         mkdirSync(path.join(dist, "client"), { recursive: true });
         copyFileSync(index, path.join(dist, "client", "index.html"));
         writeFileSync(path.join(dist, ".nojekyll"), "");
+        if (existsSync(library)) {
+          cpSync(library, path.join(dist, "client-library"), { recursive: true });
+        }
       } catch {
         // dev server has no dist yet
       }
@@ -27,8 +40,36 @@ function pagesFallback(): Plugin {
   };
 }
 
+function clientLibraryDev(): Plugin {
+  const library = path.resolve(__dirname, "../../client-library");
+  return {
+    name: "dbk-client-library-dev",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url?.split("?")[0] ?? "";
+        if (req.method !== "GET" || !url.startsWith("/client-library/")) {
+          next();
+          return;
+        }
+        const rel = decodeURIComponent(url.slice("/client-library/".length));
+        if (!rel || rel.includes("..")) {
+          next();
+          return;
+        }
+        const full = path.resolve(library, rel);
+        if (!full.startsWith(library) || !existsSync(full) || statSync(full).isDirectory()) {
+          next();
+          return;
+        }
+        res.setHeader("cache-control", "no-store");
+        createReadStream(full).pipe(res);
+      });
+    }
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), pagesFallback()],
+  plugins: [react(), pagesFallback(), clientLibraryDev()],
   base: pagesBase,
   root: __dirname,
   define: {
@@ -51,6 +92,7 @@ export default defineConfig({
     proxy: {
       "/library": "http://127.0.0.1:8787",
       "/practice": "http://127.0.0.1:8787",
+      "/client-library/publish": "http://127.0.0.1:8787",
       "/health": "http://127.0.0.1:8787",
       "/sync": { target: "ws://127.0.0.1:8787", ws: true }
     }

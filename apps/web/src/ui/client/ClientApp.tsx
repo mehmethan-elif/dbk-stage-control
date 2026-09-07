@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { PlaybackState, practiceMasterAudio, songDisplayName } from "@dbk/core";
-import { practiceEntryId } from "../../practice/gig";
-import { useMasterStore } from "../../store/master-store";
+import { isSongEntry, PlaybackState, practiceMasterAudio, songDisplayName } from "@dbk/core";
+import { currentGig, useMasterStore } from "../../store/master-store";
 import { ChronometerIcon, PauseIcon, PlayIcon, StopIcon } from "../shared/icons";
 import { ChordView } from "../master/ChordView";
 import { DrumView } from "../master/DrumView";
@@ -9,7 +8,6 @@ import { LyricsView } from "../master/LyricsView";
 import { NotaView } from "../master/NotaView";
 import { StageViewChrome } from "../master/PrepTransport";
 import { ClientLibrary } from "./ClientLibrary";
-import { PracticeImport } from "./PracticeImport";
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
@@ -48,9 +46,7 @@ export function ClientApp() {
   const leaveStage = useMasterStore((s) => s.leaveStage);
   const joinStage = useMasterStore((s) => s.joinStage);
   const syncHost = useMasterStore((s) => s.syncHost);
-  const practiceBusy = useMasterStore((s) => s.practiceBusy);
-  const importPracticePackage = useMasterStore((s) => s.importPracticePackage);
-  const importPracticeFolder = useMasterStore((s) => s.importPracticeFolder);
+  const gig = useMasterStore(currentGig);
   const page =
     masterPage === "nota"
       ? "nota"
@@ -62,7 +58,14 @@ export function ClientApp() {
             ? "lan"
             : "lyrics";
   const practice = clientSession === "practice";
-  const current = songs.find((song) => selectedEntryId === practiceEntryId(song.id));
+  const selected = gig?.setlist.find((entry) => entry.entryId === selectedEntryId);
+  const current = selected && isSongEntry(selected) ? songs.find((song) => song.id === selected.songId) : undefined;
+  const listed = gig
+    ? gig.setlist
+        .filter(isSongEntry)
+        .map((entry) => songs.find((song) => song.id === entry.songId))
+        .filter((song): song is NonNullable<typeof song> => Boolean(song))
+    : songs;
   const hasMaster = Boolean(
     current &&
       (practiceMasterAudio(fileIndex[current.id] ?? []) ||
@@ -243,13 +246,7 @@ export function ClientApp() {
         <div className={`client-main${practice ? " is-practice" : ""}`}>
           {practice ? (
             <aside className="client-song-list" aria-label="Practice songs">
-              <PracticeImport
-                compact
-                importZip={importPracticePackage}
-                importFolder={importPracticeFolder}
-                busy={practiceBusy}
-              />
-              {songs.map((song) => (
+              {listed.map((song) => (
                 <button
                   key={song.id}
                   type="button"

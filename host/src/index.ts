@@ -5,6 +5,7 @@ import { extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
 import { parseSyncMessage } from "@dbk/protocol";
+import { publishClientLibrary } from "./publish-client-library";
 
 const PORT = Number(process.env.DBK_HOST_PORT ?? 8787);
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
@@ -361,7 +362,7 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
       "access-control-allow-origin": "*",
-      "access-control-allow-methods": "GET, PUT, OPTIONS",
+      "access-control-allow-methods": "GET, PUT, POST, OPTIONS",
       "access-control-allow-headers": "*"
     });
     res.end();
@@ -388,6 +389,24 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
       return;
     }
     serveFile(mapped, res);
+    return;
+  }
+
+  if (url.pathname === "/client-library/publish") {
+    if (req.method !== "POST") {
+      send(res, 405, "Method not allowed", "text/plain");
+      return;
+    }
+    void (async () => {
+      try {
+        const body = await readBody(req, 1024 * 1024);
+        const parsed = body.trim() ? (JSON.parse(body) as { gigs?: unknown }) : {};
+        const result = publishClientLibrary(parsed.gigs ?? []);
+        send(res, 200, JSON.stringify({ ok: true, ...result }), "application/json; charset=utf-8");
+      } catch {
+        send(res, 400, "Could not publish library", "text/plain");
+      }
+    })();
     return;
   }
 

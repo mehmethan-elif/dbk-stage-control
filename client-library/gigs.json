@@ -1,0 +1,204 @@
+{
+  "gigs": [
+    {
+      "id": "gig_19227d9c-27c8-4136-87d4-d033012b64d9",
+      "name": "22 Eylül Oba Hotel",
+      "date": "2026-09-05",
+      "musicians": [],
+      "setlist": [
+        {
+          "type": "song",
+          "entryId": "entry_64da0557-1a9a-4e0d-aa88-e37309cd0025",
+          "songId": "biz",
+          "finishMode": "STOP",
+          "playMode": "VIEW"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_a1c4317c-b69b-488c-b11c-26f89756765f",
+          "songId": "evvel_zaman_i_c_inde",
+          "finishMode": "STOP",
+          "playMode": "VIEW"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_eb6e5647-d0e5-42e2-b8b3-4b83f88a236a",
+          "songId": "tanr�_dan_diledim",
+          "finishMode": "STOP",
+          "playMode": "PLAYBACK"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_0432dc4e-c095-4d18-b3be-3f0460513f98",
+          "songId": "Karahisar Kalesi",
+          "finishMode": "STOP",
+          "playMode": "VIEW"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_98091a94-522d-444a-b565-b124027a8276",
+          "songId": "telli_turnam",
+          "finishMode": "STOP",
+          "playMode": "VIEW"
+        }
+      ],
+      "busMix": {
+        "Click": {
+          "gainDb": -13.5,
+          "muted": false,
+          "solo": false
+        },
+        "Kick": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Bass": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Drums": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Perc": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Keys": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Pluck": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Guitar": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Melody": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "String": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Choir": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Main": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        }
+      },
+      "metronomeVolume": 0.7,
+      "notes": "Belediye Başkanı : Burhan Özfatura\n"
+    },
+    {
+      "id": "gig_dd9cf297-a956-4c9a-b211-6b92766c9eff",
+      "name": "Untitled",
+      "date": "2026-09-01",
+      "musicians": [],
+      "setlist": [
+        {
+          "type": "song",
+          "entryId": "entry_87fe0c0d-fd96-47a0-b872-5950e20bc673",
+          "songId": "biz",
+          "finishMode": "STOP",
+          "playMode": "PLAYBACK",
+          "startAt": 0
+        },
+        {
+          "type": "song",
+          "entryId": "entry_0083abb9-191a-458a-96f2-7cf85d106747",
+          "songId": "evvel_zaman_i_c_inde",
+          "finishMode": "STOP",
+          "playMode": "VIEW"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_59ae5e0e-5253-4115-b9c3-d3fcadc774a6",
+          "songId": "telli_turnam",
+          "finishMode": "STOP",
+          "playMode": "VIEW"
+        }
+      ],
+      "busMix": {
+        "Click": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Kick": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Bass": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Drums": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Perc": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Keys": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Pluck": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Guitar": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Melody": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "String": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Choir": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        },
+        "Main": {
+          "gainDb": 0,
+          "muted": false,
+          "solo": false
+        }
+      },
+      "metronomeVolume": 0.7
+    }
+  ]
+}
