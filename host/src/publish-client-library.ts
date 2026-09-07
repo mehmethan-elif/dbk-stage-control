@@ -96,11 +96,13 @@ export function publishClientLibrary(gigs: unknown = []): PublishedLibrarySummar
       const dir = join(LIBRARY, folder);
       if (!statSync(dir).isDirectory()) continue;
       let id = folder;
+      let title = folder.normalize("NFC").trim() || folder;
       const songJson = join(dir, "song.json");
       if (existsSync(songJson)) {
         try {
-          const packed = JSON.parse(readFileSync(songJson, "utf8")) as { id?: unknown };
+          const packed = JSON.parse(readFileSync(songJson, "utf8")) as { id?: unknown; title?: unknown };
           if (typeof packed.id === "string" && packed.id.trim()) id = packed.id.trim();
+          if (typeof packed.title === "string" && packed.title.trim()) title = packed.title.trim();
         } catch {
           // keep folder name
         }
@@ -116,11 +118,16 @@ export function publishClientLibrary(gigs: unknown = []): PublishedLibrarySummar
         writeFileSync(join(destDir, name), data);
         files.push({ path: name, size: data.byteLength, hash: sha256(data) });
       }
+      if (!files.some((file) => file.path.toLowerCase() === "song.json")) {
+        const body = Buffer.from(`${JSON.stringify({ id, version: 1, title, folder: destFolder }, null, 2)}\n`);
+        writeFileSync(join(destDir, "song.json"), body);
+        files.push({ path: "song.json", size: body.byteLength, hash: sha256(body) });
+      }
       if (files.length === 0) {
         rmSync(destDir, { recursive: true, force: true });
         continue;
       }
-      songs.push({ id, folder: destFolder, files });
+      songs.push({ id, folder: destFolder, title, files });
     }
   }
 

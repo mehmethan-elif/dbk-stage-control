@@ -12,6 +12,7 @@ export interface ClientLibraryFile {
 export interface ClientLibrarySong {
   id: string;
   folder: string;
+  title?: string;
   files: ClientLibraryFile[];
 }
 
@@ -75,6 +76,15 @@ function editDistance(left: string, right: string): number {
     }
   }
   return grid[left.length]![right.length] ?? 99;
+}
+
+export function publishedSongTitle(song: { id: string; folder: string; title?: string }): string {
+  const title = song.title?.normalize("NFC").trim();
+  if (title) return title;
+  const id = song.id.normalize("NFC").trim();
+  const folder = song.folder.normalize("NFC").trim();
+  if (id && id !== folder) return id;
+  return folder || id || "—";
 }
 
 export function needsClientLibraryDownload(

@@ -61,6 +61,7 @@
     {
       "id": "Karahisar Kalesi",
       "folder": "karahisar_kalesi",
+      "title": "Karahisar Kalesi",
       "files": [
         {
           "path": "Nota.pdf",
@@ -71,6 +72,11 @@
           "path": "settings.json",
           "size": 191,
           "hash": "fa72dda04d0c89a88d517bda3cf2b68d04256f17ce6a430be991e45c7464a64f"
+        },
+        {
+          "path": "song.json",
+          "size": 110,
+          "hash": "92aeb1d1226d90face103320f893a2c2b8ca14aaf1bbe15a329dc82c1f791084"
         }
       ]
     },

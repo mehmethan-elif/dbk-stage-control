@@ -132,6 +132,7 @@ export {
   dropMissingSetlistSongs,
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
+  publishedSongTitle,
   resolvePublishedSongId
 } from "./client-library.js";
 export type { ClientLibraryFile, ClientLibraryIndex, ClientLibrarySong } from "./client-library.js";

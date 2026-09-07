@@ -2,6 +2,7 @@ import {
   isPracticeFile,
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
+  publishedSongTitle,
   type ClientLibraryIndex,
   type Gig
 } from "@dbk/core";
@@ -60,12 +61,37 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
       files += 1;
     }
     for (const item of local[song.folder] ?? []) {
+      if (item.path.toLowerCase() === "song.json" && ![...remotePaths].some((path) => path.toLowerCase() === "song.json")) {
+        continue;
+      }
       if (!remotePaths.has(item.path)) {
         await deletePracticeFile(song.folder, item.path);
         changed = true;
       }
     }
     if (changed || !local[song.folder]) songs += 1;
+  }
+
+  for (const song of index.songs) {
+    const names = (await listPracticeManifest())[song.folder]?.map((item) => item.path.toLowerCase()) ?? [];
+    if (names.includes("song.json")) continue;
+    const body = new TextEncoder().encode(
+      `${JSON.stringify(
+        {
+          id: song.id,
+          version: 1,
+          title: publishedSongTitle(song),
+          folder: song.folder
+        },
+        null,
+        2
+      )}\n`
+    );
+    await writePracticeFile(
+      song.folder,
+      "song.json",
+      body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)
+    );
   }
 
   for (const folder of localFoldersNotOnRemote(Object.keys(local), [...remoteFolders])) {

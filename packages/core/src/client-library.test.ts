@@ -3,6 +3,7 @@ import {
   dropMissingSetlistSongs,
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
+  publishedSongTitle,
   resolvePublishedSongId
 } from "./client-library.js";
 import { FinishMode, type Gig } from "./models.js";
@@ -50,5 +51,14 @@ describe("dropMissingSetlistSongs", () => {
       ]
     };
     expect(dropMissingSetlistSongs([gig], ["biz"])[0]?.setlist.map((entry) => entry.entryId)).toEqual(["a"]);
+  });
+});
+
+describe("publishedSongTitle", () => {
+  it("prefers the master name when the published folder is a slug", () => {
+    expect(
+      publishedSongTitle({ id: "Karahisar Kalesi", folder: "karahisar_kalesi" })
+    ).toBe("Karahisar Kalesi");
+    expect(publishedSongTitle({ id: "biz", folder: "biz", title: "Biz" })).toBe("Biz");
   });
 });
