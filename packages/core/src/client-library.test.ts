@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { needsClientLibraryDownload, resolvePublishedSongId } from "./client-library.js";
+import {
+  dropMissingSetlistSongs,
+  localFoldersNotOnRemote,
+  needsClientLibraryDownload,
+  resolvePublishedSongId
+} from "./client-library.js";
+import { FinishMode, type Gig } from "./models.js";
 
 describe("needsClientLibraryDownload", () => {
   it("downloads missing files and hash changes", () => {
@@ -20,5 +26,29 @@ describe("resolvePublishedSongId", () => {
   it("matches spaced and damaged ids to library folders", () => {
     expect(resolvePublishedSongId("Karahisar Kalesi", songs)).toBe("karahisar_kalesi");
     expect(resolvePublishedSongId("tanr\uFFFD_dan_diledim", songs)).toBe("tanridan_diledim");
+  });
+});
+
+describe("localFoldersNotOnRemote", () => {
+  it("drops folders that GitHub no longer publishes", () => {
+    expect(localFoldersNotOnRemote(["biz", "telli_turnam", "old_song"], ["biz", "telli_turnam"])).toEqual([
+      "old_song"
+    ]);
+  });
+});
+
+describe("dropMissingSetlistSongs", () => {
+  it("removes setlist entries whose songs left the library", () => {
+    const gig: Gig = {
+      id: "gig",
+      name: "Show",
+      date: "2026-09-07",
+      musicians: [],
+      setlist: [
+        { type: "song", entryId: "a", songId: "biz", finishMode: FinishMode.Stop },
+        { type: "song", entryId: "b", songId: "gone", finishMode: FinishMode.Stop }
+      ]
+    };
+    expect(dropMissingSetlistSongs([gig], ["biz"])[0]?.setlist.map((entry) => entry.entryId)).toEqual(["a"]);
   });
 });

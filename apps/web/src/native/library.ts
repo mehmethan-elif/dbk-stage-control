@@ -20,6 +20,10 @@ export function registerSongFolder(songId: string, folder: string): void {
   folderBySongId[songId] = folder;
 }
 
+export function resetSongFolders(): void {
+  for (const key of Object.keys(folderBySongId)) delete folderBySongId[key];
+}
+
 let fileOverride: ((songId: string, relPath: string) => Promise<ArrayBuffer | null>) | null = null;
 
 export function setLibraryFileOverride(

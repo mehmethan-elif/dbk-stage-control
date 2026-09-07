@@ -1,5 +1,6 @@
 import {
   isPracticeFile,
+  localFoldersNotOnRemote,
   needsClientLibraryDownload,
   type ClientLibraryIndex,
   type Gig
@@ -67,8 +68,8 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
     if (changed || !local[song.folder]) songs += 1;
   }
 
-  for (const folder of Object.keys(local)) {
-    if (!remoteFolders.has(folder)) await deletePracticeFolder(folder);
+  for (const folder of localFoldersNotOnRemote(Object.keys(local), [...remoteFolders])) {
+    await deletePracticeFolder(folder);
   }
 
   let gigs: Gig[] = [];

@@ -1,4 +1,5 @@
 import { practiceFolderSlug } from "./practice-files.js";
+import { isSongEntry, type Gig } from "./models.js";
 
 export const CLIENT_LIBRARY_NAME = "DBK Stage Control";
 
@@ -83,4 +84,17 @@ export function needsClientLibraryDownload(
   if (!local) return true;
   if (local.hash && remote.hash) return local.hash !== remote.hash;
   return local.size !== remote.size;
+}
+
+export function localFoldersNotOnRemote(localFolders: readonly string[], remoteFolders: readonly string[]): string[] {
+  const remote = new Set(remoteFolders);
+  return localFolders.filter((folder) => !remote.has(folder));
+}
+
+export function dropMissingSetlistSongs(gigs: Gig[], songIds: Iterable<string>): Gig[] {
+  const ids = new Set(songIds);
+  return gigs.map((gig) => ({
+    ...gig,
+    setlist: gig.setlist.filter((entry) => !isSongEntry(entry) || ids.has(entry.songId))
+  }));
 }

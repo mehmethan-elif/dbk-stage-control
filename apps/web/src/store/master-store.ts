@@ -17,6 +17,7 @@ import {
   parseSongInfo,
   PlaybackController,
   PlaybackState,
+  dropMissingSetlistSongs,
   resolvePublishedSongId,
   sectionAfter,
   sectionAt,
@@ -484,7 +485,7 @@ function applyClientLibrary(
   publishedGigs: Gig[] = [],
   keepSongId?: string | null
 ): Pick<MasterState, "songs" | "fileIndex" | "gigs" | "gigId" | "selectedEntryId" | "previewTime" | "hostOk"> {
-  const remapped = remapPublishedGigs(publishedGigs, songs);
+  const remapped = dropMissingSetlistSongs(remapPublishedGigs(publishedGigs, songs), songs.map((song) => song.id));
   const usable = remapped.filter((gig) =>
     gig.setlist.some((entry) => isSongEntry(entry) && songs.some((song) => song.id === entry.songId))
   );

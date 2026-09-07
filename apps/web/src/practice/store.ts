@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { fileNameOf, parseSongInfo, practiceMasterAudio, samePracticeFolder, type Gig, type Song } from "@dbk/core";
-import { registerSongFolder, type LibraryIndex } from "../native/library";
+import { registerSongFolder, resetSongFolders, type LibraryIndex } from "../native/library";
 
 const DB_NAME = "dbk-practice";
 const DB_VERSION = 2;
@@ -107,13 +107,27 @@ export async function listPracticeManifest(): Promise<
 }
 
 export async function deletePracticeFile(folder: string, path: string): Promise<void> {
-  await (await db()).delete("files", practiceFileKey(folder.normalize("NFC"), path.normalize("NFC")));
+  const database = await db();
+  const wantFolder = folder.normalize("NFC");
+  const wantPath = path.normalize("NFC");
+  await database.delete("files", practiceFileKey(wantFolder, wantPath));
+  const rows = await database.getAll("files");
+  for (const row of rows) {
+    if (samePracticeFolder(row.folder, folder) && fileNameOf(row.path).toLowerCase() === fileNameOf(path).toLowerCase()) {
+      await database.delete("files", row.key);
+    }
+  }
 }
 
 export async function deletePracticeFolder(folder: string): Promise<void> {
   const database = await db();
-  const rows = await database.getAllFromIndex("files", "folder", folder);
-  for (const row of rows) await database.delete("files", row.key);
+  const want = folder.normalize("NFC");
+  const rows = await database.getAll("files");
+  for (const row of rows) {
+    if (row.folder === folder || row.folder.normalize("NFC") === want) {
+      await database.delete("files", row.key);
+    }
+  }
 }
 
 export async function writePublishedGigs(gigs: Gig[]): Promise<void> {
@@ -153,6 +167,7 @@ function stubSong(folder: string): Song {
 }
 
 export async function loadPracticeLibrary(): Promise<LibraryIndex> {
+  resetSongFolders();
   const manifest = await listPracticeManifest();
   const songs: Song[] = [];
   const fileIndex: Record<string, string[]> = {};

@@ -129,6 +129,8 @@ export {
 
 export {
   CLIENT_LIBRARY_NAME,
+  dropMissingSetlistSongs,
+  localFoldersNotOnRemote,
   needsClientLibraryDownload,
   resolvePublishedSongId
 } from "./client-library.js";
