@@ -6,6 +6,7 @@ import {
   measureStartTimes,
   PlaybackState,
   PlayMode,
+  practiceMasterAudio,
   sectionAt,
   sectionNamed
 } from "@dbk/core";
@@ -125,6 +126,8 @@ export function StageViewChrome() {
 export function PrepTransport() {
   const songs = useMasterStore((s) => s.songs);
   const fileIndex = useMasterStore((s) => s.fileIndex);
+  const deviceKind = useMasterStore((s) => s.deviceKind);
+  const clientSession = useMasterStore((s) => s.clientSession);
   const gig = useMasterStore(currentGig);
   const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
   const playback = useMasterStore((s) => s.playback);
@@ -132,6 +135,7 @@ export function PrepTransport() {
   const metronomePlaying = useMasterStore((s) => s.metronomePlaying);
   const masterPage = useMasterStore((s) => s.masterPage);
   const seek = useMasterStore((s) => s.seek);
+  const practiceClient = deviceKind === "client" && clientSession === "practice";
   const playFromPointer = useRef(false);
   const pendingMeasureRef = useRef<number | null>(null);
   const [pendingMeasure, setPendingMeasure] = useState<number | null>(null);
@@ -143,11 +147,16 @@ export function PrepTransport() {
   const selectedIndex = selected && gig ? gig.setlist.indexOf(selected) : -1;
   const song =
     selected && isSongEntry(selected) ? songs.find((item) => item.id === selected.songId) : undefined;
-  const metronomeMode =
-    !selected ||
-    !isSongEntry(selected) ||
-    !hasBackingAudio(song, song ? fileIndex[song.id] : undefined) ||
-    entryPlayMode(selected) === PlayMode.View;
+  const masterFiles = song
+    ? [...(fileIndex[song.id] ?? []), ...(song.folder ? (fileIndex[song.folder] ?? []) : [])]
+    : [];
+  const hasMasterMix = Boolean(practiceMasterAudio(masterFiles));
+  const metronomeMode = practiceClient
+    ? false
+    : !selected ||
+      !isSongEntry(selected) ||
+      !hasBackingAudio(song, song ? fileIndex[song.id] : undefined) ||
+      entryPlayMode(selected) === PlayMode.View;
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
   const clockMatches = Boolean(selected && playback.clock?.setlistEntryId === selected.entryId);
@@ -176,6 +185,11 @@ export function PrepTransport() {
 
   const togglePlayback = () => {
     const state = useMasterStore.getState();
+    if (practiceClient) {
+      if (state.playback.state === PlaybackState.Playing) state.pausePractice();
+      else void state.playPractice();
+      return;
+    }
     if (state.playback.state === PlaybackState.Loading) return;
     const selectedEntry = state.selectedEntryId
       ? currentGig(state)?.setlist.find((entry) => entry.entryId === state.selectedEntryId)
@@ -206,7 +220,7 @@ export function PrepTransport() {
     }
     toggle();
   };
-  const canPlay = Boolean(song);
+  const canPlay = practiceClient ? hasMasterMix : Boolean(song);
   const sections = song?.sections ?? [];
   const timelineStart = 0;
   const timelineEnd = sections.reduce(

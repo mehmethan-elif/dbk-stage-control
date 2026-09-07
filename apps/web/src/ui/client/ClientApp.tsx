@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { isSongEntry, PlaybackState, practiceMasterAudio, songDisplayName } from "@dbk/core";
-import { currentGig, useMasterStore } from "../../store/master-store";
-import { ChronometerIcon, PauseIcon, PlayIcon, StopIcon } from "../shared/icons";
+import { useMasterStore } from "../../store/master-store";
+import { ChronometerIcon } from "../shared/icons";
 import { ChordView } from "../master/ChordView";
 import { DrumView } from "../master/DrumView";
 import { LyricsView } from "../master/LyricsView";
 import { NotaView } from "../master/NotaView";
-import { StageViewChrome } from "../master/PrepTransport";
+import { PrepTransport, StageViewChrome } from "../master/PrepTransport";
 import { ClientLibrary } from "./ClientLibrary";
 
 function pad2(value: number): string {
@@ -22,11 +21,6 @@ function formatElapsed(ms: number): string {
   return `${pad2(Math.floor(totalMin / 60))}:${pad2(totalMin % 60)}`;
 }
 
-function formatClock(seconds: number): string {
-  const total = Math.max(0, Math.floor(seconds));
-  return `${pad2(Math.floor(total / 60))}:${pad2(total % 60)}`;
-}
-
 export function ClientApp() {
   const ready = useMasterStore((s) => s.ready);
   const gigId = useMasterStore((s) => s.gigId);
@@ -34,19 +28,10 @@ export function ClientApp() {
   const setMasterPage = useMasterStore((s) => s.setMasterPage);
   const syncConnected = useMasterStore((s) => s.syncConnected);
   const songs = useMasterStore((s) => s.songs);
-  const fileIndex = useMasterStore((s) => s.fileIndex);
   const clientSession = useMasterStore((s) => s.clientSession);
-  const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
-  const previewTime = useMasterStore((s) => s.previewTime);
-  const playback = useMasterStore((s) => s.playback);
-  const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
-  const playPractice = useMasterStore((s) => s.playPractice);
-  const pausePractice = useMasterStore((s) => s.pausePractice);
-  const seekPractice = useMasterStore((s) => s.seekPractice);
   const leaveStage = useMasterStore((s) => s.leaveStage);
   const joinStage = useMasterStore((s) => s.joinStage);
   const syncHost = useMasterStore((s) => s.syncHost);
-  const gig = useMasterStore(currentGig);
   const page =
     masterPage === "nota"
       ? "nota"
@@ -58,20 +43,6 @@ export function ClientApp() {
             ? "lan"
             : "lyrics";
   const practice = clientSession === "practice";
-  const selected = gig?.setlist.find((entry) => entry.entryId === selectedEntryId);
-  const current = selected && isSongEntry(selected) ? songs.find((song) => song.id === selected.songId) : undefined;
-  const listed = gig
-    ? gig.setlist
-        .filter(isSongEntry)
-        .map((entry) => songs.find((song) => song.id === entry.songId))
-        .filter((song): song is NonNullable<typeof song> => Boolean(song))
-    : songs;
-  const hasMaster = Boolean(
-    current &&
-      (practiceMasterAudio(fileIndex[current.id] ?? []) ||
-        practiceMasterAudio(fileIndex[current.folder] ?? []))
-  );
-  const playing = playback.state === PlaybackState.Playing;
   const [now, setNow] = useState(() => new Date());
   const [concertOn, setConcertOn] = useState(false);
   const [concertMs, setConcertMs] = useState(0);
@@ -189,48 +160,8 @@ export function ClientApp() {
         </button>
       </header>
       {page !== "lan" && practice && !empty ? (
-        <div className="app-transport client-practice-bar">
-          <button
-            type="button"
-            className={`add prep-play ${playing ? "stop" : "play"}`}
-            disabled={!hasMaster}
-            title={playing ? "Pause" : "Play Master mix"}
-            aria-label={playing ? "Pause" : "Play"}
-            onClick={() => {
-              if (playing) pausePractice();
-              else void playPractice();
-            }}
-          >
-            {playing ? <PauseIcon /> : <PlayIcon />}
-          </button>
-          <button
-            type="button"
-            className="add prep-play"
-            disabled={!hasMaster}
-            title="Stop"
-            aria-label="Stop"
-            onClick={() => {
-              pausePractice();
-              seekPractice(0);
-            }}
-          >
-            <StopIcon />
-          </button>
-          <input
-            className="client-practice-slider"
-            type="range"
-            min={0}
-            max={Math.max(1, current?.duration ?? 1)}
-            step="any"
-            value={previewTime}
-            disabled={!hasMaster}
-            aria-label="Practice position"
-            onChange={(event) => seekPractice(Number(event.target.value))}
-          />
-          <span className="client-practice-time">
-            {formatClock(previewTime)} · {songDisplayName(current)}
-            {hasMaster ? "" : " · no Master mix"}
-          </span>
+        <div className="app-transport">
+          <PrepTransport />
         </div>
       ) : null}
       {page !== "lan" && !practice && gigId ? (
@@ -243,21 +174,7 @@ export function ClientApp() {
       ) : page === "lan" ? (
         <ClientLibrary />
       ) : (
-        <div className={`client-main${practice ? " is-practice" : ""}`}>
-          {practice ? (
-            <aside className="client-song-list" aria-label="Practice songs">
-              {listed.map((song) => (
-                <button
-                  key={song.id}
-                  type="button"
-                  className={`client-song-btn${current?.id === song.id ? " on" : ""}`}
-                  onClick={() => selectPracticeSong(song.id)}
-                >
-                  {songDisplayName(song)}
-                </button>
-              ))}
-            </aside>
-          ) : null}
+        <div className="client-main">
           <div className="client-stage">
             {page === "nota" ? (
               <NotaView />

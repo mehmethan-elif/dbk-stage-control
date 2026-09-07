@@ -17,6 +17,7 @@ import {
   parseSongInfo,
   PlaybackController,
   PlaybackState,
+  resolvePublishedSongId,
   sectionAfter,
   sectionAt,
   sectionNamed,
@@ -466,13 +467,25 @@ function practiceClock(
   };
 }
 
+function remapPublishedGigs(gigs: Gig[], songs: Song[]): Gig[] {
+  return gigs.map((gig) => ({
+    ...gig,
+    setlist: gig.setlist.map((entry) => {
+      if (!isSongEntry(entry)) return entry;
+      const songId = resolvePublishedSongId(entry.songId, songs) ?? entry.songId;
+      return { ...entry, songId };
+    })
+  }));
+}
+
 function applyClientLibrary(
   songs: Song[],
   fileIndex: Record<string, string[]>,
   publishedGigs: Gig[] = [],
   keepSongId?: string | null
 ): Pick<MasterState, "songs" | "fileIndex" | "gigs" | "gigId" | "selectedEntryId" | "previewTime" | "hostOk"> {
-  const usable = publishedGigs.filter((gig) =>
+  const remapped = remapPublishedGigs(publishedGigs, songs);
+  const usable = remapped.filter((gig) =>
     gig.setlist.some((entry) => isSongEntry(entry) && songs.some((song) => song.id === entry.songId))
   );
   const gig = usable[0] ?? practiceGig(songs);
@@ -715,7 +728,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
           hostOk,
           masterPage: "lyrics",
           clientSession: options?.syncHost ? "stage" : "practice",
-          setlistOpen: Boolean(options?.syncHost),
+          setlistOpen: true,
           songMix
         });
         if (options?.syncHost) connectSync(get, set);
@@ -776,7 +789,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       set({
         syncHost: null,
         clientSession: "practice",
-        setlistOpen: false,
+        setlistOpen: true,
         syncConnected: false
       });
       void readPublishedGigs().then((published) => {
@@ -979,11 +992,12 @@ export const useMasterStore = create<MasterState>((set, get) => {
       const entry = get().selectedEntryId
         ? currentGig(get())?.setlist.find((item) => item.entryId === get().selectedEntryId)
         : undefined;
+      const playing = get().playback.state === PlaybackState.Playing;
       set({
         previewTime: time,
         playback:
-          entry && isSongEntry(entry) && get().playback.state === PlaybackState.Playing
-            ? { ...get().playback, clock: practiceClock(entry, time, true) }
+          entry && isSongEntry(entry)
+            ? { ...get().playback, clock: practiceClock(entry, time, playing) }
             : get().playback
       });
     },
@@ -1226,7 +1240,17 @@ export const useMasterStore = create<MasterState>((set, get) => {
 
     selectSetlistEntry: (entryId) => {
       if (get().deviceKind === "client") {
-        set({ selectedEntryId: entryId });
+        const gig = currentGig(get());
+        const entry = gig?.setlist.find((item) => item.entryId === entryId);
+        set({ selectedEntryId: entryId, previewTime: startAtOf(gig, entryId, get().songs) });
+        if (get().clientSession === "practice" && entry && isSongEntry(entry)) {
+          const song = get().songs.find((item) => item.id === entry.songId);
+          const files = [
+            ...(get().fileIndex[entry.songId] ?? []),
+            ...(song?.folder ? (get().fileIndex[song.folder] ?? []) : [])
+          ];
+          void loadPracticeAudio(entry.songId, files);
+        }
         return;
       }
       cancelFadeStop();
@@ -1251,7 +1275,10 @@ export const useMasterStore = create<MasterState>((set, get) => {
     },
 
     seek: (time) => {
-      if (get().deviceKind === "client") return;
+      if (get().deviceKind === "client") {
+        if (get().clientSession === "practice") get().seekPractice(time);
+        return;
+      }
       const { selectedEntryId, gigs, gigId, songs } = get();
       const gig = gigs.find((item) => item.id === gigId);
       const entry = selectedEntryId

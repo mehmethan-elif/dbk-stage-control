@@ -91,8 +91,11 @@ function cueFill(current: number, index: number, start: number, end: number, tim
 function songShowsSections(
   entry: SongSetlistEntry | undefined,
   song: Song | undefined,
-  files?: string[]
+  files?: string[],
+  client = false
 ): boolean {
+  if ((song?.sections.length ?? 0) === 0) return false;
+  if (client) return true;
   if (!hasBackingAudio(song, files)) return false;
   return entryPlayMode(entry) === PlayMode.Playback;
 }
@@ -126,20 +129,29 @@ export function LyricsView() {
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
   const playingEntryId = playing
     ? (playback.clock?.setlistEntryId ?? selectedEntryId ?? undefined)
-    : undefined;
+    : readOnly
+      ? (selectedEntryId ?? undefined)
+      : undefined;
   const liveSong = songs.find((item) => item.id === (playback.clock?.songId ?? selected?.songId));
   const rawTime = playing ? (playback.clock?.time ?? previewTime) : previewTime;
   const liveTime =
     liveSong && liveSong.duration > 0 ? Math.min(liveSong.duration, rawTime) : rawTime;
-  const playingSong = songs.find((item) => item.id === playback.clock?.songId);
+  const playingSong = songs.find(
+    (item) => item.id === (playback.clock?.songId ?? selected?.songId)
+  );
   const playingEntry = playingEntryId
     ? entries.find((entry) => entry.entryId === playingEntryId)
     : undefined;
-  const currentIdx = playing
+  const currentIdx = playingEntryId
     ? currentLyricIndex(
         stageRows(
           playingSong,
-          songShowsSections(playingEntry, playingSong, playingSong ? fileIndex[playingSong.id] : undefined)
+          songShowsSections(
+            playingEntry,
+            playingSong,
+            playingSong ? fileIndex[playingSong.id] : undefined,
+            readOnly
+          )
         ),
         liveTime
       )
@@ -240,7 +252,12 @@ export function LyricsView() {
                     song={item}
                     live={live}
                     time={liveTime}
-                    showSections={songShowsSections(entry, item, item ? fileIndex[item.id] : undefined)}
+                    showSections={songShowsSections(
+                      entry,
+                      item,
+                      item ? fileIndex[item.id] : undefined,
+                      readOnly
+                    )}
                   />
                 );
               })}

@@ -243,11 +243,11 @@ export function metronomeSongView(song: Song): Song {
   const info = parseSongInfo(song.info);
   return {
     ...song,
-    duration: info.duration ?? 0,
-    key: info.key,
-    scale: info.scale,
-    style: info.style,
-    tempoMap: metronomeTempoMap(info)
+    duration: info.duration ?? song.duration,
+    key: info.key ?? song.key,
+    scale: info.scale ?? song.scale,
+    style: info.style ?? song.style,
+    tempoMap: song.info ? metronomeTempoMap(info) : song.tempoMap
   };
 }
 

@@ -129,7 +129,8 @@ export {
 
 export {
   CLIENT_LIBRARY_NAME,
-  needsClientLibraryDownload
+  needsClientLibraryDownload,
+  resolvePublishedSongId
 } from "./client-library.js";
 export type { ClientLibraryFile, ClientLibraryIndex, ClientLibrarySong } from "./client-library.js";
 

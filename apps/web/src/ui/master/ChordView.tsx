@@ -260,7 +260,9 @@ export function ChordView() {
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
   const playingEntryId = playing
     ? (playback.clock?.setlistEntryId ?? selectedEntryId ?? undefined)
-    : undefined;
+    : readOnly
+      ? (selectedEntryId ?? undefined)
+      : undefined;
   const liveTime = playing ? (playback.clock?.time ?? previewTime) : previewTime;
   const stageRef = useRef<HTMLElement>(null);
   const visible = entries.filter((entry) => !entry.skipped);
