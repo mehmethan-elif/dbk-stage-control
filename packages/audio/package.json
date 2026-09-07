@@ -1,0 +1,13 @@
+{
+  "name": "@dbk/audio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@dbk/core": "0.1.0",
+    "@dbk/logger": "0.1.0"
+  }
+}

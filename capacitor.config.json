@@ -1,0 +1,10 @@
+{
+  "appId": "com.dbk.stagecontrol",
+  "appName": "DBK Stage Control",
+  "webDir": "apps/web/dist",
+  "server": {
+    "androidScheme": "http",
+    "iosScheme": "http",
+    "cleartext": true
+  }
+}

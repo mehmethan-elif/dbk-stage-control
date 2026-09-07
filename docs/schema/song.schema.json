@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dbk.stage/schema/song.json",
+  "title": "DBK Song",
+  "type": "object",
+  "required": ["id", "version", "title", "duration", "assets", "tempoMap", "sections"],
+  "properties": {
+    "id": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string" },
+    "duration": { "type": "number" },
+    "clickDuration": { "type": "number" },
+    "nextSongAt": { "type": "number", "minimum": 0 },
+    "key": { "type": "string" },
+    "scale": { "type": "string" },
+    "style": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "tempoMap": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["time", "measure", "bpm", "numerator", "denominator"],
+        "properties": {
+          "time": { "type": "number" },
+          "measure": { "type": "integer" },
+          "bpm": { "type": "number" },
+          "numerator": { "type": "integer" },
+          "denominator": { "type": "integer" }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "start", "end"],
+        "properties": {
+          "name": { "type": "string" },
+          "start": { "type": "number" },
+          "end": { "type": "number" }
+        }
+      }
+    },
+    "lyrics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/timedText" }
+    },
+    "chords": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          { "$ref": "#/$defs/timedText" },
+          {
+            "type": "object",
+            "properties": {
+              "notes": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/midiNote" }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text", "time", "end", "length", "numerator", "denominator", "notes"],
+        "properties": {
+          "text": { "type": "string" },
+          "time": { "type": "number" },
+          "end": { "type": "number" },
+          "length": { "type": "number" },
+          "measure": { "type": "integer" },
+          "beat": { "type": "number" },
+          "numerator": { "type": "integer" },
+          "denominator": { "type": "integer" },
+          "notes": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/midiNote" }
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "path", "hash"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["audio", "musicxml", "lyrics", "chords", "timeline"] },
+          "role": { "type": "string" },
+          "audioRole": { "enum": ["backing", "click", "cue", "stem"] },
+          "bus": { "enum": ["MAIN", "CUE"] },
+          "path": { "type": "string" },
+          "hash": { "type": "string" },
+          "label": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "timedText": {
+      "type": "object",
+      "required": ["time", "measure", "text"],
+      "properties": {
+        "time": { "type": "number" },
+        "end": { "type": "number" },
+        "measure": { "type": "integer" },
+        "beat": { "type": "number" },
+        "text": { "type": "string" }
+      }
+    },
+    "midiNote": {
+      "type": "object",
+      "required": ["time", "pitch"],
+      "properties": {
+        "time": { "type": "number" },
+        "end": { "type": "number" },
+        "pitch": { "type": "integer" },
+        "channel": { "type": "integer" },
+        "velocity": { "type": "integer" },
+        "measure": { "type": "integer" },
+        "beat": { "type": "number" },
+        "numerator": { "type": "integer" },
+        "denominator": { "type": "integer" }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dbk.stage/schema/gig.json",
+  "title": "DBK Gig",
+  "type": "object",
+  "required": ["id", "name", "date", "musicians", "setlist"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "date": { "type": "string" },
+    "venue": { "type": "string" },
+    "notes": { "type": "string" },
+    "musicians": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["musicianId", "role"],
+        "properties": {
+          "musicianId": { "type": "string" },
+          "role": { "type": "string" }
+        }
+      }
+    },
+    "setlist": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "entryId", "songId", "finishMode"],
+            "properties": {
+              "type": { "const": "song" },
+              "entryId": { "type": "string" },
+              "songId": { "type": "string" },
+              "finishMode": { "enum": ["STOP", "PLAY_NEXT"] },
+              "startAt": { "type": "number", "minimum": 0 },
+              "notes": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "entryId", "label"],
+            "properties": {
+              "type": { "enum": ["break", "talk", "costume_change", "set_marker"] },
+              "entryId": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

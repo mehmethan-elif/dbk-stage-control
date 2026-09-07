@@ -1,0 +1,22 @@
+node_modules
+dist
+.DS_Store
+*.log
+.vite
+coverage
+*.tsbuildinfo
+.idea
+.vscode/*
+!.vscode/extensions.json
+apps/web/ios/App/Pods
+apps/web/ios/App/output
+apps/web/ios/DerivedData
+ios/App/Pods
+ios/App/output
+ios/DerivedData
+
+# Local song library — stems, charts, and masters stay on the iPad
+library/songs/
+
+# Generated fixture audio (`npm run fixtures`)
+testdata/audio/
