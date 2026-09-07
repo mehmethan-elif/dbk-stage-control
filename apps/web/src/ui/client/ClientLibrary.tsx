@@ -11,7 +11,6 @@ export function ClientLibrary() {
   const songs = useMasterStore((s) => s.songs);
   const joinStage = useMasterStore((s) => s.joinStage);
   const leaveStage = useMasterStore((s) => s.leaveStage);
-  const syncClientLibrary = useMasterStore((s) => s.syncClientLibrary);
   const [host, setHost] = useState(
     () =>
       syncHost ??
@@ -21,11 +20,10 @@ export function ClientLibrary() {
 
   return (
     <section className="panel lan-page">
-      <h2>Library and stage</h2>
+      <h2>Connect</h2>
       <div className="panel-body lan-body">
         <p className="meta">
-          DBK Stage Control updates itself from GitHub. Open the page and it downloads new songs and
-          setlist changes. No zip.
+          DBK opens in practice. It updates songs and setlists from GitHub when you open it.
         </p>
 
         <div className="lan-block">
@@ -33,16 +31,6 @@ export function ClientLibrary() {
           <div className="lan-address">{songs.length} songs on this tablet</div>
           {practiceBusy ? <p className="meta">{practiceBusy}</p> : null}
           {libraryStatus ? <p className="meta">{libraryStatus}</p> : null}
-          <div className="lan-actions">
-            <button
-              type="button"
-              className="lyrics-btn on"
-              disabled={Boolean(practiceBusy)}
-              onClick={() => void syncClientLibrary()}
-            >
-              Check for updates
-            </button>
-          </div>
         </div>
 
         <form
@@ -53,7 +41,7 @@ export function ClientLibrary() {
           }}
         >
           <label className="lan-label" htmlFor="client-master-ip">
-            Join stage
+            Master address
           </label>
           <input
             id="client-master-ip"
@@ -70,16 +58,16 @@ export function ClientLibrary() {
               ? syncConnected
                 ? "Following the master. This tablet does not play audio."
                 : "Looking for the master…"
-              : "Practice is local. Join only when you are on stage."}
+              : "Practice is local. Connect only when you are on stage."}
           </p>
           <div className="lan-actions">
             {clientSession === "stage" ? (
               <button type="button" className="lyrics-btn" onClick={() => leaveStage()}>
-                Leave stage
+                Disconnect
               </button>
             ) : (
               <button type="submit" className="lyrics-btn on">
-                Join stage
+                Connect
               </button>
             )}
           </div>

@@ -727,16 +727,13 @@ export const useMasterStore = create<MasterState>((set, get) => {
           ...next,
           hostOk,
           masterPage: "lyrics",
-          clientSession: options?.syncHost ? "stage" : "practice",
+          clientSession: "practice",
           setlistOpen: true,
           songMix
         });
-        if (options?.syncHost) connectSync(get, set);
-        else {
-          const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
-          if (songId) void loadPracticeAudio(songId, fileIndex[songId] ?? []);
-          void get().syncClientLibrary();
-        }
+        const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
+        if (songId) void loadPracticeAudio(songId, fileIndex[songId] ?? []);
+        void get().syncClientLibrary();
         return;
       }
       const local = await loadLocalLibrary();
@@ -773,7 +770,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       if (!value) return;
       stopPracticeAudio();
       localStorage.setItem(MASTER_HOST_KEY, value);
-      set({ syncHost: value, clientSession: "stage", setlistOpen: true });
+      set({ syncHost: value, clientSession: "stage", setlistOpen: true, masterPage: "lyrics" });
       connectSync(get, set);
     },
 

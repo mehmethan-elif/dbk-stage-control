@@ -29,9 +29,7 @@ export function ClientApp() {
   const syncConnected = useMasterStore((s) => s.syncConnected);
   const songs = useMasterStore((s) => s.songs);
   const clientSession = useMasterStore((s) => s.clientSession);
-  const leaveStage = useMasterStore((s) => s.leaveStage);
-  const joinStage = useMasterStore((s) => s.joinStage);
-  const syncHost = useMasterStore((s) => s.syncHost);
+  const connected = clientSession === "stage";
   const page =
     masterPage === "nota"
       ? "nota"
@@ -127,36 +125,14 @@ export function ClientApp() {
         >
           DRUMS
         </button>
-        <button
-          type="button"
-          className={`lyrics-btn${practice ? " on" : ""}`}
-          aria-pressed={practice}
-          onClick={() => {
-            if (!practice) leaveStage();
-          }}
-        >
-          PRACTICE
-        </button>
-        <button
-          type="button"
-          className={`lyrics-btn${!practice ? " on" : ""}`}
-          aria-pressed={!practice}
-          onClick={() => {
-            if (practice && syncHost) joinStage(syncHost);
-            else if (practice) setMasterPage("lan");
-          }}
-        >
-          STAGE
-        </button>
         <div className="grow" />
-        <span className="badge">{practice ? "PRACTICE" : "STAGE"}</span>
         <button
           type="button"
-          className={`lyrics-btn${page === "lan" ? " on" : syncConnected ? " lan-ok" : " lan-warn"}`}
-          aria-pressed={page === "lan"}
+          className={`lyrics-btn${page === "lan" ? " on" : syncConnected ? " lan-ok" : ""}`}
+          aria-pressed={page === "lan" || connected}
           onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
         >
-          SONGS
+          CONNECT
         </button>
       </header>
       {page !== "lan" && practice && !empty ? (
