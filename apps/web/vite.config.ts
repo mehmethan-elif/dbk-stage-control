@@ -33,11 +33,20 @@ function pagesFallback(): Plugin {
         if (existsSync(library)) {
           cpSync(library, path.join(dist, "client-library"), { recursive: true });
         }
+        stampBuiltServiceWorker(dist);
       } catch {
         // dev server has no dist yet
       }
     }
   };
+}
+
+function stampBuiltServiceWorker(dist: string): void {
+  const sw = path.join(dist, "sw.js");
+  if (!existsSync(sw)) return;
+  const stamp = process.env.GITHUB_SHA?.slice(0, 7) || String(Date.now());
+  const text = readFileSync(sw, "utf8").replace(/const BUILD = ["'][^"']*["'];/, `const BUILD = ${JSON.stringify(stamp)};`);
+  writeFileSync(sw, text);
 }
 
 function clientLibraryDev(): Plugin {
