@@ -63,7 +63,11 @@ export function ClientApp() {
             : "lyrics";
   const practice = clientSession === "practice";
   const current = songs.find((song) => selectedEntryId === practiceEntryId(song.id));
-  const hasMaster = current ? Boolean(practiceMasterAudio(fileIndex[current.id] ?? [])) : false;
+  const hasMaster = Boolean(
+    current &&
+      (practiceMasterAudio(fileIndex[current.id] ?? []) ||
+        practiceMasterAudio(fileIndex[current.folder] ?? []))
+  );
   const playing = playback.state === PlaybackState.Playing;
   const [now, setNow] = useState(() => new Date());
   const [concertOn, setConcertOn] = useState(false);

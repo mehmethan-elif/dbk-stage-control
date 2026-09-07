@@ -124,12 +124,13 @@ export function LyricsView() {
     : undefined;
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
-  const playingEntryId = playing ? playback.clock?.setlistEntryId : undefined;
-  const liveTime = Math.min(
-    songs.find((item) => item.id === (playback.clock?.songId ?? selected?.songId))?.duration ??
-      previewTime,
-    playing ? (playback.clock?.time ?? previewTime) : previewTime
-  );
+  const playingEntryId = playing
+    ? (playback.clock?.setlistEntryId ?? selectedEntryId ?? undefined)
+    : undefined;
+  const liveSong = songs.find((item) => item.id === (playback.clock?.songId ?? selected?.songId));
+  const rawTime = playing ? (playback.clock?.time ?? previewTime) : previewTime;
+  const liveTime =
+    liveSong && liveSong.duration > 0 ? Math.min(liveSong.duration, rawTime) : rawTime;
   const playingSong = songs.find((item) => item.id === playback.clock?.songId);
   const playingEntry = playingEntryId
     ? entries.find((entry) => entry.entryId === playingEntryId)

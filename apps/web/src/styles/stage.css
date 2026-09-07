@@ -3744,6 +3744,42 @@ button {
   padding: 6px 10px;
 }
 
+.client-practice-bar .prep-play {
+  flex: 0 0 auto;
+  min-width: calc(var(--btn-size) * 2);
+  min-height: var(--btn-size);
+  width: calc(var(--btn-size) * 2);
+  height: var(--btn-size);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.client-practice-bar .prep-play svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  display: block;
+}
+
+.client-practice-bar .prep-play.play {
+  background: var(--ok);
+  color: #08140e;
+  border-color: transparent;
+}
+
+.client-practice-bar .prep-play.stop {
+  background: var(--danger);
+  color: #fff;
+  border-color: transparent;
+}
+
+.client-practice-bar .prep-play:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
 .client-practice-slider {
   flex: 1 1 auto;
   min-width: 0;

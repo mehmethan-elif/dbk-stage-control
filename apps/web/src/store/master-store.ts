@@ -43,6 +43,7 @@ import {
   onPracticeTime,
   pausePracticeAudio,
   playPracticeAudio,
+  practiceAudioDuration,
   seekPracticeAudio,
   stopPracticeAudio
 } from "../practice/playback";
@@ -446,6 +447,21 @@ async function practiceFileOverride(songId: string, relPath: string): Promise<Ar
   );
 }
 
+function practiceClock(
+  entry: { entryId: string; songId: string },
+  time: number,
+  playing: boolean
+): NonNullable<PlaybackSnapshot["clock"]> {
+  return {
+    songId: entry.songId,
+    setlistEntryId: entry.entryId,
+    time,
+    measure: 1,
+    beat: 1,
+    playing
+  };
+}
+
 function applyPracticeSongs(
   songs: Song[],
   fileIndex: Record<string, string[]>,
@@ -796,15 +812,28 @@ export const useMasterStore = create<MasterState>((set, get) => {
         : undefined;
       if (!entry || !isSongEntry(entry)) return;
       onPracticeTime((time, ended) => {
+        const current = useMasterStore.getState();
+        const duration = practiceAudioDuration();
         useMasterStore.setState({
           previewTime: time,
+          songs:
+            duration > 0
+              ? current.songs.map((song) =>
+                  song.id === entry.songId && !(song.duration > 0) ? { ...song, duration } : song
+                )
+              : current.songs,
           playback: {
-            ...useMasterStore.getState().playback,
-            state: ended ? PlaybackState.Idle : PlaybackState.Playing
+            ...current.playback,
+            state: ended ? PlaybackState.Idle : PlaybackState.Playing,
+            clock: practiceClock(entry, time, !ended)
           }
         });
       });
-      const files = state.fileIndex[entry.songId] ?? [];
+      const song = state.songs.find((item) => item.id === entry.songId);
+      const files = [
+        ...(state.fileIndex[entry.songId] ?? []),
+        ...(song?.folder ? (state.fileIndex[song.folder] ?? []) : [])
+      ];
       if (!isPracticeAudioLoaded(entry.songId)) {
         const ok = await loadPracticeAudio(entry.songId, files);
         if (!ok) return;
@@ -821,19 +850,51 @@ export const useMasterStore = create<MasterState>((set, get) => {
           return;
         }
       }
+      const duration = practiceAudioDuration();
       set({
-        playback: { ...get().playback, state: PlaybackState.Playing }
+        songs:
+          duration > 0
+            ? get().songs.map((song) =>
+                song.id === entry.songId && !(song.duration > 0) ? { ...song, duration } : song
+              )
+            : get().songs,
+        playback: {
+          ...get().playback,
+          state: PlaybackState.Playing,
+          clock: practiceClock(entry, get().previewTime, true)
+        }
       });
     },
 
     pausePractice: () => {
       pausePracticeAudio();
-      set({ playback: { ...get().playback, state: PlaybackState.Idle } });
+      const entry = get().selectedEntryId
+        ? get().gigs[0]?.setlist.find((item) => item.entryId === get().selectedEntryId)
+        : undefined;
+      set({
+        playback: {
+          ...get().playback,
+          state: PlaybackState.Idle,
+          clock:
+            entry && isSongEntry(entry)
+              ? practiceClock(entry, get().previewTime, false)
+              : get().playback.clock
+        }
+      });
     },
 
     seekPractice: (time) => {
       seekPracticeAudio(time);
-      set({ previewTime: time });
+      const entry = get().selectedEntryId
+        ? get().gigs[0]?.setlist.find((item) => item.entryId === get().selectedEntryId)
+        : undefined;
+      set({
+        previewTime: time,
+        playback:
+          entry && isSongEntry(entry) && get().playback.state === PlaybackState.Playing
+            ? { ...get().playback, clock: practiceClock(entry, time, true) }
+            : get().playback
+      });
     },
 
     setClientHost: (host) => {

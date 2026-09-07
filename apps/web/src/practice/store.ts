@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import { fileNameOf, parseSongInfo, samePracticeFolder, type Song } from "@dbk/core";
+import { fileNameOf, parseSongInfo, practiceMasterAudio, samePracticeFolder, type Song } from "@dbk/core";
 import { registerSongFolder, type LibraryIndex } from "../native/library";
 
 const DB_NAME = "dbk-practice";
@@ -149,8 +149,24 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
         } as Song)
       : stubSong(folder);
     registerSongFolder(song.id, folder);
-    fileIndex[song.id] = files;
-    songs.push(song);
+    registerSongFolder(folder, folder);
+    const existing = songs.find((item) => item.id === song.id);
+    const merged = [...new Set([...(fileIndex[song.id] ?? []), ...files])];
+    if (!practiceMasterAudio(merged)) {
+      const master =
+        (await readPracticeFileBuffer(folder, "Master.mp3")) ??
+        (await readPracticeFileBuffer(song.id, "Master.mp3")) ??
+        (await readPracticeFileBuffer(folder, "Master.flac")) ??
+        (await readPracticeFileBuffer(song.id, "Master.flac"));
+      if (master) merged.push("Master.mp3");
+    }
+    fileIndex[song.id] = merged;
+    if (existing) {
+      existing.folder = folder;
+      if (!existing.duration && song.duration) existing.duration = song.duration;
+    } else {
+      songs.push(song);
+    }
   }
   return { songs, fileIndex };
 }
