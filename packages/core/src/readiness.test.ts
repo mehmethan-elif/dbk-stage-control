@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { FinishMode, createId } from "./models.js";
+import { FinishMode, PlayMode, createId } from "./models.js";
 import type { Gig, Song } from "./models.js";
 import { checkGigReadiness } from "./readiness.js";
 import {
+  applyRemoteSetlist,
   canInsertElifAfter,
+  effectiveFinishMode,
   elifPlacementValid,
   estimateSetDuration,
   insertAfterSelected,
+  insertElifAfterSelected,
   moveEntry,
   songFollowedByElif,
   withKeyChangeElifs
@@ -138,8 +141,47 @@ describe("setlist helpers", () => {
     expect(canInsertElifAfter([a, b], "1")).toBe(true);
     expect(canInsertElifAfter([a, b], "2")).toBe(false);
     expect(canInsertElifAfter([a], "1")).toBe(false);
+    expect(insertElifAfterSelected([a, b], "1", "elif").map((entry) => entry.entryId)).toEqual([
+      "1",
+      "elif",
+      "2"
+    ]);
+    expect(insertElifAfterSelected([a, b], "2", "elif")).toEqual([a, b]);
+    expect(insertElifAfterSelected([a, b], null, "elif")).toEqual([a, b]);
     expect(songFollowedByElif([a, talk, b], 0)).toBe(true);
     expect(songFollowedByElif([a, b], 0)).toBe(false);
+    expect(songFollowedByElif([a, { ...b, skipped: true }, talk], 0)).toBe(true);
+    expect(songFollowedByElif([a, { ...b, skipped: true }], 0)).toBe(false);
+    expect(effectiveFinishMode(a, false, [a, { ...b, skipped: true }], 0)).toBe(FinishMode.Stop);
+    expect(
+      effectiveFinishMode(a, false, [a, { ...b, skipped: true }, { type: "song", entryId: "4", songId: "c" }], 0)
+    ).toBe(FinishMode.PlayNext);
+  });
+
+  it("stops before a VIEW song so the metronome can start it", () => {
+    const a = { type: "song" as const, entryId: "1", songId: "click", finishMode: FinishMode.PlayNext };
+    const b = { type: "song" as const, entryId: "2", songId: "view", finishMode: FinishMode.Stop };
+    const songs = new Map<string, Song>([
+      [
+        "click",
+        song({
+          id: "click",
+          title: "Click",
+          assets: [{ id: "ck", kind: "audio", audioRole: "click", path: "Click.flac", hash: "1" }],
+          info: { bpm: 120, numerator: 4, denominator: 4, playMode: PlayMode.ClickOnly }
+        })
+      ],
+      [
+        "view",
+        song({
+          id: "view",
+          title: "View",
+          assets: [{ id: "ck", kind: "audio", audioRole: "click", path: "Click.flac", hash: "1" }],
+          info: { bpm: 110, numerator: 4, denominator: 4, playMode: PlayMode.View }
+        })
+      ]
+    ]);
+    expect(effectiveFinishMode(a, false, [a, b], 0, songs)).toBe(FinishMode.Stop);
   });
 
   it("inserts a locked ELIF KONUSMA when adjacent song keys change", () => {
@@ -156,6 +198,35 @@ describe("setlist helpers", () => {
     expect(withKeyChangeElifs([a, talk, b], songs).map((entry) => entry.entryId)).toEqual(["1", "3", "2"]);
     expect(songFollowedByElif([a, b], 0, songs)).toBe(true);
     expect(songFollowedByElif([a, talk, b], 0, songs)).toBe(true);
+  });
+
+  it("places locked ELIF KONUSMA from the next unskipped song", () => {
+    const a = { type: "song" as const, entryId: "1", songId: "a" };
+    const skipped = { type: "song" as const, entryId: "2", songId: "b", skipped: true };
+    const c = { type: "song" as const, entryId: "3", songId: "c" };
+    const songs = new Map<string, Song>([
+      ["a", song({ id: "a", title: "A", info: { bpm: 120, numerator: 4, denominator: 4, key: "D" } })],
+      ["b", song({ id: "b", title: "B", info: { bpm: 120, numerator: 4, denominator: 4, key: "B" } })],
+      ["c", song({ id: "c", title: "C", info: { bpm: 120, numerator: 4, denominator: 4, key: "D" } })]
+    ]);
+    expect(withKeyChangeElifs([a, skipped, c], songs).map((entry) => entry.entryId)).toEqual([
+      "1",
+      "2",
+      "3"
+    ]);
+    const otherKey = new Map(songs);
+    otherKey.set(
+      "c",
+      song({ id: "c", title: "C", info: { bpm: 120, numerator: 4, denominator: 4, key: "A" } })
+    );
+    expect(withKeyChangeElifs([a, skipped, c], otherKey).map((entry) => entry.entryId)).toEqual([
+      "1",
+      "2",
+      "elif_key_1_3",
+      "3"
+    ]);
+    expect(songFollowedByElif([a, skipped, c], 0, songs)).toBe(false);
+    expect(songFollowedByElif([a, skipped, c], 0, otherKey)).toBe(true);
   });
 
   it("inserts a song after the selected setlist entry", () => {
@@ -184,5 +255,38 @@ describe("setlist helpers", () => {
       "2",
       "4"
     ]);
+  });
+
+  it("applies a remote setlist edit while keeping local song fields", () => {
+    const a = { type: "song" as const, entryId: "1", songId: "a", finishMode: FinishMode.PlayNext };
+    const b = { type: "song" as const, entryId: "2", songId: "b", finishMode: FinishMode.Stop };
+    const added = { type: "song" as const, entryId: "3", songId: "c" };
+    const next = applyRemoteSetlist(
+      [a, b],
+      [
+        { ...b, skipped: true },
+        a,
+        added
+      ]
+    );
+    expect(next.map((entry) => entry.entryId)).toEqual(["2", "1", "3"]);
+    expect(next[0]).toMatchObject({ songId: "b", skipped: true, finishMode: FinishMode.Stop });
+    expect(next[1]).toMatchObject({ songId: "a", finishMode: FinishMode.PlayNext });
+    expect(next[2]).toMatchObject({ type: "song", songId: "c" });
+  });
+
+  it("keeps the current setlist when a remote edit arrives empty", () => {
+    const a = { type: "song" as const, entryId: "1", songId: "a" };
+    const skipped = { type: "song" as const, entryId: "2", songId: "b", skipped: true };
+    expect(applyRemoteSetlist([a, skipped], [])).toEqual([a, skipped]);
+  });
+
+  it("puts an omitted skipped song back in its original slot", () => {
+    const a = { type: "song" as const, entryId: "1", songId: "a" };
+    const skipped = { type: "song" as const, entryId: "2", songId: "b", skipped: true };
+    const c = { type: "song" as const, entryId: "3", songId: "c" };
+    const next = applyRemoteSetlist([a, skipped, c], [a, c]);
+    expect(next.map((entry) => entry.entryId)).toEqual(["1", "2", "3"]);
+    expect(next[1]).toMatchObject({ songId: "b", skipped: true });
   });
 });

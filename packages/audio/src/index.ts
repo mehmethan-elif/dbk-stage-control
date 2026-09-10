@@ -6,4 +6,4 @@ export {
   type AudioRoutingMode,
   type OutputRoutingPlan
 } from "./web-audio-engine.js";
-export { Metronome } from "./metronome.js";
+export { Metronome, type MetronomeBeat } from "./metronome.js";

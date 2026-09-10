@@ -160,14 +160,34 @@ async function ensureInfo(folder: string, packed: Record<string, unknown> | null
     settingsRaw && typeof settingsRaw === "object" && !Array.isArray(settingsRaw)
       ? { ...(settingsRaw as Record<string, unknown>) }
       : {};
-  if (infoIsComplete(settings.view)) return parseInfo(settings.view);
-
-  const info = playbackInfo(packed);
-  settings.view = info;
-  try {
-    await writeUtf8(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
-  } catch {
-    // list the folder even if the default file cannot be written
+  const baseline = infoIsComplete(settings.view) ? settings.view : playbackInfo(packed);
+  const info = parseInfo({
+    ...(baseline && typeof baseline === "object" ? baseline : {}),
+    ...(settings.performance && typeof settings.performance === "object"
+      ? settings.performance
+      : {}),
+    ...(settings.notes && typeof settings.notes === "object"
+      ? { pageNotes: settings.notes }
+      : {}),
+    ...(packed?.info && typeof packed.info === "object" ? packed.info : {})
+  });
+  if (packed && JSON.stringify(parseInfo(packed.info)) !== JSON.stringify(info)) {
+    try {
+      await writeUtf8(
+        nativePath(folder, "song.json"),
+        `${JSON.stringify({ ...packed, info }, null, 2)}\n`
+      );
+    } catch {
+      // list the folder even if the migrated song file cannot be written
+    }
+  }
+  if ("view" in settings || "performance" in settings || "notes" in settings) {
+    const { view: _view, performance: _performance, notes: _notes, ...remaining } = settings;
+    try {
+      await writeUtf8(settingsPath, `${JSON.stringify(remaining, null, 2)}\n`);
+    } catch {
+      // song.json is authoritative even if legacy settings cleanup fails
+    }
   }
   return info;
 }
@@ -196,15 +216,14 @@ async function scanNativeLibrary(): Promise<LibraryIndex> {
         : null;
     const info = await ensureInfo(folder, packed);
     const files = await listFiles(folder);
-    const song = packed
-      ? ({
-          ...packed,
-          folder,
-          title: typeof packed.title === "string" && packed.title.trim() ? packed.title : folder,
-          id: typeof packed.id === "string" && packed.id.length > 0 ? packed.id : folder,
-          info
-        } as Song)
-      : stubSong(folder, info);
+    const song = {
+      ...stubSong(folder, info),
+      ...(packed ?? {}),
+      folder,
+      title: typeof packed?.title === "string" && packed.title.trim() ? packed.title : folder,
+      id: typeof packed?.id === "string" && packed.id.length > 0 ? packed.id : folder,
+      info
+    } as Song;
     folderBySongId[song.id] = folder;
     fileIndex[song.id] = files;
     songs.push(song);
@@ -212,8 +231,17 @@ async function scanNativeLibrary(): Promise<LibraryIndex> {
   return { songs, fileIndex };
 }
 
+function fetchTimeout(ms: number): AbortSignal {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  window.setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
 async function scanWebLibrary(): Promise<LibraryIndex> {
-  const response = await fetch("/library/index.json");
+  const response = await fetch("/library/index.json", { signal: fetchTimeout(5_000) });
   if (!response.ok) throw new Error(`Library ${response.status}`);
   return (await response.json()) as LibraryIndex;
 }
@@ -223,6 +251,15 @@ export async function loadLibraryIndex(): Promise<LibraryIndex> {
   return scanWebLibrary();
 }
 
+export async function libraryFileUrl(songId: string, relPath: string): Promise<string> {
+  if (!isNativeApp()) return webSongUrl(songId, relPath);
+  const { uri } = await Filesystem.getUri({
+    path: nativePath(folderForSong(songId), relPath),
+    directory: Directory.Documents
+  });
+  return Capacitor.convertFileSrc(uri);
+}
+
 export async function readSongFile(songId: string, relPath: string): Promise<ArrayBuffer> {
   if (fileOverride) {
     const overridden = await fileOverride(songId, relPath);
@@ -230,18 +267,14 @@ export async function readSongFile(songId: string, relPath: string): Promise<Arr
     throw new Error(`Missing ${relPath}`);
   }
   if (!isNativeApp()) {
-    const response = await fetch(webSongUrl(songId, relPath));
+    const response = await fetch(await libraryFileUrl(songId, relPath));
     if (!response.ok) throw new Error(`Missing ${relPath}`);
     return response.arrayBuffer();
   }
   const folder = folderForSong(songId);
   const path = nativePath(folder, relPath);
-  const { uri } = await Filesystem.getUri({
-    path,
-    directory: Directory.Documents
-  });
   try {
-    const response = await fetch(Capacitor.convertFileSrc(uri));
+    const response = await fetch(await libraryFileUrl(songId, relPath));
     if (response.ok) return await response.arrayBuffer();
   } catch {
     /* iOS sometimes cannot fetch the converted file URL; read bytes instead. */
@@ -269,7 +302,7 @@ export async function readSongJsonFile(songId: string, relPath: string): Promise
     }
   }
   if (!isNativeApp()) {
-    const response = await fetch(webSongUrl(songId, relPath));
+    const response = await fetch(webSongUrl(songId, relPath), { signal: fetchTimeout(5_000) });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`${relPath} ${response.status}`);
     return response.json() as Promise<unknown>;
@@ -284,7 +317,8 @@ export async function writeSongJsonFile(songId: string, relPath: string, data: u
     const response = await fetch(webSongUrl(songId, relPath), {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body
+      body,
+      signal: fetchTimeout(5_000)
     });
     if (!response.ok) throw new Error(`Could not save ${relPath} (${response.status}).`);
     return;

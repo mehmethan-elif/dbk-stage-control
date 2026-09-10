@@ -168,6 +168,29 @@ describe("PlaybackController", () => {
     expect(engine.getDeck("B")?.isPlaying).toBe(true);
   });
 
+  it("PLAY_NEXT continues from a CLICK_ONLY song", async () => {
+    const clickOnly = {
+      ...makeSong("click_only", "Click Only", 8, 8),
+      assets: [audioAsset("click_only_ck", "click", "Click.flac")],
+      info: {
+        bpm: 120,
+        numerator: 4,
+        denominator: 4,
+        playMode: PlayMode.ClickOnly
+      }
+    };
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: clickOnly.id },
+      { type: "song", entryId: "e2", songId: "song_b" }
+    ]);
+    const { engine, controller } = await setup([clickOnly, songB], gig);
+    await controller.selectIndex(0);
+    await controller.play();
+    engine.advance(8.02);
+    expect(controller.getSnapshot().clock?.songId).toBe("song_b");
+    expect(engine.getDeck("B")?.isPlaying).toBe(true);
+  });
+
   it("preloads the following song after a PLAY_NEXT transition", async () => {
     const gig = makeGig([
       { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
@@ -359,6 +382,62 @@ describe("PlaybackController", () => {
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 
+  it("ends from the last section and hands off a VIEW song", async () => {
+    const clickSong = {
+      ...songA,
+      duration: 24,
+      clickDuration: 24,
+      nextSongAt: 24,
+      sections: [
+        { name: "SAN B", start: 0, end: 20 },
+        { name: "ARA", start: 20, end: 24 }
+      ]
+    };
+    const viewOnly = {
+      ...songB,
+      info: { bpm: 110, numerator: 4, denominator: 4, playMode: PlayMode.View }
+    };
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([clickSong, viewOnly], gig);
+    let endedTo: string | null = null;
+    controller.subscribe((snap) => {
+      if (snap.endedToEntryId) endedTo = snap.endedToEntryId;
+    });
+    await controller.selectIndex(0);
+    controller.seek(20);
+    await controller.play();
+    engine.advance(4.02);
+    expect(controller.getSnapshot().clock?.playing).toBe(false);
+    expect(endedTo).toBe("e2");
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+  });
+
+  it("stops instead of PLAY_NEXT when the next song is VIEW", async () => {
+    const viewOnly = {
+      ...songB,
+      info: { bpm: 120, numerator: 4, denominator: 4, playMode: PlayMode.View }
+    };
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([songA, viewOnly], gig);
+    let endedTo: string | null = null;
+    controller.subscribe((snap) => {
+      if (snap.endedToEntryId) endedTo = snap.endedToEntryId;
+    });
+    await controller.selectIndex(0);
+    await controller.play();
+    engine.advance(12.02);
+    expect(controller.getSnapshot().clock?.songId).toBe("song_a");
+    expect(controller.getSnapshot().clock?.playing).toBe(false);
+    expect(endedTo).toBe("e2");
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+  });
+
   it("plays the next backing track when a song ends", async () => {
     const gig = makeGig([
       { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.Stop },
@@ -393,6 +472,101 @@ describe("PlaybackController", () => {
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 
+  it("keeps playing when a song is inserted into the setlist", async () => {
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([songA, songB, songC], gig);
+    await controller.selectIndex(0);
+    await controller.play();
+    engine.advance(2);
+    controller.replaceSongs([songA, songB, songC]);
+    controller.replaceShow(
+      makeGig([
+        { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+        { type: "song", entryId: "e3", songId: "song_c", finishMode: FinishMode.PlayNext },
+        { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+      ])
+    );
+    const snap = controller.getSnapshot();
+    expect(snap.state).toBe(PlaybackState.Playing);
+    expect(snap.clock?.setlistEntryId).toBe("e1");
+    expect(snap.clock?.songId).toBe("song_a");
+    expect(snap.currentIndex).toBe(0);
+    expect(engine.getDeck("A")?.isPlaying).toBe(true);
+  });
+
+  it("remaps the playing index when a song is inserted before it", async () => {
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.Stop },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([songA, songB, songC], gig);
+    await controller.selectIndex(1);
+    await controller.play();
+    controller.replaceShow(
+      makeGig([
+        { type: "song", entryId: "e3", songId: "song_c", finishMode: FinishMode.Stop },
+        { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.Stop },
+        { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+      ])
+    );
+    const snap = controller.getSnapshot();
+    expect(snap.state).toBe(PlaybackState.Playing);
+    expect(snap.currentIndex).toBe(2);
+    expect(snap.clock?.setlistEntryId).toBe("e2");
+    expect(engine.getDeck("A")?.isPlaying).toBe(true);
+  });
+
+  it("PLAY_NEXT jumps over a skipped song", async () => {
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.PlayNext, skipped: true },
+      { type: "song", entryId: "e3", songId: "song_c", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([songA, songB, songC], gig);
+    await controller.selectIndex(0);
+    await controller.play();
+    engine.advance(8.02);
+    expect(controller.getSnapshot().clock?.songId).toBe("song_c");
+    expect(engine.getDeck("B")?.isPlaying).toBe(true);
+  });
+
+  it("stops PLAY_NEXT when every later song is skipped", async () => {
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop, skipped: true }
+    ]);
+    const { engine, controller } = await setup([songA, songB], gig);
+    await controller.selectIndex(0);
+    await controller.play();
+    engine.advance(12.02);
+    const snap = controller.getSnapshot();
+    expect(snap.state).toBe(PlaybackState.Ready);
+    expect(snap.clock?.songId).toBe("song_a");
+    expect(snap.clock?.playing).toBe(false);
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+  });
+
+  it("stops PLAY_NEXT when a skipped song is followed by ELIF KONUSMA", async () => {
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.PlayNext, skipped: true },
+      { type: "talk", entryId: "elif1", label: ELIF_KONUSMA_LABEL },
+      { type: "song", entryId: "e3", songId: "song_c", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([songA, songB, songC], gig);
+    await controller.selectIndex(0);
+    await controller.play();
+    engine.advance(12.02);
+    const snap = controller.getSnapshot();
+    expect(snap.state).toBe(PlaybackState.Ready);
+    expect(snap.clock?.songId).toBe("song_a");
+    expect(snap.clock?.playing).toBe(false);
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+  });
+
   it("selects the next song without playing when ELIF KONUSMA follows", async () => {
     const gig = makeGig([
       { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
@@ -413,6 +587,35 @@ describe("PlaybackController", () => {
     expect(snap.clock?.playing).toBe(false);
     expect(endedTo).toBe("e2");
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
+  });
+
+  it("keeps loaded buffers when selecting the same song again", async () => {
+    const gig = makeGig([{ type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.Stop }]);
+    let loads = 0;
+    const events: LogEvent[] = [];
+    const engine = new FakeAudioEngine();
+    const controller = new PlaybackController({
+      engine,
+      logger: createLogger(memorySink(events)),
+      loadBuffers: async (song) => {
+        loads += 1;
+        return buffers(song);
+      }
+    });
+    await controller.setShow(gig, [songA]);
+    await controller.selectIndex(0);
+    await controller.play();
+    await controller.selectIndex(0);
+    expect(loads).toBe(1);
+    expect(controller.getSnapshot().state).toBe(PlaybackState.Playing);
+  });
+
+  it("updates a loaded song when the library changes", async () => {
+    const gig = makeGig([{ type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.Stop }]);
+    const { engine, controller } = await setup([songA], gig);
+    await controller.selectIndex(0);
+    controller.replaceSongs([{ ...songA, info: { playMode: PlayMode.ClickOnly } }]);
+    expect(engine.getDeck("A")?.state.song?.info).toEqual({ playMode: PlayMode.ClickOnly });
   });
 
   it("preview play stays on the selected song instead of PLAY_NEXT", async () => {

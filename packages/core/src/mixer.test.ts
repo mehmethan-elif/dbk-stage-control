@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { FinishMode, type Song } from "./models.js";
 import {
   DEFAULT_METRONOME_VOLUME,
   emptyMixerBank,
   gigMixerState,
   parseMetronomeVolume,
-  parseMixerBank
+  parseMixerBank,
+  songWithMixerStems
 } from "./mixer.js";
+import { effectiveFinishMode } from "./setlist.js";
 
 describe("parseMixerBank", () => {
   it("fills missing strips with defaults", () => {
@@ -40,5 +43,36 @@ describe("gigMixerState", () => {
       busMix: parseMixerBank({ Main: { gainDb: -1, muted: false, solo: false } }),
       metronomeVolume: 0.4
     });
+  });
+});
+
+describe("songWithMixerStems", () => {
+  it("lets PLAY_NEXT see disk stems when song.json assets are empty", () => {
+    const bare = (id: string): Song => ({
+      id,
+      version: 1,
+      title: id,
+      duration: 10,
+      assets: [],
+      tempoMap: [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }],
+      sections: []
+    });
+    const files = ["Click.flac", "Bass.flac", "Master.mp3"];
+    const setlist = [
+      { type: "song" as const, entryId: "e1", songId: "biz" },
+      { type: "song" as const, entryId: "e2", songId: "telli" }
+    ];
+    const empty = new Map([
+      ["biz", bare("biz")],
+      ["telli", bare("telli")]
+    ]);
+    const hydrated = new Map([
+      ["biz", songWithMixerStems(bare("biz"), files)],
+      ["telli", songWithMixerStems(bare("telli"), files)]
+    ]);
+
+    expect(effectiveFinishMode(setlist[0]!, false, setlist, 0, empty)).toBe(FinishMode.Stop);
+    expect(effectiveFinishMode(setlist[0]!, false, setlist, 0, hydrated)).toBe(FinishMode.PlayNext);
+    expect(hydrated.get("telli")?.assets.some((asset) => asset.path === "Click.flac")).toBe(true);
   });
 });

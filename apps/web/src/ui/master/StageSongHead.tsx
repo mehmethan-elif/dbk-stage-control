@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { parseSongInfo } from "@dbk/core";
 import { useMasterStore } from "../../store/master-store";
-import {
-  loadStageNotes,
-  saveStageNotes,
-  type StageNotesPage
-} from "./stage-page-notes";
+import { type StageNotesPage } from "./stage-page-notes";
 
 const PAGE_LABELS: Record<StageNotesPage, string> = {
   lyrics: "Lyrics",
@@ -19,10 +16,13 @@ export function StageSongHead(props: {
   children: ReactNode;
 }) {
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
+  const song = useMasterStore((s) => s.songs.find((item) => item.id === props.songId));
+  const saveSongInfo = useMasterStore((s) => s.saveSongInfo);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const dirty = useRef(false);
   const songId = props.songId;
+  const storedNotes = parseSongInfo(song?.info).pageNotes?.[props.page] ?? "";
   const notesRef = useRef(notes);
   notesRef.current = notes;
 
@@ -32,25 +32,22 @@ export function StageSongHead(props: {
       setNotes("");
       return;
     }
-    let cancelled = false;
-    void loadStageNotes(songId, props.page).then((text) => {
-      if (cancelled || dirty.current) return;
-      setNotes(text);
-      setError(null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [songId, props.page]);
+    if (!dirty.current) setNotes(storedNotes);
+    setError(null);
+  }, [songId, props.page, storedNotes]);
 
   const persist = (text: string) => {
     if (!songId || readOnly || !dirty.current) return;
     setError(null);
-    void saveStageNotes(songId, props.page, text)
-      .then(() => {
-        dirty.current = false;
-      })
+    dirty.current = false;
+    if (!song) return;
+    const info = parseSongInfo(song.info);
+    void saveSongInfo(songId, {
+      ...info,
+      pageNotes: { ...info.pageNotes, [props.page]: text }
+    })
       .catch((err: unknown) => {
+        dirty.current = true;
         setError(err instanceof Error ? err.message : "Could not save notes.");
       });
   };
@@ -67,13 +64,11 @@ export function StageSongHead(props: {
       {songId ? (
         <>
           {readOnly ? (
-            <p className={`stage-song-notes${notes.trim() ? "" : " meta"}`}>
-              {notes.trim() ? notes : "No notes"}
-            </p>
+            notes.trim() ? <p className="stage-song-notes">{notes}</p> : null
           ) : (
             <input
               type="text"
-              className="stage-song-note-field"
+              className={notes.trim() ? "stage-song-note-field has-note" : "stage-song-note-field"}
               aria-label={`${PAGE_LABELS[props.page]} notes`}
               value={notes}
               placeholder=""

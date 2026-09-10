@@ -4,6 +4,7 @@ export {
   DeckId,
   FinishMode,
   PlayMode,
+  SetlistPerformanceMode,
   KNOWN_ROLES,
   PlaybackState,
   ROLE_LABELS,
@@ -20,6 +21,7 @@ export {
   metronomeSongView,
   clickBeats,
   parseSongInfo,
+  normalizeSong,
   songInfoFromPlayback,
   roleLabel,
   songDisplayName,
@@ -53,7 +55,7 @@ export type {
 } from "./models.js";
 
 export type { AudioDeck, AudioEngine, DeckEvent, DeckEventHandler } from "./audio-engine.js";
-export { backingAssets, clickAsset, CLICK_FLAC, hasBackingAudio, hasClickFlac, hasOnlyClickAudio, hasPlaybackAudio, isClickFlacPath, playNextCueSeconds } from "./audio-engine.js";
+export { backingAssets, clickAsset, clickOnlyMixSilences, clickOnlySong, CLICK_FLAC, hasBackingAudio, hasClickFlac, hasOnlyClickAudio, hasPlaybackAudio, isClickFlacPath, isClickPlaybackTrack, performanceAudioSong, playNextCueSeconds } from "./audio-engine.js";
 
 export { FakeAudioDeck, FakeAudioEngine } from "./fake-audio-engine.js";
 export { PlaybackController } from "./playback-controller.js";
@@ -62,20 +64,31 @@ export type { BufferLoader, PlaybackListener, PlaybackSnapshot } from "./playbac
 export {
   currentLyricIndex,
   firstSectionNamed,
+  measureRangeFill,
   measureStartTimes,
+  nextMeasureStart,
+  nextSectionStart,
+  panicDefaultTarget,
   secondsPerBeat,
   secondsPerMeasure,
   secondsPerQuarter,
   sectionAfter,
   sectionAt,
+  sectionBoundaryTimes,
+  sectionForBoundary,
   sectionNamed,
   sectionIndexAt,
+  resolveTempoMeters,
+  snapSongToMeasureGrid,
+  snapToMeasureStart,
+  snapToSectionBoundary,
   tempoAt,
   timeToMusical
 } from "./timeline.js";
 export type { MusicalPosition } from "./timeline.js";
 
 export {
+  applyRemoteSetlist,
   canInsertElifAfter,
   effectiveFinishMode,
   elifPlacementValid,
@@ -85,6 +98,8 @@ export {
   findSongEntryIndex,
   formatDuration,
   insertAfterSelected,
+  insertElifAfterSelected,
+  keepSkippedSongsInPlace,
   isLastSongEntry,
   lastSongIndex,
   listedSongKey,
@@ -132,6 +147,7 @@ export {
   dropMissingSetlistSongs,
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
+  humanizePracticeFolder,
   publishedSongTitle,
   resolvePublishedSongId
 } from "./client-library.js";
@@ -160,3 +176,35 @@ export {
   songWithMixerStems
 } from "./mixer.js";
 export type { MixStripState, MixerBank, MixerChannel, MixerLevels, MixerStem } from "./mixer.js";
+
+export {
+  CORE_BAND_NAMES,
+  MASTER_BAND_NAME,
+  VOCAL_BAND_NAME,
+  SETLIST_MODE_ICON_COLOR,
+  STAGE_NAME_SLOTS,
+  bandRoster,
+  clientBandRoster,
+  connectedBandKeys,
+  declaredSongPlayMode,
+  effectivePlayMode,
+  extraStageNames,
+  isBandNameConnected,
+  isMasterBandName,
+  isVocalBandName,
+  isFreeSetlistMode,
+  isMetronomeSetlistMode,
+  setlistModeIsSilent,
+  lanRosterState,
+  normalizeBandName,
+  mergeStageNames,
+  padStageNames,
+  stageNamesFilled,
+  parseSetlistPerformanceMode,
+  resolvedSongPlayMode,
+  setlistPlayModeIcon,
+  songForcedClickOnly,
+  songsForcedClickOnly,
+  songsForSetlistPerformance
+} from "./setlist-performance.js";
+export type { LanRosterState } from "./setlist-performance.js";

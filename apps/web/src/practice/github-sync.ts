@@ -4,12 +4,14 @@ import {
   needsClientLibraryDownload,
   publishedSongTitle,
   type ClientLibraryIndex,
+  type ClientLibrarySong,
   type Gig
 } from "@dbk/core";
 import {
   deletePracticeFile,
   deletePracticeFolder,
   listPracticeManifest,
+  readPracticeFileBuffer,
   writePracticeFile,
   writePublishedGigs
 } from "./store";
@@ -26,6 +28,20 @@ function encodeRel(rel: string): string {
     .split("/")
     .map((part) => encodeURIComponent(part))
     .join("/");
+}
+
+function bufferLooksLikeSongJson(data: ArrayBuffer): boolean {
+  try {
+    const parsed = JSON.parse(new TextDecoder().decode(data)) as unknown;
+    return Boolean(parsed && typeof parsed === "object" && !Array.isArray(parsed));
+  } catch {
+    return false;
+  }
+}
+
+async function practiceChartLooksValid(folder: string, path: string): Promise<boolean> {
+  const raw = await readPracticeFileBuffer(folder, path);
+  return Boolean(raw && bufferLooksLikeSongJson(raw));
 }
 
 export async function fetchClientLibraryIndex(): Promise<ClientLibraryIndex | null> {
@@ -51,12 +67,17 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
     for (const file of song.files) {
       if (!isPracticeFile(file.path)) continue;
       remotePaths.add(file.path);
-      if (!needsClientLibraryDownload(have.get(file.path), file)) continue;
+      const staleChart =
+        file.path.toLowerCase() === "song.json" &&
+        !(await practiceChartLooksValid(song.folder, file.path));
+      if (!staleChart && !needsClientLibraryDownload(have.get(file.path), file)) continue;
       const response = await fetch(clientLibraryUrl(`songs/${encodeRel(song.folder)}/${encodeRel(file.path)}`), {
         cache: "no-store"
       });
       if (!response.ok) continue;
-      await writePracticeFile(song.folder, file.path, await response.arrayBuffer(), file.hash);
+      const payload = await response.arrayBuffer();
+      if (file.path.toLowerCase() === "song.json" && !bufferLooksLikeSongJson(payload)) continue;
+      await writePracticeFile(song.folder, file.path, payload, file.hash);
       changed = true;
       files += 1;
     }
@@ -73,6 +94,7 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
   }
 
   for (const song of index.songs) {
+    await applyPublishedSongTitle(song);
     const names = (await listPracticeManifest())[song.folder]?.map((item) => item.path.toLowerCase()) ?? [];
     if (names.includes("song.json")) continue;
     const body = new TextEncoder().encode(
@@ -112,4 +134,26 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
   }
   await writePublishedGigs(gigs);
   return { songs, files, gigs: gigs.length };
+}
+
+async function applyPublishedSongTitle(song: ClientLibrarySong): Promise<void> {
+  const title = publishedSongTitle(song);
+  const raw = await readPracticeFileBuffer(song.folder, "song.json");
+  if (!raw) return;
+  try {
+    const packed = JSON.parse(new TextDecoder().decode(raw)) as Record<string, unknown>;
+    const current = typeof packed.title === "string" ? packed.title.trim() : "";
+    if (current === title) return;
+    if (current && current !== song.folder && current !== song.id) return;
+    packed.title = title;
+    if (typeof packed.id !== "string" || !packed.id.trim()) packed.id = song.id;
+    const body = new TextEncoder().encode(`${JSON.stringify(packed, null, 2)}\n`);
+    await writePracticeFile(
+      song.folder,
+      "song.json",
+      body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)
+    );
+  } catch {
+    // keep the downloaded song file
+  }
 }

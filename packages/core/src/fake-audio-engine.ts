@@ -93,6 +93,11 @@ export class FakeAudioDeck implements AudioDeck {
     };
   }
 
+  updateSong(song: Song): void {
+    if (!this.state.song || this.state.song.id !== song.id) return;
+    this.state.song = song;
+  }
+
   play(atContextTime?: number): void {
     const when = atContextTime ?? this.engine.getContextTime();
     const offset = this.state.pausedAt ?? 0;

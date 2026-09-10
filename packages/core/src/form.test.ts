@@ -143,6 +143,57 @@ describe("songForm", () => {
     expect(formAt(form, 150)?.block.originStart).toBe(60);
   });
 
+  it("does not write new sections after D.S. when the return pass uses a different groove", () => {
+    const pattern = (text: string, time: number, end: number) => ({
+      text,
+      time,
+      end,
+      length: end - time,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: []
+    });
+    const form = songForm({
+      ...song([
+        { name: "COUNT", start: 0, end: 2 },
+        { name: "ARA", start: 2, end: 16 },
+        { name: "ARA", start: 16, end: 30 },
+        { name: "SAN", start: 30, end: 56 },
+        { name: "CEV", start: 56, end: 60 },
+        { name: "SAN", start: 60, end: 86 },
+        { name: "CEV+ FINAL", start: 86, end: 90 },
+        { name: "ARA", start: 90, end: 104 },
+        { name: "ARA", start: 104, end: 118 },
+        { name: "SAN", start: 118, end: 144 },
+        { name: "CEV", start: 144, end: 148 },
+        { name: "SAN", start: 148, end: 174 },
+        { name: "CEV+ FINAL", start: 174, end: 178 }
+      ]),
+      patterns: [
+        pattern("DISCO", 30, 56),
+        pattern("SURMAT", 60, 86),
+        pattern("SURMAT", 118, 144),
+        pattern("SURMAT", 148, 174)
+      ]
+    });
+
+    expect(form.blocks.map((block) => block.name)).toEqual([
+      "COUNT",
+      "ARA",
+      "ARA",
+      "SAN",
+      "CEV",
+      "SAN",
+      "CEV+ FINAL"
+    ]);
+    expect(form.blocks.find((block) => block.name === "CEV+ FINAL")?.ds).toBe(true);
+    expect(form.blocks.filter((block) => block.ds)).toHaveLength(1);
+    expect(formAt(form, 120)?.block.originStart).toBe(30);
+    expect(formAt(form, 150)?.block.originStart).toBe(60);
+    expect(formAt(form, 175)?.block.name).toBe("CEV+ FINAL");
+  });
+
   it("can compact sections by name for a chord chart despite drum-groove changes", () => {
     const form = songForm(
       {
@@ -266,6 +317,146 @@ describe("songForm", () => {
     expect(foldedAra?.repeatEnd).toBe(true);
     expect(foldedAra?.originEnd).toBe(8);
     expect(formAt(chordForm, 10)?.originTime).toBeCloseTo(2, 5);
+  });
+
+  it("keeps SAN, SAN A, and SAN B as separate written drum sections", () => {
+    const pattern = (text: string, time: number, end: number) => ({
+      text,
+      time,
+      end,
+      length: end - time,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: [
+        {
+          time,
+          end: time + 0.1,
+          pitch: 48,
+          channel: 0,
+          velocity: 96,
+          measure: 1,
+          beat: 1,
+          numerator: 4,
+          denominator: 4
+        }
+      ]
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "SAN A", start: 0, end: 4 },
+          { name: "SAN B", start: 4, end: 8 },
+          { name: "SAN", start: 8, end: 12 },
+          { name: "SAN A", start: 12, end: 16 }
+        ]),
+        patterns: [
+          pattern("ZILLER", 0, 4),
+          pattern("SLOW", 4, 8),
+          pattern("DISCO", 8, 12),
+          pattern("DISCO", 12, 16)
+        ]
+      },
+      { identity: "drums" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual(["SAN A", "SAN B", "SAN", "SAN A"]);
+  });
+
+  it("puts segno on a repeating ARA / SAN A / NAK cycle when drum grids match", () => {
+    const hit = (time: number) => ({
+      time,
+      end: time + 0.1,
+      pitch: 48,
+      channel: 0,
+      velocity: 96,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4
+    });
+    const pattern = (text: string, time: number, end: number) => ({
+      text,
+      time,
+      end,
+      length: end - time,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: [hit(time)]
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "COUNT", start: 0, end: 2 },
+          { name: "ARA", start: 2, end: 6 },
+          { name: "SAN A", start: 6, end: 10 },
+          { name: "NAK", start: 10, end: 14 },
+          { name: "ARA", start: 14, end: 18 },
+          { name: "SAN A", start: 18, end: 22 },
+          { name: "NAK", start: 22, end: 26 }
+        ]),
+        patterns: [
+          pattern("SLOW", 2, 6),
+          pattern("ZILLER", 6, 10),
+          pattern("SLOW", 10, 14),
+          pattern("SLOW", 14, 18),
+          pattern("ZILLER", 18, 22),
+          pattern("SLOW", 22, 26)
+        ]
+      },
+      { identity: "drums" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual(["COUNT", "ARA", "SAN A", "NAK"]);
+    expect(form.blocks.find((block) => block.name === "ARA")?.segno).toBe(true);
+    expect(form.blocks.find((block) => block.name === "SAN A")?.segno).toBe(false);
+    expect(form.blocks.find((block) => block.name === "NAK")?.ds).toBe(true);
+  });
+
+  it("writes a second pass when the same section names have different drum grids", () => {
+    const hit = (time: number, pitch: number) => ({
+      time,
+      end: time + 0.1,
+      pitch,
+      channel: 0,
+      velocity: 96,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4
+    });
+    const pattern = (text: string, time: number, end: number, pitch: number) => ({
+      text,
+      time,
+      end,
+      length: end - time,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: [hit(time, pitch)]
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "ARA", start: 0, end: 4 },
+          { name: "SAN", start: 4, end: 8 },
+          { name: "NAK", start: 8, end: 12 },
+          { name: "ARA", start: 12, end: 16 },
+          { name: "SAN", start: 16, end: 20 },
+          { name: "NAK", start: 20, end: 24 }
+        ]),
+        patterns: [
+          pattern("ZILLER", 0, 4, 48),
+          pattern("DISCO", 4, 8, 48),
+          pattern("SLOW", 8, 12, 48),
+          pattern("DISCO", 12, 16, 50),
+          pattern("DISCO", 16, 20, 48),
+          pattern("SLOW", 20, 24, 48)
+        ]
+      },
+      { identity: "drums" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual(["ARA", "SAN", "NAK", "ARA", "SAN", "NAK"]);
+    expect(form.blocks.some((block) => block.segno || block.ds)).toBe(false);
   });
 
   it("marks the first return as senyo, not every repeated section", () => {

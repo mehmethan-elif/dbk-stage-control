@@ -1,18 +1,19 @@
 -- @description DBK Stage Control Export
--- @version 0.2.0
+-- @version 0.3.2
 -- @about
 --   Collects duration, tempo map, sections, lyrics, chords, and selected stems
 --   from the current REAPER project and writes song.json plus audio for DBK.
 --
---   Track conventions (name match is case-insensitive):
---     SECTION  empty/text items → sections (item text, start, end)
---     LYRICS   empty/text items → lyrics (inline in song.json)
---     CHORDS   text and/or MIDI items → chords (text, time; MIDI notes if present)
---     PATTERN  text and/or MIDI items → patterns (text, time, length, notes, time sig)
+--   Track conventions:
+--     SECTION / LYRICS / CHORDS / PATTERN  name match is case-insensitive
+--     CLICK and stem tracks must be named exactly, case-sensitive:
+--       CLICK, KICK, DRUMS, PERC, BASS, KEYS, PLUCK, STRING, MELODY, CHOIR, GUITAR
+--       "Drums" or "string" is ignored. Children of a DRUMS/STRING folder are not
+--       selected; they are mixed through that folder and the master bus.
 --     NEXT     project marker → nextSongAt (when PLAY_NEXT starts the following song)
---     CLICK    if present → Click.flac (full project, 44.1 kHz 16-bit)
---     KICK, DRUMS, PERC, BASS, KEYS, PLUCK, STRING, MELODY, CHOIR, GUITAR
---              if present → Kick.flac, Drums.flac, ... (full project, 44.1 kHz 16-bit)
+--     MASTER   always available → Master.mp3 (full mix, 128 kbps CBR; CLICK muted)
+--     CLICK    if present → Click.flac through master bus (44.1 kHz 16-bit)
+--     KICK, DRUMS, ... → one Kick.flac, Drums.flac, ... through master bus
 --
 --   Key, scale, and style are chosen in the exporter (not from an INFO track).
 --
@@ -63,7 +64,7 @@ local KEY_STYLES = {
 }
 local LIBRARY_SONGS = "/Users/md/Projects/dbk-stage-control/library/songs"
 
-local WIN_W, WIN_H = 680, 680
+local WIN_W, WIN_H = 680, 730
 
 local COL = {
   bg = { 22, 22, 26 },
@@ -714,6 +715,29 @@ local function musical_at(time)
   return measure, beat_in
 end
 
+local EVENT_BARLINE_SNAP_SEC = 0.05
+
+local function nearest_barline(time)
+  local _, measures = reaper.TimeMap2_timeToBeats(0, time)
+  measures = math.floor((measures or 0) + 1e-9)
+  local this_bar = reaper.TimeMap2_beatsToTime(0, 0, measures)
+  local next_bar = reaper.TimeMap2_beatsToTime(0, 0, measures + 1)
+  this_bar = this_bar or time
+  next_bar = next_bar or this_bar
+  if math.abs(next_bar - time) < math.abs(this_bar - time) then
+    return next_bar
+  end
+  return this_bar
+end
+
+local function snap_to_barline(time, always)
+  local bar = nearest_barline(time)
+  if always or math.abs(bar - time) <= EVENT_BARLINE_SNAP_SEC then
+    return round(bar, 6)
+  end
+  return round(time, 6)
+end
+
 local function collect_tempo_map()
   local map = {}
   local count = reaper.CountTempoTimeSigMarkers(0)
@@ -724,8 +748,8 @@ local function collect_tempo_map()
       time = round(time, 6),
       measure = measure,
       bpm = round(tempo or 120, 4),
-      numerator = num ~= 0 and num or 4,
-      denominator = den ~= 0 and den or 4
+      numerator = num and num > 0 and num or 4,
+      denominator = den and den > 0 and den or 4
     }
   end
 
@@ -736,10 +760,10 @@ local function collect_tempo_map()
 
   local last_num, last_den, last_bpm = 4, 4, 120
   local n0, d0, t0 = reaper.TimeMap_GetTimeSigAtTime(0, 0)
-  if n0 and n0 ~= 0 then
+  if n0 and n0 > 0 then
     last_num = n0
   end
-  if d0 and d0 ~= 0 then
+  if d0 and d0 > 0 then
     last_den = d0
   end
   if t0 and t0 ~= 0 then
@@ -749,10 +773,10 @@ local function collect_tempo_map()
   for i = 0, count - 1 do
     local ok, timepos, _, _, bpm, timesig_num, timesig_denom = reaper.GetTempoTimeSigMarker(0, i)
     if ok ~= false and timepos ~= nil then
-      if timesig_num and timesig_num ~= 0 then
+      if timesig_num and timesig_num > 0 then
         last_num = timesig_num
       end
-      if timesig_denom and timesig_denom ~= 0 then
+      if timesig_denom and timesig_denom > 0 then
         last_den = timesig_denom
       end
       if bpm and bpm ~= 0 then
@@ -815,6 +839,11 @@ local function track_matches(name, keyword)
   end
   local nextc = n:sub(#k + 1, #k + 1)
   return nextc == " " or nextc == "_" or nextc == "-"
+end
+
+-- Stem/click tracks: exact ALL-CAPS name only. "Drums" / "string" must not match.
+local function track_named_exact(name, keyword)
+  return trim(name or "") == keyword
 end
 
 local function collect_next_marker()
@@ -887,10 +916,13 @@ local function collect_named_items(keyword)
         if text ~= "" then
           local pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
           local len = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-          local measure, beat = musical_at(pos)
+          local always_snap = keyword:upper() == "SECTION"
+          local start = snap_to_barline(pos, always_snap)
+          local finish = snap_to_barline(pos + len, always_snap)
+          local measure, beat = musical_at(start)
           items[#items + 1] = {
-            time = round(pos, 6),
-            finish = round(pos + len, 6),
+            time = start,
+            finish = finish,
             measure = measure,
             beat = beat,
             text = text
@@ -910,10 +942,10 @@ end
 
 local function timesig_at(time)
   local num, den = reaper.TimeMap_GetTimeSigAtTime(0, time)
-  if not num or num == 0 then
+  if not num or num <= 0 then
     num = 4
   end
-  if not den or den == 0 then
+  if not den or den <= 0 then
     den = 4
   end
   return num, den
@@ -990,13 +1022,15 @@ local function collect_patterns()
         if text ~= "" or #notes > 0 then
           local pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
           local len = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-          local measure, beat = musical_at(pos)
-          local num, den = timesig_at(pos)
+          local start = snap_to_barline(pos, false)
+          local finish = snap_to_barline(pos + len, false)
+          local measure, beat = musical_at(start)
+          local num, den = timesig_at(start)
           items[#items + 1] = {
             text = text,
-            time = round(pos, 6),
-            finish = round(pos + len, 6),
-            length = round(len, 6),
+            time = start,
+            finish = finish,
+            length = round(finish - start, 6),
             measure = measure,
             beat = beat,
             numerator = num,
@@ -1031,10 +1065,12 @@ local function collect_chords()
         if text ~= "" or #notes > 0 then
           local pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
           local len = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-          local measure, beat = musical_at(pos)
+          local start = snap_to_barline(pos, false)
+          local finish = snap_to_barline(pos + len, false)
+          local measure, beat = musical_at(start)
           items[#items + 1] = {
-            time = round(pos, 6),
-            finish = round(pos + len, 6),
+            time = start,
+            finish = finish,
             measure = measure,
             beat = beat,
             text = text,
@@ -1058,7 +1094,7 @@ local function find_named_tracks(keyword)
   for t = 0, reaper.CountTracks(0) - 1 do
     local track = reaper.GetTrack(0, t)
     local _, name = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
-    if track_matches(name or "", keyword) then
+    if track_named_exact(name or "", keyword) then
       tracks[#tracks + 1] = track
     end
   end
@@ -1177,8 +1213,24 @@ local function base64_encode(data)
   return table.concat(out)
 end
 
+local function pack_u32(n)
+  n = math.floor(tonumber(n) or 0)
+  local a = n % 256
+  n = math.floor(n / 256)
+  local b = n % 256
+  n = math.floor(n / 256)
+  local c = n % 256
+  n = math.floor(n / 256)
+  return string.char(a, b, c, n % 256)
+end
+
 -- FLAC, 16-bit, compression 5 (Reaper RENDER_FORMAT base64).
 local FLAC16_CFG = base64_encode("calf" .. string.char(16, 0, 0, 0, 5, 0, 0, 0))
+
+-- MP3 CBR 128 kbps, joint stereo, Normal quality (l3pm sink).
+local MP3_128_CFG = base64_encode(
+  "l3pm" .. pack_u32(128) .. pack_u32(0) .. pack_u32(3) .. string.char(255, 255, 255, 255) .. pack_u32(4) .. pack_u32(128) .. pack_u32(0)
+)
 
 local function snapshot_selection()
   local items = {}
@@ -1229,22 +1281,19 @@ local function restore_track_flags(flags)
   end
 end
 
-local function solo_track_and_children(track)
+local function walk_track_and_children(track, apply)
   local idx = math.floor(reaper.GetMediaTrackInfo_Value(track, "IP_TRACKNUMBER") + 0.5) - 1
   if idx < 0 then
     return
   end
-  reaper.SetMediaTrackInfo_Value(track, "I_SOLO", 1)
-  reaper.SetMediaTrackInfo_Value(track, "B_MUTE", 0)
-  reaper.SetTrackSelected(track, true)
+  apply(track)
   local nest = reaper.GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH")
   if nest <= 0 then
     return
   end
   for t = idx + 1, reaper.CountTracks(0) - 1 do
     local child = reaper.GetTrack(0, t)
-    reaper.SetMediaTrackInfo_Value(child, "I_SOLO", 1)
-    reaper.SetMediaTrackInfo_Value(child, "B_MUTE", 0)
+    apply(child)
     nest = nest + reaper.GetMediaTrackInfo_Value(child, "I_FOLDERDEPTH")
     if nest <= 0 then
       break
@@ -1252,15 +1301,53 @@ local function solo_track_and_children(track)
   end
 end
 
-local function render_stem_flac(stem, out_dir)
-  local dest = join_path(out_dir, stem.file .. ".flac")
+-- 0 = Master mix (stem soloed, then printed through the master bus as one file).
+local RENDER_MASTER_MIX = 0
+
+local function solo_track_and_children(track)
+  walk_track_and_children(track, function(t)
+    reaper.SetMediaTrackInfo_Value(t, "I_SOLO", 1)
+    reaper.SetMediaTrackInfo_Value(t, "B_MUTE", 0)
+  end)
+end
+
+local function select_only_tracks(tracks)
+  reaper.Main_OnCommand(40297, 0) -- Track: Unselect all tracks
+  for _, track in ipairs(tracks or {}) do
+    if track then
+      reaper.SetTrackSelected(track, true)
+    end
+  end
+end
+
+local function mute_track_and_children(track)
+  walk_track_and_children(track, function(t)
+    reaper.SetMediaTrackInfo_Value(t, "B_MUTE", 1)
+    reaper.SetMediaTrackInfo_Value(t, "I_SOLO", 0)
+  end)
+end
+
+local function remove_increment_renders(out_dir, file, ext)
+  for n = 1, 99 do
+    local extra = join_path(out_dir, string.format("%s-%03d.%s", file, n, ext))
+    if reaper.file_exists(extra) then
+      os.remove(extra)
+    else
+      break
+    end
+  end
+end
+
+local function render_bounce(opts)
+  local dest = join_path(opts.out_dir, opts.file .. "." .. opts.ext)
   if reaper.file_exists(dest) then
     os.remove(dest)
   end
-  if stem.file == "Click" then
-    local old_dest = join_path(out_dir, "click.flac")
-    if old_dest ~= dest and reaper.file_exists(old_dest) then
-      os.remove(old_dest)
+  remove_increment_renders(opts.out_dir, opts.file, opts.ext)
+  for _, extra in ipairs(opts.remove or {}) do
+    local old = join_path(opts.out_dir, extra)
+    if old ~= dest and reaper.file_exists(old) then
+      os.remove(old)
     end
   end
 
@@ -1283,18 +1370,24 @@ local function render_stem_flac(stem, out_dir)
   local sel_items, sel_tracks = snapshot_selection()
   local flags = snapshot_track_flags()
   reaper.PreventUIRefresh(1)
-  reaper.Main_OnCommand(40340, 0) -- Track: Unsolo all tracks
-  reaper.Main_OnCommand(40297, 0) -- Track: Unselect all tracks
-  for _, track in ipairs(stem.tracks) do
-    solo_track_and_children(track)
+  if opts.solo_tracks then
+    reaper.Main_OnCommand(40340, 0) -- Track: Unsolo all tracks
+    for _, track in ipairs(opts.solo_tracks) do
+      solo_track_and_children(track)
+    end
+    -- Select only the named stem/click track. Via-master already includes
+    -- folder children and receives; selecting children would write extra files.
+    select_only_tracks(opts.solo_tracks)
+  end
+  for _, track in ipairs(opts.mute_tracks or {}) do
+    mute_track_and_children(track)
   end
 
-  -- One file per stem name. Solo matching tracks (and folder children) and
-  -- bounce the master mix from the start of the project to the end.
-  set_str("RENDER_FILE", out_dir)
-  set_str("RENDER_PATTERN", stem.file)
-  set_str("RENDER_FORMAT", FLAC16_CFG)
-  set_num("RENDER_SETTINGS", 0) -- master mix
+  set_str("RENDER_FILE", opts.out_dir)
+  set_str("RENDER_PATTERN", opts.file)
+  set_str("RENDER_FORMAT", opts.format)
+  set_str("RENDER_FORMAT2", "")
+  set_num("RENDER_SETTINGS", opts.source or RENDER_MASTER_MIX)
   set_num("RENDER_BOUNDSFLAG", 1)
   set_num("RENDER_SRATE", 44100)
   set_num("RENDER_CHANNELS", 2)
@@ -1312,14 +1405,55 @@ local function render_stem_flac(stem, out_dir)
   reaper.PreventUIRefresh(-1)
   reaper.UpdateArrange()
 
+  -- Via-master can still write Name-001.flac for folder children; keep one file.
   if reaper.file_exists(dest) then
+    remove_increment_renders(opts.out_dir, opts.file, opts.ext)
     return true, dest
   end
-  return false, "Render did not create " .. stem.file .. ".flac"
+  return false, "Render did not create " .. opts.file .. "." .. opts.ext
 end
 
-local function build_song_json(data, click_path, stem_files, key_str, scale_str, style_str)
+local function render_stem_flac(stem, out_dir)
+  local remove = {}
+  if stem.file == "Click" then
+    remove[1] = "click.flac"
+  end
+  return render_bounce({
+    out_dir = out_dir,
+    file = stem.file,
+    ext = "flac",
+    format = FLAC16_CFG,
+    -- One bounce through the master bus. "Selected tracks via master" writes
+    -- a file per folder child (String-001, Drums-002, ...).
+    source = RENDER_MASTER_MIX,
+    solo_tracks = stem.tracks,
+    remove = remove
+  })
+end
+
+local function render_master_mp3(out_dir, click_tracks)
+  return render_bounce({
+    out_dir = out_dir,
+    file = "Master",
+    ext = "mp3",
+    format = MP3_128_CFG,
+    source = RENDER_MASTER_MIX,
+    mute_tracks = click_tracks or {},
+    remove = { "master.mp3", "Master.flac", "master.flac" }
+  })
+end
+
+local function build_song_json(data, master_path, click_path, stem_files, key_str, scale_str, style_str)
   local assets = {}
+  if master_path then
+    assets[#assets + 1] = {
+      id = "master",
+      kind = "audio",
+      path = "Master.mp3",
+      hash = "sha256:pending",
+      label = "Master"
+    }
+  end
   if click_path then
     assets[#assets + 1] = {
       id = "click",
@@ -1386,6 +1520,16 @@ local function export_json(data, out_dir, opts)
   reaper.RecursiveCreateDirectory(out_dir, 0)
 
   local extras = {}
+  local master_file
+  if include.MASTER then
+    local rendered, dest = render_master_mp3(out_dir, data.click and data.click.tracks or {})
+    if rendered then
+      master_file = "Master.mp3"
+    else
+      extras[#extras + 1] = dest or "MASTER render failed"
+    end
+  end
+
   local click_file
   local want_click = include.CLICK and data.click and data.click.found
   if include.CLICK and not want_click then
@@ -1427,13 +1571,16 @@ local function export_json(data, out_dir, opts)
   local song_path = join_path(out_dir, "song.json")
   local ok, err = write_file(
     song_path,
-    build_song_json(data, click_file, stem_files, opts.key or "", opts.scale or "", opts.style or "")
+    build_song_json(data, master_file, click_file, stem_files, opts.key or "", opts.scale or "", opts.style or "")
   )
   if not ok then
     return false, "Could not write song.json: " .. tostring(err)
   end
 
   local written = { "song.json" }
+  if master_file then
+    written[#written + 1] = master_file
+  end
   if click_file then
     written[#written + 1] = click_file
   end
@@ -1596,6 +1743,7 @@ end
 
 local function include_map(data)
   local m = {
+    MASTER = wants_include("MASTER", true),
     CLICK = wants_include("CLICK", click_exportable(data.click))
   }
   for _, stem in ipairs(data.stems or {}) do
@@ -1850,6 +1998,12 @@ local function draw()
 
   local audio_rows = {
     {
+      key = "MASTER",
+      found = true,
+      exportable = true,
+      status = "128 kbps MP3"
+    },
+    {
       key = "CLICK",
       found = state.data.click and state.data.click.found or false,
       exportable = click_exportable(state.data.click)
@@ -1875,7 +2029,7 @@ local function draw()
     local cx = x + col * (col_w + agap)
     local cy = y + r * (row_ah + agap)
     fill_rect(cx, cy, col_w, row_ah, COL.panel)
-    local status = row.found and "found" or "Not found"
+    local status = row.status or (row.found and "found" or "Not found")
     local status_rgb = row.found and COL.ok or COL.err
     set_font(13)
     text_at(cx + 10, cy + 5, row.key, COL.text, cx + col_w - check_s - 16, cy + 22)

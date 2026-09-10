@@ -114,7 +114,17 @@ export function publishClientLibrary(gigs: unknown = []): PublishedLibrarySummar
       for (const rel of listFiles(dir)) {
         const name = rel.split("/").pop() ?? rel;
         if (!isPracticeFile(name)) continue;
-        const data = readFileSync(join(dir, rel));
+        let data = readFileSync(join(dir, rel));
+        if (name.toLowerCase() === "song.json") {
+          try {
+            const packed = JSON.parse(data.toString("utf8")) as Record<string, unknown>;
+            if (typeof packed.title !== "string" || !packed.title.trim()) packed.title = title;
+            if (typeof packed.id !== "string" || !packed.id.trim()) packed.id = id;
+            data = Buffer.from(`${JSON.stringify(packed, null, 2)}\n`);
+          } catch {
+            // copy the original song file
+          }
+        }
         writeFileSync(join(destDir, name), data);
         files.push({ path: name, size: data.byteLength, hash: sha256(data) });
       }
@@ -147,6 +157,29 @@ export function publishClientLibrary(gigs: unknown = []): PublishedLibrarySummar
   }
 
   songs.sort((a, b) => a.folder.localeCompare(b.folder));
+  return writePublishedIndex(songs, gigs);
+}
+
+type PublishedSong = {
+  id: string;
+  folder: string;
+  title?: string;
+  files: { path: string; size: number; hash: string }[];
+};
+
+export function publishClientGigs(gigs: unknown = []): PublishedLibrarySummary {
+  const indexPath = join(CLIENT_LIBRARY, "index.json");
+  if (!existsSync(indexPath)) return publishClientLibrary(gigs);
+  try {
+    const index = JSON.parse(readFileSync(indexPath, "utf8")) as { songs?: PublishedSong[] };
+    return writePublishedIndex(Array.isArray(index.songs) ? index.songs : [], gigs);
+  } catch {
+    return publishClientLibrary(gigs);
+  }
+}
+
+function writePublishedIndex(songs: PublishedSong[], gigs: unknown = []): PublishedLibrarySummary {
+  mkdirSync(CLIENT_LIBRARY, { recursive: true });
   const gigList = Array.isArray(gigs) ? gigs : [];
   const gigsBody = `${JSON.stringify({ gigs: gigList }, null, 2)}\n`;
   const gigsBuf = Buffer.from(gigsBody, "utf8");

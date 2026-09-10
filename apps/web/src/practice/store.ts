@@ -1,6 +1,14 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import { fileNameOf, parseSongInfo, practiceMasterAudio, samePracticeFolder, type Gig, type Song } from "@dbk/core";
-import { registerSongFolder, resetSongFolders, type LibraryIndex } from "../native/library";
+import {
+  fileNameOf,
+  parseSongInfo,
+  practiceMasterAudio,
+  publishedSongTitle,
+  samePracticeFolder,
+  type Gig,
+  type Song
+} from "@dbk/core";
+import { registerSongFolder, resetSongFolders, type LibraryIndex } from "../library/api";
 
 const DB_NAME = "dbk-practice";
 const DB_VERSION = 2;
@@ -186,8 +194,8 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
       }
     }
     const settingsRaw = await readPracticeFileBuffer(folder, "settings.json");
-    let info = parseSongInfo(undefined);
-    if (settingsRaw) {
+    let info = parseSongInfo(packed?.info);
+    if (!packed?.info && settingsRaw) {
       try {
         const settings = JSON.parse(decodeText(settingsRaw)) as { view?: unknown };
         if (settings.view) info = parseSongInfo(settings.view);
@@ -201,10 +209,11 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
           ...base,
           ...packed,
           folder,
-          title:
-            typeof packed.title === "string" && packed.title.trim()
-              ? packed.title.normalize("NFC")
-              : base.title,
+          title: publishedSongTitle({
+            id: typeof packed.id === "string" && packed.id.trim() ? packed.id : folder,
+            folder,
+            title: typeof packed.title === "string" ? packed.title : undefined
+          }),
           id: typeof packed.id === "string" && packed.id.length > 0 ? packed.id : folder,
           assets: Array.isArray(packed.assets) ? packed.assets : base.assets,
           tempoMap:

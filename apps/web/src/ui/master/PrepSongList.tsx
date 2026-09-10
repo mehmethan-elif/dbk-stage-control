@@ -2,16 +2,17 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import {
   canInsertElifAfter,
   createId,
-  ELIF_KONUSMA_LABEL,
+  insertElifAfterSelected,
   elifPlacementValid,
-  FinishMode,
   hasBackingAudio,
-  hasOnlyClickAudio,
+  hasClickFlac,
   isElifKonusma,
   isLockedElif,
   isSongEntry,
+  parseSongInfo,
   PlayMode,
   insertAfterSelected,
+  keepSkippedSongsInPlace,
   songDisplayName,
   songPlaybackName,
   trimElifAfterLastSong,
@@ -21,8 +22,13 @@ import {
   type Song,
   type SongSetlistEntry
 } from "@dbk/core";
-import { currentGig, useMasterStore } from "../../store/master-store";
-import { AddIcon, EighthNoteIcon, LockIcon, NotationIcon, ViewIcon } from "../shared/icons";
+import { currentGig, selectAddedSetlistEntry, setlistLocked, useMasterStore } from "../../store/master-store";
+import {
+  isSongLibraryGig,
+  songLibraryEntryId
+} from "../../store/song-library";
+import { AddIcon, LockIcon } from "../shared/icons";
+import { PlayModeMark } from "./play-mode-mark";
 import {
   compareFacet,
   facetChipStyle,
@@ -31,6 +37,7 @@ import {
   songRowStyle,
   type SongFacet
 } from "../shared/key-color";
+import { groupLibrarySongs } from "./library-groups";
 import { ConcertFinalBlock, ElifLabel, ElifNote, setlistHasSongs } from "./setlist-marker";
 
 const DRAG_THRESHOLD = 8;
@@ -69,67 +76,6 @@ function facetValues(song: Song, facet: SongFacet): string[] {
   return values;
 }
 
-function songFacet(song: Song, facet: SongFacet, playMode?: PlayMode, files?: string[]): string {
-  const viewed = listedSongForColor(song, playMode, files) ?? song;
-  const value =
-    facet === "key" ? viewed.key : facet === "scale" ? viewed.scale : viewed.style;
-  return value?.trim() || facetValues(song, facet)[0] || "";
-}
-
-function groupLibrarySongs(
-  songs: Song[],
-  libModes: Record<string, PlayMode>,
-  fileIndex: Record<string, string[]>
-): Array<{ id: string; title: string; songs: Song[] }> {
-  const groups: Array<{ key: string; scale: string; songs: Song[] }> = [];
-  for (const song of songs) {
-    const playMode = libModes[song.id] ?? PlayMode.View;
-    const files = fileIndex[song.id];
-    const key = songFacet(song, "key", playMode, files);
-    const scale = songFacet(song, "scale", playMode, files);
-    const existing = groups.find(
-      (group) =>
-        (key ? sameFacet("key", group.key, key) : !group.key) &&
-        (scale ? sameFacet("scale", group.scale, scale) : !group.scale)
-    );
-    if (existing) existing.songs.push(song);
-    else groups.push({ key, scale, songs: [song] });
-  }
-  groups.sort((left, right) => {
-    if (!left.key && right.key) return 1;
-    if (left.key && !right.key) return -1;
-    const byKey = left.key && right.key ? compareFacet("key", left.key, right.key) : 0;
-    if (byKey !== 0) return byKey;
-    if (!left.scale && right.scale) return 1;
-    if (left.scale && !right.scale) return -1;
-    if (left.scale && right.scale) return compareFacet("scale", left.scale, right.scale);
-    return 0;
-  });
-  for (const group of groups) {
-    group.songs.sort((left, right) => {
-      const leftMode = libModes[left.id] ?? PlayMode.View;
-      const rightMode = libModes[right.id] ?? PlayMode.View;
-      const leftStyle = songFacet(left, "style", leftMode, fileIndex[left.id]);
-      const rightStyle = songFacet(right, "style", rightMode, fileIndex[right.id]);
-      const byStyle =
-        leftStyle && rightStyle
-          ? compareFacet("style", leftStyle, rightStyle)
-          : leftStyle
-            ? -1
-            : rightStyle
-              ? 1
-              : 0;
-      if (byStyle !== 0) return byStyle;
-      return songDisplayName(left).localeCompare(songDisplayName(right), "tr");
-    });
-  }
-  return groups.map((group) => ({
-    id: `${group.key || "none"}:${group.scale || "none"}`,
-    title: [group.key || "—", group.scale || "—"].join(" "),
-    songs: group.songs
-  }));
-}
-
 function idsOf(entries: Array<{ entryId: string }>): string[] {
   return entries.map((entry) => entry.entryId);
 }
@@ -142,7 +88,11 @@ function entriesOf(order: string[], lookup: Map<string, SetlistEntry>): SetlistE
 }
 
 function indexFromPointerY(list: HTMLElement, clientY: number): number {
-  const rows = [...list.querySelectorAll<HTMLElement>(".set-block:not(.is-locked):not(.is-final)")];
+  const rows = [
+    ...list.querySelectorAll<HTMLElement>(
+      ".set-block:not(.is-locked):not(.is-final):not(.is-elif-add)"
+    )
+  ];
   if (rows.length === 0) return 0;
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -156,15 +106,15 @@ function indexFromPointerY(list: HTMLElement, clientY: number): number {
 export function PrepSongList(props: {
   libraryFocusId: string | null;
   onLibraryFocus: (songId: string | null) => void;
-  libModes: Record<string, PlayMode>;
+  onCreateSetlist: (songId: string) => void;
 }) {
   const songs = useMasterStore((s) => s.songs);
-  const query = useMasterStore((s) => s.songQuery);
   const updateGig = useMasterStore((s) => s.updateGig);
   const selectSetlistEntry = useMasterStore((s) => s.selectSetlistEntry);
   const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
   const fileIndex = useMasterStore((s) => s.fileIndex);
   const gig = useMasterStore(currentGig);
+  const frozen = useMasterStore(setlistLocked);
   const [keys, setKeys] = useState<string[]>([]);
   const [scales, setScales] = useState<string[]>([]);
   const [styles, setStyles] = useState<string[]>([]);
@@ -178,6 +128,11 @@ export function PrepSongList(props: {
   } | null>(null);
   const [liveOrder, setLiveOrder] = useState<string[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const songLibrary = isSongLibraryGig(gig);
+  const playModes: Record<string, PlayMode> = {};
+  for (const song of songs) {
+    playModes[song.id] = parseSongInfo(song.info).playMode ?? PlayMode.View;
+  }
 
   useEffect(() => {
     if (!gig) return;
@@ -191,10 +146,10 @@ export function PrepSongList(props: {
       return;
     }
     selectSetlistEntry(first.entryId);
-  }, [gig, selectedEntryId, selectSetlistEntry]);
+  }, [gig?.id, gig?.setlist, selectedEntryId, selectSetlistEntry]);
 
   const songMap = new Map(songs.map((song) => [song.id, song]));
-  const listEntries = gig
+  const listEntries = gig && !songLibrary
     ? visibleSetlistEntries(gig.setlist).filter((entry) => !isLockedElif(entry))
     : [];
   const byId = new Map(listEntries.map((entry) => [entry.entryId, entry] as const));
@@ -205,12 +160,11 @@ export function PrepSongList(props: {
   }
   const displayed = draggingId ? added : withKeyChangeElifs(added, songMap);
   const addedSongIds = new Set(added.filter(isSongEntry).map((entry) => entry.songId));
-  const canAddElif = Boolean(gig && canInsertElifAfter(gig.setlist, selectedEntryId));
-  const q = query.trim().toLowerCase();
+  const canAddElif = Boolean(
+    gig && !songLibrary && canInsertElifAfter(gig.setlist, selectedEntryId)
+  );
   const unadded = songs.filter((song) => {
     if (addedSongIds.has(song.id)) return false;
-    const haystack = `${songDisplayName(song)} ${song.title}`.toLowerCase();
-    if (q && !haystack.includes(q)) return false;
     if (!matchesSelected(song, keys, "key")) return false;
     if (!matchesSelected(song, scales, "scale")) return false;
     if (!matchesSelected(song, styles, "style")) return false;
@@ -224,9 +178,10 @@ export function PrepSongList(props: {
   const persistOrder = (order: string[]) => {
     void updateGig((current) => {
       const lookup = new Map(current.setlist.map((entry) => [entry.entryId, entry]));
-      const nextItems = entriesOf(order, lookup);
+      const nextItems = keepSkippedSongsInPlace(current.setlist, entriesOf(order, lookup));
       if (!elifPlacementValid(nextItems)) return current;
-      const leftovers = current.setlist.filter((entry) => !order.includes(entry.entryId));
+      const kept = new Set(nextItems.map((entry) => entry.entryId));
+      const leftovers = current.setlist.filter((entry) => !kept.has(entry.entryId));
       return { ...current, setlist: [...nextItems, ...leftovers] };
     }).finally(() => {
       setLiveOrder(null);
@@ -242,6 +197,7 @@ export function PrepSongList(props: {
   const onPointerDown = (entryId: string, event: PointerEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     const onControl = target.closest("button, select, input");
+    if (frozen) return;
     if (!target.closest(".prep-cell.actions")) selectSetlist(entryId);
     if (onControl) return;
     if (target.closest(".set-block.is-locked")) return;
@@ -300,18 +256,11 @@ export function PrepSongList(props: {
       setlist: insertAfterSelected(current.setlist, selectedEntryId, {
         type: "song",
         entryId,
-        songId,
-        finishMode: FinishMode.Stop,
-        playMode: hasBackingAudio(
-          songs.find((item) => item.id === songId),
-          fileIndex[songId]
-        )
-          ? (props.libModes[songId] ?? PlayMode.View)
-          : PlayMode.View
+        songId
       })
     })).then(() => {
       props.onLibraryFocus(null);
-      selectSetlistEntry(entryId);
+      selectAddedSetlistEntry(entryId);
     });
   };
 
@@ -319,12 +268,9 @@ export function PrepSongList(props: {
     if (!gig || !selectedEntryId || !canInsertElifAfter(gig.setlist, selectedEntryId)) return;
     const entryId = createId("entry");
     void updateGig((current) => {
-      if (!canInsertElifAfter(current.setlist, selectedEntryId)) return current;
-      const index = current.setlist.findIndex((entry) => entry.entryId === selectedEntryId);
-      if (index < 0) return current;
-      const next = current.setlist.slice();
-      next.splice(index + 1, 0, { type: "talk", entryId, label: ELIF_KONUSMA_LABEL });
-      return { ...current, setlist: next };
+      const setlist = insertElifAfterSelected(current.setlist, selectedEntryId, entryId);
+      if (setlist === current.setlist) return current;
+      return { ...current, setlist };
     }).then(() => selectSetlist(entryId));
   };
 
@@ -353,14 +299,6 @@ export function PrepSongList(props: {
             onToggle={(value) => setStyles((current) => toggleFacet(current, value, "style"))}
           />
         </div>
-        <button
-          type="button"
-          className="lib-elif-btn"
-          disabled={!canAddElif}
-          onClick={addElif}
-        >
-          {ELIF_KONUSMA_LABEL}
-        </button>
       </div>
       <div
         ref={listRef}
@@ -386,7 +324,7 @@ export function PrepSongList(props: {
                 key={elifId}
                 className={`set-block${selected ? " active" : ""}${
                   draggingId === elifId ? " dragging" : ""
-                }${locked ? " is-locked" : ""}`}
+                }${locked ? " is-locked" : ""}${frozen ? " is-frozen" : ""}`}
                 onPointerDown={(event) => onPointerDown(elifId, event)}
               >
                 <ElifItem
@@ -411,7 +349,9 @@ export function PrepSongList(props: {
           return (
             <div
               key={entry.entryId}
-              className={`set-block${selected ? " active" : ""}${draggingId === entry.entryId ? " dragging" : ""}`}
+              className={`set-block${selected ? " active" : ""}${
+                draggingId === entry.entryId ? " dragging" : ""
+              }${frozen ? " is-frozen" : ""}`}
               onPointerDown={(event) => onPointerDown(entry.entryId, event)}
             >
               <SongItem
@@ -421,6 +361,7 @@ export function PrepSongList(props: {
                 files={song ? fileIndex[song.id] : undefined}
                 entry={entry}
                 selected={selected}
+                playMode={song ? (playModes[song.id] ?? PlayMode.View) : PlayMode.View}
                 onRemove={() => {
                   void updateGig((current) => ({
                     ...current,
@@ -434,26 +375,62 @@ export function PrepSongList(props: {
           );
         })}
         {setlistHasSongs(added) ? <ConcertFinalBlock variant="prep" /> : null}
-        {groupLibrarySongs(unadded, props.libModes, fileIndex).map((group) => (
+        {!songLibrary ? (
+          <div className="set-block is-elif-add">
+            <div className="prep-elif-row prep-elif-add-item">
+              <div className="prep-cell num">—</div>
+              <div className="prep-cell title">
+                <span className="elif-label">ELIF KONUSMA EKLE</span>
+              </div>
+              <div className="prep-cell actions">
+                <button
+                  type="button"
+                  className="add"
+                  title="Add"
+                  aria-label="Add ELIF KONUSMA"
+                  disabled={!canAddElif}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (canAddElif) addElif();
+                  }}
+                >
+                  <AddIcon />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {groupLibrarySongs(unadded, playModes, fileIndex).map((group) => (
           <div key={group.id} className="prep-lib-group">
             <div className="prep-lib-group-title">{group.title}</div>
-            {group.songs.map((song) => (
-              <div
-                key={song.id}
-                className={`prep-lib-wrap${props.libraryFocusId === song.id ? " active" : ""}`}
-                onClick={() => props.onLibraryFocus(song.id)}
-              >
-                <SongItem
-                  added={false}
-                  order={null}
-                  song={song}
-                  files={fileIndex[song.id]}
-                  selected={props.libraryFocusId === song.id}
-                  playMode={props.libModes[song.id] ?? PlayMode.View}
-                  onAdd={() => addSong(song.id)}
-                />
-              </div>
-            ))}
+            {group.songs.map((song) => {
+              const librarySelected =
+                songLibrary && selectedEntryId === songLibraryEntryId(song.id);
+              const selected = librarySelected || props.libraryFocusId === song.id;
+              return (
+                <div
+                  key={song.id}
+                  className={`prep-lib-wrap${selected ? " active" : ""}`}
+                  onClick={() => {
+                    if (songLibrary && frozen) return;
+                    props.onLibraryFocus(song.id);
+                    if (songLibrary) selectSetlistEntry(songLibraryEntryId(song.id));
+                  }}
+                >
+                  <SongItem
+                    added={false}
+                    order={null}
+                    song={song}
+                    files={fileIndex[song.id]}
+                    selected={selected}
+                    playMode={playModes[song.id] ?? PlayMode.View}
+                    onAdd={() =>
+                      songLibrary ? props.onCreateSetlist(song.id) : addSong(song.id)
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -492,7 +469,7 @@ function ElifItem(props: { locked?: boolean; onRemove?: () => void }) {
   return (
     <div className={`prep-elif-row${props.locked ? " is-locked" : ""}`}>
       <div className="prep-cell num">{props.locked ? <LockIcon /> : "—"}</div>
-      <div className="prep-elif-title">
+      <div className="prep-cell title">
         <ElifLabel />
         {props.locked ? <ElifNote /> : null}
       </div>
@@ -525,29 +502,44 @@ function SongItem(props: {
   onRemove?: () => void;
 }) {
   const song = props.song;
+  const gigMode = useMasterStore((s) => currentGig(s)?.performanceMode);
   const canBacking = hasBackingAudio(song, props.files);
+  const canClick = Boolean(song && hasClickFlac(song, props.files));
   const requestedMode =
     props.playMode ??
-    (props.entry?.playMode === PlayMode.Playback ? PlayMode.Playback : PlayMode.View);
-  const playMode = canBacking ? requestedMode : PlayMode.View;
-  const tint = props.added ? songRowStyle(listedSongForColor(song, requestedMode, props.files), props.selected) : undefined;
-  const playback = playMode === PlayMode.Playback;
+    (props.entry?.playMode === PlayMode.Playback
+      ? PlayMode.Playback
+      : props.entry?.playMode === PlayMode.ClickOnly
+        ? PlayMode.ClickOnly
+        : PlayMode.View);
+  const playMode =
+    requestedMode === PlayMode.Playback
+      ? canBacking
+        ? requestedMode
+        : canClick
+          ? PlayMode.ClickOnly
+          : PlayMode.View
+      : requestedMode === PlayMode.ClickOnly && !canClick
+        ? PlayMode.View
+        : requestedMode;
+  const tint = songRowStyle(
+    listedSongForColor(song, playMode, props.files),
+    props.selected
+  );
 
   return (
     <div className={`prep-song-row${props.added ? " added" : " library"}`} style={tint}>
-      <div className="prep-cell num">{props.order ? String(props.order).padStart(2, "0") : "—"}</div>
+      <div className="prep-cell num">
+        <span>{props.order ? String(props.order).padStart(2, "0") : "—"}</span>
+        {song ? <PlayModeMark song={song} files={props.files} setlistMode={gigMode} /> : null}
+      </div>
       <div className="prep-cell title">
-        {song ? (
-          <span className="prep-song-mode" aria-hidden="true">
-            {playback ? (
-              hasOnlyClickAudio(song, props.files) ? <EighthNoteIcon /> : <NotationIcon />
-            ) : (
-              <ViewIcon />
-            )}
-          </span>
-        ) : null}
         <span className="prep-song-name">
-          {song ? (playback ? songPlaybackName(song) : songDisplayName(song)) : "—"}
+          {song
+            ? playMode !== PlayMode.View
+              ? songPlaybackName(song)
+              : songDisplayName(song)
+            : "—"}
         </span>
       </div>
       <div className="prep-cell actions">

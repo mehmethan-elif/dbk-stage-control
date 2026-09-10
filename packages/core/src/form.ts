@@ -34,7 +34,7 @@ export interface SongForm {
 }
 
 export interface SongFormOptions {
-  identity?: "arrangement" | "chords" | "names";
+  identity?: "arrangement" | "chords" | "names" | "drums";
   foldInnerRepeats?: boolean;
 }
 
@@ -58,14 +58,35 @@ function nameKey(name: string, index: number): string {
   return trimmed || `_${index}`;
 }
 
+function patternGridKey(pattern: { time: number; end: number; notes?: { time: number; pitch: number }[] }): string {
+  const span = Math.max(TIME_EPS, pattern.end - pattern.time);
+  return (pattern.notes ?? [])
+    .map((note) => {
+      const step = Math.round(((note.time - pattern.time) / span) * 16);
+      const pc = ((note.pitch % 12) + 12) % 12;
+      return `${step}:${pc}`;
+    })
+    .sort()
+    .join(",");
+}
+
 function sectionGroove(song: Song, section: Section, identity: SongFormOptions["identity"]): string {
   if (identity === "names") return "";
   if (identity !== "chords") {
     const patterns = (song.patterns ?? [])
       .filter((pattern) => pattern.time >= section.start - TIME_EPS && pattern.time < section.end - TIME_EPS)
-      .map((pattern) => pattern.text.trim().toUpperCase())
-      .filter((text) => text.length > 0 && text !== "FILL");
+      .map((pattern) => {
+        const text = pattern.text.trim().toUpperCase();
+        if (!text || text === "FILL") return "";
+        if (identity === "drums") {
+          const grid = patternGridKey(pattern);
+          return grid ? `${text}[${grid}]` : text;
+        }
+        return text;
+      })
+      .filter((text) => text.length > 0);
     if (patterns.length > 0) return `p:${patterns.join("|")}`;
+    if (identity === "drums") return "";
   }
   const chords = (song.chords ?? [])
     .filter((chord) => chord.time >= section.start - TIME_EPS && chord.time < section.end - TIME_EPS)
@@ -141,6 +162,23 @@ function matchWrittenBlock(
   return same[0];
 }
 
+function matchAfterDs(
+  blocks: FormBlock[],
+  key: string,
+  previousBlock: FormBlock | undefined
+): FormBlock | undefined {
+  const same = blocks.filter((block) => nameKey(block.name, block.originIndex) === key);
+  if (same.length === 0) return undefined;
+  if (previousBlock) {
+    const byContext = same.find((block) => {
+      const blockIndex = blocks.indexOf(block);
+      return blocks[blockIndex - 1]?.id === previousBlock.id;
+    });
+    if (byContext) return byContext;
+  }
+  return same[0];
+}
+
 export function isCodaName(name: string): boolean {
   const n = name.trim().toUpperCase();
   return n === "FINAL" || n === "CODA" || n.startsWith("CODA ");
@@ -174,6 +212,13 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       previousBlock,
       runOffset(sections, index, key)
     );
+    if (
+      !block &&
+      visits.some((visit) => visit.fromJump === "ds") &&
+      !isCodaName(section.name)
+    ) {
+      block = matchAfterDs(blocks, key, previousBlock);
+    }
     if (!block) {
       block = {
         id: `form_${blocks.length}`,

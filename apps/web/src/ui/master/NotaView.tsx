@@ -1,13 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { AnnotationMode, getDocument, GlobalWorkerOptions, type PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import {
   createId,
-  FinishMode,
   ELIF_KONUSMA_LABEL,
   isElifKonusma,
   isLockedElif,
   insertAfterSelected,
+  trimElifAfterLastSong,
   isSongEntry,
   withKeyChangeElifs,
   PlaybackState,
@@ -19,23 +20,65 @@ import {
   songDisplayName,
   type Song
 } from "@dbk/core";
-import { currentGig, useMasterStore } from "../../store/master-store";
-import { readSongFile } from "../../native/library";
-import { DeleteIcon } from "../shared/icons";
+import { useFollowPlayheadTime } from "../../store/follow-clock";
+import { clientPracticeMode, currentGig, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, stageAutoScroll, stagePlayheadTime, useMasterStore, usesFreeMetroTransport } from "../../store/master-store";
+import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
+import { libraryApi } from "../../library/api";
+import { ChainIcon, DeleteIcon } from "../shared/icons";
 import { StageSetlist } from "./StageSetlist";
 import { CONCERT_FINAL_LABEL, StageFinishRow, stageBodyEntries } from "./setlist-marker";
 import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
-import { scrollStageToSongTitle, stageNodeFullyInView } from "./stage-scroll";
+import { useFreeStageScrollSelection } from "./free-stage-scroll";
+import { scrollStageToNotaSectionMeasures, scrollStageToSongTitle } from "./stage-scroll";
+import { upcomingSongLeadIn } from "./next-song-section";
 import { countLabel, countSection, isCountSection } from "./count-section";
 import { sectionBarClass } from "./section-color";
 import {
+  ChordNoteLane,
+  displayChordText,
+  nextNoteGridIfDifferent,
+  notesForBox,
+  rectChordLane,
+  stepsForBox,
+  stepsForMeasure,
+  uniqueSectionNoteGrids,
+  type ChordNoteHit
+} from "./chord-notes";
+import { NOTE_GRID_GAP } from "./nota-rect-notes";
+import { rallOverlayBoxes } from "./rall-alert";
+import { SCORE_LYRIC_GAP_PX, activeScoreLyric, scoreLyricPlacements } from "./score-lyrics";
+import {
+  addNotaBox,
+  ensureSectionLabels,
+  isSectionLabel,
+  sectionLabelText,
+  applyChainedRectGeometry,
+  boxForOccurrence,
+  breakMeasureChain,
+  canChainMeasure,
   clampNotaBox,
-  defaultNotaBox,
-  loadNotaSections,
+  clampNotaPage,
+  editableNotaSections,
+  effectiveBrokenChains,
+  isMeasureChained,
+  linkMeasureChain,
+  loadNotaLayout,
+  mergeNotaRects,
+  rememberNotaLayout,
+  nextEmptySectionMeasure,
+  nextNotaHit,
+  notaHitAt,
+  nowLooksAheadHit,
+  notaSectionScrollTargets,
+  rectsForHit,
+  rectsForLiveSections,
+  rectsForSectionOccurrence,
   saveNotaSections,
-  uniqueSectionNames,
+  sectionMeasureNumbers,
+  touchedNotaNames,
   upsertNotaBox,
+  type BrokenMeasureChain,
   type NotaSectionBox
 } from "./nota-sections";
 
@@ -75,6 +118,15 @@ function notaFile(files: string[] | undefined): string | undefined {
   return files?.find((name) => /(^|\/)nota\.pdf$/i.test(name));
 }
 
+function visiblePageSize(root: HTMLElement | null): { width: number; height: number } | undefined {
+  if (!root) return undefined;
+  const wraps = [...root.querySelectorAll<HTMLElement>(".nota-page-wrap")];
+  const wrap = wraps[visiblePageIndex(root)] ?? wraps[0];
+  const box = wrap?.getBoundingClientRect();
+  if (!box || box.width < 8 || box.height < 8) return undefined;
+  return { width: box.width, height: box.height };
+}
+
 function visiblePageIndex(root: HTMLElement | null): number {
   if (!root) return 0;
   const wraps = [...root.querySelectorAll<HTMLElement>(".nota-page-wrap")];
@@ -94,7 +146,9 @@ function visiblePageIndex(root: HTMLElement | null): number {
   return best;
 }
 
-export function NotaView() {
+export type NotaLayer = "score" | "chord";
+
+export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   const songs = useMasterStore((s) => s.songs);
   const fileIndex = useMasterStore((s) => s.fileIndex);
   const gig = useMasterStore(currentGig);
@@ -103,33 +157,78 @@ export function NotaView() {
   const updateGig = useMasterStore((s) => s.updateGig);
   const playback = useMasterStore((s) => s.playback);
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
+  const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
   const editOpen = useMasterStore((s) => s.editOpen);
-  const zoom = useMasterStore((s) => s.stageZooms.nota);
-  const autoScroll = useMasterStore((s) => s.autoScroll);
-  const [sectionName, setSectionName] = useState("");
+  const sectionEditing = Boolean(!readOnly && editOpen && layer === "chord");
+  const zoom = useMasterStore((s) => s.stageZooms[layer === "chord" ? "chords" : "nota"]);
+  const autoScroll = useMasterStore(stageAutoScroll);
+  const panicFollow = useMasterStore(panicBlocksFollow);
+  const detached = useMasterStore(followsSharedPlayhead);
+  const freeMode = useMasterStore(usesFreeMetroTransport);
+  const stageRef = useRef<HTMLElement>(null);
+  const [editSlot, setEditSlot] = useState<HTMLDivElement | null>(null);
+  const [sectionIndex, setSectionIndex] = useState(0);
   const [rectsBySong, setRectsBySong] = useState<Record<string, NotaSectionBox[]>>({});
-  const listEntries = gig ? withKeyChangeElifs(gig.setlist, songs) : [];
+  const [brokenBySong, setBrokenBySong] = useState<Record<string, BrokenMeasureChain[]>>({});
+  const loadedSongIds = useRef(new Set<string>());
+  const dirtySongIds = useRef(new Set<string>());
+  const rectsBySongRef = useRef(rectsBySong);
+  rectsBySongRef.current = rectsBySong;
+  const brokenBySongRef = useRef(brokenBySong);
+  brokenBySongRef.current = brokenBySong;
+  const listEntries = gig
+    ? isSongLibraryGig(gig)
+      ? gig.setlist
+      : withKeyChangeElifs(gig.setlist, songs)
+    : [];
   const entries = listEntries.filter(isSongEntry);
-  const addedIds = new Set(entries.map((entry) => entry.songId));
-  const library = songs.filter((item) => !addedIds.has(item.id));
+  const library = librarySongsNotOnSetlist(songs, listEntries);
+  const practice = useMasterStore(clientPracticeMode);
+  const bodySource = isSongLibraryGig(gig)
+    ? selectedLibraryEntries(listEntries, selectedEntryId)
+    : practice
+      ? withSelectedLibrarySong(listEntries, songs, selectedEntryId)
+      : listEntries;
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
-  const playingEntryId = playing ? playback.clock?.setlistEntryId : undefined;
-  const stageRef = useRef<HTMLElement>(null);
-  const visible = entries.filter((entry) => !entry.skipped);
-  const bodyEntries = stageBodyEntries(listEntries);
+  const playingEntryId =
+    playing && detached
+      ? playback.clock?.setlistEntryId
+      : playing && !detached
+        ? (selectedEntryId ?? playback.clock?.setlistEntryId)
+        : undefined;
+  const followTime = useMasterStore(stagePlayheadTime);
+  const playingSong = findSongByRef(
+    songs,
+    detached
+      ? playback.clock?.songId
+      : (entries.find((entry) => entry.entryId === selectedEntryId)?.songId ??
+        playback.clock?.songId)
+  );
+  const upcoming = playingEntryId
+    ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, followTime)
+    : undefined;
+  const visible = (practice || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries).filter(
+    (entry) => !entry.skipped
+  );
+  const bodyEntries = stageBodyEntries(bodySource);
   const selected =
     visible.find((entry) => entry.entryId === selectedEntryId) ?? visible[0];
-  const selectedSong = songs.find((item) => item.id === selected?.songId);
+  const selectedSong = findSongByRef(songs, selected?.songId);
 
-  const pinToSelected = !autoScroll || !playingEntryId;
+  const pinToSelected = !freeMode && !detached && !panicFollow && (!autoScroll || !playingEntryId);
   const selectedSongId = selected?.entryId ?? null;
+  useFreeStageScrollSelection(
+    stageRef,
+    "data-nota-song",
+    listEntries.map((entry) => entry.entryId).join("\0")
+  );
 
   useEffect(() => {
     if (!pinToSelected || !selectedSongId) return;
     scrollStageToSongTitle(stageRef.current, `[data-nota-song="${selectedSongId}"]`);
-  }, [selectedSongId, pinToSelected, editOpen]);
+  }, [selectedSongId, pinToSelected, sectionEditing]);
 
   const onPagesLayout = () => {
     if (!pinToSelected || !selectedSongId) return;
@@ -137,21 +236,53 @@ export function NotaView() {
   };
 
   useEffect(() => {
-    if (!autoScroll || editOpen || playingEntryId || !selectedSongId) return;
+    if (freeMode) return;
+    if (!autoScroll || sectionEditing || playingEntryId || !selectedSongId) return;
     scrollStageToSongTitle(stageRef.current, `[data-nota-song="${selectedSongId}"]`);
-  }, [autoScroll, editOpen, playingEntryId, selectedSongId, zoom]);
+  }, [autoScroll, sectionEditing, playingEntryId, selectedSongId, zoom, freeMode]);
 
   useEffect(() => {
-    setSectionName(
-      uniqueSectionNames(selectedSong?.sections.slice(1) ?? [])[0] ?? ""
+    if (!autoScroll || sectionEditing || !playingEntryId) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const songRoot = stage.querySelector(`[data-nota-song="${playingEntryId}"]`);
+    if (!(songRoot instanceof HTMLElement) || !playingSong) return;
+    const rects = rectsBySong[playingSong.id] ?? [];
+    const broken = brokenBySong[playingSong.id] ?? [];
+    const targets = notaSectionScrollTargets(playingSong, followTime, rects, broken);
+    const leadIn = stage.querySelector("[data-lead-in]");
+    scrollStageToNotaSectionMeasures(
+      stage,
+      songRoot,
+      targets.current,
+      targets.next,
+      targets.focus,
+      leadIn instanceof HTMLElement ? leadIn : null
     );
+  }, [
+    autoScroll,
+    brokenBySong,
+    sectionEditing,
+    followTime,
+    playingEntryId,
+    playingSong,
+    rectsBySong,
+    upcoming?.entryId,
+    zoom
+  ]);
+
+  useEffect(() => {
+    setSectionIndex(editableNotaSections(selectedSong?.sections ?? [])[0]?.index ?? 0);
   }, [selectedSong?.id]);
 
   const visibleSongIds = visible.map((entry) => entry.songId).join("\0");
   useEffect(() => {
     const ids = [...new Set(visibleSongIds ? visibleSongIds.split("\0") : [])];
     if (ids.length === 0) {
+      loadedSongIds.current.clear();
+      dirtySongIds.current.clear();
       setRectsBySong({});
+      setBrokenBySong({});
       return;
     }
     let cancelled = false;
@@ -159,13 +290,34 @@ export function NotaView() {
       ids.map(async (id) => {
         try {
           const song = songs.find((item) => item.id === id);
-          return [id, await loadNotaSections(id, song?.sections ?? [])] as const;
+          return [id, await loadNotaLayout(id, song?.sections ?? [])] as const;
         } catch {
-          return [id, []] as const;
+          return [id, { rects: [], brokenChains: [] }] as const;
         }
       })
     ).then((rows) => {
-      if (!cancelled) setRectsBySong(Object.fromEntries(rows));
+      if (cancelled) return;
+      setRectsBySong((current) => {
+        const next = { ...current };
+        for (const [id, layout] of rows) {
+          loadedSongIds.current.add(id);
+          if (dirtySongIds.current.has(id) && current[id]) {
+            const names = new Set(current[id].map((box) => box.name));
+            next[id] = mergeNotaRects(layout.rects, current[id], names);
+            continue;
+          }
+          next[id] = layout.rects;
+        }
+        return next;
+      });
+      setBrokenBySong((current) => {
+        const next = { ...current };
+        for (const [id, layout] of rows) {
+          if (dirtySongIds.current.has(id) && current[id]) continue;
+          next[id] = layout.brokenChains;
+        }
+        return next;
+      });
     });
     return () => {
       cancelled = true;
@@ -180,25 +332,36 @@ export function NotaView() {
       setlist: insertAfterSelected(currentGigState.setlist, selectedEntryId, {
         type: "song",
         entryId,
-        songId,
-        finishMode: FinishMode.Stop,
-        playMode: PlayMode.View
+        songId
       })
-    })).then(() => selectSetlistEntry(entryId));
+    })).then(() => selectAddedSetlistEntry(entryId));
   };
 
-  const toggleSkip = (entryId: string) => {
+  const removeSong = (entryId: string) => {
     void updateGig((currentGigState) => ({
       ...currentGigState,
-      setlist: currentGigState.setlist.map((item) =>
-        item.entryId === entryId && isSongEntry(item) ? { ...item, skipped: !item.skipped } : item
+      setlist: trimElifAfterLastSong(
+        currentGigState.setlist.filter((item) => item.entryId !== entryId)
       )
     }));
   };
 
-  const commitRects = (songId: string, next: NotaSectionBox[], persist: boolean) => {
+  const commitLayout = (
+    songId: string,
+    next: NotaSectionBox[],
+    persist: boolean,
+    broken = brokenBySongRef.current[songId] ?? []
+  ) => {
+    const previous = rectsBySongRef.current[songId] ?? [];
+    const touched = touchedNotaNames(previous, next);
+    const chains = effectiveBrokenChains(next, broken);
+    dirtySongIds.current.add(songId);
+    rememberNotaLayout(songId, next, chains);
     setRectsBySong((current) => ({ ...current, [songId]: next }));
-    if (persist) void saveNotaSections(songId, next);
+    setBrokenBySong((current) => ({ ...current, [songId]: chains }));
+    if (persist && loadedSongIds.current.has(songId)) {
+      void saveNotaSections(songId, next, touched, chains);
+    }
   };
 
   return (
@@ -207,17 +370,20 @@ export function NotaView() {
         {setlistOpen ? (
           <StageSetlist
             entries={listEntries}
-            library={readOnly ? [] : library}
+            library={library}
             songs={songs}
             selectedEntryId={selectedEntryId}
             readOnly={readOnly}
             onSelect={selectSetlistEntry}
-            onSkip={toggleSkip}
+            onRemove={removeSong}
             onAdd={addSong}
+            onSelectLibrary={practice ? selectPracticeSong : undefined}
             stageRef={stageRef}
             songAttr="data-nota-song"
           />
         ) : null}
+        <div className="nota-main">
+        {sectionEditing ? <div ref={setEditSlot} className="nota-edit-slot" /> : null}
         <section
           ref={stageRef}
           className="lyrics-stage nota-stage"
@@ -227,7 +393,10 @@ export function NotaView() {
             <div className="lyrics-empty meta">No nota</div>
           ) : (
             <>
-              {bodyEntries.map((entry) => {
+              {(sectionEditing && selected
+                ? bodyEntries.filter((entry) => entry.entryId === selected.entryId)
+                : bodyEntries
+              ).map((entry) => {
                 if (isElifKonusma(entry)) {
                   return (
                     <StageFinishRow
@@ -240,100 +409,244 @@ export function NotaView() {
                   );
                 }
                 if (!isSongEntry(entry)) return null;
-                const item = songs.find((row) => row.id === entry.songId);
-                const editing = Boolean(!readOnly && editOpen && selected && entry.entryId === selected.entryId);
+                const item = findSongByRef(songs, entry.songId);
+                const editing = Boolean(sectionEditing && selected && entry.entryId === selected.entryId);
                 return (
                   <SongNota
                     key={entry.entryId}
+                    layer={layer}
                     entryId={entry.entryId}
                     song={item}
                     file={notaFile(item ? fileIndex[item.id] : undefined)}
                     zoom={zoom}
                     editing={editing}
-                    autoScroll={autoScroll && !editOpen}
-                    sectionName={sectionName}
-                    onSectionName={setSectionName}
+                    editSlot={editSlot}
+                    autoScroll={autoScroll && !sectionEditing}
+                    leadIn={upcoming?.entryId === entry.entryId}
+                    sectionIndex={sectionIndex}
+                    onSectionIndex={setSectionIndex}
                     onPagesLayout={onPagesLayout}
                     rects={item ? (rectsBySong[item.id] ?? []) : []}
-                    onRects={(next, persist) => {
-                      if (item) commitRects(item.id, next, persist);
+                    layoutReady={Boolean(item && item.id in rectsBySong)}
+                    brokenChains={item ? (brokenBySong[item.id] ?? []) : []}
+                    onRects={(next, persist, broken) => {
+                      if (item) commitLayout(item.id, next, persist, broken);
                     }}
                   />
                 );
               })}
-              {entries.length > 0 ? <StageFinishRow label={CONCERT_FINAL_LABEL} /> : null}
+              {!sectionEditing && entries.length > 0 ? (
+                <StageFinishRow label={CONCERT_FINAL_LABEL} />
+              ) : null}
             </>
           )}
         </section>
+        </div>
       </div>
     </div>
   );
 }
 
 function SongNota(props: {
+  layer: NotaLayer;
   entryId: string;
   song: Song | undefined;
   file: string | undefined;
   zoom: number;
   editing: boolean;
+  editSlot?: HTMLDivElement | null;
   autoScroll: boolean;
-  sectionName: string;
-  onSectionName: (name: string) => void;
+  leadIn?: boolean;
+  sectionIndex: number;
+  onSectionIndex: (index: number) => void;
   onPagesLayout: () => void;
   rects: NotaSectionBox[];
-  onRects: (rects: NotaSectionBox[], persist: boolean) => void;
+  layoutReady: boolean;
+  brokenChains: BrokenMeasureChain[];
+  onRects: (rects: NotaSectionBox[], persist: boolean, broken?: BrokenMeasureChain[]) => void;
 }) {
   const song = props.song;
   const file = props.file;
   const title = songDisplayName(song);
-  const names = uniqueSectionNames(song?.sections.slice(1) ?? []);
+  const liveRects = rectsForLiveSections(props.rects, song?.sections ?? []);
+  const choices = editableNotaSections(song?.sections ?? []);
   const articleRef = useRef<HTMLElement>(null);
-  const [selectedRectId, setSelectedRectId] = useState<string | null>(null);
-  const name = names.includes(props.sectionName) ? props.sectionName : (names[0] ?? "");
-  const named = props.rects.filter((item) => item.name === name);
-  const selectedRect =
-    named.find((item) => item.id === selectedRectId) ?? named[named.length - 1];
+  const [measurePick, setMeasurePick] = useState<number | null>(null);
+  const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
+  const selectedChoice =
+    choices.find((item) => item.index === props.sectionIndex) ?? choices[0];
+  const sectionIndex = selectedChoice?.index ?? -1;
+  const name = selectedChoice?.name ?? "";
+  const selectedSection = sectionIndex >= 0 ? song?.sections[sectionIndex] : undefined;
+  const canChain = canChainMeasure(song?.sections ?? [], name);
+  const measures = selectedSection
+    ? sectionMeasureNumbers([selectedSection], song?.tempoMap, selectedSection.name)
+    : [];
+  const measure =
+    measurePick != null && measures.includes(measurePick) ? measurePick : (measures[0] ?? 0);
+  const broken = effectiveBrokenChains(liveRects, props.brokenChains);
+  const chained = measure > 0 && isMeasureChained(broken, name, measure);
+  const canEdit = sectionIndex >= 0;
+  const sectionRects = rectsForSectionOccurrence(liveRects, name, sectionIndex, broken);
+  const measureRects = sectionRects.filter((box) => !isSectionLabel(box));
+  const sectionLabels = liveRects.filter(isSectionLabel);
+  const selectedLabel =
+    canEdit && selectedLabelId
+      ? sectionLabels.find((box) => box.id === selectedLabelId)
+      : undefined;
+  const activeRect = canEdit
+    ? boxForOccurrence(liveRects, name, measure, sectionIndex, chained)
+    : undefined;
+  const emptyMeasure = canEdit
+    ? nextEmptySectionMeasure(measures, liveRects, name, measure, {
+        sectionIndex,
+        broken
+      })
+    : undefined;
+
+  const liveRectKey = liveRects.map((box) => box.id).join("\0");
+  const storedRectKey = props.rects.map((box) => box.id).join("\0");
+  useEffect(() => {
+    if (!props.layoutReady || !song?.sections.length) return;
+    const next = ensureSectionLabels(
+      props.rects,
+      song.sections,
+      visiblePageIndex(articleRef.current)
+    );
+    if (next) {
+      props.onRects(next, true);
+      return;
+    }
+    if (liveRectKey !== storedRectKey) props.onRects(liveRects, true);
+  }, [props.layoutReady, song?.id, liveRectKey, storedRectKey]);
+
+  const selectBox = (box: NotaSectionBox) => {
+    if (isSectionLabel(box)) {
+      setSelectedLabelId(box.id);
+      if (box.sectionIndex != null) {
+        props.onSectionIndex(box.sectionIndex);
+        return;
+      }
+      const first = choices.find((item) => item.name === box.name);
+      if (first) props.onSectionIndex(first.index);
+      return;
+    }
+    setSelectedLabelId(null);
+    if (box.sectionIndex != null) props.onSectionIndex(box.sectionIndex);
+    setMeasurePick(box.measure);
+  };
 
   const addRect = () => {
-    if (!name) return;
-    const page = visiblePageIndex(articleRef.current);
-    const box = defaultNotaBox(name, page, named.length);
-    setSelectedRectId(box.id);
-    props.onRects([...props.rects, box], true);
+    if (!name || emptyMeasure == null) return;
+    const pages = articleRef.current?.querySelectorAll(".nota-page-wrap").length ?? 1;
+    const added = addNotaBox(
+      liveRects,
+      name,
+      emptyMeasure,
+      visiblePageIndex(articleRef.current),
+      Math.max(0, pages - 1),
+      sectionIndex,
+      broken,
+      visiblePageSize(articleRef.current)
+    );
+    if (!added) return;
+    setSelectedLabelId(null);
+    setMeasurePick(emptyMeasure);
+    props.onRects(added.rects, true, broken);
+  };
+
+  const toggleChain = () => {
+    if (!song || !canChain || measure < 1) return;
+    if (chained) {
+      props.onRects(breakMeasureChain(liveRects, song.sections, name, measure), true, [
+        ...broken,
+        { name, measure }
+      ]);
+      return;
+    }
+    props.onRects(
+      linkMeasureChain(liveRects, song.sections, name, measure, sectionIndex),
+      true,
+      broken.filter((item) => !(item.name === name && item.measure === measure))
+    );
   };
   const removeRect = () => {
-    if (!selectedRect) return;
-    const next = props.rects.filter((item) => item.id !== selectedRect.id);
-    const remaining = next.filter((item) => item.name === name);
-    setSelectedRectId(remaining[remaining.length - 1]?.id ?? null);
+    if (canEdit && selectedLabel) {
+      setSelectedLabelId(null);
+      props.onRects(
+        liveRects.filter((item) => item.id !== selectedLabel.id),
+        true
+      );
+      return;
+    }
+    if (!canEdit || !activeRect) return;
+    const next = chained
+      ? liveRects.filter(
+          (item) =>
+            isSectionLabel(item) ||
+            !(item.name === activeRect.name && item.measure === activeRect.measure)
+        )
+      : liveRects.filter((item) => item.id !== activeRect.id);
+    const remaining = next.filter((item) => item.name === name && !isSectionLabel(item));
+    const previous = remaining
+      .filter((item) => item.measure > 0)
+      .sort((a, b) => a.measure - b.measure)
+      .at(-1);
+    setMeasurePick(previous?.measure ?? null);
     props.onRects(next, true);
   };
   const removeAllRects = () => {
-    setSelectedRectId(null);
-    props.onRects([], true);
+    setMeasurePick(null);
+    props.onRects([], true, []);
   };
 
-  return (
-    <article ref={articleRef} className="lyrics-song nota-song" data-nota-song={props.entryId}>
-      <StageSongHead songId={song?.id} page="score">
-        <span className="nota-song-name">{title}</span>
+  const songHead = (
+      <StageSongHead songId={song?.id} page={props.layer === "chord" ? "chord" : "score"}>
+        <span
+          className="nota-song-name"
+          data-lead-in={
+            props.leadIn && !liveRects.some((box) => box.name === song?.sections[0]?.name)
+              ? ""
+              : undefined
+          }
+        >
+          {title}
+        </span>
         <SongTitleMeta song={song} entryId={props.entryId} />
       </StageSongHead>
-      {props.editing ? (
+  );
+  const editDock = props.editing ? (
+      <div className="nota-edit-dock">
+      {songHead}
         <div className="nota-edit-bar">
           <select
             className="prop-select nota-section-select"
             aria-label="Section"
-            value={name}
-            disabled={names.length === 0}
+            value={sectionIndex >= 0 ? String(sectionIndex) : ""}
+            disabled={choices.length === 0}
             onChange={(event) => {
-              const nextName = event.target.value;
-              props.onSectionName(nextName);
-              const last = props.rects.filter((item) => item.name === nextName).at(-1);
-              setSelectedRectId(last?.id ?? null);
+              const nextIndex = Number(event.target.value);
+              props.onSectionIndex(nextIndex);
+              setMeasurePick(null);
             }}
           >
-            {names.map((item) => (
+            {choices.map((item) => (
+              <option key={`${item.index}:${item.name}`} value={item.index}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          <select
+            className="prop-select nota-measure-select"
+            aria-label="Measure"
+            value={measure > 0 ? String(measure) : ""}
+            disabled={measures.length === 0}
+            onChange={(event) => {
+              const nextMeasure = Number(event.target.value);
+              setMeasurePick(nextMeasure);
+            }}
+          >
+            {measures.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
@@ -341,10 +654,21 @@ function SongNota(props: {
           </select>
           <button
             type="button"
+            className={`icon-btn${chained && canChain ? " on" : ""}`}
+            title="Measure chain"
+            aria-label="Measure chain"
+            aria-pressed={chained}
+            disabled={!canChain || measure < 1}
+            onClick={toggleChain}
+          >
+            <ChainIcon />
+          </button>
+          <button
+            type="button"
             className="icon-btn"
             title="Add section rectangle"
             aria-label="Add section rectangle"
-            disabled={!name}
+            disabled={emptyMeasure == null || !canEdit}
             onClick={addRect}
           >
             +
@@ -354,7 +678,7 @@ function SongNota(props: {
             className="icon-btn"
             title="Delete section rectangle"
             aria-label="Delete section rectangle"
-            disabled={!selectedRect}
+            disabled={!canEdit || (!activeRect && !selectedLabel)}
             onClick={removeRect}
           >
             −
@@ -364,13 +688,26 @@ function SongNota(props: {
             className="icon-btn danger"
             title="Delete all section rectangles"
             aria-label="Delete all section rectangles"
-            disabled={props.rects.length === 0}
+            disabled={liveRects.length === 0}
             onClick={removeAllRects}
           >
             <DeleteIcon />
           </button>
         </div>
-      ) : null}
+      </div>
+  ) : null;
+
+  return (
+    <article
+      ref={articleRef}
+      className={`lyrics-song nota-song${props.editing && props.layer === "chord" ? " chord-editing" : ""}`}
+      data-nota-song={props.entryId}
+    >
+      {props.editing && props.editSlot
+        ? createPortal(editDock, props.editSlot)
+        : props.editing
+          ? editDock
+          : songHead}
       {song && file ? <NotaProgressBar entryId={props.entryId} song={song} /> : null}
       {song && file ? (
         <NotaPages
@@ -378,56 +715,183 @@ function SongNota(props: {
           file={file}
           zoom={props.zoom}
           onLayout={props.onPagesLayout}
-          overlay={(page) =>
+          overlay={(page, pageCount) =>
             props.editing ? (
               <>
-                {props.rects
-                  .filter((box) => box.page === page && box.name !== name)
+                {props.layer === "chord" ? (
+                  <RectChordLabels
+                    song={song}
+                    rects={measureRects}
+                    page={page}
+                    lastPage={pageCount - 1}
+                    sectionIndex={sectionIndex}
+                    editing
+                  />
+                ) : null}
+                {sectionLabels
+                  .filter((box) => clampNotaPage(box.page, pageCount - 1) === page)
                   .map((box) => (
-                    <SectionRect key={box.id} box={box} dim />
-                  ))}
-                {named
-                  .filter((box) => box.page === page)
-                  .map((box) => (
-                    <SectionRect
+                    <SectionLabelRect
                       key={box.id}
                       box={box}
-                      selected={box.id === selectedRect?.id}
-                      onSelect={setSelectedRectId}
+                      selected={selectedLabel?.id === box.id}
+                      onSelect={selectBox}
                       onChange={(next, persist) =>
-                        props.onRects(upsertNotaBox(props.rects, next), persist)
+                        props.onRects(upsertNotaBox(liveRects, next), persist)
                       }
                     />
                   ))}
+                {measureRects
+                  .filter(
+                    (box) =>
+                      clampNotaPage(box.page, pageCount - 1) === page &&
+                      box.id !== activeRect?.id
+                  )
+                  .map((box) => (
+                    <SectionRect key={box.id} box={box} previous onSelect={selectBox} />
+                  ))}
+                {canEdit &&
+                activeRect &&
+                clampNotaPage(activeRect.page, pageCount - 1) === page ? (
+                  <>
+                    <SectionRect
+                      key={activeRect.id}
+                      box={activeRect}
+                      selected
+                      onChange={(next, persist) =>
+                        props.onRects(
+                          chained
+                            ? applyChainedRectGeometry(liveRects, next)
+                            : upsertNotaBox(liveRects, next),
+                          persist
+                        )
+                      }
+                    />
+                    {props.layer === "chord" ? (
+                      <RectNoteGrid
+                        box={activeRect}
+                        notes={notesForBox(song, activeRect)}
+                        steps={stepsForBox(song, activeRect)}
+                        play="current"
+                      />
+                    ) : null}
+                  </>
+                ) : null}
+                <RallMarks
+                  song={song}
+                  rects={liveRects}
+                  page={page}
+                  lastPage={pageCount - 1}
+                  entryId={props.entryId}
+                  brokenChains={broken}
+                />
               </>
             ) : (
-              <PlayRects
-                page={page}
-                entryId={props.entryId}
-                song={song}
-                rects={props.rects}
-                autoScroll={props.autoScroll}
-              />
+              <>
+                {props.layer === "chord" ? (
+                  <RectChordLabels
+                    song={song}
+                    rects={liveRects.filter((box) => !isSectionLabel(box))}
+                    page={page}
+                    lastPage={pageCount - 1}
+                  />
+                ) : null}
+                {props.layer === "score" ? (
+                  <ScoreLyrics
+                    song={song}
+                    rects={liveRects}
+                    page={page}
+                    lastPage={pageCount - 1}
+                    brokenChains={broken}
+                    entryId={props.entryId}
+                  />
+                ) : null}
+                {liveRects
+                  .filter(
+                    (box) =>
+                      isSectionLabel(box) && clampNotaPage(box.page, pageCount - 1) === page
+                  )
+                  .map((box) => (
+                    <SectionLabelRect key={box.id} box={box} />
+                  ))}
+                <PlayRects
+                  page={page}
+                  lastPage={pageCount - 1}
+                  entryId={props.entryId}
+                  song={song}
+                  rects={liveRects}
+                  brokenChains={broken}
+                  autoScroll={props.autoScroll}
+                  leadIn={props.leadIn}
+                  showNoteGrids={props.layer === "chord"}
+                />
+                <RallMarks
+                  song={song}
+                  rects={liveRects}
+                  page={page}
+                  lastPage={pageCount - 1}
+                  entryId={props.entryId}
+                  brokenChains={broken}
+                />
+              </>
             )
           }
         />
       ) : (
         <div className="lyrics-empty meta">No nota</div>
       )}
+      {song && props.layer === "chord" ? <SongNoteGridSummary song={song} /> : null}
     </article>
+  );
+}
+
+function SongNoteGridSummary(props: { song: Song }) {
+  const rows = uniqueSectionNoteGrids(props.song).flatMap((row) => {
+    const section = props.song.sections.find((item) => item.name === row.name);
+    const steps = section
+      ? stepsForMeasure(props.song, timeToMusical(props.song.tempoMap, section.start).measure)
+      : undefined;
+    return row.groups.map((group) => ({
+      key: `${row.name}:${group.label}`,
+      name: group.label,
+      grids: group.grids,
+      steps
+    }));
+  });
+  if (rows.length === 0) return null;
+  return (
+    <div className="nota-grid-summary">
+      {rows.map((row) => (
+        <div key={row.key} className="nota-grid-summary-row">
+          <div className="nota-grid-summary-head">{row.name}</div>
+          <div className={row.grids.length > 1 ? "nota-grid-summary-list" : "nota-grid-summary-one"}>
+            {row.grids.map((hits, index) => (
+              <div key={`${row.key}-${index}`} className="nota-grid-summary-grid">
+                <ChordNoteLane notes={hits} steps={row.steps} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
 function NotaProgressBar(props: { entryId: string; song: Song }) {
   const count = countSection(props.song);
   const playback = useMasterStore((state) => state.playback);
+  const followTime = useMasterStore(stagePlayheadTime);
+  const panicFollow = useMasterStore(panicBlocksFollow);
+  const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
   if (!count) return null;
 
   const playing =
-    (playback.state === PlaybackState.Playing ||
-      playback.state === PlaybackState.Transitioning) &&
-    playback.clock?.setlistEntryId === props.entryId;
-  const time = playing ? (playback.clock?.time ?? 0) : 0;
+    ((playback.state === PlaybackState.Playing ||
+      playback.state === PlaybackState.Transitioning) ||
+      panicFollow) &&
+    (playback.clock?.setlistEntryId === props.entryId ||
+      (panicFollow && selectedEntryId === props.entryId));
+  const time = playing ? followTime : 0;
   const sectionIndex = playing ? sectionIndexAt(props.song.sections, time) : -1;
   const section = sectionIndex >= 0 ? props.song.sections[sectionIndex] : undefined;
   const showingCount = !section || isCountSection(props.song, section);
@@ -459,75 +923,378 @@ function NotaProgressBar(props: { entryId: string; song: Song }) {
   }
 
   return (
-    <div
-      className={`lyrics-section chord-section-name nota-count-bar playhead-green${sectionBarClass(name)}`}
-      style={{ "--playhead": String(fill) } as CSSProperties}
-    >
-      <span className="lyrics-playhead" aria-hidden="true" />
-      <div className="lyrics-cue-body form-section-bar">
-        <span className="form-section-lead">{name}</span>
-        {label ? (
-          <span className="form-section-tail">
-            <span className="drum-count-label">{label}</span>
-          </span>
-        ) : null}
+    <div className="nota-count-stack">
+      <div
+        className={`lyrics-section chord-section-name nota-count-bar playhead-green${sectionBarClass(name)}`}
+        style={{ "--playhead": String(fill) } as CSSProperties}
+      >
+        <span className="lyrics-playhead" aria-hidden="true" />
+        <div className="lyrics-cue-body form-section-bar">
+          <span className="form-section-lead">{name}</span>
+          {label ? (
+            <span className="form-section-tail">
+              <span className="drum-count-label">{label}</span>
+            </span>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
 
+function RectChordLabels(props: {
+  song: Song;
+  rects: NotaSectionBox[];
+  page: number;
+  lastPage: number;
+  sectionIndex?: number;
+  editing?: boolean;
+}) {
+  const shown = (text: string) => displayChordText(text);
+  const musicBox = (box: NotaSectionBox): NotaSectionBox =>
+    props.sectionIndex != null ? { ...box, sectionIndex: props.sectionIndex } : box;
+  return (
+    <>
+      {props.rects
+        .filter((box) => clampNotaPage(box.page, props.lastPage) === props.page)
+        .map((box) => {
+          const lane = rectChordLane(props.song, musicBox(box));
+          const marks = lane?.marks ?? [];
+          const beats = lane?.beats ?? 4;
+          if (!props.editing && marks.length === 0) return null;
+          return (
+            <div
+              key={`chord-${box.id}`}
+              className={`nota-rect-chords${props.editing ? " editing" : ""}`}
+              style={{
+                left: `${box.x * 100}%`,
+                top: `${box.y * 100}%`,
+                width: `${box.w * 100}%`
+              }}
+            >
+              {marks.map((mark) => (
+                <span
+                  key={`beat-${mark.beat}`}
+                  className="nota-rect-beat"
+                  style={{ left: `${(mark.beat / beats) * 100}%` }}
+                />
+              ))}
+              {marks.map((mark, index) => (
+                <span
+                  key={`${mark.text}-${mark.beat}-${index}`}
+                  className="nota-rect-chord"
+                  style={{ left: `${(mark.beat / beats) * 100}%` }}
+                >
+                  {shown(mark.text)}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+    </>
+  );
+}
+
+function ScoreLyrics(props: {
+  song: Song;
+  rects: NotaSectionBox[];
+  page: number;
+  lastPage: number;
+  brokenChains: BrokenMeasureChain[];
+  entryId: string;
+}) {
+  const storeTime = useMasterStore((s) => {
+    const live =
+      s.playback.clock?.setlistEntryId === props.entryId ||
+      (panicBlocksFollow(s) && s.selectedEntryId === props.entryId);
+    const idlePreview =
+      s.playback.state !== PlaybackState.Playing &&
+      s.playback.state !== PlaybackState.Transitioning &&
+      !panicBlocksFollow(s) &&
+      s.selectedEntryId === props.entryId;
+    return live || idlePreview ? stagePlayheadTime(s) : undefined;
+  });
+  const line = activeScoreLyric(
+    scoreLyricPlacements(props.song, props.rects, props.brokenChains).filter(
+      (placement) => clampNotaPage(placement.page, props.lastPage) === props.page
+    ),
+    storeTime
+  );
+  if (!line) return null;
+  return (
+    <div
+      className="nota-score-lyric current"
+      data-score-lyric={line.id}
+      style={{
+        left: `${line.x * 100}%`,
+        top: `calc(${line.y * 100}% + ${SCORE_LYRIC_GAP_PX}px)`,
+        width: `${line.w * 100}%`
+      }}
+    >
+      {line.text}
+    </div>
+  );
+}
+
+function RallMarks(props: {
+  song: Song;
+  rects: readonly NotaSectionBox[];
+  page: number;
+  lastPage: number;
+  entryId: string;
+  brokenChains?: BrokenMeasureChain[];
+}) {
+  const storeTime = useMasterStore((s) => {
+    const live =
+      s.playback.clock?.setlistEntryId === props.entryId ||
+      (panicBlocksFollow(s) && s.selectedEntryId === props.entryId);
+    const idlePreview =
+      s.playback.state !== PlaybackState.Playing &&
+      s.playback.state !== PlaybackState.Transitioning &&
+      !panicBlocksFollow(s) &&
+      s.selectedEntryId === props.entryId;
+    return live || idlePreview ? stagePlayheadTime(s) : undefined;
+  });
+  return (
+    <>
+      {rallOverlayBoxes(props.song, props.rects, storeTime, props.brokenChains)
+        .filter((box) => clampNotaPage(box.page, props.lastPage) === props.page)
+        .map((box) => (
+          <div
+            key={`rall-${box.id}`}
+            className="nota-rall-mark"
+            data-rall-mark={box.id}
+            style={{
+              left: `${box.x * 100}%`,
+              top: `calc(${(box.y + box.h) * 100}% + 3px)`
+            }}
+          >
+            RALL
+          </div>
+        ))}
+    </>
+  );
+}
+
 function PlayRects(props: {
   page: number;
+  lastPage: number;
   entryId: string;
   song: Song;
   rects: NotaSectionBox[];
+  brokenChains: BrokenMeasureChain[];
   autoScroll: boolean;
+  leadIn?: boolean;
+  showNoteGrids?: boolean;
 }) {
+  const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
+  const anyPlaying = useMasterStore(
+    (s) =>
+      s.playback.state === PlaybackState.Playing ||
+      s.playback.state === PlaybackState.Transitioning ||
+      panicBlocksFollow(s)
+  );
   const playing = useMasterStore(
     (s) =>
-      (s.playback.state === PlaybackState.Playing || s.playback.state === PlaybackState.Transitioning) &&
-      s.playback.clock?.setlistEntryId === props.entryId
+      ((s.playback.state === PlaybackState.Playing ||
+        s.playback.state === PlaybackState.Transitioning) ||
+        panicBlocksFollow(s)) &&
+      (s.playback.clock?.setlistEntryId === props.entryId ||
+        (panicBlocksFollow(s) && s.selectedEntryId === props.entryId))
   );
-  const time = useMasterStore((s) =>
-    s.playback.clock?.setlistEntryId === props.entryId ? (s.playback.clock.time ?? 0) : 0
-  );
-  const current = playing ? sectionIndexAt(props.song.sections, time) : -1;
-  const next = current >= 0 ? current + 1 : -1;
-  const nextName = next >= 0 ? props.song.sections[next]?.name : undefined;
-  const nextBoxes = nextName
-    ? props.rects.filter((box) => box.name === nextName && box.page === props.page)
-    : [];
-  const section = current >= 0 ? props.song.sections[current] : undefined;
-  const measureLen = secondsPerMeasure(tempoAt(props.song.tempoMap, time));
-  const lastMeasure = Boolean(section && measureLen > 0 && time >= section.end - measureLen);
-
-  useEffect(() => {
-    if (!props.autoScroll || !lastMeasure || nextBoxes.length === 0) return;
-    const node = document.querySelector(
-      `[data-nota-song="${props.entryId}"] .nota-section-rect.next`
-    );
-    if (!(node instanceof HTMLElement)) return;
-    const stage = node.closest(".nota-stage");
-    if (stage instanceof HTMLElement && stageNodeFullyInView(stage, node)) return;
-    node.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [lastMeasure, nextName, props.autoScroll, props.entryId, nextBoxes.length]);
-
-  if (!playing) return null;
+  const preview = !anyPlaying && selectedEntryId === props.entryId;
+  const active = playing || Boolean(props.leadIn) || preview;
+  const storeTime = useMasterStore((s) => {
+    const live =
+      s.playback.clock?.setlistEntryId === props.entryId ||
+      (panicBlocksFollow(s) && s.selectedEntryId === props.entryId);
+    const idlePreview =
+      s.playback.state !== PlaybackState.Playing &&
+      s.playback.state !== PlaybackState.Transitioning &&
+      !panicBlocksFollow(s) &&
+      s.selectedEntryId === props.entryId;
+    return live || idlePreview ? stagePlayheadTime(s) : 0;
+  });
+  const time = useFollowPlayheadTime(storeTime);
+  const onPage = (box: NotaSectionBox) => clampNotaPage(box.page, props.lastPage) === props.page;
+  const currentHit = notaHitAt(props.song, time);
+  const followingHit = nowLooksAheadHit(props.song, time, props.brokenChains);
+  const nextMeasureHit = nextNotaHit(props.song, time);
+  const currentBoxes = rectsForHit(props.rects, currentHit, props.brokenChains).filter(onPage);
+  const currentIds = new Set(currentBoxes.map((box) => box.id));
+  const nextBoxes = rectsForHit(props.rects, followingHit, props.brokenChains)
+    .filter(onPage)
+    .filter((box) => !currentIds.has(box.id));
+  const nowNotes = notesForBox(props.song, currentHit);
+  const previewHit = currentHit ? nextMeasureHit : followingHit;
+  const nextNotes = nextNoteGridIfDifferent(nowNotes, notesForBox(props.song, previewHit));
+  const nextGridBoxes =
+    props.showNoteGrids && nextNotes
+      ? rectsForHit(props.rects, previewHit, props.brokenChains)
+          .filter(onPage)
+          .filter((box) => !currentIds.has(box.id))
+      : [];
+  if (!active) return null;
+  if (!playing && currentBoxes.length === 0 && nextBoxes.length === 0 && nextGridBoxes.length === 0) {
+    return null;
+  }
   return (
     <>
-      {lastMeasure
-        ? nextBoxes.map((box) => <SectionRect key={box.id} box={box} play="next" />)
-        : null}
+      {currentBoxes.map((box) => (
+        <Fragment key={box.id}>
+          <SectionRect box={box} play="current" />
+          {props.showNoteGrids ? (
+            <RectNoteGrid
+              box={box}
+              notes={nowNotes}
+              steps={stepsForBox(props.song, box)}
+              play="current"
+            />
+          ) : null}
+        </Fragment>
+      ))}
+      {nextBoxes.map((box) => (
+        <SectionRect key={box.id} box={box} play="next" />
+      ))}
+      {nextGridBoxes.map((box) => (
+        <RectNoteGrid
+          key={`next-grid-${box.id}`}
+          box={box}
+          notes={nextNotes ?? []}
+          steps={stepsForBox(props.song, box)}
+          play="next"
+        />
+      ))}
     </>
+  );
+}
+
+function RectNoteGrid(props: {
+  box: NotaSectionBox;
+  notes: ChordNoteHit[];
+  steps?: number;
+  play: "current" | "next";
+}) {
+  return (
+    <div
+      className={`nota-rect-notes ${props.play}`}
+      style={{
+        left: `${props.box.x * 100}%`,
+        top: `${props.box.y * 100}%`,
+        width: `${props.box.w * 100}%`,
+        transform: `translateY(calc(-100% - ${NOTE_GRID_GAP}px))`
+      }}
+    >
+      <ChordNoteLane notes={props.notes} steps={props.steps} />
+    </div>
+  );
+}
+
+function SectionLabelRect(props: {
+  box: NotaSectionBox;
+  selected?: boolean;
+  onSelect?: (box: NotaSectionBox) => void;
+  onChange?: (box: NotaSectionBox, persist: boolean) => void;
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ start: NotaSectionBox; grabX: number; grabY: number } | null>(null);
+  const latestRef = useRef(props.box);
+  latestRef.current = props.box;
+  const text = sectionLabelText(props.box);
+
+  const pointerPos = (event: PointerEvent<HTMLElement>) => {
+    const page = wrapRef.current?.parentElement;
+    const bounds = page?.getBoundingClientRect();
+    if (!bounds || bounds.width < 1 || bounds.height < 1) return null;
+    return {
+      x: (event.clientX - bounds.left) / bounds.width,
+      y: (event.clientY - bounds.top) / bounds.height
+    };
+  };
+
+  const fitSize = (persist: boolean) => {
+    const node = wrapRef.current;
+    const page = node?.parentElement;
+    if (!node || !page || !props.onChange) return;
+    const pageBox = page.getBoundingClientRect();
+    if (pageBox.width < 1 || pageBox.height < 1) return;
+    const nextW = Math.min(1, Math.max(0.02, node.offsetWidth / pageBox.width));
+    const nextH = Math.min(1, Math.max(0.018, node.offsetHeight / pageBox.height));
+    if (Math.abs(nextW - props.box.w) < 0.003 && Math.abs(nextH - props.box.h) < 0.003) return;
+    const next = clampNotaBox({ ...props.box, w: nextW, h: nextH });
+    latestRef.current = next;
+    props.onChange(next, persist);
+  };
+
+  useLayoutEffect(() => {
+    fitSize(false);
+  }, [text, props.box.label, props.box.name]);
+
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!props.onChange) {
+      props.onSelect?.(props.box);
+      return;
+    }
+    props.onSelect?.(props.box);
+    const pos = pointerPos(event);
+    if (!pos) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragRef.current = { start: props.box, grabX: pos.x - props.box.x, grabY: pos.y - props.box.y };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || !props.onChange) return;
+    const pos = pointerPos(event);
+    if (!pos) return;
+    const next = clampNotaBox({ ...drag.start, x: pos.x - drag.grabX, y: pos.y - drag.grabY });
+    latestRef.current = next;
+    props.onChange(next, false);
+  };
+
+  const endDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current || !props.onChange) return;
+    dragRef.current = null;
+    props.onChange(latestRef.current, true);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  return (
+    <div
+      ref={wrapRef}
+      className={`nota-section-label${sectionBarClass(props.box.name)}${
+        props.selected ? " selected" : ""
+      }${props.onChange ? " editing" : ""}${props.onSelect ? " selectable" : ""}`}
+      role="button"
+      aria-label="Section name"
+      aria-pressed={props.selected ? true : undefined}
+      tabIndex={props.onSelect || props.onChange ? 0 : undefined}
+      data-nota-kind="label"
+      data-nota-section={props.box.name}
+      data-nota-rect={props.box.id}
+      style={{ left: `${props.box.x * 100}%`, top: `${props.box.y * 100}%` }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+    >
+      <span className="nota-section-label-text">{text}</span>
+    </div>
   );
 }
 
 function SectionRect(props: {
   box: NotaSectionBox;
   dim?: boolean;
+  previous?: boolean;
   selected?: boolean;
   play?: "current" | "next";
-  onSelect?: (id: string) => void;
+  leadIn?: boolean;
+  onSelect?: (box: NotaSectionBox) => void;
   onChange?: (box: NotaSectionBox, persist: boolean) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -551,8 +1318,14 @@ function SectionRect(props: {
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (!props.onChange) return;
-    props.onSelect?.(props.box.id);
+    if (!props.onChange) {
+      if (!props.onSelect) return;
+      event.preventDefault();
+      event.stopPropagation();
+      props.onSelect(props.box);
+      return;
+    }
+    props.onSelect?.(props.box);
     const handle = ((event.target as HTMLElement).dataset.handle as RectHandle | undefined) ?? "move";
     event.preventDefault();
     event.stopPropagation();
@@ -591,11 +1364,15 @@ function SectionRect(props: {
   return (
     <div
       ref={wrapRef}
-      className={`nota-section-rect${props.dim ? " dim" : ""}${props.selected ? " selected" : ""}${props.play ? ` play ${props.play}` : ""}`}
+      className={`nota-section-rect${props.dim ? " dim" : ""}${props.previous ? " previous" : ""}${props.selected ? " selected" : ""}${props.play ? ` play ${props.play}` : ""}${
+        props.previous && props.onSelect ? " selectable" : ""
+      }`}
       role={props.onChange ? "slider" : undefined}
       aria-label="Section rectangle"
       tabIndex={props.onChange ? 0 : undefined}
+      data-lead-in={props.leadIn ? "" : undefined}
       data-nota-section={props.box.name}
+      data-nota-measure={props.box.measure}
       data-nota-rect={props.box.id}
       style={{
         left: `${props.box.x * 100}%`,
@@ -621,7 +1398,7 @@ function NotaPages(props: {
   songId: string;
   file: string;
   zoom: number;
-  overlay?: (pageIndex: number) => ReactNode;
+  overlay?: (pageIndex: number, pageCount: number) => ReactNode;
   onLayout?: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -643,7 +1420,7 @@ function NotaPages(props: {
     setFailed(null);
     const load = async () => {
       try {
-        const buffer = await readSongFile(props.songId, props.file);
+        const buffer = await libraryApi.readBytes(props.songId, props.file);
         if (cancelled) return;
         doc = await getDocument({ data: new Uint8Array(buffer) }).promise;
         if (cancelled) {
@@ -723,7 +1500,7 @@ function NotaPages(props: {
                 else canvases.current.delete(index);
               }}
             />
-            {props.overlay?.(index)}
+            {props.overlay?.(index, pageCount)}
           </div>
         ))}
       </div>

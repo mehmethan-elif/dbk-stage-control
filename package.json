@@ -18,7 +18,8 @@
     "test:watch": "vitest",
     "build": "npm run build -w @dbk/web",
     "pages:build": "VITE_PUBLIC_CLIENT=1 npm run build -w @dbk/web",
-    "ios": "npm run build -w @dbk/web && npx cap sync ios",
+    "build:ios": "npm run build:ios -w @dbk/web && npx cap sync ios",
+    "ios": "npm run build:ios",
     "ios:open": "npx cap open ios",
     "fixtures": "node scripts/generate-fixtures.mjs",
     "publish:library": "npx tsx scripts/publish-client-library.mjs"

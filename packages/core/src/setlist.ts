@@ -1,4 +1,4 @@
-import { hasBackingAudio } from "./audio-engine.js";
+import { hasPlaybackAudio } from "./audio-engine.js";
 import type { BreakSetlistEntry, Gig, SetlistEntry, Song, SongSetlistEntry } from "./models.js";
 import {
   ELIF_KONUSMA_LABEL,
@@ -59,7 +59,7 @@ export function lastSongIndex(setlist: SetlistEntry[]): number {
 export function listedSongKey(song: Song | undefined, entry: SongSetlistEntry): string {
   if (!song) return "";
   const key =
-    entryPlayMode(entry) === PlayMode.Playback ? song.key : parseSongInfo(song.info).key;
+    entryPlayMode(entry, song.info) !== PlayMode.View ? song.key : parseSongInfo(song.info).key;
   return (key ?? "").trim().toLocaleUpperCase("tr-TR");
 }
 
@@ -94,19 +94,31 @@ export function withKeyChangeElifs(
   const map = songMapOf(songs);
   const visible = visibleSetlistEntries(setlist).filter((entry) => !isLockedElif(entry));
   const next: SetlistEntry[] = [];
-  for (let i = 0; i < visible.length; i++) {
-    const entry = visible[i];
-    const prev = visible[i - 1];
-    if (
-      entry &&
-      prev &&
-      isSongEntry(prev) &&
-      isSongEntry(entry) &&
-      songsHaveDifferentKeys(prev, entry, map)
-    ) {
-      next.push(lockedElifEntry(prev.entryId, entry.entryId));
+  let lastPlayable: SongSetlistEntry | undefined;
+  let manualElifPending = false;
+  for (const entry of visible) {
+    if (isSongEntry(entry) && entry.skipped) {
+      next.push(entry);
+      continue;
     }
-    if (entry) next.push(entry);
+    if (isElifKonusma(entry)) {
+      next.push(entry);
+      manualElifPending = true;
+      continue;
+    }
+    if (
+      isSongEntry(entry) &&
+      lastPlayable &&
+      !manualElifPending &&
+      songsHaveDifferentKeys(lastPlayable, entry, map)
+    ) {
+      next.push(lockedElifEntry(lastPlayable.entryId, entry.entryId));
+    }
+    next.push(entry);
+    if (isSongEntry(entry)) {
+      lastPlayable = entry;
+      manualElifPending = false;
+    }
   }
   return next;
 }
@@ -122,6 +134,7 @@ export function songFollowedByElif(
     if (!entry) continue;
     if (isElifKonusma(entry)) return true;
     if (isSongEntry(entry)) {
+      if (entry.skipped) continue;
       if (!current || !isSongEntry(current) || !songs) return false;
       return songsHaveDifferentKeys(current, entry, songs);
     }
@@ -175,6 +188,19 @@ export function canInsertElifAfter(setlist: SetlistEntry[], entryId: string | nu
   return index >= 0 && last >= 0 && index < last;
 }
 
+export function insertElifAfterSelected(
+  setlist: SetlistEntry[],
+  selectedEntryId: string | null,
+  entryId: string
+): SetlistEntry[] {
+  if (!canInsertElifAfter(setlist, selectedEntryId)) return setlist;
+  const index = setlist.findIndex((entry) => entry.entryId === selectedEntryId);
+  if (index < 0) return setlist;
+  const next = setlist.slice();
+  next.splice(index + 1, 0, { type: "talk", entryId, label: ELIF_KONUSMA_LABEL });
+  return next;
+}
+
 export function effectiveFinishMode(
   _entry: SongSetlistEntry,
   lastSong: boolean,
@@ -183,22 +209,29 @@ export function effectiveFinishMode(
   songs?: Map<string, Song>
 ): FinishMode {
   if (lastSong) return FinishMode.Stop;
+  if (setlist && index !== undefined && nextUnskippedSongIndex(setlist, index) === -1) {
+    return FinishMode.Stop;
+  }
   if (setlist && index !== undefined && songFollowedByElif(setlist, index, songs)) {
     return FinishMode.Stop;
   }
   if (setlist && index !== undefined && songs) {
     const current = setlist[index];
-    if (current && isSongEntry(current) && !hasBackingAudio(songs.get(current.songId))) {
+    if (current && isSongEntry(current) && !hasPlaybackAudio(songs.get(current.songId))) {
       return FinishMode.Stop;
     }
-    const next = setlist[nextSongIndex(setlist, index)];
-    if (next && isSongEntry(next) && !hasBackingAudio(songs.get(next.songId))) {
+    const next = setlist[nextUnskippedSongIndex(setlist, index)];
+    const nextSong = next && isSongEntry(next) ? songs.get(next.songId) : undefined;
+    if (next && isSongEntry(next) && !hasPlaybackAudio(nextSong)) {
+      return FinishMode.Stop;
+    }
+    if (next && isSongEntry(next) && parseSongInfo(nextSong?.info).playMode === PlayMode.View) {
       return FinishMode.Stop;
     }
     if (
       next &&
       isSongEntry(next) &&
-      entryPlayMode(next) === PlayMode.Playback &&
+      entryPlayMode(next, songs.get(next.songId)?.info) !== PlayMode.View &&
       firstSectionNamed(songs.get(next.songId)?.sections, "SERBEST")
     ) {
       return FinishMode.Stop;
@@ -207,13 +240,13 @@ export function effectiveFinishMode(
   return FinishMode.PlayNext;
 }
 
-export function entryStartAt(entry: SongSetlistEntry): number {
-  return Math.max(0, entry.startAt ?? 0);
+export function entryStartAt(entry: SongSetlistEntry, song?: Song): number {
+  return Math.max(0, parseSongInfo(song?.info).startAt ?? entry.startAt ?? 0);
 }
 
 /** Where a chained PLAY_NEXT should start the following song. */
 export function songChainStartAt(song: Song | undefined, entry: SongSetlistEntry): number {
-  const explicit = entryStartAt(entry);
+  const explicit = entryStartAt(entry, song);
   if (explicit > 0) return explicit;
   const first = song?.sections[0];
   const second = song?.sections[1];
@@ -227,10 +260,10 @@ export function estimateSetDuration(gig: Gig, songs: Map<string, Song>): number 
   let total = 0;
   for (let i = 0; i < gig.setlist.length; i++) {
     const entry = gig.setlist[i];
-    if (!entry || !isSongEntry(entry)) continue;
+    if (!entry || !isSongEntry(entry) || entry.skipped) continue;
     const song = songs.get(entry.songId);
     if (!song) continue;
-    const last = isLastSongEntry(gig.setlist, i);
+    const last = nextUnskippedSongIndex(gig.setlist, i) === -1;
     const finish = effectiveFinishMode(entry, last, gig.setlist, i, songs);
     if (finish === FinishMode.PlayNext) {
       total += (song.nextSongAt ?? song.clickDuration ?? song.duration) || song.info?.duration || 0;
@@ -250,6 +283,57 @@ export function formatDuration(seconds: number): string {
     return `${h}h ${String(m).padStart(2, "0")}m`;
   }
   return `${m}:${String(rem).padStart(2, "0")}`;
+}
+
+export function keepSkippedSongsInPlace(
+  original: SetlistEntry[],
+  next: SetlistEntry[]
+): SetlistEntry[] {
+  const nextIds = new Set(next.map((entry) => entry.entryId));
+  const missing = original.filter(
+    (entry) => isSongEntry(entry) && entry.skipped && !nextIds.has(entry.entryId)
+  );
+  if (missing.length === 0) return next;
+  const result = next.slice();
+  for (const entry of missing) {
+    const at = original.findIndex((item) => item.entryId === entry.entryId);
+    let insertAt = 0;
+    for (let i = at - 1; i >= 0; i--) {
+      const neighbor = original[i];
+      const idx = result.findIndex((item) => item.entryId === neighbor?.entryId);
+      if (idx >= 0) {
+        insertAt = idx + 1;
+        break;
+      }
+    }
+    result.splice(insertAt, 0, { ...entry, skipped: true });
+  }
+  return result;
+}
+
+export function applyRemoteSetlist(
+  current: SetlistEntry[],
+  incoming: readonly SetlistEntry[]
+): SetlistEntry[] {
+  if (incoming.length === 0) return current;
+  const byId = new Map(current.map((entry) => [entry.entryId, entry]));
+  const merged = incoming.map((entry) => {
+    const existing = byId.get(entry.entryId);
+    if (entry.type === "song") {
+      const prior = existing && isSongEntry(existing) ? existing : undefined;
+      return {
+        ...(prior ?? { type: "song" as const, entryId: entry.entryId, songId: entry.songId }),
+        entryId: entry.entryId,
+        songId: entry.songId,
+        skipped: entry.skipped ? true : undefined
+      };
+    }
+    if (existing && existing.type !== "song") {
+      return { ...existing, ...entry };
+    }
+    return entry;
+  });
+  return keepSkippedSongsInPlace(current, merged);
 }
 
 export function moveEntry(setlist: SetlistEntry[], from: number, to: number): SetlistEntry[] {

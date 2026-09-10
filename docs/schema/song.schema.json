@@ -15,6 +15,34 @@
     "scale": { "type": "string" },
     "style": { "type": "string" },
     "tags": { "type": "array", "items": { "type": "string" } },
+    "info": {
+      "type": "object",
+      "description": "Shared editable song information used by every setlist.",
+      "required": ["bpm", "numerator", "denominator"],
+      "properties": {
+        "bpm": { "type": "number", "exclusiveMinimum": 0 },
+        "numerator": { "type": "integer", "minimum": 1 },
+        "denominator": { "type": "integer", "minimum": 1 },
+        "beats": { "type": "array", "items": { "type": "boolean" } },
+        "startMode": { "enum": ["COUNT", "SERBEST"] },
+        "duration": { "type": "number", "minimum": 0 },
+        "key": { "type": "string" },
+        "scale": { "type": "string" },
+        "style": { "type": "string" },
+        "notes": { "type": "string" },
+        "playMode": { "enum": ["VIEW", "PLAYBACK", "CLICK_ONLY"] },
+        "startAt": { "type": "number", "minimum": 0 },
+        "pageNotes": {
+          "type": "object",
+          "properties": {
+            "lyrics": { "type": "string" },
+            "score": { "type": "string" },
+            "chord": { "type": "string" },
+            "drums": { "type": "string" }
+          }
+        }
+      }
+    },
     "tempoMap": {
       "type": "array",
       "items": {

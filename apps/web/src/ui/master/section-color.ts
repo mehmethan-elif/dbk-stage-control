@@ -1,6 +1,15 @@
+function tokens(name: string): string[] {
+  return name
+    .trim()
+    .toLocaleUpperCase("tr-TR")
+    .split(/[^A-Z0-9]+/)
+    .filter((part) => part.length > 0);
+}
+
 function isNamed(name: string, token: string): boolean {
   const normalized = name.trim().toLocaleUpperCase("tr-TR");
-  return normalized === token || normalized.startsWith(`${token} `);
+  if (normalized === token || normalized.startsWith(`${token} `)) return true;
+  return tokens(name).includes(token);
 }
 
 export function sectionBarClass(name: string): string {

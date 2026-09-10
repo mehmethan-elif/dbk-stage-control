@@ -1,4 +1,4 @@
-import { hasBackingAudio, metronomeSongView, PlayMode, type Song } from "@dbk/core";
+import { hasBackingAudio, hasClickFlac, metronomeSongView, PlayMode, type Song } from "@dbk/core";
 import type { CSSProperties } from "react";
 
 const FALLBACK = "hsl(0 0% 18%)";
@@ -220,7 +220,12 @@ export function listedSongForColor(
   files?: string[]
 ): Song | undefined {
   if (!song) return undefined;
-  const playback = hasBackingAudio(song, files) && playMode === PlayMode.Playback;
+  const mode = playMode ?? song.info?.playMode;
+  const playback =
+    mode === PlayMode.Playback ||
+    mode === PlayMode.ClickOnly ||
+    (hasBackingAudio(song, files) && playMode === PlayMode.Playback) ||
+    (hasClickFlac(song, files) && playMode === PlayMode.ClickOnly);
   return playback ? song : metronomeSongView(song);
 }
 

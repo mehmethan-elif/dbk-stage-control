@@ -78,12 +78,24 @@ function editDistance(left: string, right: string): number {
   return grid[left.length]![right.length] ?? 99;
 }
 
+export function humanizePracticeFolder(folder: string): string {
+  return folder
+    .normalize("NFC")
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toLocaleUpperCase("tr-TR") + word.slice(1))
+    .join(" ");
+}
+
 export function publishedSongTitle(song: { id: string; folder: string; title?: string }): string {
   const title = song.title?.normalize("NFC").trim();
   if (title) return title;
   const id = song.id.normalize("NFC").trim();
   const folder = song.folder.normalize("NFC").trim();
   if (id && id !== folder) return id;
+  if (folder.includes("_") || (folder && folder === folder.toLowerCase())) {
+    return humanizePracticeFolder(folder);
+  }
   return folder || id || "—";
 }
 
@@ -101,10 +113,22 @@ export function localFoldersNotOnRemote(localFolders: readonly string[], remoteF
   return localFolders.filter((folder) => !remote.has(folder));
 }
 
-export function dropMissingSetlistSongs(gigs: Gig[], songIds: Iterable<string>): Gig[] {
-  const ids = new Set(songIds);
+export function dropMissingSetlistSongs(
+  gigs: Gig[],
+  songs: Iterable<string> | readonly { id: string; folder?: string; title?: string }[]
+): Gig[] {
+  const list = [...songs];
+  const meta = list.every((item) => typeof item === "object")
+    ? (list as { id: string; folder?: string; title?: string }[])
+    : undefined;
+  const ids = new Set(meta ? meta.map((song) => song.id) : (list as string[]));
   return gigs.map((gig) => ({
     ...gig,
-    setlist: gig.setlist.filter((entry) => !isSongEntry(entry) || ids.has(entry.songId))
+    setlist: gig.setlist.filter((entry) => {
+      if (!isSongEntry(entry)) return true;
+      if (entry.skipped) return true;
+      if (ids.has(entry.songId)) return true;
+      return Boolean(meta && resolvePublishedSongId(entry.songId, meta));
+    })
   }));
 }

@@ -57,18 +57,13 @@ export function SelectIcon() {
   );
 }
 
-export function SaveIcon() {
+export function RenameIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 4.5h11.2L19.5 8v11.5H5zm2.2 1.8v5.4h9.2V6.3zm1.7 8.2v4.2h6.2v-4.2z" />
-    </svg>
-  );
-}
-
-export function ResetIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 4.2a7.8 7.8 0 1 0 7.45 9.95h-2.15A5.9 5.9 0 1 1 12 6.1v3.15L18.4 5.6 12 2.05z" />
+      <text x="1.2" y="16.2" fontFamily="Arial, sans-serif" fontSize="13" fontWeight="700">
+        Ab
+      </text>
+      <path d="M18 3.5h5v2h-1.5v13H23v2h-5v-2h1.5v-13H18z" />
     </svg>
   );
 }
@@ -190,6 +185,25 @@ export function AutoScrollIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 3.4 20.2 13h-4.4v7.6H8.2V13H3.8z" />
+    </svg>
+  );
+}
+
+export function ChainIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8.2 14.4 6.9 15.7a3.15 3.15 0 1 1-4.45-4.45l2.5-2.5a3.15 3.15 0 0 1 4.45 0l.85.85-1.27 1.27-.85-.85a1.35 1.35 0 0 0-1.91 0l-2.5 2.5a1.35 1.35 0 1 0 1.91 1.91l1.3-1.3zm7.6-4.8 1.3-1.3a3.15 3.15 0 1 1 4.45 4.45l-2.5 2.5a3.15 3.15 0 0 1-4.45 0l-.85-.85 1.27-1.27.85.85a1.35 1.35 0 0 0 1.91 0l2.5-2.5a1.35 1.35 0 1 0-1.91-1.91l-1.3 1.3zM14.85 8.1 15.95 9.2l-6.75 6.75L7.1 14.85z" />
+    </svg>
+  );
+}
+
+export function DockLeftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        d="M3.7 4.3h16.6v15.4H3.7zm7.4 1.7v12h7.5v-12z"
+      />
     </svg>
   );
 }

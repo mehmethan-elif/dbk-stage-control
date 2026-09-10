@@ -50,17 +50,78 @@ The repo is public, so anyone with the link can get the Master mix and charts. S
 3. Band tablets: home-screen **DBK** → **SONGS** → **Join stage** (your iPad address).
 4. Only playhead, selection, and setlist metadata go over LAN. They do not play backing stems.
 
-## Master iPad app (you)
+## Standalone master iPad app
+
+The native iPad app contains the existing master UI and reads the song library directly from its
+Documents folder. After installation and copying the library, the master iPad can run a show with
+no Mac and no internet connection.
+
+### Build and install
+
+Requirements:
+
+- A Mac with Xcode
+- An Apple ID configured in Xcode
+- The iPad connected to the Mac
 
 ```bash
 npm install
-npm run ios
+npm run build:ios
 npm run ios:open
 ```
 
-In Xcode, run on your master iPads. Copy the full `library` folder (with stems) into the app with Finder File Sharing so the master can play the show.
+In Xcode:
 
-Band tablets do **not** install this Xcode app.
+1. Select the **App** project and its **App** target.
+2. Under **Signing & Capabilities**, choose your development team.
+3. Select the physical iPad as the run destination.
+4. Press **Run** to install DBK Stage Control.
+
+A free Apple ID can sign the app, but the installation normally expires after about seven days.
+Install it again from Xcode when needed. A paid Apple Developer account provides longer-lived
+signing.
+
+### Copy the song library with Finder
+
+The app exposes its Documents folder through Finder File Sharing:
+
+1. Connect the iPad to the Mac.
+2. Open Finder and select the iPad.
+3. Open **Files**.
+4. Select **DBK Stage Control**.
+5. Copy the project’s complete `library` folder into the app.
+
+The resulting iPad layout must be:
+
+```text
+Documents/
+  library/
+    songs/
+      Biz/
+        song.json
+        settings.json
+        nota.pdf
+        ...audio stems...
+      Another Song/
+        ...
+```
+
+Each song folder may contain its packed `song.json`, optional `settings.json`, notation, lyrics, and
+audio files. Shared song information—including play/start mode, key, tempo, duration, and page
+notes—is stored in `song.json`. Legacy song information is migrated there automatically.
+Score rectangles and mixer settings remain in `settings.json`.
+
+To add or update songs later, copy the `library` folder again with Finder. Rebuilding the app is not
+required for library-only changes.
+
+### Use on stage
+
+Open DBK Stage Control on the iPad and choose **This iPad is master**. The master UI, backing
+tracks, click, lyrics, chords, drums, and scores work from the local Files library. Airplane mode is
+fine when using only the master iPad.
+
+Wi-Fi or the master iPad hotspot is needed only when other band tablets join the stage session.
+Band tablets use the browser player and do **not** install the Xcode app.
 
 ## Ports
 

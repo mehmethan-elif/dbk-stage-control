@@ -1,6 +1,16 @@
 export const PROTOCOL_VERSION = 1;
 
-export type DeviceKind = "master" | "client";
+export type DeviceKind = "master" | "client" | "remote";
+
+export const REMOTE_DEVICE_NAME = "REMOTE";
+
+export function isRemoteKind(kind: string | undefined): boolean {
+  return kind === "remote";
+}
+
+export function isRemotePeer(peer: { deviceKind?: string; deviceName?: string }): boolean {
+  return peer.deviceKind === "remote";
+}
 
 export interface HelloMessage {
   type: "Hello";
@@ -8,6 +18,28 @@ export interface HelloMessage {
   deviceKind: DeviceKind;
   deviceName: string;
   deviceId: string;
+  sessionId?: string;
+}
+
+export function masterSessionUpdate(
+  previous: string | null,
+  incoming: string | undefined
+): { sessionId: string | null; restarted: boolean } {
+  const sessionId = incoming?.trim() || null;
+  if (!sessionId) return { sessionId: previous, restarted: false };
+  return { sessionId, restarted: Boolean(previous && previous !== sessionId) };
+}
+
+export interface SyncPeer {
+  deviceId: string;
+  deviceKind: DeviceKind;
+  deviceName: string;
+}
+
+export interface PeersMessage {
+  type: "Peers";
+  peers: SyncPeer[];
+  masterSessionId?: string;
 }
 
 export interface RoleAssignmentMessage {
@@ -22,8 +54,10 @@ export type LoadGigSetlistEntry =
       type: "song";
       entryId: string;
       songId: string;
-      finishMode: "STOP" | "PLAY_NEXT";
-      playMode?: "VIEW" | "PLAYBACK";
+      title?: string;
+      duration?: number;
+      finishMode?: "STOP" | "PLAY_NEXT";
+      playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY";
       skipped?: boolean;
       startAt?: number;
     }
@@ -39,6 +73,19 @@ export interface LoadGigMessage {
   name: string;
   setlistEntryIds: string[];
   setlist?: LoadGigSetlistEntry[];
+  performanceMode?:
+    | "FOLLOW_SONG_INFO"
+    | "CLICK_ONLY"
+    | "METRONOME_CONTINUOUS"
+    | "FREE";
+  stageNames?: string[];
+}
+
+export interface SetlistEditMessage {
+  type: "SetlistEdit";
+  gigId: string;
+  deviceName: string;
+  setlist: LoadGigSetlistEntry[];
 }
 
 export interface LoadSongMessage {
@@ -105,10 +152,50 @@ export interface ErrorMessage {
   message: string;
 }
 
+export type RemoteControlAction = "select" | "play" | "stop" | "seek";
+
+export interface RemoteControlMessage {
+  type: "RemoteControl";
+  action: RemoteControlAction;
+  setlistEntryId?: string;
+  time?: number;
+}
+
+export interface RemoteMixStrip {
+  gainDb: number;
+  muted: boolean;
+  solo: boolean;
+}
+
+export type RemoteMixBank = Record<string, RemoteMixStrip>;
+
+export interface MixerStateMessage {
+  type: "MixerState";
+  busMix: RemoteMixBank;
+  metronomeVolume: number;
+  songId?: string;
+  songTitle?: string;
+  songMix?: RemoteMixBank;
+  songChannels?: string[];
+  playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY";
+  songMixer?: boolean;
+}
+
+export interface RemoteMixerMessage {
+  type: "RemoteMixer";
+  target: "song" | "bus" | "metro";
+  songId?: string;
+  channel?: string;
+  patch?: Partial<RemoteMixStrip>;
+  volume?: number;
+}
+
 export type SyncMessage =
   | HelloMessage
+  | PeersMessage
   | RoleAssignmentMessage
   | LoadGigMessage
+  | SetlistEditMessage
   | LoadSongMessage
   | PrepareSongMessage
   | PlayMessage
@@ -118,6 +205,9 @@ export type SyncMessage =
   | SectionChangedMessage
   | NextSongMessage
   | ClientStatusMessage
+  | RemoteControlMessage
+  | MixerStateMessage
+  | RemoteMixerMessage
   | ErrorMessage;
 
 export function parseSyncMessage(raw: string): SyncMessage | null {

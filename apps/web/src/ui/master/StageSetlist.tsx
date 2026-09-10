@@ -1,10 +1,14 @@
-import { useRef, useState, type PointerEvent, type RefObject } from "react";
+import { useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import {
+  canInsertElifAfter,
+  createId,
   elifPlacementValid,
-  entryPlayMode,
+  insertElifAfterSelected,
   isElifKonusma,
   isLockedElif,
   isSongEntry,
+  keepSkippedSongsInPlace,
+  parseSongInfo,
   withKeyChangeElifs,
   PlaybackState,
   PlayMode,
@@ -12,13 +16,39 @@ import {
   type SetlistEntry,
   type Song
 } from "@dbk/core";
-import { useMasterStore } from "../../store/master-store";
+import {
+  currentGig,
+  selectAddedSetlistEntry,
+  setlistLocked,
+  followsSharedPlayhead,
+  stageConnectOn,
+  useMasterStore
+} from "../../store/master-store";
+import { PlayModeMark } from "./play-mode-mark";
+import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
+import { practiceEntryId } from "../../practice/gig";
 import { listedSongForColor, songRowStyle } from "../shared/key-color";
-import { AddIcon, LockIcon, SkipIcon } from "../shared/icons";
+import { AddIcon, LockIcon } from "../shared/icons";
 import { ConcertFinalBlock, ElifLabel, ElifNote, setlistHasSongs } from "./setlist-marker";
+import { groupLibrarySongs } from "./library-groups";
 import { scrollStageToSongTitle } from "./stage-scroll";
 
 const DRAG_THRESHOLD = 8;
+
+let lastSetlistAction = 0;
+
+function onSetlistAction(
+  event: PointerEvent<HTMLButtonElement> | MouseEvent<HTMLButtonElement>,
+  action?: () => void
+) {
+  event.stopPropagation();
+  event.preventDefault();
+  if ("button" in event && event.button > 0) return;
+  const now = performance.now();
+  if (now - lastSetlistAction < 400) return;
+  lastSetlistAction = now;
+  action?.();
+}
 
 function idsOf(entries: Array<{ entryId: string }>): string[] {
   return entries.map((entry) => entry.entryId);
@@ -32,7 +62,11 @@ function entriesOf(order: string[], lookup: Map<string, SetlistEntry>): SetlistE
 }
 
 function indexFromPointerY(list: HTMLElement, clientY: number): number {
-  const rows = [...list.querySelectorAll<HTMLElement>(".lyrics-set-block:not(.is-locked):not(.is-final)")];
+  const rows = [
+    ...list.querySelectorAll<HTMLElement>(
+      ".lyrics-set-block:not(.is-locked):not(.is-final):not(.is-elif-add)"
+    )
+  ];
   if (rows.length === 0) return 0;
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -52,17 +86,34 @@ export function StageSetlist(props: {
   stageRef?: RefObject<HTMLElement | null>;
   songAttr?: "data-lyric-song" | "data-chord-song" | "data-drum-song" | "data-nota-song";
   onSelect: (entryId: string) => void;
-  onSkip: (entryId: string) => void;
+  onRemove: (entryId: string) => void;
   onAdd: (songId: string) => void;
+  onSelectLibrary?: (songId: string) => void;
 }) {
   const updateGig = useMasterStore((s) => s.updateGig);
+  const gig = useMasterStore(currentGig);
   const playback = useMasterStore((s) => s.playback);
   const metronomePlaying = useMasterStore((s) => s.metronomePlaying);
   const fileIndex = useMasterStore((s) => s.fileIndex);
+  const songLibrary = useMasterStore((s) => s.gigId === SONG_LIBRARY_GIG_ID);
+  const frozen = useMasterStore(setlistLocked);
+  const detached = useMasterStore(stageConnectOn);
+  const followPlayhead = useMasterStore(followsSharedPlayhead);
+  const readOnly = Boolean(props.readOnly || songLibrary);
+  const showAddElif = Boolean(detached && !songLibrary && !readOnly);
+  const canAddElif = Boolean(
+    showAddElif && gig && canInsertElifAfter(gig.setlist, props.selectedEntryId)
+  );
+  const lockRows = frozen && !readOnly;
   const songPlaying =
     metronomePlaying ||
     playback.state === PlaybackState.Playing ||
     playback.state === PlaybackState.Transitioning;
+  const playingEntryId = songPlaying
+    ? followPlayhead
+      ? playback.clock?.setlistEntryId
+      : props.selectedEntryId
+    : undefined;
   const listRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{
     id: string;
@@ -80,13 +131,29 @@ export function StageSetlist(props: {
     .map((id) => byId.get(id))
     .filter((entry): entry is SetlistEntry => Boolean(entry));
   const displayed = draggingId ? moved : withKeyChangeElifs(moved, props.songs);
+  const entryBySongId = new Map(
+    moved.filter(isSongEntry).map((entry) => [entry.songId, entry] as const)
+  );
+  const playModes: Record<string, PlayMode> = {};
+  for (const song of props.songs) {
+    playModes[song.id] = parseSongInfo(song.info).playMode ?? PlayMode.View;
+  }
+  const groupedSetlistSongs = songLibrary
+    ? groupLibrarySongs(
+        props.songs.filter((song) => entryBySongId.has(song.id)),
+        playModes,
+        fileIndex
+      )
+    : [];
+  const groupedLibrarySongs = groupLibrarySongs(props.library, playModes, fileIndex);
 
   const persistOrder = (order: string[]) => {
     void updateGig((current) => {
       const lookup = new Map(current.setlist.map((entry) => [entry.entryId, entry]));
-      const nextItems = entriesOf(order, lookup);
+      const nextItems = keepSkippedSongsInPlace(current.setlist, entriesOf(order, lookup));
       if (!elifPlacementValid(nextItems)) return current;
-      const leftovers = current.setlist.filter((entry) => !order.includes(entry.entryId));
+      const kept = new Set(nextItems.map((entry) => entry.entryId));
+      const leftovers = current.setlist.filter((entry) => !kept.has(entry.entryId));
       return { ...current, setlist: [...nextItems, ...leftovers] };
     }).finally(() => {
       setLiveOrder(null);
@@ -96,17 +163,22 @@ export function StageSetlist(props: {
 
   const selectEntry = (entryId: string) => {
     props.onSelect(entryId);
+    if (followPlayhead) return;
     if (!props.stageRef?.current || !props.songAttr) return;
     scrollStageToSongTitle(props.stageRef.current, `[${props.songAttr}="${entryId}"]`);
   };
 
   const onPointerDown = (entryId: string, event: PointerEvent<HTMLDivElement>) => {
-    if (props.readOnly) {
+    const target = event.target as HTMLElement;
+    if (target.closest(".lyrics-skip")) {
+      event.stopPropagation();
+      return;
+    }
+    if (lockRows) return;
+    if (readOnly) {
       selectEntry(entryId);
       return;
     }
-    const target = event.target as HTMLElement;
-    if (target.closest(".lyrics-skip")) return;
     selectEntry(entryId);
     if (target.closest(".lyrics-set-block.is-locked")) return;
     dragRef.current = {
@@ -160,17 +232,68 @@ export function StageSetlist(props: {
     persistOrder(drag.order);
   };
 
+  const addElif = () => {
+    if (!gig || !canAddElif) return;
+    const entryId = createId("entry");
+    void updateGig((current) => {
+      const setlist = insertElifAfterSelected(current.setlist, props.selectedEntryId, entryId);
+      if (setlist === current.setlist) return current;
+      return { ...current, setlist };
+    }).then(() => selectAddedSetlistEntry(entryId));
+  };
+
   let songNumber = 0;
+
+  const renderSongEntry = (entry: Extract<SetlistEntry, { type: "song" }>, item?: Song) => {
+    const on = draggingId ? draggingId === entry.entryId : entry.entryId === props.selectedEntryId;
+    songNumber += 1;
+    return (
+      <div
+        key={entry.entryId}
+        className={`lyrics-set-block${on ? " on" : ""}${
+          draggingId === entry.entryId ? " dragging" : ""
+        }${lockRows ? " is-frozen" : ""}`}
+        onPointerDown={(event) => onPointerDown(entry.entryId, event)}
+      >
+        <StageSongRow
+          song={item}
+          files={item ? fileIndex[item.id] : undefined}
+          playMode={parseSongInfo(item?.info).playMode ?? PlayMode.View}
+          title={songDisplayName(item)}
+          order={songNumber}
+          added
+          selected={on}
+          playing={playingEntryId === entry.entryId}
+          onName={lockRows ? undefined : () => selectEntry(entry.entryId)}
+          onRemove={
+            readOnly || (songPlaying && (detached ? playingEntryId === entry.entryId : on))
+              ? undefined
+              : () => props.onRemove(entry.entryId)
+          }
+        />
+      </div>
+    );
+  };
 
   return (
     <aside
       ref={listRef}
-      className={`lyrics-setlist${draggingId ? " is-reordering" : ""}`}
+      className={`lyrics-setlist${draggingId ? " is-reordering" : ""}${readOnly ? " is-readonly" : ""}`}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
-      {displayed.map((entry) => {
+      {songLibrary ? (
+        groupedSetlistSongs.map((group) => (
+          <div key={group.id} className="lyrics-library-group">
+            <div className="lyrics-library-group-title">{group.title}</div>
+            {group.songs.map((song) => {
+              const entry = entryBySongId.get(song.id);
+              return entry ? renderSongEntry(entry, song) : null;
+            })}
+          </div>
+        ))
+      ) : displayed.map((entry) => {
         const on = draggingId ? draggingId === entry.entryId : entry.entryId === props.selectedEntryId;
         if (isElifKonusma(entry)) {
           const locked = isLockedElif(entry);
@@ -179,7 +302,7 @@ export function StageSetlist(props: {
               key={entry.entryId}
               className={`lyrics-set-block${on ? " on" : ""}${
                 draggingId === entry.entryId ? " dragging" : ""
-              }${locked ? " is-locked" : ""}`}
+              }${locked ? " is-locked" : ""}${lockRows ? " is-frozen" : ""}`}
               onPointerDown={(event) => onPointerDown(entry.entryId, event)}
             >
               <div className={`lyrics-elif-item${on ? " on" : ""}${locked ? " is-locked" : ""}`}>
@@ -192,55 +315,83 @@ export function StageSetlist(props: {
                   <ElifLabel />
                   {locked ? <ElifNote /> : null}
                 </span>
+                {!readOnly && !locked ? (
+                  <button
+                    type="button"
+                    className="lyrics-skip"
+                    title="Delete"
+                    aria-label="Delete"
+                    onPointerDown={(event) =>
+                      onSetlistAction(event, () => props.onRemove(entry.entryId))
+                    }
+                    onClick={(event) => onSetlistAction(event, () => props.onRemove(entry.entryId))}
+                  >
+                    ×
+                  </button>
+                ) : null}
               </div>
             </div>
           );
         }
         if (!isSongEntry(entry)) return null;
-        songNumber += 1;
-        const item = props.songs.find((row) => row.id === entry.songId);
-        return (
-          <div
-            key={entry.entryId}
-            className={`lyrics-set-block${on ? " on" : ""}${entry.skipped ? " skipped" : ""}${
-              draggingId === entry.entryId ? " dragging" : ""
-            }`}
-            onPointerDown={(event) => onPointerDown(entry.entryId, event)}
-          >
-            <StageSongRow
-              song={item}
-              files={item ? fileIndex[item.id] : undefined}
-              playMode={entryPlayMode(entry)}
-              title={songDisplayName(item)}
-              order={songNumber}
-              added
-              skipped={Boolean(entry.skipped)}
-              selected={on}
-              onName={() => selectEntry(entry.entryId)}
-              onSkip={
-                props.readOnly || (songPlaying && on)
-                  ? undefined
-                  : () => props.onSkip(entry.entryId)
-              }
-            />
-          </div>
-        );
+        const item = findSongByRef(props.songs, entry.songId);
+        return renderSongEntry(entry, item);
       })}
-      {setlistHasSongs(moved) ? <ConcertFinalBlock variant="lyrics" /> : null}
-      {props.readOnly
-        ? null
-        : props.library.map((item) => (
-            <StageSongRow
-              key={item.id}
-              song={item}
-              title={songDisplayName(item)}
-              added={false}
-              selected={false}
-              onName={() => undefined}
-              onAdd={() => props.onAdd(item.id)}
-            />
-          ))}
-      {props.entries.length === 0 && (props.readOnly || props.library.length === 0) ? (
+      {!songLibrary && setlistHasSongs(moved) ? <ConcertFinalBlock variant="lyrics" /> : null}
+      {showAddElif ? (
+        <div className="lyrics-set-block is-elif-add">
+          <div className="lyrics-elif-item lyrics-elif-add-item">
+            <span className="elif-copy">
+              <span className="elif-label">ELIF KONUSMA EKLE</span>
+            </span>
+            <button
+              type="button"
+              className="lyrics-skip"
+              title="Add"
+              aria-label="Add ELIF KONUSMA"
+              disabled={!canAddElif}
+              onPointerDown={(event) => onSetlistAction(event, canAddElif ? addElif : undefined)}
+              onClick={(event) => onSetlistAction(event, canAddElif ? addElif : undefined)}
+            >
+              <AddIcon />
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {groupedLibrarySongs.map((group) => (
+        <div key={group.id} className="lyrics-library-group">
+          <div className="lyrics-library-group-title">{group.title}</div>
+          {group.songs.map((item) => {
+            const pickLibrary = () => {
+              props.onSelectLibrary?.(item.id);
+              if (!props.stageRef?.current || !props.songAttr) return;
+              scrollStageToSongTitle(
+                props.stageRef.current,
+                `[${props.songAttr}="${practiceEntryId(item.id)}"]`
+              );
+            };
+            return (
+              <div
+                key={item.id}
+                className="lyrics-set-block"
+                onPointerDown={props.onSelectLibrary ? () => pickLibrary() : undefined}
+              >
+                <StageSongRow
+                  song={item}
+                  files={fileIndex[item.id]}
+                  playMode={playModes[item.id] ?? PlayMode.View}
+                  title={songDisplayName(item)}
+                  added={false}
+                  selected={props.selectedEntryId === practiceEntryId(item.id)}
+                  onName={props.onSelectLibrary ? pickLibrary : undefined}
+                  onAdd={readOnly ? undefined : () => props.onAdd(item.id)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      {props.entries.length === 0 && (readOnly || props.library.length === 0) ? (
         <div className="lyrics-empty meta">No songs</div>
       ) : null}
     </aside>
@@ -254,46 +405,56 @@ function StageSongRow(props: {
   title: string;
   order?: number;
   added: boolean;
-  skipped?: boolean;
   selected: boolean;
+  playing?: boolean;
   onName?: () => void;
-  onSkip?: () => void;
+  onRemove?: () => void;
   onAdd?: () => void;
 }) {
-  const tint =
-    props.added && !props.skipped
-      ? songRowStyle(listedSongForColor(props.song, props.playMode, props.files), props.selected)
-      : undefined;
+  const gigMode = useMasterStore((s) => currentGig(s)?.performanceMode);
+  const tint = songRowStyle(listedSongForColor(props.song, props.playMode, props.files), props.selected);
   return (
     <div
-      className={`lyrics-set-item${props.added ? " added" : " library"}${props.selected ? " on" : ""}${
-        props.skipped ? " skipped" : ""
-      }`}
+      className={`lyrics-set-item${props.added ? " added" : " library"}${props.selected ? " on" : ""}${props.playing ? " is-playing" : ""}`}
       style={tint}
     >
       <button type="button" className="lyrics-set-name" onClick={props.onName}>
-        {props.added && props.order ? (
-          <span className="lyrics-set-num">{String(props.order).padStart(2, "0")}</span>
-        ) : null}
+        <span className="lyrics-set-index">
+          <span className="lyrics-set-num">
+            {props.added && props.order ? String(props.order).padStart(2, "0") : "—"}
+          </span>
+          {props.song ? (
+            <PlayModeMark song={props.song} files={props.files} setlistMode={gigMode} />
+          ) : null}
+        </span>
         {props.title}
       </button>
       {props.added ? (
-        props.onSkip ? (
+        props.onRemove ? (
           <button
             type="button"
-            className={`lyrics-skip${props.skipped ? " on" : ""}`}
-            title="Skip"
-            aria-label="Skip"
-            aria-pressed={props.skipped}
-            onClick={props.onSkip}
+            className="lyrics-skip"
+            title="Delete"
+            aria-label="Delete"
+            onPointerDown={(event) => onSetlistAction(event, props.onRemove)}
+            onClick={(event) => onSetlistAction(event, props.onRemove)}
           >
-            <SkipIcon />
+            ×
           </button>
         ) : null
       ) : (
-        <button type="button" className="lyrics-skip" title="Add" aria-label="Add" onClick={props.onAdd}>
-          <AddIcon />
-        </button>
+        props.onAdd ? (
+          <button
+            type="button"
+            className="lyrics-skip"
+            title="Add"
+            aria-label="Add"
+            onPointerDown={(event) => onSetlistAction(event, props.onAdd)}
+            onClick={(event) => onSetlistAction(event, props.onAdd)}
+          >
+            <AddIcon />
+          </button>
+        ) : null
       )}
     </div>
   );

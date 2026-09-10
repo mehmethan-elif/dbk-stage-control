@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "ios:sync": "vite build && cap sync ios --config ../../capacitor.config.json",
+    "build:ios": "DBK_NATIVE_BUILD=1 vite build",
+    "ios:sync": "npm run build:ios && cd ../.. && npx cap sync ios",
     "ios:open": "cap open ios"
   },
   "dependencies": {

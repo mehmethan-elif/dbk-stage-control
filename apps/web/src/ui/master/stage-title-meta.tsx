@@ -39,7 +39,7 @@ export function SongTitleMeta(props: { song: Song | undefined; entryId: string }
   const fileIndex = useMasterStore((s) => s.fileIndex);
   const gig = useMasterStore(currentGig);
   const entry = gig?.setlist.find((item) => item.entryId === props.entryId);
-  const playMode = entry && isSongEntry(entry) ? entryPlayMode(entry) : undefined;
+  const playMode = entry && isSongEntry(entry) ? entryPlayMode(entry, props.song?.info) : undefined;
   const files = props.song ? fileIndex[props.song.id] : undefined;
   const parts = songTitleMetaParts(listedSongForColor(props.song, playMode, files));
   if (parts.length === 0) return null;

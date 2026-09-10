@@ -1,4 +1,4 @@
-import { useEffect, useState, type MutableRefObject } from "react";
+import { useEffect, useState } from "react";
 import { parseSongInfo, songInfoFromPlayback, type Song, type SongInfo } from "@dbk/core";
 import { useMasterStore } from "../../store/master-store";
 import { songPropertyFills } from "../shared/key-color";
@@ -61,7 +61,6 @@ export function SongInfoEditor(props: {
   readOnly?: boolean;
   playbackValues?: boolean;
   onClose?: () => void;
-  resetActionRef?: MutableRefObject<(() => void) | null>;
 }) {
   const saveSongInfo = useMasterStore((s) => s.saveSongInfo);
   const source = props.playbackValues
@@ -102,31 +101,6 @@ export function SongInfoEditor(props: {
       .finally(() => setSaving(false));
   };
 
-  const applyFromPlayback = () => {
-    if (disabled) return;
-    const next = parseSongInfo(songInfoFromPlayback(props.song));
-    const parsedKey = splitKey(next.key);
-    setDuration(next.duration ? formatClock(next.duration) : "");
-    setBpm(String(next.bpm));
-    setNumerator(snapTsNumerator(next.numerator));
-    setDenominator(snapTsDenominator(next.denominator));
-    setKeyLetter(parsedKey.letter);
-    setKeyAccidental(parsedKey.accidental);
-    setScale(next.scale ?? "");
-    setStyle(next.style ?? "");
-    setBeats(next.beats ?? [true]);
-    persist(next);
-  };
-
-  useEffect(() => {
-    const ref = props.resetActionRef;
-    if (!ref) return;
-    ref.current = applyFromPlayback;
-    return () => {
-      ref.current = null;
-    };
-  });
-
   const commit = (patch: Partial<{
     duration: string;
     bpm: string;
@@ -145,6 +119,7 @@ export function SongInfoEditor(props: {
     }
     setDuration(parsed.seconds ? formatClock(parsed.seconds) : "");
     const next = parseSongInfo({
+      ...source,
       bpm: Number(patch.bpm ?? bpm),
       numerator: patch.numerator ?? numerator,
       denominator: patch.denominator ?? denominator,
@@ -274,49 +249,51 @@ export function SongInfoEditor(props: {
       </div>
       <div className="song-info-line">
         <span>TS</span>
-        <div className="song-info-meter">
-          <TsStepper
-            value={numerator}
-            label="Beats per bar"
-            disabled={disabled}
-            canUp={numerator < TS_NUM_MAX}
-            canDown={numerator > TS_NUM_MIN}
-            onStep={(delta) => {
-              const next = stepTsNumerator(numerator, delta);
-              setNumerator(next);
-              commit({ numerator: next });
-            }}
-          />
-          <span>/</span>
-          <TsStepper
-            value={denominator}
-            label="Beat unit"
-            disabled={disabled}
-            canUp={denominator < 16}
-            canDown={denominator > 4}
-            onStep={(delta) => {
-              const next = stepTsDenominator(denominator, delta);
-              setDenominator(next);
-              commit({ denominator: next });
-            }}
-          />
-        </div>
-        <div className="song-info-beats" role="group" aria-label="Time signature pattern">
-          {beats.map((on, index) => (
-            <button
-              key={index}
-              type="button"
-              className={on ? "on" : ""}
-              aria-pressed={on}
-              aria-label={`Beat ${index + 1}`}
+        <div className="song-info-ts">
+          <div className="song-info-meter">
+            <TsStepper
+              value={numerator}
+              label="Beats per bar"
               disabled={disabled}
-              onClick={() => {
-                const next = beats.map((value, beat) => (beat === index ? !value : value));
-                setBeats(next);
-                commit({ beats: next });
+              canUp={numerator < TS_NUM_MAX}
+              canDown={numerator > TS_NUM_MIN}
+              onStep={(delta) => {
+                const next = stepTsNumerator(numerator, delta);
+                setNumerator(next);
+                commit({ numerator: next });
               }}
             />
-          ))}
+            <span>/</span>
+            <TsStepper
+              value={denominator}
+              label="Beat unit"
+              disabled={disabled}
+              canUp={denominator < 16}
+              canDown={denominator > 4}
+              onStep={(delta) => {
+                const next = stepTsDenominator(denominator, delta);
+                setDenominator(next);
+                commit({ denominator: next });
+              }}
+            />
+          </div>
+          <div className="song-info-beats" role="group" aria-label="Time signature pattern">
+            {beats.map((on, index) => (
+              <button
+                key={index}
+                type="button"
+                className={on ? "on" : ""}
+                aria-pressed={on}
+                aria-label={`Beat ${index + 1}`}
+                disabled={disabled}
+                onClick={() => {
+                  const next = beats.map((value, beat) => (beat === index ? !value : value));
+                  setBeats(next);
+                  commit({ beats: next });
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
       <div className="song-info-line">

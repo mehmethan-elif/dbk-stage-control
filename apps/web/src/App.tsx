@@ -4,8 +4,15 @@ import type { DeviceKind } from "@dbk/protocol";
 import { isNativeApp } from "./native/platform";
 import { ClientApp } from "./ui/client/ClientApp";
 import { MasterApp } from "./ui/master/MasterApp";
+import { RemoteApp } from "./ui/remote/RemoteApp";
 import { RoleGate } from "./ui/native/RoleGate";
 import { useMasterStore } from "./store/master-store";
+
+function kindFromPath(pathname: string, publicClient: boolean): DeviceKind {
+  if (pathname.startsWith("/remote")) return "remote";
+  if (publicClient || pathname.startsWith("/client")) return "client";
+  return "master";
+}
 
 export function App() {
   const load = useMasterStore((s) => s.load);
@@ -13,8 +20,7 @@ export function App() {
   const navigate = useNavigate();
   const native = isNativeApp();
   const publicClient = import.meta.env.VITE_PUBLIC_CLIENT === "1";
-  const pathKind: DeviceKind =
-    publicClient || location.pathname.startsWith("/client") ? "client" : "master";
+  const pathKind = kindFromPath(location.pathname, publicClient);
   const [nativeKind, setNativeKind] = useState<DeviceKind | null>(native ? null : pathKind);
   const [syncHost, setSyncHost] = useState<string | undefined>();
   const kind = native ? nativeKind : pathKind;
@@ -38,10 +44,22 @@ export function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={publicClient || kind === "client" ? "/client" : "/master"} replace />} />
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to={publicClient || kind === "client" ? "/client" : kind === "remote" ? "/remote" : "/master"}
+            replace
+          />
+        }
+      />
       {publicClient ? null : <Route path="/master" element={<MasterApp />} />}
       <Route path="/client" element={<ClientApp />} />
-      <Route path="*" element={<Navigate to={publicClient ? "/client" : "/master"} replace />} />
+      <Route path="/remote" element={<RemoteApp />} />
+      <Route
+        path="*"
+        element={<Navigate to={publicClient ? "/client" : kind === "remote" ? "/remote" : "/master"} replace />}
+      />
     </Routes>
   );
 }

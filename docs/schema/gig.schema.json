@@ -21,20 +21,31 @@
         }
       }
     },
+    "performanceMode": {
+      "type": "string",
+      "enum": [
+        "FOLLOW_SONG_INFO",
+        "CLICK_ONLY",
+        "METRONOME_CONTINUOUS",
+        "FREE"
+      ]
+    },
+    "stageNames": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
     "setlist": {
       "type": "array",
       "items": {
         "oneOf": [
           {
             "type": "object",
-            "required": ["type", "entryId", "songId", "finishMode"],
+            "required": ["type", "entryId", "songId"],
             "properties": {
               "type": { "const": "song" },
               "entryId": { "type": "string" },
               "songId": { "type": "string" },
-              "finishMode": { "enum": ["STOP", "PLAY_NEXT"] },
-              "startAt": { "type": "number", "minimum": 0 },
-              "notes": { "type": "string" }
+              "skipped": { "type": "boolean" }
             }
           },
           {

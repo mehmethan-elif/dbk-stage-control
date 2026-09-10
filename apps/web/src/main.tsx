@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { registerClientWorker } from "./pwa";
@@ -11,14 +11,22 @@ if (!root) {
 }
 
 const pageBase = import.meta.env.BASE_URL;
-const routerBase = pageBase === "/" ? undefined : pageBase.replace(/\/$/, "");
+const routerBase =
+  pageBase === "/" || pageBase === "./" ? undefined : pageBase.replace(/\/$/, "");
 
 registerClientWorker();
 
-createRoot(root).render(
+const host = window as typeof window & { __dbkRoot?: Root };
+const app = host.__dbkRoot ?? createRoot(root);
+host.__dbkRoot = app;
+app.render(
   <StrictMode>
     <BrowserRouter basename={routerBase}>
       <App />
     </BrowserRouter>
   </StrictMode>
 );
+
+if (import.meta.hot) {
+  import.meta.hot.accept();
+}

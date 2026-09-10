@@ -5,6 +5,11 @@ const SCHEDULE_AHEAD = 0.12;
 const ACCENT_HZ = 880;
 const BEAT_HZ = 1320;
 
+export type MetronomeBeat = {
+  at: number;
+  accent: boolean;
+};
+
 export class Metronome {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -17,11 +22,19 @@ export class Metronome {
   private beats: boolean[] = [];
   private running = false;
   private volume = 0.7;
+  private silent = false;
 
-  constructor(private readonly onRunningChange?: (running: boolean) => void) {}
+  constructor(
+    private readonly onRunningChange?: (running: boolean) => void,
+    private readonly onBeat?: (beat: MetronomeBeat) => void
+  ) {}
 
   get isPlaying(): boolean {
     return this.running;
+  }
+
+  get time(): number {
+    return this.songTime;
   }
 
   get gain(): number {
@@ -59,16 +72,17 @@ export class Metronome {
     this.master.gain.setValueAtTime(this.volume, this.ctx.currentTime);
   }
 
-  start(map: TempoPoint[], beats?: boolean[]): void {
+  start(map: TempoPoint[], beats?: boolean[], fromTime = 0, opts?: { silent?: boolean }): void {
     if (!this.ctx || !this.master) return;
     this.stop();
+    this.silent = opts?.silent === true;
     this.master.gain.cancelScheduledValues(this.ctx.currentTime);
     this.master.gain.setValueAtTime(this.volume, this.ctx.currentTime);
     this.map = map;
     this.beats = beats?.length ? beats : [];
     this.running = true;
     this.onRunningChange?.(true);
-    this.songTime = 0;
+    this.songTime = Math.max(0, fromTime);
     this.beatsInBar = 0;
     this.nextTime = this.ctx.currentTime + 0.05;
     this.tick();
@@ -91,6 +105,7 @@ export class Metronome {
       const point = tempoAt(this.map, this.songTime);
       const beats = Math.max(1, point.numerator || 4);
       const low = this.beats.length > 0 ? this.beats[this.beatsInBar] === true : this.beatsInBar === 0;
+      this.onBeat?.({ at: this.nextTime, accent: low });
       this.click(this.nextTime, low);
       const interval = Math.max(0.05, secondsPerBeat(point));
       this.nextTime += interval;
@@ -102,7 +117,7 @@ export class Metronome {
   };
 
   private click(time: number, accent: boolean): void {
-    if (!this.ctx || !this.master) return;
+    if (this.silent || !this.ctx || !this.master) return;
     const osc = this.ctx.createOscillator();
     const env = this.ctx.createGain();
     osc.type = "square";

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ELIF_KONUSMA_LABEL,
-  entryPlayMode,
   firstSectionNamed,
   hasBackingAudio,
+  hasClickFlac,
   isElifKonusma,
   isSongEntry,
   parseSongInfo,
@@ -13,7 +13,7 @@ import {
   type Song
 } from "@dbk/core";
 import { currentGig, useMasterStore } from "../../store/master-store";
-import { ResetIcon } from "../shared/icons";
+import { hasPackedSong } from "./song-settings";
 import { SongInfoEditor } from "./SongInfoEditor";
 
 function countEnabled(song: Song | undefined): boolean {
@@ -45,8 +45,6 @@ function extraValues(songs: Song[], pick: (song: Song) => Array<string | undefin
 
 export function PrepSongInfo(props: {
   libraryFocusId: string | null;
-  libModes: Record<string, PlayMode>;
-  onLibPlayMode: (songId: string, mode: PlayMode) => void;
 }) {
   const songs = useMasterStore((s) => s.songs);
   const fileIndex = useMasterStore((s) => s.fileIndex);
@@ -54,8 +52,6 @@ export function PrepSongInfo(props: {
   const gig = useMasterStore(currentGig);
   const updateGig = useMasterStore((s) => s.updateGig);
   const seek = useMasterStore((s) => s.seek);
-  const stop = useMasterStore((s) => s.stop);
-  const stopMetronome = useMasterStore((s) => s.stopMetronome);
   const saveSongInfo = useMasterStore((s) => s.saveSongInfo);
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
 
@@ -68,24 +64,29 @@ export function PrepSongInfo(props: {
   const setlistSong =
     selected && isSongEntry(selected) ? songs.find((song) => song.id === selected.songId) : undefined;
   const song = librarySong ?? setlistSong;
-  const entry = librarySong ? undefined : selected && isSongEntry(selected) ? selected : undefined;
+  const info = parseSongInfo(song?.info);
   const files = song ? fileIndex[song.id] : undefined;
+  const packedSong = hasPackedSong(song, files);
   const canBacking = hasBackingAudio(song, files);
-  const requestedMode = librarySong
-    ? (props.libModes[librarySong.id] ?? PlayMode.View)
-    : entry
-      ? entryPlayMode(entry)
-      : PlayMode.View;
-  const playMode = canBacking ? requestedMode : PlayMode.View;
+  const canClick = Boolean(song && hasClickFlac(song, files));
+  const requestedMode = info.playMode ?? PlayMode.View;
+  const playMode =
+    requestedMode === PlayMode.Playback
+      ? canBacking
+        ? requestedMode
+        : canClick
+          ? PlayMode.ClickOnly
+          : PlayMode.View
+      : requestedMode === PlayMode.ClickOnly && !canClick
+        ? PlayMode.View
+        : requestedMode;
   const metronome = playMode === PlayMode.View;
   const startsSerbest = firstSectionNamed(song?.sections, "SERBEST");
   const metronomeStartMode = song?.info?.startMode === "SERBEST" ? "SERBEST" : "COUNT";
-  const countOn = countIsOn(song, entry?.startAt ?? 0);
-  const canCount = Boolean(entry && countEnabled(song));
+  const countOn = countIsOn(song, info.startAt ?? 0);
+  const canCount = Boolean(countEnabled(song));
   const scales = extraValues(songs, (item) => [item.scale, item.info?.scale]);
   const styles = extraValues(songs, (item) => [item.style, item.info?.style]);
-  const resetActionRef = useRef<(() => void) | null>(null);
-  const showReset = Boolean(song) && !readOnly && metronome;
   const elifSelected = Boolean(
     !librarySong &&
       ((selected && isElifKonusma(selected)) || selectedEntryId?.startsWith("elif_key_"))
@@ -115,30 +116,15 @@ export function PrepSongInfo(props: {
 
   const setPlayMode = (mode: PlayMode) => {
     if (mode === PlayMode.Playback && !canBacking) return;
-    if (mode === PlayMode.View) stop();
-    else stopMetronome();
-    if (librarySong) {
-      props.onLibPlayMode(librarySong.id, mode);
-      return;
-    }
-    if (!entry) return;
-    void updateGig((current) => ({
-      ...current,
-      setlist: current.setlist.map((item) =>
-        item.entryId === entry.entryId && isSongEntry(item) ? { ...item, playMode: mode } : item
-      )
-    }));
+    if (mode === PlayMode.ClickOnly && !canClick) return;
+    if (!song) return;
+    void saveSongInfo(song.id, { ...info, playMode: mode });
   };
 
   const setCount = (on: boolean) => {
-    if (!entry) return;
+    if (!song) return;
     const time = countStartTime(song, on);
-    void updateGig((current) => ({
-      ...current,
-      setlist: current.setlist.map((item) =>
-        item.entryId === entry.entryId && isSongEntry(item) ? { ...item, startAt: time } : item
-      )
-    }));
+    void saveSongInfo(song.id, { ...info, startAt: time });
     if (!metronome) seek(time);
   };
 
@@ -148,21 +134,19 @@ export function PrepSongInfo(props: {
   };
 
   const songName = song
-    ? playMode === PlayMode.Playback
+    ? playMode !== PlayMode.View
       ? songPlaybackName(song)
       : songDisplayName(song)
     : "";
 
-  const title = elifSelected
-    ? ELIF_KONUSMA_LABEL
-    : songName
-      ? `Song - ${songName}`
-      : "Song";
+  const title = elifSelected ? ELIF_KONUSMA_LABEL : songName;
 
   return (
     <section className={`panel prep-side-panel${!song && !elifSelected ? " is-empty" : ""}`}>
       <div className="panel-head">
-        <h2>{title}</h2>
+        <h2>
+          <span className="prep-active-setlist">{title}</span>
+        </h2>
       </div>
       <div className="panel-body prep-song-info-body">
         {elifSelected ? (
@@ -193,9 +177,9 @@ export function PrepSongInfo(props: {
         ) : (
           <>
             <div className="song-info-toolbar">
-              <div className="song-info-line">
+              <div className="song-info-line song-info-play-mode">
                 <span>Play Mode</span>
-                <div className="song-info-modes" role="radiogroup" aria-label="Play Mode">
+                <div className="song-info-modes play-mode-options" role="radiogroup" aria-label="Play Mode">
                   <button
                     type="button"
                     role="radio"
@@ -216,22 +200,24 @@ export function PrepSongInfo(props: {
                     disabled={readOnly || !canBacking}
                     onClick={() => setPlayMode(PlayMode.Playback)}
                   >
-                    BACKING TRACKS
+                    BACKING
+                    <br />
+                    TRACKS
                   </button>
-                </div>
-                {showReset ? (
                   <button
                     type="button"
-                    className="icon-btn song-info-reset"
-                    aria-label="Reset from Playback"
-                    title="Copy duration, BPM, TS, key, scale, and style from song.json"
-                    onClick={() => resetActionRef.current?.()}
+                    role="radio"
+                    aria-label="Click Only"
+                    aria-checked={playMode === PlayMode.ClickOnly}
+                    className={playMode === PlayMode.ClickOnly ? "on" : ""}
+                    disabled={readOnly || !canClick}
+                    onClick={() => setPlayMode(PlayMode.ClickOnly)}
                   >
-                    <ResetIcon />
+                    CLICK
+                    <br />
+                    ONLY
                   </button>
-                ) : (
-                  <span className="song-info-reset" aria-hidden="true" />
-                )}
+                </div>
               </div>
             </div>
             <div className="song-info-line song-info-start">
@@ -269,13 +255,12 @@ export function PrepSongInfo(props: {
               ) : null}
             </div>
             <SongInfoEditor
-              key={`${song.id}-${metronome ? "metro" : "play"}`}
+              key={`${gig?.id ?? "none"}-${song.id}-${packedSong ? "packed" : "edit"}`}
               song={song}
               scales={scales}
               styles={styles}
-              readOnly={readOnly || !metronome}
-              playbackValues={!metronome}
-              resetActionRef={resetActionRef}
+              readOnly={readOnly || packedSong}
+              playbackValues={packedSong}
             />
           </>
         )}

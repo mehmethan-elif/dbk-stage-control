@@ -17,6 +17,7 @@ const rootPkg = JSON.parse(readFileSync(path.resolve(__dirname, "../../package.j
 };
 
 const pagesBase = process.env.DBK_PAGES_BASE || "/";
+const appBase = process.env.DBK_NATIVE_BUILD === "1" ? "./" : pagesBase;
 
 function pagesFallback(): Plugin {
   return {
@@ -29,6 +30,8 @@ function pagesFallback(): Plugin {
         copyFileSync(index, path.join(dist, "404.html"));
         mkdirSync(path.join(dist, "client"), { recursive: true });
         copyFileSync(index, path.join(dist, "client", "index.html"));
+        mkdirSync(path.join(dist, "remote"), { recursive: true });
+        copyFileSync(index, path.join(dist, "remote", "index.html"));
         writeFileSync(path.join(dist, ".nojekyll"), "");
         if (existsSync(library)) {
           cpSync(library, path.join(dist, "client-library"), { recursive: true });
@@ -79,7 +82,7 @@ function clientLibraryDev(): Plugin {
 
 export default defineConfig({
   plugins: [react(), pagesFallback(), clientLibraryDev()],
-  base: pagesBase,
+  base: appBase,
   root: __dirname,
   define: {
     __APP_VERSION__: JSON.stringify(rootPkg.version)
@@ -98,6 +101,9 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    watch: {
+      ignored: ["**/library/songs/**", "**/client-library/**"]
+    },
     proxy: {
       "/library": "http://127.0.0.1:8787",
       "/practice": "http://127.0.0.1:8787",

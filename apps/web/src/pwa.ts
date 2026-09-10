@@ -1,5 +1,13 @@
+import { isNativeApp } from "./native/platform";
+
 export function registerClientWorker(): void {
-  if (window.location.protocol.startsWith("capacitor") || !("serviceWorker" in navigator)) return;
+  if (isNativeApp() || !("serviceWorker" in navigator)) return;
+  if (import.meta.env.DEV) {
+    void navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) void registration.unregister();
+    });
+    return;
+  }
 
   const pageBase = import.meta.env.BASE_URL;
   const hadController = Boolean(navigator.serviceWorker.controller);

@@ -2,128 +2,88 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 4745,
-    "hash": "1933e7ae1a7e672db815c9db38fb51b80f424ab45f4df6624cf07599f43f35a5"
+    "size": 1932,
+    "hash": "c645daa498b3c7717ef0f788a951f06ae94d5d5b5eab6950714cc387d8db9efc"
   },
   "songs": [
     {
       "id": "biz",
       "folder": "biz",
+      "title": "Biz",
       "files": [
         {
           "path": "Master.mp3",
-          "size": 2699099,
-          "hash": "0de91c19e04cfef0bbada940ecc9a11e6f9df4300c963dd1f0aa73b528ff8e32"
+          "size": 2880991,
+          "hash": "4746704eb3bd1aa499818d58f237426df5b012be7fbca7c14e66f9ad468930d8"
         },
         {
           "path": "Nota.pdf",
-          "size": 34638,
-          "hash": "e4ef83ab2fdf60c14e6a0c1156fbb69d0f6f13efcf39947f2df1015c318570fc"
+          "size": 34177,
+          "hash": "7161415f442caaec5882cf01dad6857ad6a7c464b417a3986442ca82c729fbeb"
         },
         {
           "path": "settings.json",
-          "size": 2351,
-          "hash": "4234fcb750b3fa177a760745ba1f19e6037a12a3702b3d4bb4b28fa7e513d95b"
+          "size": 13058,
+          "hash": "cc43ed75f19ad069294d88989c1a9f8f2b852660d5c1c42b0622388dbd4f9e8f"
         },
         {
           "path": "song.json",
-          "size": 135368,
-          "hash": "a91903ccc520100d32a03c1cd0f835f7ed920847219d216702f09b6bcebd61c8"
+          "size": 201975,
+          "hash": "a28d2fba046df433d27bc21fda512b0cc7af4dbf5343f81a43dc0f15187cbf06"
         }
       ]
     },
     {
-      "id": "evvel_zaman_i_c_inde",
-      "folder": "evvel_zaman_i_c_inde",
-      "files": [
-        {
-          "path": "Nota.pdf",
-          "size": 39306,
-          "hash": "999fdb525d5af2f97a64df3ba9c76f6fbb7d8f3e4d27cf05000f3621870604dd"
-        },
-        {
-          "path": "lyrics.json",
-          "size": 2322,
-          "hash": "0dd70dadfe15789517a0a4f321f87838de911c726ca9c8461f9df176a66e9b75"
-        },
-        {
-          "path": "settings.json",
-          "size": 235,
-          "hash": "bf9e91e219ba9ed06e5fc88b4827f4c041f767cc56dd7b88d86631ccd152ba14"
-        },
-        {
-          "path": "song.json",
-          "size": 3635,
-          "hash": "04982bd25ad3575e51c81858660b72ebab68e0dfcf9c309fe036b4fde8b7237c"
-        }
-      ]
-    },
-    {
-      "id": "Karahisar Kalesi",
+      "id": "karahisar_kalesi",
       "folder": "karahisar_kalesi",
       "title": "Karahisar Kalesi",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 3037308,
+          "hash": "7813d35853e9b6fc96f2b75fdf586fdf0e686776ff84245fb1ee52a1168d1600"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 31373,
-          "hash": "b5c2dc04112e896d8b6023b8c4d706304fbdf68e9350cc74e4005d437ff97f66"
+          "size": 43777,
+          "hash": "d1b357930b90d60968c205bf718de92694effcea32c8098334657733dcaa8ad4"
         },
         {
           "path": "settings.json",
-          "size": 191,
-          "hash": "fa72dda04d0c89a88d517bda3cf2b68d04256f17ce6a430be991e45c7464a64f"
+          "size": 15503,
+          "hash": "2ef30a4c56e14c64d38591e9bd446791f81190dae9f63e45efe1cda58617d189"
         },
         {
           "path": "song.json",
-          "size": 260,
-          "hash": "04c799d5cb757fbf068ff72b4cf639df5abe8ebe0306e80fb34ba630f4303c90"
+          "size": 82875,
+          "hash": "c4812fb9163d19c429f2b97cb11d5f816a8112e4cb16e9544e38eef409aba598"
         }
       ]
     },
     {
-      "id": "tanr�_dan_diledim",
-      "folder": "tanridan_diledim",
+      "id": "tuna_nehri",
+      "folder": "tuna_nehri",
+      "title": "Tuna Nehri",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 2841703,
+          "hash": "8a0a7189f7a7cf1b2917106d563f9912d62ae01f3941e97099552807d09f5a89"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 35791,
-          "hash": "b016803361537cd49f1ee8539a0708ac9687e7f62a3f4a1157c5ed1f9056c302"
+          "size": 44164,
+          "hash": "15848ff45ff037cf95bb15afbcc54191c7047914d2a4f8730822751cf1f8fbf3"
         },
         {
           "path": "settings.json",
-          "size": 253,
-          "hash": "9db888aa0d461461186bc794f417a1323f2935d4ca5757a5ecb7dd8deb0bf379"
+          "size": 17849,
+          "hash": "16234353a7bba3441aca096c9512672bfcb6148de2227c40f473534d4a920043"
         },
         {
           "path": "song.json",
-          "size": 937,
-          "hash": "1be06bf327773fa42c52cb99905710310ae71fbfaac78a6fa04f005861d6c149"
-        }
-      ]
-    },
-    {
-      "id": "telli_turnam",
-      "folder": "telli_turnam",
-      "files": [
-        {
-          "path": "Nota.pdf",
-          "size": 29893,
-          "hash": "9027beae59955272674b8462c59463e6387c781d691732e6c9bb42afc27079b4"
-        },
-        {
-          "path": "lyrics.json",
-          "size": 1580,
-          "hash": "4632d8e17c58db72ad877628ca48cc35ca7aa31714cf4c0a234abf40cf3538ce"
-        },
-        {
-          "path": "settings.json",
-          "size": 216,
-          "hash": "5ad8465459987b62865761da8f89416776ce43d5da36daa4da98e7417264265e"
-        },
-        {
-          "path": "song.json",
-          "size": 4151,
-          "hash": "27637fcc1ede47dc47c43c65e2c0b78e32638574a701d871d5b9abbe15bde1b8"
+          "size": 74739,
+          "hash": "10dfa296ceb2e883745fe9f076379c1507b7a30e5dea78c90035c26cd30ec209"
         }
       ]
     }

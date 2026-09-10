@@ -1,5 +1,5 @@
 import { practiceMasterAudio } from "@dbk/core";
-import { folderForSong } from "../native/library";
+import { folderForSong } from "../library/api";
 import { readPracticeFileBuffer } from "./store";
 
 const MASTER_CANDIDATES = ["Master.mp3", "master.mp3", "Master.flac", "master.flac"];
@@ -11,6 +11,7 @@ let timeListener: ((time: number, ended: boolean) => void) | null = null;
 let tick: number | null = null;
 
 function emitTime(ended = false): void {
+  if (!ended && audio?.paused) return;
   timeListener?.(audio?.currentTime ?? 0, ended);
 }
 

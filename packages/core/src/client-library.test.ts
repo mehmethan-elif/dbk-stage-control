@@ -52,6 +52,25 @@ describe("dropMissingSetlistSongs", () => {
     };
     expect(dropMissingSetlistSongs([gig], ["biz"])[0]?.setlist.map((entry) => entry.entryId)).toEqual(["a"]);
   });
+
+  it("keeps a skipped song even when the published id needs remapping", () => {
+    const gig: Gig = {
+      id: "gig",
+      name: "Show",
+      date: "2026-09-07",
+      musicians: [],
+      setlist: [
+        { type: "song", entryId: "a", songId: "biz" },
+        { type: "song", entryId: "b", songId: "telli_turnam", skipped: true }
+      ]
+    };
+    const next = dropMissingSetlistSongs([gig], [
+      { id: "biz", folder: "biz" },
+      { id: "Telli Turnam", folder: "telli_turnam", title: "Telli Turnam" }
+    ]);
+    expect(next[0]?.setlist.map((entry) => entry.entryId)).toEqual(["a", "b"]);
+    expect(next[0]?.setlist[1]).toMatchObject({ songId: "telli_turnam", skipped: true });
+  });
 });
 
 describe("publishedSongTitle", () => {
@@ -60,5 +79,8 @@ describe("publishedSongTitle", () => {
       publishedSongTitle({ id: "Karahisar Kalesi", folder: "karahisar_kalesi" })
     ).toBe("Karahisar Kalesi");
     expect(publishedSongTitle({ id: "biz", folder: "biz", title: "Biz" })).toBe("Biz");
+    expect(
+      publishedSongTitle({ id: "karahisar_kalesi", folder: "karahisar_kalesi" })
+    ).toBe("Karahisar Kalesi");
   });
 });

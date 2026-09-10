@@ -1,5 +1,5 @@
 import { filterPracticeFiles, practiceExportFolder, type Song } from "@dbk/core";
-import { readSongFile } from "../native/library";
+import { libraryApi } from "../library/api";
 import { buildPracticeZip, practiceZipName } from "./zip";
 
 export async function exportPracticeZip(
@@ -15,7 +15,7 @@ export async function exportPracticeZip(
     const listed = filterPracticeFiles(fileIndex[song.id] ?? []);
     for (const rel of listed) {
       try {
-        const buffer = await readSongFile(song.id, rel);
+        const buffer = await libraryApi.readBytes(song.id, rel);
         files.push({
           path: `${folder}/${rel}`,
           data: new Uint8Array(buffer)

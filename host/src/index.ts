@@ -4,8 +4,8 @@ import { createReadStream, existsSync, readdirSync, readFileSync, statSync, writ
 import { extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
-import { parseSyncMessage } from "@dbk/protocol";
-import { publishClientLibrary } from "./publish-client-library";
+import { masterSessionUpdate, parseSyncMessage, type DeviceKind } from "@dbk/protocol";
+import { publishClientGigs, publishClientLibrary } from "./publish-client-library";
 
 const PORT = Number(process.env.DBK_HOST_PORT ?? 8787);
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
@@ -22,8 +22,8 @@ function lanIpv4(): string[] {
   return ips;
 }
 
-const WRITE_FILES = new Set(["settings.json"]);
-const MAX_PUT_BYTES = 256 * 1024;
+const WRITE_FILES = new Set(["song.json", "settings.json"]);
+const MAX_PUT_BYTES = 16 * 1024 * 1024;
 
 const MIME: Record<string, string> = {
   ".json": "application/json; charset=utf-8",
@@ -75,6 +75,9 @@ type SongInfo = {
   scale?: string;
   style?: string;
   notes?: string;
+  playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY";
+  startAt?: number;
+  pageNotes?: Partial<Record<"lyrics" | "score" | "chord" | "drums", string>>;
 };
 
 function positiveInt(value: unknown, fallback: number): number {
@@ -116,6 +119,23 @@ function parseInfo(raw: unknown): SongInfo {
   if (scale) info.scale = scale;
   if (style) info.style = style;
   if (notes) info.notes = notes;
+  if (
+    record?.playMode === "VIEW" ||
+    record?.playMode === "PLAYBACK" ||
+    record?.playMode === "CLICK_ONLY"
+  ) {
+    info.playMode = record.playMode;
+  }
+  const startAt = Number(record?.startAt);
+  if (Number.isFinite(startAt) && startAt >= 0) info.startAt = startAt;
+  if (record?.pageNotes && typeof record.pageNotes === "object") {
+    const pageNotes: NonNullable<SongInfo["pageNotes"]> = {};
+    for (const page of ["lyrics", "score", "chord", "drums"] as const) {
+      const text = optionalText((record.pageNotes as Record<string, unknown>)[page]);
+      if (text) pageNotes[page] = text;
+    }
+    if (Object.keys(pageNotes).length > 0) info.pageNotes = pageNotes;
+  }
   return info;
 }
 
@@ -148,6 +168,7 @@ function playbackInfo(packed: Record<string, unknown> | null): SongInfo {
 }
 
 function ensureInfoJson(dir: string): SongInfo {
+  const packed = readSongJson(dir);
   const settingsPath = join(dir, "settings.json");
   let settings: Record<string, unknown> = {};
   if (existsSync(settingsPath)) {
@@ -160,14 +181,35 @@ function ensureInfoJson(dir: string): SongInfo {
       settings = {};
     }
   }
-  if (infoIsComplete(settings.view)) return parseInfo(settings.view);
-
-  const info = playbackInfo(readSongJson(dir));
-  settings.view = info;
-  try {
-    writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
-  } catch {
-    // still list the folder even if the default file cannot be written
+  const baseline = infoIsComplete(settings.view) ? settings.view : playbackInfo(packed);
+  const info = parseInfo({
+    ...(baseline && typeof baseline === "object" ? baseline : {}),
+    ...(settings.performance && typeof settings.performance === "object"
+      ? settings.performance
+      : {}),
+    ...(settings.notes && typeof settings.notes === "object"
+      ? { pageNotes: settings.notes }
+      : {}),
+    ...(packed?.info && typeof packed.info === "object" ? packed.info : {})
+  });
+  if (packed && JSON.stringify(parseInfo(packed.info)) !== JSON.stringify(info)) {
+    try {
+      writeFileSync(
+        join(dir, "song.json"),
+        `${JSON.stringify({ ...packed, info }, null, 2)}\n`,
+        "utf8"
+      );
+    } catch {
+      // still list the folder even if the migrated song file cannot be written
+    }
+  }
+  if ("view" in settings || "performance" in settings || "notes" in settings) {
+    const { view: _view, performance: _performance, notes: _notes, ...remaining } = settings;
+    try {
+      writeFileSync(settingsPath, `${JSON.stringify(remaining, null, 2)}\n`, "utf8");
+    } catch {
+      // song.json is authoritative even if legacy settings cleanup fails
+    }
   }
   return info;
 }
@@ -217,15 +259,14 @@ function scanLibrary(): LibraryIndex {
     const info = ensureInfoJson(dir);
     const files = listFiles(dir);
     const packed = readSongJson(dir);
-    const song = packed
-      ? {
-          ...packed,
-          folder,
-          title: typeof packed.title === "string" && packed.title.trim() ? packed.title : folder,
-          id: typeof packed.id === "string" && packed.id.length > 0 ? packed.id : folder,
-          info
-        }
-      : stubSong(folder, info);
+    const song = {
+      ...stubSong(folder, info),
+      ...(packed ?? {}),
+      folder,
+      title: typeof packed?.title === "string" && packed.title.trim() ? packed.title : folder,
+      id: typeof packed?.id === "string" && packed.id.length > 0 ? packed.id : folder,
+      info
+    };
     const key = String(song.id);
     fileIndex[key] = files;
     songs.push(song);
@@ -400,8 +441,12 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
     void (async () => {
       try {
         const body = await readBody(req, 1024 * 1024);
-        const parsed = body.trim() ? (JSON.parse(body) as { gigs?: unknown }) : {};
-        const result = publishClientLibrary(parsed.gigs ?? []);
+        const parsed = body.trim()
+          ? (JSON.parse(body) as { gigs?: unknown; gigsOnly?: unknown })
+          : {};
+        const result = parsed.gigsOnly
+          ? publishClientGigs(parsed.gigs ?? [])
+          : publishClientLibrary(parsed.gigs ?? []);
         send(res, 200, JSON.stringify({ ok: true, ...result }), "application/json; charset=utf-8");
       } catch {
         send(res, 400, "Could not publish library", "text/plain");
@@ -431,8 +476,33 @@ const server = createServer(handler);
 const wss = new WebSocketServer({ server, path: "/sync" });
 
 const clients = new Set<WebSocket>();
+const peers = new Map<WebSocket, { deviceId: string; deviceKind: DeviceKind; deviceName: string }>();
 let lastPosition = "";
 let lastShow = "";
+let lastMasterSessionId: string | null = null;
+
+function broadcastRaw(raw: string, except?: WebSocket): void {
+  for (const client of clients) {
+    if (client === except || client.readyState !== client.OPEN) continue;
+    client.send(raw);
+  }
+}
+
+function stopPlaybackSync(except?: WebSocket): void {
+  lastPosition = "";
+  broadcastRaw(JSON.stringify({ type: "Stop" }), except);
+}
+
+function sendRoster(): void {
+  const raw = JSON.stringify({
+    type: "Peers",
+    peers: [...peers.values()],
+    ...(lastMasterSessionId ? { masterSessionId: lastMasterSessionId } : {})
+  });
+  for (const client of clients) {
+    if (client.readyState === client.OPEN) client.send(raw);
+  }
+}
 
 wss.on("connection", (socket) => {
   clients.add(socket);
@@ -445,11 +515,31 @@ wss.on("connection", (socket) => {
     if (message.type === "LoadGig") lastShow = raw;
     if (message.type === "Position") lastPosition = raw;
     if (message.type === "Stop") lastPosition = "";
-    for (const client of clients) {
-      if (client !== socket && client.readyState === client.OPEN) client.send(raw);
+    if (message.type === "Hello") {
+      if (message.deviceKind === "master") {
+        const update = masterSessionUpdate(lastMasterSessionId, message.sessionId);
+        lastMasterSessionId = update.sessionId;
+        if (update.restarted) stopPlaybackSync(socket);
+      }
+      for (const [other, peer] of peers) {
+        if (peer.deviceId === message.deviceId) peers.delete(other);
+      }
+      peers.set(socket, {
+        deviceId: message.deviceId,
+        deviceKind: message.deviceKind,
+        deviceName: message.deviceName
+      });
+      sendRoster();
     }
+    broadcastRaw(raw, socket);
   });
-  socket.on("close", () => clients.delete(socket));
+  socket.on("close", () => {
+    const peer = peers.get(socket);
+    clients.delete(socket);
+    peers.delete(socket);
+    if (peer?.deviceKind === "master") stopPlaybackSync();
+    sendRoster();
+  });
 });
 
 server.listen(PORT, "0.0.0.0", () => {

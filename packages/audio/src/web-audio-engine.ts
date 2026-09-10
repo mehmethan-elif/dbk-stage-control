@@ -15,10 +15,13 @@ import type {
 import {
   MIXER_CHANNELS,
   MIXER_STEMS,
+  clickOnlyMixSilences,
   emptyMixerBank,
   emptyMixerLevels,
   emptyStrip,
+  isMasterPracticeAudio,
   mixerStemFromPath,
+  parseSongInfo,
   playNextCueSeconds,
   type MixerBank,
   type MixerChannel,
@@ -167,6 +170,12 @@ export class WebAudioDeck implements AudioDeck {
     });
   }
 
+  updateSong(song: Song): void {
+    if (!this.song || this.song.id !== song.id) return;
+    this.song = song;
+    this.applyMix();
+  }
+
   play(atContextTime?: number): void {
     const ctx = this.engine.context;
     const when = atContextTime ?? ctx.currentTime;
@@ -289,10 +298,14 @@ export class WebAudioDeck implements AudioDeck {
   private applyMix(): void {
     const songId = this.song?.id;
     const songBank = songId ? this.engine.songMix(songId) : emptyMixerBank();
+    const playMode = parseSongInfo(this.song?.info).playMode;
     for (const track of this.tracks) {
       const stem = mixerStemFromPath(track.asset.path);
       const songStem = stem ? songBank[stem] : emptyStrip();
-      const silenced = songBank.Main.muted || (stem ? songStem.muted : false);
+      const silenced =
+        songBank.Main.muted ||
+        (stem ? songStem.muted : false) ||
+        clickOnlyMixSilences(track.asset, playMode);
       const db = songBank.Main.gainDb + (stem ? songStem.gainDb : 0);
       track.gain.gain.value = silenced ? 0 : dbToGain(db);
     }
@@ -706,7 +719,9 @@ export async function decodeSongBuffers(
   song: Song,
   fetchBuffer: (path: string) => Promise<ArrayBuffer>
 ): Promise<LoadedBuffers> {
-  const audioAssets = song.assets.filter((asset) => asset.kind === "audio");
+  const audioAssets = song.assets.filter(
+    (asset) => asset.kind === "audio" && !isMasterPracticeAudio(asset.path)
+  );
   const decoded = await Promise.all(
     audioAssets.map(async (asset) => {
       try {

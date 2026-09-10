@@ -6,11 +6,13 @@ import {
   emptyMixerLevels,
   entryPlayMode,
   hasBackingAudio,
+  hasClickFlac,
   isSongEntry,
   songHasMixerFile,
   type MixerChannel
 } from "@dbk/core";
 import { currentGig, readBusLevels, useMasterStore } from "../../store/master-store";
+import { findSongByRef } from "../../store/song-library";
 
 const FADER_MIN = -60;
 const FADER_MAX = 12;
@@ -37,17 +39,33 @@ export function MixerView() {
   const busMix = useMasterStore((s) => s.busMix);
   const setSongMixStrip = useMasterStore((s) => s.setSongMixStrip);
   const setBusMixStrip = useMasterStore((s) => s.setBusMixStrip);
+  const liveMeters = useMasterStore((s) => s.deviceKind === "master");
+  const remoteSongMixer = useMasterStore((s) => s.remoteSongMixer);
+  const deviceKind = useMasterStore((s) => s.deviceKind);
   const metronomeVolume = useMasterStore((s) => s.metronomeVolume);
   const setMetronomeVolume = useMasterStore((s) => s.setMetronomeVolume);
   const gig = useMasterStore(currentGig);
   const entry = gig?.setlist.find((item) => item.entryId === selectedEntryId);
   const songEntry = entry && isSongEntry(entry) ? entry : undefined;
-  const song = songEntry ? songs.find((item) => item.id === songEntry.songId) : undefined;
-  const files = song ? fileIndex[song.id] : undefined;
+  const song = songEntry ? findSongByRef(songs, songEntry.songId) : undefined;
+  const files = song
+    ? [
+        ...(fileIndex[song.id] ?? []),
+        ...(songEntry.songId !== song.id ? (fileIndex[songEntry.songId] ?? []) : []),
+        ...(song.folder && song.folder !== song.id ? (fileIndex[song.folder] ?? []) : [])
+      ]
+    : undefined;
+  const mode = entryPlayMode(songEntry, song?.info);
   const metronomeMode =
-    Boolean(songEntry) &&
-    (!hasBackingAudio(song, files) || entryPlayMode(songEntry) === PlayMode.View);
-  const songBank = song ? (songMix[song.id] ?? emptyMixerBank()) : emptyMixerBank();
+    deviceKind === "remote"
+      ? !remoteSongMixer
+      : Boolean(songEntry) &&
+        (mode === PlayMode.View ||
+          (mode === PlayMode.Playback && !hasBackingAudio(song, files)) ||
+          (mode === PlayMode.ClickOnly && (!song || !hasClickFlac(song, files))));
+  const songBank = song
+    ? (songMix[song.id] ?? (songEntry ? songMix[songEntry.songId] : undefined) ?? emptyMixerBank())
+    : emptyMixerBank();
   const meterFills = useRef(new Map<MixerChannel, HTMLDivElement>());
   const meterPeaks = useRef(new Map<MixerChannel, HTMLDivElement>());
 
@@ -101,8 +119,8 @@ export function MixerView() {
                     muted={strip.muted}
                     solo={false}
                     showSolo={false}
-                    onGain={(gainDb) => setSongMixStrip(song.id, channel, { gainDb })}
-                    onMute={() => setSongMixStrip(song.id, channel, { muted: !strip.muted })}
+                    onGain={(gainDb) => setSongMixStrip(songEntry.songId, channel, { gainDb })}
+                    onMute={() => setSongMixStrip(songEntry.songId, channel, { muted: !strip.muted })}
                   />
                 );
               })
@@ -128,7 +146,7 @@ export function MixerView() {
                 muted={strip.muted}
                 solo={strip.solo}
                 showSolo
-                showMeter
+                showMeter={liveMeters}
                 meterFillRef={(el) => {
                   if (el) meterFills.current.set(channel, el);
                   else meterFills.current.delete(channel);

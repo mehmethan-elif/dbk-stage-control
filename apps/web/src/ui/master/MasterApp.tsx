@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { useMasterStore } from "../../store/master-store";
+import { bandRoster, lanRosterState } from "@dbk/core";
+import { currentGig, useMasterStore } from "../../store/master-store";
 import {
   ChronometerIcon,
+  EditSectionsIcon,
   MixerIcon,
   PreparationIcon,
   SpeakerMonitorIcon
 } from "../shared/icons";
 import { AudioView } from "./AudioView";
-import { ChordView } from "./ChordView";
 import { DrumView } from "./DrumView";
 import { LanView } from "./LanView";
+import { useNavigatorOnline } from "../shared/BandRoster";
 import { LyricsView } from "./LyricsView";
 import { MixerView } from "./MixerView";
 import { NotaView } from "./NotaView";
@@ -17,6 +19,7 @@ import { PrepTransport } from "./PrepTransport";
 import { PrepView } from "./PrepView";
 import { isNativeApp } from "../../native/platform";
 import { LibraryMissing } from "../native/RoleGate";
+import { holdLibraryLoading, LibraryLoading } from "../shared/LibraryLoading";
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
@@ -33,15 +36,25 @@ function formatElapsed(ms: number): string {
 
 export function MasterApp() {
   const ready = useMasterStore((s) => s.ready);
+  const libraryStatus = useMasterStore((s) => s.libraryStatus);
+  const load = useMasterStore((s) => s.load);
+  const songCount = useMasterStore((s) => s.songs.length);
   const masterPage = useMasterStore((s) => s.masterPage);
   const setMasterPage = useMasterStore((s) => s.setMasterPage);
+  const editOpen = useMasterStore((s) => s.editOpen);
+  const toggleEditOpen = useMasterStore((s) => s.toggleEditOpen);
   const hostOk = useMasterStore((s) => s.hostOk);
   const syncConnected = useMasterStore((s) => s.syncConnected);
+  const syncPeers = useMasterStore((s) => s.syncPeers);
+  const gig = useMasterStore(currentGig);
+  const online = useNavigatorOnline();
+  const lanState = lanRosterState(bandRoster(gig), syncPeers, syncConnected, online);
   const native = isNativeApp();
   const [now, setNow] = useState(() => new Date());
   const [concertOn, setConcertOn] = useState(false);
   const [concertMs, setConcertMs] = useState(0);
   const concertStarted = useRef<number | null>(null);
+  const loadTries = useRef(0);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -53,8 +66,15 @@ export function MasterApp() {
     return () => window.clearInterval(id);
   }, []);
 
-  if (!ready) {
-    return <div className="panel-body">Loading library…</div>;
+  useEffect(() => {
+    if (ready && songCount > 0) return;
+    if (ready && loadTries.current >= 2) return;
+    loadTries.current += 1;
+    void load("master");
+  }, [load, ready, songCount]);
+
+  if (!ready || holdLibraryLoading()) {
+    return <LibraryLoading status={libraryStatus} />;
   }
 
   if (native && !hostOk) {
@@ -65,8 +85,8 @@ export function MasterApp() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand-block">
-          <div className="brand">DBK Stage Control</div>
-          <div className="brand-version">v {__APP_VERSION__}</div>
+          <div className="brand">DBK STAGE</div>
+          <div className="brand-name">ELIF AVCI</div>
         </div>
         <div className="topbar-time-cluster">
           <span className="topbar-clock-value">{formatHourMin(now)}</span>
@@ -127,13 +147,29 @@ export function MasterApp() {
         <div className="grow" />
         <button
           type="button"
-          className={`lyrics-btn${masterPage === "lan" ? " on" : syncConnected ? " lan-ok" : " lan-warn"}`}
+          className={`lyrics-btn${masterPage === "lan" ? " on" : lanState === "ready" ? " lan-ok" : lanState === "problem" ? " lan-bad" : " lan-warn"}`}
           aria-pressed={masterPage === "lan"}
           onClick={() => setMasterPage(masterPage === "lan" ? "prep" : "lan")}
         >
           LAN
         </button>
         <div className="mode-toggle">
+          <button
+            className={editOpen && masterPage === "chords" ? "on" : ""}
+            title="Edit sections"
+            aria-label="Edit sections"
+            aria-pressed={editOpen && masterPage === "chords"}
+            onClick={() => {
+              if (masterPage !== "chords") {
+                setMasterPage("chords");
+                if (!editOpen) toggleEditOpen();
+                return;
+              }
+              toggleEditOpen();
+            }}
+          >
+            <EditSectionsIcon />
+          </button>
           <button
             className={masterPage === "audio" ? "on" : ""}
             title="Audio"
@@ -172,10 +208,8 @@ export function MasterApp() {
         <AudioView />
       ) : masterPage === "lyrics" ? (
         <LyricsView />
-      ) : masterPage === "nota" ? (
-        <NotaView />
-      ) : masterPage === "chords" ? (
-        <ChordView />
+      ) : masterPage === "nota" || masterPage === "chords" ? (
+        <NotaView layer={masterPage === "chords" ? "chord" : "score"} />
       ) : masterPage === "drums" ? (
         <DrumView />
       ) : masterPage === "lan" ? (

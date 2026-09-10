@@ -1,4 +1,5 @@
 import type { MixerBank } from "./mixer.js";
+import { snapSongToMeasureGrid } from "./timeline.js";
 
 export const FinishMode = {
   Stop: "STOP",
@@ -9,12 +10,30 @@ export type FinishMode = (typeof FinishMode)[keyof typeof FinishMode];
 
 export const PlayMode = {
   View: "VIEW",
-  Playback: "PLAYBACK"
+  Playback: "PLAYBACK",
+  ClickOnly: "CLICK_ONLY"
 } as const;
 
 export type PlayMode = (typeof PlayMode)[keyof typeof PlayMode];
 
-export function entryPlayMode(entry: { playMode?: PlayMode } | undefined): PlayMode {
+export const SetlistPerformanceMode = {
+  FollowSongInfo: "FOLLOW_SONG_INFO",
+  ClickOnly: "CLICK_ONLY",
+  MetronomeContinuous: "METRONOME_CONTINUOUS",
+  Free: "FREE"
+} as const;
+
+export type SetlistPerformanceMode =
+  (typeof SetlistPerformanceMode)[keyof typeof SetlistPerformanceMode];
+
+export function entryPlayMode(
+  entry: { playMode?: PlayMode } | undefined,
+  info?: { playMode?: PlayMode }
+): PlayMode {
+  if (info?.playMode === PlayMode.Playback) return PlayMode.Playback;
+  if (info?.playMode === PlayMode.ClickOnly) return PlayMode.ClickOnly;
+  if (info?.playMode === PlayMode.View) return PlayMode.View;
+  if (entry?.playMode === PlayMode.ClickOnly) return PlayMode.ClickOnly;
   return entry?.playMode === PlayMode.Playback ? PlayMode.Playback : PlayMode.View;
 }
 
@@ -142,6 +161,9 @@ export interface SongInfo {
   scale?: string;
   style?: string;
   notes?: string;
+  playMode?: PlayMode;
+  startAt?: number;
+  pageNotes?: Partial<Record<"lyrics" | "score" | "chord" | "drums", string>>;
 }
 
 export const DEFAULT_METRONOME_BPM = 120;
@@ -208,13 +230,30 @@ export function parseSongInfo(raw: unknown): SongInfo {
   if (scale) info.scale = scale;
   if (style) info.style = style;
   if (notes) info.notes = notes;
+  if (
+    record?.playMode === PlayMode.View ||
+    record?.playMode === PlayMode.Playback ||
+    record?.playMode === PlayMode.ClickOnly
+  ) {
+    info.playMode = record.playMode;
+  }
+  const startAt = Number(record?.startAt);
+  if (Number.isFinite(startAt) && startAt >= 0) info.startAt = startAt;
+  if (record?.pageNotes && typeof record.pageNotes === "object") {
+    const pageNotes: NonNullable<SongInfo["pageNotes"]> = {};
+    for (const page of ["lyrics", "score", "chord", "drums"] as const) {
+      const text = optionalText((record.pageNotes as Record<string, unknown>)[page]);
+      if (text) pageNotes[page] = text;
+    }
+    if (Object.keys(pageNotes).length > 0) info.pageNotes = pageNotes;
+  }
   return info;
 }
 
 export function songInfoFromPlayback(
   song: Pick<Song, "duration" | "tempoMap" | "key" | "scale" | "style">
 ): SongInfo {
-  const point = song.tempoMap[0];
+  const point = song.tempoMap?.[0];
   return parseSongInfo({
     bpm: point?.bpm,
     numerator: point?.numerator,
@@ -223,6 +262,39 @@ export function songInfoFromPlayback(
     key: song.key,
     scale: song.scale,
     style: song.style
+  });
+}
+
+export function normalizeSong(raw: unknown, folder?: string): Song {
+  const record = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const info = parseSongInfo(record.info);
+  const folderName =
+    (typeof record.folder === "string" && record.folder.trim()) || folder?.trim() || "";
+  const id = (typeof record.id === "string" && record.id.trim()) || folderName || "song";
+  const title = (typeof record.title === "string" && record.title.trim()) || folderName || id;
+  const duration = Number(record.duration);
+  return snapSongToMeasureGrid({
+    id,
+    version: positiveInt(record.version, 1),
+    title,
+    folder: folderName || undefined,
+    duration: Number.isFinite(duration) && duration >= 0 ? duration : (info.duration ?? 0),
+    clickDuration: typeof record.clickDuration === "number" ? record.clickDuration : undefined,
+    nextSongAt: typeof record.nextSongAt === "number" ? record.nextSongAt : undefined,
+    key: typeof record.key === "string" ? record.key : info.key,
+    scale: typeof record.scale === "string" ? record.scale : info.scale,
+    style: typeof record.style === "string" ? record.style : info.style,
+    assets: Array.isArray(record.assets) ? (record.assets as AssetRef[]) : [],
+    tempoMap:
+      Array.isArray(record.tempoMap) && record.tempoMap.length > 0
+        ? (record.tempoMap as TempoPoint[])
+        : metronomeTempoMap(info),
+    sections: Array.isArray(record.sections) ? (record.sections as Section[]) : [],
+    lyrics: Array.isArray(record.lyrics) ? (record.lyrics as LyricLine[]) : undefined,
+    chords: Array.isArray(record.chords) ? (record.chords as ChordEvent[]) : undefined,
+    patterns: Array.isArray(record.patterns) ? (record.patterns as PatternEvent[]) : undefined,
+    tags: Array.isArray(record.tags) ? (record.tags as string[]) : undefined,
+    info
   });
 }
 
@@ -279,7 +351,8 @@ export interface SongSetlistEntry {
   type: "song";
   entryId: string;
   songId: string;
-  finishMode: FinishMode;
+  /** Legacy/runtime fields. Persisted setlists store only identity and order. */
+  finishMode?: FinishMode;
   playMode?: PlayMode;
   skipped?: boolean;
   startAt?: number;
@@ -305,6 +378,8 @@ export interface Gig {
   setlist: SetlistEntry[];
   busMix?: MixerBank;
   metronomeVolume?: number;
+  performanceMode?: SetlistPerformanceMode;
+  stageNames?: string[];
 }
 
 export interface PerformanceClock {

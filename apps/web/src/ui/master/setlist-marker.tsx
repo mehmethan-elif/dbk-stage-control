@@ -33,7 +33,7 @@ export function ConcertFinalBlock(props: { variant: "prep" | "lyrics" }) {
   if (props.variant === "prep") {
     return (
       <div className="set-block is-final">
-        <div className="set-marker prep-marker" aria-label={CONCERT_FINAL_LABEL}>
+        <div className="set-marker prep-marker is-concert-final" aria-label={CONCERT_FINAL_LABEL}>
           <span className="prep-marker-label">{CONCERT_FINAL_LABEL}</span>
         </div>
       </div>
@@ -41,7 +41,7 @@ export function ConcertFinalBlock(props: { variant: "prep" | "lyrics" }) {
   }
   return (
     <div className="lyrics-set-block is-final">
-      <div className="set-marker lyrics-marker" aria-label={CONCERT_FINAL_LABEL}>
+      <div className="set-marker lyrics-marker is-concert-final" aria-label={CONCERT_FINAL_LABEL}>
         {CONCERT_FINAL_LABEL}
       </div>
     </div>
@@ -63,7 +63,9 @@ export function StageFinishRow(props: {
   return (
     <div className="stage-finish-block" {...anchor}>
       <div
-        className={`stage-finish-row${props.locked ? " is-locked" : ""}`}
+        className={`stage-finish-row${props.locked ? " is-locked" : ""}${
+          elif ? "" : " is-concert-final"
+        }`}
         aria-label={
           elif && props.locked ? `${props.label} · ${ELIF_KEY_CHANGE_NOTE}` : props.label
         }

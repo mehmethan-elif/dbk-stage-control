@@ -20,7 +20,6 @@ import type {
 } from "./models.js";
 import {
   effectiveFinishMode,
-  nextSongIndex,
   songChainStartAt,
   nextUnskippedSongIndex,
   previousSongIndex
@@ -151,11 +150,21 @@ export class PlaybackController {
   }
 
   replaceShow(gig: Gig): void {
+    const currentId =
+      this.currentIndex >= 0 ? this.gig?.setlist[this.currentIndex]?.entryId : undefined;
     this.gig = gig;
+    if (currentId) {
+      this.currentIndex = gig.setlist.findIndex((entry) => entry.entryId === currentId);
+    }
     if (this.state === PlaybackState.Playing || this.state === PlaybackState.Transitioning) {
-      this.schedulePlayNextIfNeeded();
+      void this.preloadAndMaybeSchedule().then(() => this.emit());
     }
     this.emit();
+  }
+
+  replaceSongs(songs: Song[]): void {
+    this.songs = new Map(songs.map((song) => [song.id, song]));
+    this.syncLoadedSongs();
   }
 
   async selectIndex(setlistIndex: number): Promise<void> {
@@ -163,6 +172,18 @@ export class PlaybackController {
     const entry = this.gig.setlist[setlistIndex];
     if (!entry || !isSongEntry(entry)) {
       this.fail("That setlist item is not a song.");
+      return;
+    }
+    const already = this.songs.get(entry.songId);
+    if (
+      already &&
+      this.currentIndex === setlistIndex &&
+      this.decks[DeckId.A].loadedSongId === already.id &&
+      (this.state === PlaybackState.Ready ||
+        this.state === PlaybackState.Playing ||
+        this.state === PlaybackState.Transitioning)
+    ) {
+      this.syncLoadedSongs();
       return;
     }
     this.state = PlaybackState.Loading;
@@ -280,7 +301,7 @@ export class PlaybackController {
 
   async next(): Promise<void> {
     if (!this.gig) return;
-    const index = nextSongIndex(this.gig.setlist, this.currentIndex);
+    const index = nextUnskippedSongIndex(this.gig.setlist, this.currentIndex);
     if (index === -1) return;
     this.stopImmediate();
     await this.selectIndex(index);
@@ -307,9 +328,9 @@ export class PlaybackController {
     if (!this.decks[this.primary].isPlaying) return;
     const entry = this.currentSongEntry();
     const song = this.currentSong();
-    if (!entry || entry.playMode !== PlayMode.Playback || !song) return;
+    if (!entry || !song || entryPlayMode(entry, song.info) === PlayMode.View) return;
     const section = sectionAt(song.sections, this.decks[this.primary].getPosition());
-    if (!sectionNamed(section, "SERBEST")) return;
+    if (!section || !sectionNamed(section, "SERBEST")) return;
     this.pause();
     this.seek(section.start);
     this.logger.playback("serbest_hold", { songId: song.id, sectionStart: section.start });
@@ -328,7 +349,8 @@ export class PlaybackController {
     const song = this.decks[id].loadedSongId;
     this.logger.playback("click_eof", { songId: song, deck: id });
     if (this.beginSilentSerbestNext(id)) return;
-    this.beginPlayNext(id);
+    if (this.beginPlayNext(id)) return;
+    if (this.chainEnabled && this.nextPlayableIndex() >= 0) this.emitEndedToNext(id, song);
   }
 
   private handleLongestEof(id: DeckIdType): void {
@@ -350,18 +372,21 @@ export class PlaybackController {
     }
 
     if (id === this.primary && this.beginPlayNext(id)) return;
+    this.emitEndedToNext(id, songId);
+  }
 
-    if (id === this.primary && this.state === PlaybackState.Playing) {
-      this.state = PlaybackState.Stopping;
-      this.decks[id].stop();
-      this.state = PlaybackState.Ready;
-      const next = this.gig ? nextUnskippedSongIndex(this.gig.setlist, this.currentIndex) : -1;
-      const nextEntry = next >= 0 ? this.gig?.setlist[next] : undefined;
-      this.endedToEntryId = nextEntry && isSongEntry(nextEntry) ? nextEntry.entryId : null;
-      this.logger.playback("song_ended", { songId });
-      this.emit();
-      this.endedToEntryId = null;
-    }
+  private emitEndedToNext(fromDeck: DeckIdType, songId: string | null): void {
+    if (fromDeck !== this.primary) return;
+    if (this.state !== PlaybackState.Playing && this.state !== PlaybackState.Transitioning) return;
+    this.state = PlaybackState.Stopping;
+    this.decks[fromDeck].stop();
+    this.state = PlaybackState.Ready;
+    const next = this.gig ? nextUnskippedSongIndex(this.gig.setlist, this.currentIndex) : -1;
+    const nextEntry = next >= 0 ? this.gig?.setlist[next] : undefined;
+    this.endedToEntryId = nextEntry && isSongEntry(nextEntry) ? nextEntry.entryId : null;
+    this.logger.playback("song_ended", { songId });
+    this.emit();
+    this.endedToEntryId = null;
   }
 
   private beginPlayNext(fromDeck: DeckIdType): boolean {
@@ -369,7 +394,7 @@ export class PlaybackController {
     if (fromDeck !== this.primary) return false;
     if (this.currentFinishMode() !== FinishMode.PlayNext) return false;
 
-    const nextIndex = this.gig ? nextSongIndex(this.gig.setlist, this.currentIndex) : -1;
+    const nextIndex = this.nextPlayableIndex();
     const nextEntry = nextIndex >= 0 ? this.gig?.setlist[nextIndex] : undefined;
     if (!nextEntry || !isSongEntry(nextEntry)) return false;
 
@@ -387,12 +412,12 @@ export class PlaybackController {
 
   private beginSilentSerbestNext(fromDeck: DeckIdType): boolean {
     if (!this.chainEnabled || fromDeck !== this.primary || !this.gig) return false;
-    const nextIndex = nextSongIndex(this.gig.setlist, this.currentIndex);
+    const nextIndex = this.nextPlayableIndex();
     const nextEntry = nextIndex >= 0 ? this.gig.setlist[nextIndex] : undefined;
     if (!nextEntry || !isSongEntry(nextEntry)) return false;
     const nextSong = this.songs.get(nextEntry.songId);
     if (
-      entryPlayMode(nextEntry) !== PlayMode.Playback ||
+      entryPlayMode(nextEntry, nextSong?.info) === PlayMode.View ||
       !firstSectionNamed(nextSong?.sections, "SERBEST")
     ) {
       return false;
@@ -478,7 +503,7 @@ export class PlaybackController {
 
   private async preloadNext(): Promise<void> {
     if (!this.gig) return;
-    const nextIndex = nextSongIndex(this.gig.setlist, this.currentIndex);
+    const nextIndex = this.nextPlayableIndex();
     const secondary = this.decks[otherDeck(this.primary)];
     if (nextIndex === -1) {
       if (this.outgoing !== otherDeck(this.primary)) secondary.unload();
@@ -511,6 +536,14 @@ export class PlaybackController {
     this.logger.playback("play_next_ready", { songId: next.id });
   }
 
+  private syncLoadedSongs(): void {
+    for (const deck of Object.values(this.decks)) {
+      const id = deck.loadedSongId;
+      const song = id ? this.songs.get(id) : undefined;
+      if (song) deck.updateSong(song);
+    }
+  }
+
   private currentSongEntry(): SongSetlistEntry | null {
     if (!this.gig || this.currentIndex < 0) return null;
     const entry = this.gig.setlist[this.currentIndex];
@@ -525,10 +558,15 @@ export class PlaybackController {
 
   private nextSong(): Song | null {
     if (!this.gig) return null;
-    const index = nextSongIndex(this.gig.setlist, this.currentIndex);
+    const index = this.nextPlayableIndex();
     const entry = index >= 0 ? this.gig.setlist[index] : undefined;
     if (!entry || !isSongEntry(entry)) return null;
     return this.songs.get(entry.songId) ?? null;
+  }
+
+  private nextPlayableIndex(): number {
+    if (!this.gig) return -1;
+    return nextUnskippedSongIndex(this.gig.setlist, this.currentIndex);
   }
 
   private currentFinishMode() {
@@ -536,7 +574,7 @@ export class PlaybackController {
     if (!entry || !this.gig) return FinishMode.Stop;
     return effectiveFinishMode(
       entry,
-      nextSongIndex(this.gig.setlist, this.currentIndex) === -1,
+      this.nextPlayableIndex() === -1,
       this.gig.setlist,
       this.currentIndex,
       this.songs
