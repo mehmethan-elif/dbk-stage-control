@@ -702,6 +702,7 @@ button {
   appearance: none;
   background: transparent;
   cursor: ew-resize;
+  touch-action: none;
 }
 
 .app-transport .prep-position-slider::-webkit-slider-runnable-track {
@@ -710,7 +711,7 @@ button {
 }
 
 .app-transport .prep-position-slider::-webkit-slider-thumb {
-  width: 1px;
+  width: var(--touch);
   height: 100%;
   appearance: none;
   border: 0;
@@ -724,10 +725,16 @@ button {
 }
 
 .app-transport .prep-position-slider::-moz-range-thumb {
-  width: 1px;
+  width: var(--touch);
   height: 100%;
   border: 0;
   background: transparent;
+}
+
+@media (pointer: coarse) {
+  .app-transport .prep-now-track {
+    height: var(--touch);
+  }
 }
 
 .app-transport .prep-position-slider:disabled {

@@ -51,7 +51,12 @@ import {
   StopIcon
 } from "../shared/icons";
 import { sectionBarClass } from "./section-color";
-import { songTransportEnd, songTransportSections } from "./transport-sections";
+import {
+  nearestMeasureIndex,
+  sliderTimeFromClientX,
+  songTransportEnd,
+  songTransportSections
+} from "./transport-sections";
 
 export function StageSetlistButton() {
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
@@ -507,6 +512,25 @@ export function PrepTransport() {
       : panicTime
     : activeMeasureEnd;
   const sliderValue = panicArmed ? panicTime : activeMeasureStart;
+  const previewSliderTime = (time: number) => {
+    if (panicArmed) {
+      const snapped = snapToSectionBoundary(sections, time);
+      pendingPanicRef.current = snapped;
+      setPendingPanicTime(snapped);
+      setPanicTarget(snapped);
+      return;
+    }
+    const index = nearestMeasureIndex(measureStarts, time);
+    pendingMeasureRef.current = index;
+    setPendingMeasure(index);
+  };
+  const sliderTimeFromEvent = (event: PointerEvent<HTMLInputElement>) =>
+    sliderTimeFromClientX(
+      event.clientX,
+      event.currentTarget.getBoundingClientRect(),
+      timelineStart,
+      timelineEnd
+    );
   const commitPosition = () => {
     if (panicArmed) {
       if (pendingPanicRef.current == null) return;
@@ -613,26 +637,19 @@ export function PrepTransport() {
               value={sliderValue}
               disabled={!song}
               aria-label={panicArmed ? "Panic resume section" : "Song position by measure"}
-              onChange={(event) => {
-                const target = Number(event.target.value);
-                if (panicArmed) {
-                  const snapped = snapToSectionBoundary(sections, target);
-                  pendingPanicRef.current = snapped;
-                  setPendingPanicTime(snapped);
-                  setPanicTarget(snapped);
-                  return;
-                }
-                const index = measureStarts.reduce(
-                  (best, time, candidate) =>
-                    Math.abs(time - target) < Math.abs((measureStarts[best] ?? 0) - target)
-                      ? candidate
-                      : best,
-                  0
-                );
-                pendingMeasureRef.current = index;
-                setPendingMeasure(index);
+              onChange={(event) => previewSliderTime(Number(event.target.value))}
+              onPointerDown={(event) => {
+                if (!song || event.button !== 0) return;
+                event.preventDefault();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                previewSliderTime(sliderTimeFromEvent(event));
+              }}
+              onPointerMove={(event) => {
+                if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+                previewSliderTime(sliderTimeFromEvent(event));
               }}
               onPointerUp={commitPosition}
+              onLostPointerCapture={commitPosition}
               onPointerCancel={() => {
                 pendingMeasureRef.current = null;
                 pendingPanicRef.current = null;

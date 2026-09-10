@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Song } from "@dbk/core";
-import { songTransportEnd, songTransportSections } from "./transport-sections";
+import {
+  nearestMeasureIndex,
+  sliderTimeFromClientX,
+  songTransportEnd,
+  songTransportSections
+} from "./transport-sections";
 
 function song(sections: { name: string; start: number; end: number }[], duration?: number): Song {
   const last = sections.at(-1)?.end ?? 0;
@@ -52,5 +57,26 @@ describe("songTransportSections", () => {
       "CEV+ FINAL"
     ]);
     expect(songTransportEnd(biz)).toBeCloseTo(176.4);
+  });
+});
+
+describe("sliderTimeFromClientX", () => {
+  it("maps the left edge, middle, and right edge of the bar", () => {
+    const rect = { left: 100, width: 200 };
+    expect(sliderTimeFromClientX(100, rect, 0, 80)).toBe(0);
+    expect(sliderTimeFromClientX(200, rect, 0, 80)).toBe(40);
+    expect(sliderTimeFromClientX(300, rect, 0, 80)).toBe(80);
+  });
+
+  it("stays inside the song when the finger overshoots", () => {
+    expect(sliderTimeFromClientX(0, { left: 100, width: 200 }, 0, 80)).toBe(0);
+    expect(sliderTimeFromClientX(400, { left: 100, width: 200 }, 0, 80)).toBe(80);
+  });
+});
+
+describe("nearestMeasureIndex", () => {
+  it("picks the closest barline", () => {
+    expect(nearestMeasureIndex([0, 2, 4, 6], 3.1)).toBe(2);
+    expect(nearestMeasureIndex([0, 2, 4, 6], 0.4)).toBe(0);
   });
 });
