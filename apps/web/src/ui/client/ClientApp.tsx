@@ -36,10 +36,6 @@ function pad2(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function formatHourMin(date: Date): string {
-  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
-
 function formatElapsed(ms: number): string {
   const totalMin = Math.max(0, Math.floor(ms / 60_000));
   return `${pad2(Math.floor(totalMin / 60))}:${pad2(totalMin % 60)}`;
@@ -69,14 +65,12 @@ export function ClientApp() {
             : "lyrics";
   const practice = useMasterStore(clientPracticeMode);
   const freeTransport = useMasterStore(usesFreeMetroTransport);
-  const [now, setNow] = useState(() => new Date());
   const [concertOn, setConcertOn] = useState(false);
   const [concertMs, setConcertMs] = useState(0);
   const concertStarted = useRef<number | null>(null);
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setNow(new Date());
       if (concertStarted.current != null) {
         setConcertMs(Date.now() - concertStarted.current);
       }
@@ -98,7 +92,6 @@ export function ClientApp() {
           <div className="brand-name">ELIF AVCI</div>
         </div>
         <div className="topbar-time-cluster">
-          <span className="topbar-clock-value">{formatHourMin(now)}</span>
           <button
             type="button"
             className={`chrono-btn${concertOn ? " on" : ""}`}
@@ -153,37 +146,40 @@ export function ClientApp() {
         >
           DRUMS
         </button>
-        <div className="grow" />
-        {stageLive ? null : (
-          <div className="topbar-offline-modes" role="radiogroup" aria-label="Offline mode">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={offlineMode === "free"}
-              className={`lyrics-btn${offlineMode === "free" ? " on" : ""}`}
-              onClick={() => setClientOfflineMode("free")}
-            >
-              FREE
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={offlineMode === "practice"}
-              className={`lyrics-btn${offlineMode === "practice" ? " on" : ""}`}
-              onClick={() => setClientOfflineMode("practice")}
-            >
-              PRACTICE
-            </button>
-          </div>
-        )}
-        <button
-          type="button"
-          className={`lyrics-btn${page === "lan" ? " on" : stageLive ? " lan-ok" : ""}`}
-          aria-pressed={page === "lan" || connected}
-          onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
-        >
-          STAGE CONNECT
-        </button>
+        <div className="topbar-end">
+          {stageLive ? null : (
+            <div className="topbar-offline-modes" role="radiogroup" aria-label="Offline mode">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={offlineMode === "free"}
+                className={`lyrics-btn${offlineMode === "free" ? " on" : ""}`}
+                onClick={() => setClientOfflineMode("free")}
+              >
+                FREE
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={offlineMode === "practice"}
+                className={`lyrics-btn${offlineMode === "practice" ? " on" : ""}`}
+                onClick={() => setClientOfflineMode("practice")}
+              >
+                PRACTICE
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            className={`lyrics-btn topbar-connect${page === "lan" ? " on" : stageLive ? " lan-ok" : ""}`}
+            aria-label="Stage connect"
+            aria-pressed={page === "lan" || connected}
+            onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
+          >
+            <span>STAGE</span>
+            <span>CONNECT</span>
+          </button>
+        </div>
       </header>
       {page !== "lan" && practice && !empty ? (
         <div className="app-transport">

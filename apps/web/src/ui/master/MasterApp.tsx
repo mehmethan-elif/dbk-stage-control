@@ -25,10 +25,6 @@ function pad2(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function formatHourMin(date: Date): string {
-  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
-
 function formatElapsed(ms: number): string {
   const totalMin = Math.max(0, Math.floor(ms / 60_000));
   return `${pad2(Math.floor(totalMin / 60))}:${pad2(totalMin % 60)}`;
@@ -50,7 +46,6 @@ export function MasterApp() {
   const online = useNavigatorOnline();
   const lanState = lanRosterState(bandRoster(gig), syncPeers, syncConnected, online);
   const native = isNativeApp();
-  const [now, setNow] = useState(() => new Date());
   const [concertOn, setConcertOn] = useState(false);
   const [concertMs, setConcertMs] = useState(0);
   const concertStarted = useRef<number | null>(null);
@@ -58,7 +53,6 @@ export function MasterApp() {
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setNow(new Date());
       if (concertStarted.current != null) {
         setConcertMs(Date.now() - concertStarted.current);
       }
@@ -89,7 +83,6 @@ export function MasterApp() {
           <div className="brand-name">ELIF AVCI</div>
         </div>
         <div className="topbar-time-cluster">
-          <span className="topbar-clock-value">{formatHourMin(now)}</span>
           <button
             type="button"
             className={`chrono-btn${concertOn ? " on" : ""}`}

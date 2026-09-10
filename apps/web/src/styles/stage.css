@@ -33,6 +33,7 @@ html, body, #root {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .app-loading {
@@ -110,6 +111,7 @@ button {
 .topbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   min-height: 56px;
   padding: calc(8px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 8px
@@ -154,7 +156,6 @@ button {
   background: rgba(47, 111, 237, 0.16);
 }
 
-.topbar-clock-value,
 .concert-time-value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -220,13 +221,40 @@ button {
   border-color: transparent;
 }
 
-.topbar .grow { flex: 1; }
+.topbar .grow { flex: 1 1 0; min-width: 0; }
+
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.topbar-connect {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  height: auto;
+  min-height: var(--btn-size);
+  padding: 3px 10px;
+  line-height: 1.05;
+  flex: 0 0 auto;
+}
+
+.topbar-connect span {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
 
 .topbar-offline-modes {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
+  flex: 0 0 auto;
 }
 
 .topbar-offline-modes .lyrics-btn {
@@ -235,6 +263,31 @@ button {
   padding: 0 10px;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    gap: 6px;
+  }
+
+  .topbar .lyrics-btn {
+    padding-left: 7px;
+    padding-right: 7px;
+    letter-spacing: 0.04em;
+  }
+
+  .topbar-time-cluster {
+    gap: 5px;
+    padding: 3px 6px;
+  }
+
+  .topbar-end {
+    gap: 6px;
+  }
+
+  .topbar-connect {
+    padding: 3px 7px;
+  }
 }
 
 .lyrics-btn.lan-ok:not(.on) {
