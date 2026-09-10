@@ -3,7 +3,6 @@
   "version": 1,
   "title": "Biz",
   "duration": 180,
-  "clickDuration": 180,
   "nextSongAt": 176.818182,
   "key": "D",
   "scale": "MINOR",
@@ -91,29 +90,29 @@
     {
       "time": 30.909091,
       "end": 38.181818,
-      "measure": 17,
-      "beat": 4,
+      "measure": 18,
+      "beat": 1,
       "text": "TARİHTE BELLİDİR NESLİMİN YAŞI\r\nOL NEBİ YOLUNDA NURLUDUR BAŞI"
     },
     {
       "time": 38.181818,
       "end": 45.454545,
-      "measure": 22,
-      "beat": 1,
+      "measure": 21,
+      "beat": 4,
       "text": "OLMASA SİLAHI YİYECEK AŞI\r\nİMAN İLE ZIRHI DELENLERİZ BİZ"
     },
     {
       "time": 45.454545,
       "end": 56.363636,
-      "measure": 26,
-      "beat": 1,
+      "measure": 25,
+      "beat": 4,
       "text": "OLMASA SİLAHI YİYECEK AŞI\r\nİMAN İLE ZIRHI DELENLERİZ BİZ\r\nİMAN İLE ZIRHI DELENLERİZ BİZ"
     },
     {
       "time": 60,
       "end": 67.272727,
-      "measure": 33,
-      "beat": 4,
+      "measure": 34,
+      "beat": 1,
       "text": "ATEŞ YAĞDI TOPRAĞINA SERİLDİK\r\nYILMADIK CEPHEDE KANLA DERİLDİK"
     },
     {
@@ -126,8 +125,8 @@
     {
       "time": 74.545455,
       "end": 85.454545,
-      "measure": 41,
-      "beat": 4,
+      "measure": 42,
+      "beat": 1,
       "text": "SANMAYIN ÖLDÜLER ŞİMDİ DİRİLDİK\r\nŞEHADET SIRRINA ERENLERİZ BİZ\r\nŞEHADET SIRRINA ERENLERİZ BİZ"
     },
     {
@@ -140,8 +139,8 @@
     {
       "time": 125.454545,
       "end": 132.727273,
-      "measure": 70,
-      "beat": 1,
+      "measure": 69,
+      "beat": 4,
       "text": "OLMASA SİLAHI YİYECEK AŞI\r\nİMAN İLE ZIRHI DELENLERİZ BİZ"
     },
     {
@@ -161,15 +160,15 @@
     {
       "time": 154.545455,
       "end": 161.818182,
-      "measure": 85,
-      "beat": 4,
+      "measure": 86,
+      "beat": 1,
       "text": "SANMAYIN ÖLDÜLER ŞİMDİ DİRİLDİK\r\nŞEHADET SIRRINA ERENLERİZ BİZ"
     },
     {
       "time": 161.818182,
       "end": 172.727273,
-      "measure": 89,
-      "beat": 4,
+      "measure": 90,
+      "beat": 1,
       "text": "SANMAYIN ÖLDÜLER ŞİMDİ DİRİLDİK\r\nŞEHADET SIRRINA ERENLERİZ BİZ\r\nŞEHADET SIRRINA ERENLERİZ BİZ"
     }
   ],
@@ -224,8 +223,8 @@
     {
       "time": 5.454545,
       "end": 7.272727,
-      "measure": 4,
-      "beat": 1,
+      "measure": 3,
+      "beat": 4,
       "text": "G",
       "notes": [
         {
@@ -244,8 +243,8 @@
     {
       "time": 7.272727,
       "end": 9.090909,
-      "measure": 5,
-      "beat": 1,
+      "measure": 4,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -264,8 +263,8 @@
     {
       "time": 9.090909,
       "end": 12.727273,
-      "measure": 6,
-      "beat": 1,
+      "measure": 5,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -445,8 +444,8 @@
     {
       "time": 16.363636,
       "end": 18.181818,
-      "measure": 10,
-      "beat": 1,
+      "measure": 9,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -487,8 +486,8 @@
     {
       "time": 18.181818,
       "end": 20,
-      "measure": 11,
-      "beat": 1,
+      "measure": 10,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -743,8 +742,8 @@
     {
       "time": 25.454545,
       "end": 27.272727,
-      "measure": 15,
-      "beat": 1,
+      "measure": 14,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -785,8 +784,8 @@
     {
       "time": 27.272727,
       "end": 29.090909,
-      "measure": 16,
-      "beat": 1,
+      "measure": 15,
+      "beat": 4,
       "text": "G",
       "notes": [
         {
@@ -882,8 +881,8 @@
     {
       "time": 29.090909,
       "end": 30.909091,
-      "measure": 17,
-      "beat": 1,
+      "measure": 16,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -1248,8 +1247,8 @@
     {
       "time": 36.363636,
       "end": 38.181818,
-      "measure": 21,
-      "beat": 1,
+      "measure": 20,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -1345,8 +1344,8 @@
     {
       "time": 38.181818,
       "end": 40,
-      "measure": 22,
-      "beat": 1,
+      "measure": 21,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -1733,8 +1732,8 @@
     {
       "time": 45.454545,
       "end": 47.272727,
-      "measure": 26,
-      "beat": 1,
+      "measure": 25,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -1830,8 +1829,8 @@
     {
       "time": 47.272727,
       "end": 49.090909,
-      "measure": 27,
-      "beat": 1,
+      "measure": 26,
+      "beat": 4,
       "text": "Gm",
       "notes": [
         {
@@ -1927,8 +1926,8 @@
     {
       "time": 49.090909,
       "end": 50.909091,
-      "measure": 28,
-      "beat": 1,
+      "measure": 27,
+      "beat": 4,
       "text": "Bb",
       "notes": [
         {
@@ -2315,8 +2314,8 @@
     {
       "time": 56.363636,
       "end": 57.272727,
-      "measure": 32,
-      "beat": 1,
+      "measure": 31,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -2336,7 +2335,7 @@
       "time": 57.272727,
       "end": 58.181818,
       "measure": 32,
-      "beat": 3,
+      "beat": 2,
       "text": "Bb",
       "notes": [
         {
@@ -2355,8 +2354,8 @@
     {
       "time": 58.181818,
       "end": 59.090909,
-      "measure": 33,
-      "beat": 1,
+      "measure": 32,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -2398,7 +2397,7 @@
       "time": 59.090909,
       "end": 60,
       "measure": 33,
-      "beat": 3,
+      "beat": 2,
       "text": "Dm",
       "notes": [
         {
@@ -2719,8 +2718,8 @@
     {
       "time": 65.454545,
       "end": 67.272727,
-      "measure": 37,
-      "beat": 1,
+      "measure": 36,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -2816,8 +2815,8 @@
     {
       "time": 67.272727,
       "end": 69.090909,
-      "measure": 38,
-      "beat": 1,
+      "measure": 37,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -2913,8 +2912,8 @@
     {
       "time": 69.090909,
       "end": 70.909091,
-      "measure": 39,
-      "beat": 1,
+      "measure": 38,
+      "beat": 4,
       "text": "Gm",
       "notes": [
         {
@@ -3301,8 +3300,8 @@
     {
       "time": 76.363636,
       "end": 78.181818,
-      "measure": 43,
-      "beat": 1,
+      "measure": 42,
+      "beat": 4,
       "text": "Gm",
       "notes": [
         {
@@ -3398,8 +3397,8 @@
     {
       "time": 78.181818,
       "end": 80,
-      "measure": 44,
-      "beat": 1,
+      "measure": 43,
+      "beat": 4,
       "text": "Bb",
       "notes": [
         {
@@ -3786,8 +3785,8 @@
     {
       "time": 85.454545,
       "end": 86.363636,
-      "measure": 48,
-      "beat": 1,
+      "measure": 47,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -3807,7 +3806,7 @@
       "time": 86.363636,
       "end": 87.272727,
       "measure": 48,
-      "beat": 3,
+      "beat": 2,
       "text": "Bb",
       "notes": [
         {
@@ -3826,8 +3825,8 @@
     {
       "time": 87.272727,
       "end": 88.181818,
-      "measure": 49,
-      "beat": 1,
+      "measure": 48,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -3869,7 +3868,7 @@
       "time": 88.181818,
       "end": 89.090909,
       "measure": 49,
-      "beat": 3,
+      "beat": 2,
       "text": "Dm",
       "notes": [
         {
@@ -3899,8 +3898,8 @@
     {
       "time": 89.090909,
       "end": 90.909091,
-      "measure": 50,
-      "beat": 1,
+      "measure": 49,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -3979,8 +3978,8 @@
     {
       "time": 96.363636,
       "end": 100,
-      "measure": 54,
-      "beat": 1,
+      "measure": 53,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -4202,8 +4201,8 @@
     {
       "time": 105.454545,
       "end": 107.272727,
-      "measure": 59,
-      "beat": 1,
+      "measure": 58,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -4244,8 +4243,8 @@
     {
       "time": 107.272727,
       "end": 109.090909,
-      "measure": 60,
-      "beat": 1,
+      "measure": 59,
+      "beat": 4,
       "text": "G",
       "notes": [
         {
@@ -4341,8 +4340,8 @@
     {
       "time": 109.090909,
       "end": 110.909091,
-      "measure": 61,
-      "beat": 1,
+      "measure": 60,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -4597,8 +4596,8 @@
     {
       "time": 116.363636,
       "end": 118.181818,
-      "measure": 65,
-      "beat": 1,
+      "measure": 64,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -4672,8 +4671,8 @@
     {
       "time": 118.181818,
       "end": 120,
-      "measure": 66,
-      "beat": 1,
+      "measure": 65,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -5060,8 +5059,8 @@
     {
       "time": 125.454545,
       "end": 127.272727,
-      "measure": 70,
-      "beat": 1,
+      "measure": 69,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -5157,8 +5156,8 @@
     {
       "time": 127.272727,
       "end": 129.090909,
-      "measure": 71,
-      "beat": 1,
+      "measure": 70,
+      "beat": 4,
       "text": "Gm",
       "notes": [
         {
@@ -5254,8 +5253,8 @@
     {
       "time": 129.090909,
       "end": 130.909091,
-      "measure": 72,
-      "beat": 1,
+      "measure": 71,
+      "beat": 4,
       "text": "F",
       "notes": [
         {
@@ -5642,8 +5641,8 @@
     {
       "time": 136.363636,
       "end": 138.181818,
-      "measure": 76,
-      "beat": 1,
+      "measure": 75,
+      "beat": 4,
       "text": "Bb",
       "notes": [
         {
@@ -5739,8 +5738,8 @@
     {
       "time": 138.181818,
       "end": 140,
-      "measure": 77,
-      "beat": 1,
+      "measure": 76,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -6070,8 +6069,8 @@
     {
       "time": 145.454545,
       "end": 146.363636,
-      "measure": 81,
-      "beat": 1,
+      "measure": 80,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -6113,7 +6112,7 @@
       "time": 146.363636,
       "end": 147.272727,
       "measure": 81,
-      "beat": 3,
+      "beat": 2,
       "text": "Dm",
       "notes": [
         {
@@ -6143,8 +6142,8 @@
     {
       "time": 147.272727,
       "end": 149.090909,
-      "measure": 82,
-      "beat": 1,
+      "measure": 81,
+      "beat": 4,
       "text": "Dm",
       "notes": [
         {
@@ -6240,8 +6239,8 @@
     {
       "time": 149.090909,
       "end": 150.909091,
-      "measure": 83,
-      "beat": 1,
+      "measure": 82,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -6628,8 +6627,8 @@
     {
       "time": 156.363636,
       "end": 158.181818,
-      "measure": 87,
-      "beat": 1,
+      "measure": 86,
+      "beat": 4,
       "text": "Gm",
       "notes": [
         {
@@ -6725,8 +6724,8 @@
     {
       "time": 158.181818,
       "end": 160,
-      "measure": 88,
-      "beat": 1,
+      "measure": 87,
+      "beat": 4,
       "text": "F",
       "notes": [
         {
@@ -7113,8 +7112,8 @@
     {
       "time": 165.454545,
       "end": 167.272727,
-      "measure": 92,
-      "beat": 1,
+      "measure": 91,
+      "beat": 4,
       "text": "Bb",
       "notes": [
         {
@@ -7210,8 +7209,8 @@
     {
       "time": 167.272727,
       "end": 169.090909,
-      "measure": 93,
-      "beat": 1,
+      "measure": 92,
+      "beat": 4,
       "text": "A",
       "notes": [
         {
@@ -7307,8 +7306,8 @@
     {
       "time": 169.090909,
       "end": 170.909091,
-      "measure": 94,
-      "beat": 1,
+      "measure": 93,
+      "beat": 4,
       "text": "Bb",
       "notes": [
         {
@@ -7584,7 +7583,7 @@
       "time": 175.454545,
       "end": 176.363636,
       "measure": 97,
-      "beat": 3,
+      "beat": 2,
       "text": "Dm",
       "notes": [
         {
@@ -7685,8 +7684,8 @@
       "time": 9.090909,
       "end": 10.909091,
       "length": 1.818182,
-      "measure": 6,
-      "beat": 1,
+      "measure": 5,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -7762,9 +7761,9 @@
       "text": "FILL",
       "time": 14.545455,
       "end": 16.363636,
-      "length": 1.818182,
-      "measure": 8,
-      "beat": 4,
+      "length": 1.818181,
+      "measure": 9,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -7774,8 +7773,8 @@
       "time": 16.363636,
       "end": 18.181818,
       "length": 1.818182,
-      "measure": 10,
-      "beat": 1,
+      "measure": 9,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -7852,8 +7851,8 @@
       "time": 29.090909,
       "end": 30.909091,
       "length": 1.818182,
-      "measure": 17,
-      "beat": 1,
+      "measure": 16,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -7863,8 +7862,8 @@
       "time": 30.909091,
       "end": 32.727273,
       "length": 1.818182,
-      "measure": 17,
-      "beat": 4,
+      "measure": 18,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -7940,9 +7939,9 @@
       "text": "FILL",
       "time": 54.545455,
       "end": 56.363636,
-      "length": 1.818182,
-      "measure": 30,
-      "beat": 4,
+      "length": 1.818181,
+      "measure": 31,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -7952,8 +7951,8 @@
       "time": 56.363636,
       "end": 58.181818,
       "length": 1.818182,
-      "measure": 32,
-      "beat": 1,
+      "measure": 31,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8030,8 +8029,8 @@
       "time": 58.181818,
       "end": 60,
       "length": 1.818182,
-      "measure": 33,
-      "beat": 1,
+      "measure": 32,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8119,8 +8118,8 @@
       "time": 60,
       "end": 61.818182,
       "length": 1.818182,
-      "measure": 33,
-      "beat": 4,
+      "measure": 34,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8196,9 +8195,9 @@
       "text": "FILL",
       "time": 83.636364,
       "end": 85.454545,
-      "length": 1.818182,
-      "measure": 46,
-      "beat": 4,
+      "length": 1.818181,
+      "measure": 47,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -8208,8 +8207,8 @@
       "time": 85.454545,
       "end": 87.272727,
       "length": 1.818182,
-      "measure": 48,
-      "beat": 1,
+      "measure": 47,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8286,8 +8285,8 @@
       "time": 87.272727,
       "end": 89.090909,
       "length": 1.818182,
-      "measure": 49,
-      "beat": 1,
+      "measure": 48,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8375,8 +8374,8 @@
       "time": 89.090909,
       "end": 90.909091,
       "length": 1.818182,
-      "measure": 50,
-      "beat": 1,
+      "measure": 49,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8431,8 +8430,8 @@
       "time": 96.363636,
       "end": 98.181818,
       "length": 1.818182,
-      "measure": 54,
-      "beat": 1,
+      "measure": 53,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8509,8 +8508,8 @@
       "time": 101.818182,
       "end": 103.636364,
       "length": 1.818182,
-      "measure": 56,
-      "beat": 4,
+      "measure": 57,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -8519,7 +8518,7 @@
       "text": "ŞURMAT",
       "time": 103.636364,
       "end": 105.454545,
-      "length": 1.818182,
+      "length": 1.818181,
       "measure": 58,
       "beat": 1,
       "numerator": 4,
@@ -8598,8 +8597,8 @@
       "time": 116.363636,
       "end": 118.181818,
       "length": 1.818182,
-      "measure": 65,
-      "beat": 1,
+      "measure": 64,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -8687,8 +8686,8 @@
       "time": 141.818182,
       "end": 143.636364,
       "length": 1.818182,
-      "measure": 78,
-      "beat": 4,
+      "measure": 79,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -8697,7 +8696,7 @@
       "text": "DISCO",
       "time": 143.636364,
       "end": 145.454545,
-      "length": 1.818182,
+      "length": 1.818181,
       "measure": 80,
       "beat": 1,
       "numerator": 4,
@@ -8776,8 +8775,8 @@
       "time": 145.454545,
       "end": 147.272727,
       "length": 1.818182,
-      "measure": 81,
-      "beat": 1,
+      "measure": 80,
+      "beat": 4,
       "numerator": 4,
       "denominator": 4,
       "notes": [
@@ -8943,8 +8942,8 @@
       "time": 170.909091,
       "end": 172.727273,
       "length": 1.818182,
-      "measure": 94,
-      "beat": 4,
+      "measure": 95,
+      "beat": 1,
       "numerator": 4,
       "denominator": 4,
       "notes": []
@@ -9031,7 +9030,7 @@
       "text": "SENKOP",
       "time": 174.545455,
       "end": 176.363636,
-      "length": 1.818182,
+      "length": 1.818181,
       "measure": 97,
       "beat": 1,
       "numerator": 4,
@@ -9117,114 +9116,7 @@
       ]
     }
   ],
-  "assets": [
-    {
-      "id": "master",
-      "kind": "audio",
-      "path": "Master.mp3",
-      "hash": "sha256:pending",
-      "label": "Master"
-    },
-    {
-      "id": "click",
-      "kind": "audio",
-      "path": "Click.flac",
-      "hash": "sha256:pending",
-      "audioRole": "click",
-      "bus": "CUE",
-      "label": "Click"
-    },
-    {
-      "id": "kick",
-      "kind": "audio",
-      "path": "Kick.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Kick"
-    },
-    {
-      "id": "drums",
-      "kind": "audio",
-      "path": "Drums.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Drums"
-    },
-    {
-      "id": "perc",
-      "kind": "audio",
-      "path": "Perc.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Perc"
-    },
-    {
-      "id": "bass",
-      "kind": "audio",
-      "path": "Bass.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Bass"
-    },
-    {
-      "id": "keys",
-      "kind": "audio",
-      "path": "Keys.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Keys"
-    },
-    {
-      "id": "pluck",
-      "kind": "audio",
-      "path": "Pluck.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Pluck"
-    },
-    {
-      "id": "string",
-      "kind": "audio",
-      "path": "String.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "String"
-    },
-    {
-      "id": "melody",
-      "kind": "audio",
-      "path": "Melody.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Melody"
-    },
-    {
-      "id": "choir",
-      "kind": "audio",
-      "path": "Choir.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Choir"
-    },
-    {
-      "id": "guitar",
-      "kind": "audio",
-      "path": "Guitar.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Guitar"
-    }
-  ],
+  "assets": [],
   "info": {
     "bpm": 132,
     "numerator": 4,
@@ -9238,7 +9130,6 @@
     "duration": 180,
     "key": "D",
     "scale": "MINOR",
-    "style": "BESTE",
-    "playMode": "PLAYBACK"
+    "style": "BESTE"
   }
 }

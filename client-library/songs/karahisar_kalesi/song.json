@@ -4124,6 +4124,7 @@
     "duration": 189.764661,
     "key": "B",
     "scale": "KURDI",
-    "style": "SLOW"
+    "style": "SLOW",
+    "playMode": "PLAYBACK"
   }
 }

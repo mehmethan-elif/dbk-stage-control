@@ -3884,6 +3884,7 @@
     "duration": 177.540659,
     "key": "B",
     "scale": "KURDI",
-    "style": "TURKCU"
+    "style": "TURKCU",
+    "playMode": "PLAYBACK"
   }
 }
