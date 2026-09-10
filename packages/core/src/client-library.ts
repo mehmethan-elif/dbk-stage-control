@@ -1,4 +1,4 @@
-import { practiceFolderSlug } from "./practice-files.js";
+import { isPracticeFile, practiceFolderSlug } from "./practice-files.js";
 import { isSongEntry, type Gig } from "./models.js";
 
 export const CLIENT_LIBRARY_NAME = "DBK Stage Control";
@@ -97,6 +97,32 @@ export function publishedSongTitle(song: { id: string; folder: string; title?: s
     return humanizePracticeFolder(folder);
   }
   return folder || id || "—";
+}
+
+export function publishedPracticeFiles(index: ClientLibraryIndex): Array<{
+  folder: string;
+  title: string;
+  file: ClientLibraryFile;
+}> {
+  const out: Array<{ folder: string; title: string; file: ClientLibraryFile }> = [];
+  for (const song of index.songs) {
+    const title = publishedSongTitle(song);
+    for (const file of song.files) {
+      if (!isPracticeFile(file.path)) continue;
+      out.push({ folder: song.folder, title, file });
+    }
+  }
+  return out;
+}
+
+export function publishedLibraryMissing(
+  index: ClientLibraryIndex,
+  local: Record<string, ReadonlyArray<{ path: string; size: number; hash?: string }>>
+): Array<{ folder: string; title: string; file: ClientLibraryFile }> {
+  return publishedPracticeFiles(index).filter((item) => {
+    const have = (local[item.folder] ?? []).find((entry) => entry.path === item.file.path);
+    return needsClientLibraryDownload(have, item.file);
+  });
 }
 
 export function needsClientLibraryDownload(

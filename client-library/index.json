@@ -77,13 +77,13 @@
         },
         {
           "path": "settings.json",
-          "size": 2275,
-          "hash": "bf0f4baf23d3983dbeb66a3ab7b59fa7637df616b0e3958d80715f9af8750071"
+          "size": 3068,
+          "hash": "78b74b131c448efee006f6b4202e13f3294d7ede398050fd80c53727bb76f835"
         },
         {
           "path": "song.json",
-          "size": 74883,
-          "hash": "9feba3e71a40030440799e60bc5024df9602565c87590499bdc93248c7d3bc07"
+          "size": 74767,
+          "hash": "3075a07932ea2963c7eb6f12a76fe43364573f37424aef23b3781e98d86b15d3"
         }
       ]
     }

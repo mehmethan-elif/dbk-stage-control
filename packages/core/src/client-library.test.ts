@@ -3,6 +3,7 @@ import {
   dropMissingSetlistSongs,
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
+  publishedLibraryMissing,
   publishedSongTitle,
   resolvePublishedSongId
 } from "./client-library.js";
@@ -15,6 +16,50 @@ describe("needsClientLibraryDownload", () => {
     expect(needsClientLibraryDownload({ size: 10, hash: "a" }, { size: 10, hash: "b" })).toBe(true);
     expect(needsClientLibraryDownload({ size: 8 }, { size: 10, hash: "a" })).toBe(true);
     expect(needsClientLibraryDownload({ size: 10 }, { size: 10, hash: "a" })).toBe(false);
+  });
+});
+
+describe("publishedLibraryMissing", () => {
+  const index = {
+    name: "DBK",
+    songs: [
+      {
+        id: "biz",
+        folder: "biz",
+        title: "Biz",
+        files: [
+          { path: "song.json", size: 10, hash: "a" },
+          { path: "Master.mp3", size: 20, hash: "b" }
+        ]
+      },
+      {
+        id: "tuna",
+        folder: "tuna_nehri",
+        title: "Tuna Nehri",
+        files: [{ path: "song.json", size: 8, hash: "c" }]
+      }
+    ]
+  };
+
+  it("lists every published practice file that is missing or stale", () => {
+    expect(publishedLibraryMissing(index, {})).toHaveLength(3);
+    expect(
+      publishedLibraryMissing(index, {
+        biz: [
+          { path: "song.json", size: 10, hash: "a" },
+          { path: "Master.mp3", size: 20, hash: "b" }
+        ]
+      }).map((item) => item.folder)
+    ).toEqual(["tuna_nehri"]);
+    expect(
+      publishedLibraryMissing(index, {
+        biz: [
+          { path: "song.json", size: 10, hash: "a" },
+          { path: "Master.mp3", size: 20, hash: "b" }
+        ],
+        tuna_nehri: [{ path: "song.json", size: 8, hash: "c" }]
+      })
+    ).toEqual([]);
   });
 });
 

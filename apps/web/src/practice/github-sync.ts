@@ -1,7 +1,7 @@
 import {
   isPracticeFile,
   localFoldersNotOnRemote,
-  needsClientLibraryDownload,
+  publishedLibraryMissing,
   publishedSongTitle,
   type ClientLibraryIndex,
   type ClientLibrarySong,
@@ -51,73 +51,90 @@ export async function fetchClientLibraryIndex(): Promise<ClientLibraryIndex | nu
   return (await response.json()) as ClientLibraryIndex;
 }
 
-export async function syncPublishedLibrary(): Promise<{ songs: number; files: number; gigs: number }> {
+export type LibrarySyncProgress = {
+  message: string;
+};
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+async function fetchPublishedBuffer(url: string): Promise<ArrayBuffer> {
+  let lastError = "Network error";
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) {
+        lastError = `HTTP ${response.status}`;
+        await wait(400 * attempt);
+        continue;
+      }
+      return await response.arrayBuffer();
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "Network error";
+      await wait(400 * attempt);
+    }
+  }
+  throw new Error(lastError);
+}
+
+export async function syncPublishedLibrary(
+  onProgress?: (progress: LibrarySyncProgress) => void
+): Promise<{ songs: number; files: number; gigs: number }> {
+  onProgress?.({ message: "Checking library…" });
   const index = await fetchClientLibraryIndex();
   if (!index) return { songs: 0, files: 0, gigs: 0 };
 
   const local = await listPracticeManifest();
   const remoteFolders = new Set(index.songs.map((song) => song.folder));
+  const queue = publishedLibraryMissing(index, local);
+  for (const song of index.songs) {
+    const chart = song.files.find((file) => file.path.toLowerCase() === "song.json");
+    if (!chart) continue;
+    if (await practiceChartLooksValid(song.folder, chart.path)) continue;
+    if (queue.some((item) => item.folder === song.folder && item.file.path === chart.path)) continue;
+    queue.push({ folder: song.folder, title: publishedSongTitle(song), file: chart });
+  }
   let files = 0;
   let songs = 0;
+  const changedFolders = new Set<string>();
 
-  for (const song of index.songs) {
-    const have = new Map((local[song.folder] ?? []).map((item) => [item.path, item]));
-    let changed = false;
-    const remotePaths = new Set<string>();
-    for (const file of song.files) {
-      if (!isPracticeFile(file.path)) continue;
-      remotePaths.add(file.path);
-      const staleChart =
-        file.path.toLowerCase() === "song.json" &&
-        !(await practiceChartLooksValid(song.folder, file.path));
-      if (!staleChart && !needsClientLibraryDownload(have.get(file.path), file)) continue;
-      const response = await fetch(clientLibraryUrl(`songs/${encodeRel(song.folder)}/${encodeRel(file.path)}`), {
-        cache: "no-store"
-      });
-      if (!response.ok) continue;
-      const payload = await response.arrayBuffer();
-      if (file.path.toLowerCase() === "song.json" && !bufferLooksLikeSongJson(payload)) continue;
-      await writePracticeFile(song.folder, file.path, payload, file.hash);
-      changed = true;
-      files += 1;
+  for (const [indexNum, item] of queue.entries()) {
+    onProgress?.({
+      message: `Downloading ${item.title} (${indexNum + 1}/${queue.length})…`
+    });
+    const payload = await fetchPublishedBuffer(
+      clientLibraryUrl(`songs/${encodeRel(item.folder)}/${encodeRel(item.file.path)}`)
+    );
+    if (item.file.path.toLowerCase() === "song.json" && !bufferLooksLikeSongJson(payload)) {
+      throw new Error(`Could not download ${item.title}: song.json`);
     }
-    for (const item of local[song.folder] ?? []) {
-      if (item.path.toLowerCase() === "song.json" && ![...remotePaths].some((path) => path.toLowerCase() === "song.json")) {
-        continue;
-      }
-      if (!remotePaths.has(item.path)) {
-        await deletePracticeFile(song.folder, item.path);
-        changed = true;
-      }
-    }
-    if (changed || !local[song.folder]) songs += 1;
+    await writePracticeFile(item.folder, item.file.path, payload, item.file.hash);
+    changedFolders.add(item.folder);
+    files += 1;
   }
 
   for (const song of index.songs) {
+    const remotePaths = new Set(
+      song.files.filter((file) => isPracticeFile(file.path)).map((file) => file.path)
+    );
+    for (const item of local[song.folder] ?? []) {
+      if (item.path.toLowerCase() === "song.json" && !remotePaths.has(item.path)) continue;
+      if (!remotePaths.has(item.path)) {
+        await deletePracticeFile(song.folder, item.path);
+        changedFolders.add(song.folder);
+      }
+    }
     await applyPublishedSongTitle(song);
-    const names = (await listPracticeManifest())[song.folder]?.map((item) => item.path.toLowerCase()) ?? [];
-    if (names.includes("song.json")) continue;
-    const body = new TextEncoder().encode(
-      `${JSON.stringify(
-        {
-          id: song.id,
-          version: 1,
-          title: publishedSongTitle(song),
-          folder: song.folder,
-          duration: 0,
-          assets: [],
-          tempoMap: [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }],
-          sections: []
-        },
-        null,
-        2
-      )}\n`
-    );
-    await writePracticeFile(
-      song.folder,
-      "song.json",
-      body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)
-    );
+    if (changedFolders.has(song.folder) || !local[song.folder]) songs += 1;
+  }
+
+  const leftover = publishedLibraryMissing(index, await listPracticeManifest());
+  if (leftover.length > 0) {
+    const first = leftover[0];
+    throw new Error(`Library incomplete: ${first?.title ?? "song"} (${leftover.length} files left).`);
   }
 
   for (const folder of localFoldersNotOnRemote(Object.keys(local), [...remoteFolders])) {
@@ -126,13 +143,14 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
 
   let gigs: Gig[] = [];
   if (index.gigs) {
-    const response = await fetch(`${clientLibraryUrl(index.gigs.path)}?t=${Date.now()}`, { cache: "no-store" });
-    if (response.ok) {
-      const payload = (await response.json()) as { gigs?: Gig[] };
-      gigs = Array.isArray(payload.gigs) ? payload.gigs : [];
-    }
+    onProgress?.({ message: "Downloading setlist…" });
+    const payload = JSON.parse(
+      new TextDecoder().decode(await fetchPublishedBuffer(clientLibraryUrl(index.gigs.path)))
+    ) as { gigs?: Gig[] };
+    gigs = Array.isArray(payload.gigs) ? payload.gigs : [];
   }
   await writePublishedGigs(gigs);
+  onProgress?.({ message: "Library ready." });
   return { songs, files, gigs: gigs.length };
 }
 

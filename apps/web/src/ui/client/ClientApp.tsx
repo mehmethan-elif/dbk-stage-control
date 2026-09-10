@@ -65,6 +65,8 @@ export function ClientApp() {
             : "lyrics";
   const practice = useMasterStore(clientPracticeMode);
   const freeTransport = useMasterStore(usesFreeMetroTransport);
+  const libraryStatus = useMasterStore((s) => s.libraryStatus);
+  const practiceBusy = useMasterStore((s) => s.practiceBusy);
   const [concertOn, setConcertOn] = useState(false);
   const [concertMs, setConcertMs] = useState(0);
   const concertStarted = useRef<number | null>(null);
@@ -79,7 +81,7 @@ export function ClientApp() {
   }, []);
 
   if (!ready || holdLibraryLoading()) {
-    return <LibraryLoading />;
+    return <LibraryLoading status={libraryStatus ?? practiceBusy} />;
   }
 
   const empty = practice && songs.length === 0;

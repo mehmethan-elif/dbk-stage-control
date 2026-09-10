@@ -3871,15 +3871,7 @@
       ]
     }
   ],
-  "assets": [
-    {
-      "id": "master",
-      "kind": "audio",
-      "path": "Master.mp3",
-      "hash": "sha256:pending",
-      "label": "Master"
-    }
-  ],
+  "assets": [],
   "info": {
     "bpm": 75,
     "numerator": 3,
@@ -3892,6 +3884,7 @@
     "duration": 177.540659,
     "key": "B",
     "scale": "KURDI",
-    "style": "TURKCU"
+    "style": "TURKCU",
+    "playMode": "PLAYBACK"
   }
 }

@@ -1309,6 +1309,10 @@ async function runLibraryLoad(
   set: (patch: Partial<MasterState>) => void
 ): Promise<void> {
   try {
+    if (kind === "client") {
+      await loadLibraryNow(kind, options, get, set);
+      return;
+    }
     await Promise.race([
       loadLibraryNow(kind, options, get, set),
       new Promise<never>((_, reject) => {
@@ -1316,6 +1320,15 @@ async function runLibraryLoad(
       })
     ]);
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not load library.";
+    if (kind === "client") {
+      set({
+        ready: false,
+        libraryStatus: message,
+        practiceBusy: null
+      });
+      return;
+    }
     const songs = get().songs;
     const gigs = get().gigs.length > 0 ? get().gigs : [songLibraryGig(songs)];
     set({
@@ -1325,12 +1338,7 @@ async function runLibraryLoad(
       gigs,
       gigId: get().gigId ?? SONG_LIBRARY_GIG_ID,
       hostOk: get().hostOk || !isNativeApp(),
-      libraryStatus:
-        songs.length > 0
-          ? get().libraryStatus
-          : error instanceof Error
-            ? error.message
-            : "Could not load library."
+      libraryStatus: songs.length > 0 ? get().libraryStatus : message
     });
   }
 }
@@ -1380,22 +1388,16 @@ async function loadLibraryNow(
         songs = index.songs;
         fileIndex = index.fileIndex;
         hostOk = songs.length > 0;
-      } else {
-        hostOk = true;
       }
-      if (songs.length === 0 && !isNativeApp()) {
-        set({ practiceBusy: "Updating library…" });
-        try {
-          await syncPublishedLibrary();
-          const again = await loadPracticeLibrary();
-          songs = again.songs;
-          fileIndex = again.fileIndex;
-          hostOk = true;
-        } catch {
-          hostOk = true;
-        } finally {
-          set({ practiceBusy: null });
-        }
+      if (!isNativeApp()) {
+        const report = (message: string) => set({ libraryStatus: message, practiceBusy: message });
+        report("Updating library…");
+        await syncPublishedLibrary((progress) => report(progress.message));
+        const again = await loadPracticeLibrary();
+        songs = again.songs;
+        fileIndex = again.fileIndex;
+        hostOk = true;
+        set({ practiceBusy: null, libraryStatus: null });
       }
     } else {
       const index = await libraryApi.loadIndex();
@@ -1403,7 +1405,8 @@ async function loadLibraryNow(
       fileIndex = index.fileIndex;
       hostOk = songs.length > 0 || !isNativeApp();
     }
-  } catch {
+  } catch (error) {
+    if (kind === "client" && !isNativeApp()) throw error;
     hostOk = kind === "client";
   }
   songs = songs.map((song) => normalizeSong(song, song.folder ?? song.id));
@@ -1435,6 +1438,8 @@ async function loadLibraryNow(
       ready: true,
       ...next,
       hostOk,
+      libraryStatus: null,
+      practiceBusy: null,
       masterPage: "lyrics",
       clientSession: "practice",
       clientOfflineMode: "free",
@@ -1445,7 +1450,6 @@ async function loadLibraryNow(
     const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
     if (songId) void loadPracticeAudio(songId, fileIndex[songId] ?? []);
     if (options?.syncHost) get().joinStage(options.syncHost);
-    else void get().syncClientLibrary();
     return;
   }
   let local = { gigs: [] as Gig[] };
@@ -1856,9 +1860,11 @@ export const useMasterStore = create<MasterState>((set, get) => {
 
     syncClientLibrary: async () => {
       if (get().clientSession === "stage") return;
-      set({ practiceBusy: "Updating library…" });
+      set({ practiceBusy: "Updating library…", libraryStatus: "Updating library…" });
       try {
-        const result = await syncPublishedLibrary();
+        const result = await syncPublishedLibrary((progress) =>
+          set({ libraryStatus: progress.message, practiceBusy: progress.message })
+        );
         await get().reloadPracticeLibrary();
         set({
           libraryStatus:

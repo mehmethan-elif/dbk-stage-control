@@ -147,6 +147,8 @@ export {
   dropMissingSetlistSongs,
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
+  publishedLibraryMissing,
+  publishedPracticeFiles,
   humanizePracticeFolder,
   publishedSongTitle,
   resolvePublishedSongId
