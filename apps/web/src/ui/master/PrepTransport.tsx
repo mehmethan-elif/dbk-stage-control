@@ -15,7 +15,6 @@ import {
   secondsPerBeat,
   sectionForBoundary,
   snapToSectionBoundary,
-  practiceMasterAudio,
   sectionAt,
   sectionNamed,
   songDisplayName,
@@ -31,6 +30,7 @@ import {
   clientPracticeMode,
   currentGig,
   isStageContentPage,
+  practicePlaysMasterMix,
   nextUnskippedSongEntryId,
   onMetronomeBeat,
   panicBlocksFollow,
@@ -309,11 +309,12 @@ export function PrepTransport() {
   const setPanicTarget = useMasterStore((s) => s.setPanicTarget);
   const detached = useMasterStore(followsSharedPlayhead);
   const practiceClient = useMasterStore(clientPracticeMode);
+  const playMasterMix = useMasterStore(practicePlaysMasterMix);
   const continuousMetro = useMasterStore(usesContinuousMetroTransport);
   const freeMode = useMasterStore(usesFreeMetroTransport);
   const dualVisualMetro =
     freeMode || (continuousMetro && isMetronomeSetlistMode(gig?.performanceMode));
-  const showPlayButtons = continuousMetro && !freeMode && !practiceClient;
+  const showPlayButtons = continuousMetro && !freeMode && !playMasterMix;
   const nextSongId = continuousMetro ? nextUnskippedSongEntryId(gig, selectedEntryId) : null;
   const displayedEntries = gig ? withKeyChangeElifs(gig.setlist, songs) : [];
   const nextEntry = continuousMetro
@@ -365,20 +366,16 @@ export function PrepTransport() {
     (selectedEntryId?.startsWith("practice_")
       ? findSongByRef(songs, selectedEntryId.slice("practice_".length))
       : undefined);
-  const masterFiles = song
-    ? [...(fileIndex[song.id] ?? []), ...(song.folder ? (fileIndex[song.folder] ?? []) : [])]
-    : [];
-  const hasMasterMix = Boolean(practiceMasterAudio(masterFiles));
   const selectedFiles = song
     ? [...(fileIndex[song.id] ?? []), ...(song.folder ? (fileIndex[song.folder] ?? []) : [])]
     : undefined;
   const selectedMode = displayEntry && isSongEntry(displayEntry)
     ? effectivePlayMode(song, selectedFiles, gig?.performanceMode)
     : PlayMode.View;
-  const metronomeMode = freeMode
-    ? true
-    : practiceClient
-      ? !hasMasterMix
+  const metronomeMode = playMasterMix
+    ? false
+    : freeMode || practiceClient
+      ? true
       : !displayEntry ||
         !isSongEntry(displayEntry) ||
         selectedMode === PlayMode.View ||
@@ -426,9 +423,11 @@ export function PrepTransport() {
   const playNextSong = () => {
     if (!nextSongId) return;
     const state = useMasterStore.getState();
-    state.selectSetlistEntry(nextSongId);
-    if (state.deviceKind === "client") state.startMetronome(0);
-    else void state.playSelected();
+    state.selectSetlistEntry(nextSongId, { playNext: true });
+    const next = useMasterStore.getState();
+    if (practicePlaysMasterMix(next)) void next.playPractice();
+    else if (next.deviceKind === "client") next.startMetronome(0);
+    else void next.playSelected();
   };
 
   useEffect(() => {
@@ -445,9 +444,14 @@ export function PrepTransport() {
 
   const togglePlayback = () => {
     const state = useMasterStore.getState();
-    if (practiceClient) {
+    if (practicePlaysMasterMix(state)) {
       if (state.playback.state === PlaybackState.Playing) state.pausePractice();
       else void state.playPractice();
+      return;
+    }
+    if (practiceClient) {
+      if (state.metronomePlaying) state.stopMetronome();
+      else state.startMetronome();
       return;
     }
     if (state.playback.state === PlaybackState.Loading) return;
@@ -480,8 +484,7 @@ export function PrepTransport() {
     }
     toggle();
   };
-  const canPlay = practiceClient ? hasMasterMix || Boolean(song) : Boolean(song);
-  const playOnly = !freeMode && practiceClient && metronomeMode;
+  const canPlay = Boolean(song);
   const sections = song?.sections ?? [];
   const transportSections = songTransportSections(song);
   const timelineStart = 0;
@@ -621,7 +624,6 @@ export function PrepTransport() {
       )}
       {deviceKind === "master" && !metronomeMode ? <FadeButton /> : null}
       {showPanic ? <PanicButton /> : null}
-      {playOnly ? null : (
       <div
         className={`prep-now-track${metronomeMode ? " metro" : ""}${panicArmed ? " panic" : ""}`}
         title={currentIsElif ? ELIF_KONUSMA_LABEL : song?.title}
@@ -724,7 +726,6 @@ export function PrepTransport() {
           </div>
         </div>
       </div>
-      )}
       {continuousMetro ? (
         <>
           <span className="prep-next-song-label">NEXT</span>

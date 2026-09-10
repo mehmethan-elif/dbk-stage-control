@@ -17,6 +17,7 @@ import {
   type Song
 } from "@dbk/core";
 import {
+  clientPracticeMode,
   currentGig,
   selectAddedSetlistEntry,
   setlistLocked,
@@ -97,6 +98,7 @@ export function StageSetlist(props: {
   const fileIndex = useMasterStore((s) => s.fileIndex);
   const songLibrary = useMasterStore((s) => s.gigId === SONG_LIBRARY_GIG_ID);
   const frozen = useMasterStore(setlistLocked);
+  const practice = useMasterStore(clientPracticeMode);
   const detached = useMasterStore(stageConnectOn);
   const followPlayhead = useMasterStore(followsSharedPlayhead);
   const readOnly = Boolean(props.readOnly || songLibrary);
@@ -104,7 +106,7 @@ export function StageSetlist(props: {
   const canAddElif = Boolean(
     showAddElif && gig && canInsertElifAfter(gig.setlist, props.selectedEntryId)
   );
-  const lockRows = frozen && !readOnly;
+  const lockRows = frozen && (!readOnly || practice);
   const songPlaying =
     metronomePlaying ||
     playback.state === PlaybackState.Playing ||
@@ -363,6 +365,7 @@ export function StageSetlist(props: {
           <div className="lyrics-library-group-title">{group.title}</div>
           {group.songs.map((item) => {
             const pickLibrary = () => {
+              if (lockRows) return;
               props.onSelectLibrary?.(item.id);
               if (!props.stageRef?.current || !props.songAttr) return;
               scrollStageToSongTitle(
@@ -373,8 +376,8 @@ export function StageSetlist(props: {
             return (
               <div
                 key={item.id}
-                className="lyrics-set-block"
-                onPointerDown={props.onSelectLibrary ? () => pickLibrary() : undefined}
+                className={`lyrics-set-block${lockRows ? " is-frozen" : ""}`}
+                onPointerDown={props.onSelectLibrary && !lockRows ? () => pickLibrary() : undefined}
               >
                 <StageSongRow
                   song={item}
@@ -383,7 +386,7 @@ export function StageSetlist(props: {
                   title={songDisplayName(item)}
                   added={false}
                   selected={props.selectedEntryId === practiceEntryId(item.id)}
-                  onName={props.onSelectLibrary ? pickLibrary : undefined}
+                  onName={props.onSelectLibrary && !lockRows ? pickLibrary : undefined}
                   onAdd={readOnly ? undefined : () => props.onAdd(item.id)}
                 />
               </div>
