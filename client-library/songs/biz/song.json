@@ -9130,6 +9130,7 @@
     "duration": 180,
     "key": "D",
     "scale": "MINOR",
-    "style": "BESTE"
+    "style": "BESTE",
+    "playMode": "PLAYBACK"
   }
 }

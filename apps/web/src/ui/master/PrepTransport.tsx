@@ -53,6 +53,7 @@ import {
 import { sectionBarClass } from "./section-color";
 import {
   nearestMeasureIndex,
+  sectionStartAtTime,
   sliderTimeFromClientX,
   songTransportEnd,
   songTransportSections
@@ -334,6 +335,9 @@ export function PrepTransport() {
   const playFromPointer = useRef(false);
   const pendingMeasureRef = useRef<number | null>(null);
   const pendingPanicRef = useRef<number | null>(null);
+  const pendingSectionRef = useRef<number | null>(null);
+  const lastTapRef = useRef(0);
+  const ignoreCommitRef = useRef(false);
   const [pendingMeasure, setPendingMeasure] = useState<number | null>(null);
   const [pendingPanicTime, setPendingPanicTime] = useState<number | null>(null);
   const showStageChrome = isStageContentPage(masterPage);
@@ -531,7 +535,33 @@ export function PrepTransport() {
       timelineStart,
       timelineEnd
     );
+  const sectionSeek = deviceKind === "client";
+  const jumpToSongStart = () => {
+    pendingSectionRef.current = null;
+    pendingMeasureRef.current = null;
+    pendingPanicRef.current = null;
+    setPendingMeasure(null);
+    setPendingPanicTime(null);
+    if (panicArmed) {
+      setPanicTarget(timelineStart);
+      return;
+    }
+    seek(timelineStart);
+  };
+  const commitSectionSeek = () => {
+    if (ignoreCommitRef.current) {
+      ignoreCommitRef.current = false;
+      return;
+    }
+    const start = pendingSectionRef.current;
+    pendingSectionRef.current = null;
+    if (start != null) seek(start);
+  };
   const commitPosition = () => {
+    if (ignoreCommitRef.current) {
+      ignoreCommitRef.current = false;
+      return;
+    }
     if (panicArmed) {
       if (pendingPanicRef.current == null) return;
       setPanicTarget(pendingPanicRef.current);
@@ -629,35 +659,60 @@ export function PrepTransport() {
               />
             ) : null}
             <input
-              className={`prep-position-slider${panicArmed ? " panic" : ""}`}
+              className={`prep-position-slider${panicArmed ? " panic" : ""}${sectionSeek ? " is-section-seek" : ""}`}
               type="range"
               min={0}
               max={timelineEnd}
               step="any"
               value={sliderValue}
               disabled={!song}
-              aria-label={panicArmed ? "Panic resume section" : "Song position by measure"}
-              onChange={(event) => previewSliderTime(Number(event.target.value))}
+              aria-label={
+                panicArmed
+                  ? "Panic resume section"
+                  : sectionSeek
+                    ? "Jump to section"
+                    : "Song position by measure"
+              }
+              onChange={(event) => {
+                if (sectionSeek) return;
+                previewSliderTime(Number(event.target.value));
+              }}
               onPointerDown={(event) => {
                 if (!song || event.button !== 0) return;
                 event.preventDefault();
                 event.currentTarget.setPointerCapture(event.pointerId);
+                const now = performance.now();
+                if (now - lastTapRef.current < 400) {
+                  lastTapRef.current = 0;
+                  ignoreCommitRef.current = true;
+                  jumpToSongStart();
+                  return;
+                }
+                lastTapRef.current = now;
+                ignoreCommitRef.current = false;
+                if (sectionSeek) {
+                  pendingSectionRef.current =
+                    sectionStartAtTime(transportSections, sliderTimeFromEvent(event)) ?? null;
+                  return;
+                }
                 previewSliderTime(sliderTimeFromEvent(event));
               }}
               onPointerMove={(event) => {
+                if (sectionSeek) return;
                 if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
                 previewSliderTime(sliderTimeFromEvent(event));
               }}
-              onPointerUp={commitPosition}
-              onLostPointerCapture={commitPosition}
+              onPointerUp={sectionSeek ? commitSectionSeek : commitPosition}
+              onLostPointerCapture={sectionSeek ? commitSectionSeek : commitPosition}
               onPointerCancel={() => {
                 pendingMeasureRef.current = null;
                 pendingPanicRef.current = null;
+                pendingSectionRef.current = null;
                 setPendingMeasure(null);
                 setPendingPanicTime(null);
               }}
-              onKeyUp={commitPosition}
-              onBlur={commitPosition}
+              onKeyUp={sectionSeek ? undefined : commitPosition}
+              onBlur={sectionSeek ? undefined : commitPosition}
             />
           </>
         )}

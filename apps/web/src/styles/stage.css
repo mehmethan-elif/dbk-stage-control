@@ -251,18 +251,18 @@ button {
 
 .topbar-offline-modes {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
 .topbar-offline-modes .lyrics-btn {
-  height: 17px;
-  min-height: 17px;
-  padding: 0 10px;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  height: var(--btn-size);
+  min-height: var(--btn-size);
+  padding: 0 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
 }
 
 @media (max-width: 900px) {
@@ -739,6 +739,10 @@ button {
 
 .app-transport .prep-position-slider:disabled {
   cursor: default;
+}
+
+.app-transport .prep-position-slider.is-section-seek {
+  cursor: pointer;
 }
 
 .app-transport .prep-now-track.panic .prep-position-head,

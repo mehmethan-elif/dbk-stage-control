@@ -2350,7 +2350,15 @@ export const useMasterStore = create<MasterState>((set, get) => {
 
     seek: (time) => {
       if (get().deviceKind === "client") {
-        if (clientPracticeMode(get())) get().seekPractice(time);
+        if (clientPracticeMode(get())) {
+          get().seekPractice(time);
+          return;
+        }
+        if (!clientStageLive(get())) {
+          const song = songForSelectedEntry(get());
+          const duration = song?.duration ?? time;
+          set({ previewTime: Math.max(0, Math.min(time, duration)) });
+        }
         return;
       }
       const { selectedEntryId, songs } = get();

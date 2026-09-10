@@ -27,6 +27,17 @@ export function sliderTimeFromClientX(
   return timelineStart + clamped * (timelineEnd - timelineStart);
 }
 
+export function sectionStartAtTime(
+  sections: readonly { start: number; end: number }[],
+  time: number
+): number | undefined {
+  const hit = sections.find(
+    (section) => time >= section.start - 1e-9 && time < section.end + 1e-9
+  );
+  if (hit) return hit.start;
+  return [...sections].reverse().find((section) => time >= section.start)?.start;
+}
+
 export function nearestMeasureIndex(starts: number[], time: number): number {
   if (starts.length === 0) return 0;
   return starts.reduce(

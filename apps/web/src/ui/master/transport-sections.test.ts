@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Song } from "@dbk/core";
 import {
   nearestMeasureIndex,
+  sectionStartAtTime,
   sliderTimeFromClientX,
   songTransportEnd,
   songTransportSections
@@ -71,6 +72,15 @@ describe("sliderTimeFromClientX", () => {
   it("stays inside the song when the finger overshoots", () => {
     expect(sliderTimeFromClientX(0, { left: 100, width: 200 }, 0, 80)).toBe(0);
     expect(sliderTimeFromClientX(400, { left: 100, width: 200 }, 0, 80)).toBe(80);
+  });
+});
+
+describe("sectionStartAtTime", () => {
+  it("returns the start of the section under the tap", () => {
+    const sections = songTransportSections(biz);
+    expect(sectionStartAtTime(sections, 0.2)).toBe(0);
+    expect(sectionStartAtTime(sections, 40)).toBeCloseTo(30.9);
+    expect(sectionStartAtTime(sections, 120)).toBeCloseTo(118.2);
   });
 });
 
