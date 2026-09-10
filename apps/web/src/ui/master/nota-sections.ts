@@ -804,6 +804,15 @@ export function createSectionLabelBeside(
   return createSectionLabelBox(name, measureBox.page, x, y);
 }
 
+/** Persist only when boxes were added. Dropping leftover names must not rewrite the file. */
+export function shouldPersistNotaLayout(
+  previous: readonly NotaSectionBox[],
+  next: readonly NotaSectionBox[]
+): boolean {
+  const previousIds = new Set(previous.map((box) => box.id));
+  return next.some((box) => !previousIds.has(box.id));
+}
+
 export function ensureSectionLabels(
   rects: readonly NotaSectionBox[],
   sections: readonly Section[],

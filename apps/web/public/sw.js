@@ -17,6 +17,7 @@ function isLivePath(url) {
     url.pathname.includes("/library") ||
     url.pathname.includes("/practice") ||
     url.pathname.includes("/client-library") ||
+    url.pathname.includes("/version.json") ||
     url.pathname.includes("/sync")
   );
 }

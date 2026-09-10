@@ -18,6 +18,7 @@ const rootPkg = JSON.parse(readFileSync(path.resolve(__dirname, "../../package.j
 
 const pagesBase = process.env.DBK_PAGES_BASE || "/";
 const appBase = process.env.DBK_NATIVE_BUILD === "1" ? "./" : pagesBase;
+const BUILD_STAMP = process.env.GITHUB_SHA?.slice(0, 7) || "dev";
 
 function pagesFallback(): Plugin {
   return {
@@ -46,10 +47,14 @@ function pagesFallback(): Plugin {
 
 function stampBuiltServiceWorker(dist: string): void {
   const sw = path.join(dist, "sw.js");
-  if (!existsSync(sw)) return;
-  const stamp = process.env.GITHUB_SHA?.slice(0, 7) || String(Date.now());
-  const text = readFileSync(sw, "utf8").replace(/const BUILD = ["'][^"']*["'];/, `const BUILD = ${JSON.stringify(stamp)};`);
-  writeFileSync(sw, text);
+  if (existsSync(sw)) {
+    const text = readFileSync(sw, "utf8").replace(
+      /const BUILD = ["'][^"']*["'];/,
+      `const BUILD = ${JSON.stringify(BUILD_STAMP)};`
+    );
+    writeFileSync(sw, text);
+  }
+  writeFileSync(path.join(dist, "version.json"), `${JSON.stringify({ build: BUILD_STAMP })}\n`);
 }
 
 function clientLibraryDev(): Plugin {
@@ -85,7 +90,8 @@ export default defineConfig({
   base: appBase,
   root: __dirname,
   define: {
-    __APP_VERSION__: JSON.stringify(rootPkg.version)
+    __APP_VERSION__: JSON.stringify(rootPkg.version),
+    __APP_BUILD__: JSON.stringify(BUILD_STAMP)
   },
   resolve: {
     alias: {

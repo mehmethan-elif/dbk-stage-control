@@ -51,6 +51,7 @@ import { SCORE_LYRIC_GAP_PX, activeScoreLyric, scoreLyricPlacements } from "./sc
 import {
   addNotaBox,
   ensureSectionLabels,
+  shouldPersistNotaLayout,
   isSectionLabel,
   sectionLabelText,
   applyChainedRectGeometry,
@@ -513,11 +514,13 @@ function SongNota(props: {
       song.sections,
       visiblePageIndex(articleRef.current)
     );
-    if (next) {
-      props.onRects(next, true);
+    if (!next) return;
+    if (shouldPersistNotaLayout(props.rects, next)) {
+      const added = next.filter((box) => !props.rects.some((row) => row.id === box.id));
+      props.onRects([...props.rects, ...added], true);
       return;
     }
-    if (liveRectKey !== storedRectKey) props.onRects(liveRects, true);
+    if (liveRectKey !== storedRectKey) props.onRects(next, false);
   }, [props.layoutReady, song?.id, liveRectKey, storedRectKey]);
 
   const selectBox = (box: NotaSectionBox) => {

@@ -45,7 +45,7 @@ async function practiceChartLooksValid(folder: string, path: string): Promise<bo
 }
 
 export async function fetchClientLibraryIndex(): Promise<ClientLibraryIndex | null> {
-  const response = await fetch(clientLibraryUrl("index.json"), { cache: "no-store" });
+  const response = await fetch(`${clientLibraryUrl("index.json")}?t=${Date.now()}`, { cache: "no-store" });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Library ${response.status}`);
   return (await response.json()) as ClientLibraryIndex;
@@ -126,7 +126,7 @@ export async function syncPublishedLibrary(): Promise<{ songs: number; files: nu
 
   let gigs: Gig[] = [];
   if (index.gigs) {
-    const response = await fetch(clientLibraryUrl(index.gigs.path), { cache: "no-store" });
+    const response = await fetch(`${clientLibraryUrl(index.gigs.path)}?t=${Date.now()}`, { cache: "no-store" });
     if (response.ok) {
       const payload = (await response.json()) as { gigs?: Gig[] };
       gigs = Array.isArray(payload.gigs) ? payload.gigs : [];

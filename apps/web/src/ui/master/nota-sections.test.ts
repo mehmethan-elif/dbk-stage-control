@@ -10,6 +10,7 @@ import {
   FIRST_NOTA_RECT_WIDTH_PX,
   applyChainedRectGeometry,
   ensureSectionLabels,
+  shouldPersistNotaLayout,
   hasSectionLabel,
   isSectionLabel,
   sectionLabelText,
@@ -724,6 +725,8 @@ describe("one rect per measure", () => {
     const next = ensureSectionLabels([leftover], sections, 0);
     expect(next?.some((box) => box.name === "FINAL")).toBe(false);
     expect(next?.filter(isSectionLabel).map((box) => box.name)).toEqual(["ARA", "SAN"]);
+    expect(shouldPersistNotaLayout(next ?? [], next ?? [])).toBe(false);
+    expect(shouldPersistNotaLayout([leftover], next ?? [])).toBe(true);
   });
 
   it("keeps edited label text", () => {
