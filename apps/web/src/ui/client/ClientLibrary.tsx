@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
 import { clientBandRoster, isMasterBandName } from "@dbk/core";
-import { MASTER_HOST_KEY, SYNC_PORT } from "../../native/sync";
+import { MASTER_HOST_KEY, PRACTICE_SHARE_PORT, SYNC_PORT } from "../../native/sync";
 import { currentGig, useMasterStore } from "../../store/master-store";
 import { BandRoster } from "../shared/BandRoster";
 
@@ -29,21 +29,29 @@ export function ClientLibrary() {
   const setStageName = useMasterStore((s) => s.setStageName);
   const joinStage = useMasterStore((s) => s.joinStage);
   const leaveStage = useMasterStore((s) => s.leaveStage);
+  const servedHere =
+    typeof window !== "undefined" && window.location.port === String(PRACTICE_SHARE_PORT);
   const [host, setHost] = useState(
     () =>
       syncHost ??
+      (servedHere ? window.location.hostname : null) ??
       (typeof localStorage !== "undefined" ? localStorage.getItem(MASTER_HOST_KEY) : "") ??
       ""
   );
   const roster = clientBandRoster(gig);
   const onStage = clientSession === "stage";
   const connected = onStage && syncConnected;
-  const canConnect = Boolean(host.trim());
+  const canConnect = Boolean(host.trim()) || servedHere;
   const [waited, setWaited] = useState(false);
 
   useEffect(() => {
     if (stageName && isMasterBandName(stageName)) setStageName(null);
   }, [stageName, setStageName]);
+
+  useEffect(() => {
+    if (!servedHere || onStage) return;
+    joinStage(window.location.hostname);
+  }, [servedHere, onStage, joinStage]);
 
   useEffect(() => {
     if (!onStage || connected) {
@@ -119,7 +127,9 @@ export function ClientLibrary() {
                 ? waited
                   ? "No master at that address. Same Wi-Fi? Allow Local Network for this app."
                   : `Connecting to ${syncHost ?? host}…`
-                : "Type the master address, then Connect."}
+                : servedHere
+                  ? "This page is on the master. Connecting…"
+                  : "Type the master address, then Connect. Or open the Client page URL in Safari."}
           </p>
         </form>
       </div>

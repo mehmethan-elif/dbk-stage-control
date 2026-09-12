@@ -6,7 +6,14 @@ import {
   parseSyncMessage
 } from "@dbk/protocol";
 import { isNativeApp } from "./platform";
-import { parseSyncHostname, PRACTICE_SHARE_PORT, SYNC_PORT, syncSocketUrls } from "./sync-host";
+import {
+  httpSyncOrigin,
+  parseSyncHostname,
+  PRACTICE_SHARE_PORT,
+  practiceSharePageOrigin,
+  SYNC_PORT,
+  syncSocketUrls
+} from "./sync-host";
 
 export { PRACTICE_SHARE_PORT, SYNC_PORT };
 export const MASTER_HOST_KEY = "dbk-master-host";
@@ -47,6 +54,7 @@ let allowReconnect = false;
 let seenMasterSessionId: string | null = null;
 let nativeServerStarted = false;
 let nativeListenersBound = false;
+let httpEpoch = 0;
 let linkState: SyncLinkState = {
   connected: false,
   hosting: false,
@@ -382,6 +390,7 @@ function sessionClientId(): string {
 export function disconnectSyncTransport(): void {
   seenMasterSessionId = null;
   allowReconnect = false;
+  httpEpoch += 1;
   window.clearTimeout(reconnectTimer);
   void dropNativeClientListeners();
   void import("./sync-socket")
@@ -410,10 +419,11 @@ export async function connectSyncTransport(hooks: SyncHooks): Promise<string | n
   }
   const host = hookSyncHost(hooks);
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const hostname = parseSyncHostname(host);
+  const hostname = parseSyncHostname(host) || practiceSharePageOrigin()?.replace(/^https?:\/\//, "").replace(/:\d+$/, "") || "";
   const urls = hostname
-    ? syncSocketUrls(host)
+    ? syncSocketUrls(hostname)
     : [`${protocol}://${window.location.host}/sync`];
+  const httpRoot = practiceSharePageOrigin() ?? httpSyncOrigin(host);
   setLink({
     connected: false,
     hosting: false,
@@ -423,11 +433,81 @@ export async function connectSyncTransport(hooks: SyncHooks): Promise<string | n
   });
   const retry = () => {
     if (!allowReconnect) return;
-    if (isFollowerKind(hooks.deviceKind()) && !hookSyncHost(hooks)) return;
+    if (isFollowerKind(hooks.deviceKind()) && !hookSyncHost(hooks) && !practiceSharePageOrigin()) return;
     void connectSyncTransport(hooks);
   };
-  connectFollower(urls, hooks, retry);
+  if (httpRoot) void connectPreferHttp(httpRoot, urls, hooks, retry);
+  else connectFollower(urls, hooks, retry);
   return hostname ? `${hostname}:${SYNC_PORT}` : null;
+}
+
+async function connectPreferHttp(
+  httpRoot: string,
+  urls: string[],
+  hooks: SyncHooks,
+  retryAll: () => void
+): Promise<void> {
+  try {
+    const probe = await fetch(`${httpRoot}/health`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(2500)
+    });
+    if (probe.ok) {
+      await connectHttpFollower(httpRoot, hooks, retryAll);
+      return;
+    }
+  } catch {
+    // sockets next
+  }
+  connectFollower(urls, hooks, retryAll);
+}
+
+async function connectHttpFollower(
+  root: string,
+  hooks: SyncHooks,
+  retryAll: () => void
+): Promise<void> {
+  const epoch = ++httpEpoch;
+  const created = await fetch(`${root}/sync-http/session`, { method: "POST", cache: "no-store" });
+  if (!created.ok) throw new Error("http session");
+  const { id } = (await created.json()) as { id?: string };
+  if (!id) throw new Error("http session");
+  setLink({ connected: true, hosting: false });
+  sendImpl = (message) => {
+    if (epoch !== httpEpoch) return;
+    const raw = JSON.stringify(message);
+    rememberOutgoing(message, raw);
+    void fetch(`${root}/sync-http/session/${id}`, { method: "POST", body: raw, cache: "no-store" });
+  };
+  sendImpl({
+    type: "Hello",
+    protocolVersion: PROTOCOL_VERSION,
+    deviceKind: hooks.deviceKind(),
+    deviceName:
+      hooks.deviceKind() === "remote"
+        ? hooks.deviceName?.().trim() || REMOTE_DEVICE_NAME
+        : hooks.deviceName?.().trim() || clientDeviceName(),
+    deviceId: hooks.deviceKind() === "master" ? "master" : sessionClientId()
+  });
+  const poll = async () => {
+    while (allowReconnect && epoch === httpEpoch) {
+      try {
+        const res = await fetch(`${root}/sync-http/session/${id}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("poll");
+        const data = (await res.json()) as { messages?: string[] };
+        for (const raw of data.messages ?? []) {
+          const message = parseSyncMessage(raw);
+          if (message) handleIncoming(message, hooks, true);
+        }
+      } catch {
+        if (epoch !== httpEpoch || !allowReconnect) return;
+        setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
+        retryAll();
+        return;
+      }
+    }
+  };
+  void poll();
 }
 
 function connectFollower(urls: string[], hooks: SyncHooks, retryAll: () => void): void {

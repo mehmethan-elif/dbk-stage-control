@@ -9,6 +9,7 @@ final class StageSyncHub {
     private let queue = DispatchQueue(label: "com.dbk.stagesync", qos: .userInitiated)
     private var listener: NWListener?
     private var sessions: [String: StageSyncSession] = [:]
+    private var httpSessions: [String: HttpSyncGate] = [:]
     private var inbox: [String: [String]] = [:]
     private var onOpen: ((String) -> Void)?
     private var onClose: ((String) -> Void)?
@@ -18,7 +19,10 @@ final class StageSyncHub {
         queue.async {
             guard self.listener == nil else { return }
             do {
-                let listener = try NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: port) ?? 8787)
+                let params = NWParameters.tcp
+                params.includePeerToPeer = true
+                let listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: port) ?? 8787)
+                listener.service = NWListener.Service(name: "DBK Stage", type: "_dbk-stage._tcp")
                 self.listener = listener
                 listener.newConnectionHandler = { [weak self] connection in
                     connection.start(queue: .global(qos: .userInitiated))
@@ -41,7 +45,7 @@ final class StageSyncHub {
             self.onOpen = onOpen
             self.onClose = onClose
             self.onMessage = onMessage
-            for uuid in self.sessions.keys {
+            for uuid in self.sessions.keys + Array(self.httpSessions.keys) {
                 DispatchQueue.main.async { onOpen(uuid) }
             }
             for (uuid, messages) in self.inbox {
@@ -71,13 +75,7 @@ final class StageSyncHub {
             }
             session.onMessage = { [weak self] uuid, text in
                 self?.queue.async {
-                    NSLog("DBK stage sync message \(text.prefix(80))")
-                    var held = self?.inbox[uuid] ?? []
-                    held.append(text)
-                    if held.count > 8 { held.removeFirst(held.count - 8) }
-                    self?.inbox[uuid] = held
-                    let handler = self?.onMessage
-                    DispatchQueue.main.async { handler?(uuid, text) }
+                    self?.note(uuid: uuid, text: text)
                 }
             }
             self.sessions[session.uuid] = session
@@ -92,12 +90,64 @@ final class StageSyncHub {
     func send(uuid: String, message: String) {
         queue.async {
             self.sessions[uuid]?.send(text: message)
+            self.httpSessions[uuid]?.enqueue(message)
         }
+    }
+
+    func openHttp() -> String {
+        queue.sync {
+            let uuid = UUID().uuidString
+            self.httpSessions[uuid] = HttpSyncGate()
+            let handler = self.onOpen
+            DispatchQueue.main.async { handler?(uuid) }
+            return uuid
+        }
+    }
+
+    func postHttp(uuid: String, message: String) {
+        queue.async {
+            guard self.httpSessions[uuid] != nil else { return }
+            self.note(uuid: uuid, text: message)
+        }
+    }
+
+    func waitHttp(uuid: String, done: @escaping ([String]) -> Void) {
+        queue.async {
+            guard let gate = self.httpSessions[uuid] else {
+                DispatchQueue.main.async { done([]) }
+                return
+            }
+            gate.wait { messages in
+                DispatchQueue.main.async { done(messages) }
+            }
+            self.queue.asyncAfter(deadline: .now() + 8) {
+                gate.timeoutIfWaiting()
+            }
+        }
+    }
+
+    func closeHttp(uuid: String) {
+        queue.async {
+            self.httpSessions.removeValue(forKey: uuid)
+            self.inbox.removeValue(forKey: uuid)
+            let handler = self.onClose
+            DispatchQueue.main.async { handler?(uuid) }
+        }
+    }
+
+    private func note(uuid: String, text: String) {
+        NSLog("DBK stage sync message \(text.prefix(80))")
+        var held = inbox[uuid] ?? []
+        held.append(text)
+        if held.count > 8 { held.removeFirst(held.count - 8) }
+        inbox[uuid] = held
+        let handler = onMessage
+        DispatchQueue.main.async { handler?(uuid, text) }
     }
 
     func debugStatus() -> (sessions: Int, last: String) {
         queue.sync {
-            (sessions.count, inbox.values.flatMap { $0 }.last ?? "")
+            (sessions.count + httpSessions.count, inbox.values.flatMap { $0 }.last ?? "")
         }
     }
 
@@ -122,6 +172,37 @@ final class StageSyncHub {
         return found.first(where: { $0.0 == "en0" })?.1
             ?? found.first(where: { $0.0.hasPrefix("en") })?.1
             ?? found.first?.1
+    }
+}
+
+final class HttpSyncGate {
+    private var outgoing: [String] = []
+    private var waiter: (([String]) -> Void)?
+
+    func enqueue(_ text: String) {
+        if let waiter {
+            self.waiter = nil
+            waiter([text])
+        } else {
+            outgoing.append(text)
+        }
+    }
+
+    func wait(done: @escaping ([String]) -> Void) {
+        if !outgoing.isEmpty {
+            let batch = outgoing
+            outgoing.removeAll()
+            done(batch)
+        } else {
+            waiter = done
+        }
+    }
+
+    func timeoutIfWaiting() {
+        guard waiter != nil else { return }
+        let done = waiter
+        waiter = nil
+        done?([])
     }
 }
 

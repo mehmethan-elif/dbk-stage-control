@@ -140,7 +140,7 @@ import {
   sendSyncMessage,
   subscribeSyncLink
 } from "../native/sync";
-import { parseSyncHostname } from "../native/sync-host";
+import { parseSyncHostname, PRACTICE_SHARE_PORT } from "../native/sync-host";
 
 export type ClientSession = "practice" | "stage";
 
@@ -2163,7 +2163,10 @@ export const useMasterStore = create<MasterState>((set, get) => {
     },
 
     joinStage: (host) => {
-      const value = parseSyncHostname(host);
+      const served =
+        typeof window !== "undefined" && window.location.port === String(PRACTICE_SHARE_PORT);
+      const value =
+        parseSyncHostname(host) || (served ? window.location.hostname : "");
       const stageName = get().stageName?.trim() || clientDeviceName();
       if (!value) return;
       stopPracticeAudio();

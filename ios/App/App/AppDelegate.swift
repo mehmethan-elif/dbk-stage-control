@@ -67,6 +67,7 @@ final class PracticeShareServer {
         guard listener == nil else { return }
         do {
             let params = NWParameters.tcp
+            params.includePeerToPeer = true
             listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: port) ?? 8788)
         } catch {
             NSLog("DBK practice share listen failed: \(error.localizedDescription)")
@@ -84,25 +85,84 @@ final class PracticeShareServer {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 64 * 1024) { data, _, isComplete, error in
             var next = buffer
             if let data { next.append(data) }
-            if let range = next.range(of: Data("\r\n\r\n".utf8)) {
-                let header = String(data: next.subdata(in: next.startIndex..<range.lowerBound), encoding: .utf8) ?? ""
-                if header.range(of: "upgrade: websocket", options: .caseInsensitive) != nil {
-                    StageSyncHub.shared.accept(connection: connection, request: next)
-                    return
-                }
-                let path = Self.requestPath(from: header)
-                let response = self.response(for: path)
-                connection.send(content: response, completion: .contentProcessed { _ in
-                    connection.cancel()
-                })
+            guard let range = next.range(of: Data("\r\n\r\n".utf8)) else {
+                if isComplete || error != nil { connection.cancel(); return }
+                self.receive(on: connection, buffer: next)
                 return
             }
-            if isComplete || error != nil {
-                connection.cancel()
+            let header = String(data: next.subdata(in: next.startIndex..<range.lowerBound), encoding: .utf8) ?? ""
+            if header.range(of: "upgrade: websocket", options: .caseInsensitive) != nil {
+                StageSyncHub.shared.accept(connection: connection, request: next)
                 return
             }
-            self.receive(on: connection, buffer: next)
+            let method = Self.requestMethod(from: header)
+            let path = Self.requestPath(from: header)
+            let needed = Self.contentLength(from: header)
+            let bodyStart = range.upperBound
+            if next.distance(from: bodyStart, to: next.endIndex) < needed {
+                if isComplete || error != nil { connection.cancel(); return }
+                self.receive(on: connection, buffer: next)
+                return
+            }
+            let body = next.subdata(in: bodyStart..<next.index(bodyStart, offsetBy: needed))
+            self.handleHttp(on: connection, method: method, path: path, body: body)
         }
+    }
+
+    private func handleHttp(on connection: NWConnection, method: String, path: String, body: Data) {
+        if method == "OPTIONS" {
+            self.reply(connection, Self.http(204, "text/plain", Data()))
+            return
+        }
+        if path == "/sync-http/session" && method == "POST" {
+            let id = StageSyncHub.shared.openHttp()
+            let payload = Data("{\"id\":\"\(id)\"}".utf8)
+            self.reply(connection, Self.http(200, "application/json; charset=utf-8", payload))
+            return
+        }
+        if path.hasPrefix("/sync-http/session/") {
+            let id = String(path.dropFirst("/sync-http/session/".count))
+            if method == "POST" {
+                let text = String(data: body, encoding: .utf8) ?? ""
+                if !text.isEmpty { StageSyncHub.shared.postHttp(uuid: id, message: text) }
+                self.reply(connection, Self.http(200, "application/json; charset=utf-8", Data("{\"ok\":true}".utf8)))
+                return
+            }
+            if method == "GET" {
+                StageSyncHub.shared.waitHttp(uuid: id) { messages in
+                    let body = (try? JSONSerialization.data(withJSONObject: ["messages": messages]))
+                        ?? Data("{\"messages\":[]}".utf8)
+                    self.reply(connection, Self.http(200, "application/json; charset=utf-8", body))
+                }
+                return
+            }
+            if method == "DELETE" {
+                StageSyncHub.shared.closeHttp(uuid: id)
+                self.reply(connection, Self.http(200, "application/json; charset=utf-8", Data("{\"ok\":true}".utf8)))
+                return
+            }
+        }
+        self.reply(connection, self.response(for: path))
+    }
+
+    private func reply(_ connection: NWConnection, _ data: Data) {
+        connection.send(content: data, completion: .contentProcessed { _ in
+            connection.cancel()
+        })
+    }
+
+    private static func requestMethod(from header: String) -> String {
+        let first = header.split(separator: "\r\n", maxSplits: 1).first.map(String.init) ?? ""
+        return first.split(separator: " ").first.map(String.init)?.uppercased() ?? "GET"
+    }
+
+    private static func contentLength(from header: String) -> Int {
+        for line in header.split(separator: "\r\n") {
+            if line.lowercased().hasPrefix("content-length:") {
+                return Int(line.split(separator: ":", maxSplits: 1).last?.trimmingCharacters(in: .whitespaces) ?? "") ?? 0
+            }
+        }
+        return 0
     }
 
     private static func requestPath(from header: String) -> String {
@@ -147,11 +207,16 @@ final class PracticeShareServer {
     }
 
     private static func http(_ status: Int, _ type: String, _ body: Data) -> Data {
-        let phrase = status == 200 ? "OK" : "Not Found"
+        let phrase = status == 200 ? "OK" : status == 204 ? "No Content" : "Not Found"
         var header = "HTTP/1.1 \(status) \(phrase)\r\n"
         header += "Content-Type: \(type)\r\n"
         header += "Content-Length: \(body.count)\r\n"
         header += "Access-Control-Allow-Origin: *\r\n"
+        header += "Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS\r\n"
+        header += "Access-Control-Allow-Headers: Content-Type\r\n"
+        if type.contains("javascript") || type.contains("html") || type.contains("json") {
+            header += "Cache-Control: no-store\r\n"
+        }
         header += "Connection: close\r\n\r\n"
         var data = Data(header.utf8)
         data.append(body)
