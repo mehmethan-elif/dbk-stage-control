@@ -6,6 +6,14 @@ const BEAT_HZ = 1320;
 
 export const METRO_INTRO_URLS = ["/library/1.flac", "/library/2.flac"] as const;
 
+export type MetroIntroLoader = (url: string) => Promise<ArrayBuffer | undefined>;
+
+async function fetchIntroBytes(url: string): Promise<ArrayBuffer | undefined> {
+  const res = await fetch(url);
+  if (!res.ok) return undefined;
+  return res.arrayBuffer();
+}
+
 export type MetronomeBeat = {
   at: number;
 };
@@ -49,7 +57,8 @@ export class Metronome {
 
   constructor(
     private readonly onRunningChange?: (running: boolean) => void,
-    private readonly onBeat?: (beat: MetronomeBeat) => void
+    private readonly onBeat?: (beat: MetronomeBeat) => void,
+    private readonly loadIntro: MetroIntroLoader = fetchIntroBytes
   ) {}
 
   get isPlaying(): boolean {
@@ -153,9 +162,8 @@ export class Metronome {
     const loaded = await Promise.all(
       METRO_INTRO_URLS.map(async (url) => {
         try {
-          const res = await fetch(url);
-          if (!res.ok) return undefined;
-          const raw = await res.arrayBuffer();
+          const raw = await this.loadIntro(url);
+          if (!raw) return undefined;
           return await ctx.decodeAudioData(raw.slice(0));
         } catch {
           return undefined;

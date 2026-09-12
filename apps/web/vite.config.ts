@@ -37,12 +37,22 @@ function pagesFallback(): Plugin {
         if (existsSync(library)) {
           cpSync(library, path.join(dist, "client-library"), { recursive: true });
         }
+        copyMetroIntroClicks(dist);
         stampBuiltServiceWorker(dist);
       } catch {
         // dev server has no dist yet
       }
     }
   };
+}
+
+function copyMetroIntroClicks(dist: string): void {
+  const dest = path.join(dist, "library");
+  mkdirSync(dest, { recursive: true });
+  for (const name of ["1.flac", "2.flac"]) {
+    const src = path.resolve(__dirname, "../../library", name);
+    if (existsSync(src)) copyFileSync(src, path.join(dest, name));
+  }
 }
 
 function stampBuiltServiceWorker(dist: string): void {

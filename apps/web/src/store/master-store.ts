@@ -112,6 +112,7 @@ import { loadPracticeLibrary, readPracticeFileBuffer, readPublishedGigs } from "
 import { importPracticeFileList, importPracticeZip } from "../practice/zip";
 import { loadSongMixers, saveSongMixer } from "../ui/master/song-mixer";
 import { updateSongSettings, writeSongInfo } from "../ui/master/song-settings";
+import { readMetroIntroBuffer } from "../native/library";
 import { isNativeApp } from "../native/platform";
 import {
   isSongLibraryGig,
@@ -228,7 +229,8 @@ const metronome = new Metronome(
       seq: ++metronomeSeq,
       ...(delay > 0 ? { in: delay } : {})
     });
-  }
+  },
+  readMetroIntroBuffer
 );
 
 export function readBusLevels() {

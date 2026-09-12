@@ -332,6 +332,48 @@ export async function writeSongJsonFile(songId: string, relPath: string, data: u
   await writeUtf8(nativePath(folderForSong(songId), relPath), body);
 }
 
+async function decodeFilesystemBytes(data: string | Blob | ArrayBuffer): Promise<ArrayBuffer> {
+  if (data instanceof ArrayBuffer) return data;
+  if (typeof Blob !== "undefined" && data instanceof Blob) return data.arrayBuffer();
+  if (typeof data !== "string") throw new Error("Missing library file");
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+async function readDocumentsBytes(path: string): Promise<ArrayBuffer | undefined> {
+  try {
+    const { uri } = await Filesystem.getUri({ path, directory: Directory.Documents });
+    const response = await fetch(Capacitor.convertFileSrc(uri));
+    if (response.ok) return await response.arrayBuffer();
+  } catch {
+    /* iOS sometimes cannot fetch the converted file URL; read bytes instead. */
+  }
+  try {
+    const file = await Filesystem.readFile({ path, directory: Directory.Documents });
+    return await decodeFilesystemBytes(file.data);
+  } catch {
+    return undefined;
+  }
+}
+
+export async function readMetroIntroBuffer(url: string): Promise<ArrayBuffer | undefined> {
+  const name = url.split("/").pop() ?? "";
+  if (!/^[12]\.flac$/i.test(name)) return undefined;
+  if (isNativeApp()) {
+    const fromDocs = await readDocumentsBytes(`library/${name}`);
+    if (fromDocs) return fromDocs;
+  }
+  try {
+    const response = await fetch(`/library/${name}`);
+    if (!response.ok) return undefined;
+    return await response.arrayBuffer();
+  } catch {
+    return undefined;
+  }
+}
+
 export async function writeSongBytes(
   songId: string,
   relPath: string,
