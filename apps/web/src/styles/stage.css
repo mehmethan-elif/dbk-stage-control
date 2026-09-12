@@ -3568,21 +3568,6 @@ button {
   border-right: 2px solid #fff;
 }
 
-.drum-playhead {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: calc(100% * 4 / var(--drum-steps, 16));
-  background: rgba(61, 186, 122, 0.32);
-  box-shadow: inset 2px 0 0 rgb(61, 186, 122);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.drum-playhead[hidden] {
-  display: none;
-}
-
 .drum-lane {
   height: var(--drum-lane-h);
   display: grid;

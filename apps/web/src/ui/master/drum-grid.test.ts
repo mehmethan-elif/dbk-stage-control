@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PatternEvent, TempoPoint } from "@dbk/core";
-import { buildHits, drumBarSteps, drumPlayheadBeat, drumPlayheadStep } from "./DrumView";
+import { buildHits, drumBarSteps } from "./DrumView";
 
 const waltz: TempoPoint[] = [{ time: 0, measure: 1, bpm: 75, numerator: 3, denominator: 4 }];
 const common: TempoPoint[] = [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }];
@@ -55,22 +55,5 @@ describe("buildHits", () => {
     const built = buildHits(pattern, common);
     expect(built.barSteps).toBe(16);
     expect([...built.hits.get("C") ?? []].sort((a, b) => a - b)).toEqual([0, 8]);
-  });
-});
-
-describe("drumPlayheadBeat", () => {
-  const run = { start: 0, end: 8, steps: 16, barSteps: 16 };
-
-  it("steps with the musical beat, not the bar line", () => {
-    expect(drumPlayheadStep(run, 0, common)).toBe(0);
-    expect(drumPlayheadStep(run, 0.5, common)).toBe(4);
-    expect(drumPlayheadBeat(run, 0.4, common)).toBe(0);
-    expect(drumPlayheadBeat(run, 0.5, common)).toBe(4);
-    expect(drumPlayheadBeat(run, 1.5, common)).toBe(12);
-  });
-
-  it("wraps a repeating one-bar pattern", () => {
-    expect(drumPlayheadBeat(run, 2, common)).toBe(0);
-    expect(drumPlayheadBeat(run, 2.5, common)).toBe(4);
   });
 });

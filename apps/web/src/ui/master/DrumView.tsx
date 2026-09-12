@@ -140,30 +140,6 @@ export function stepOf(
   return Math.max(0, Math.min(steps - 1, Math.round(raw)));
 }
 
-export function drumPlayheadStep(
-  run: Pick<PatternRun, "start" | "end" | "steps" | "barSteps">,
-  originTime: number,
-  map: TempoPoint[]
-): number {
-  if (originTime < run.start - TIME_EPS || originTime >= run.end) return -1;
-  const origin = timeToMusical(map, run.start);
-  const at = timeToMusical(map, originTime);
-  const raw =
-    (at.measure - origin.measure) * run.barSteps + (at.beat - origin.beat) * STEPS_PER_BEAT;
-  if (run.steps <= 0 || raw < 0) return 0;
-  return Math.min(run.steps - 1, Math.floor(((raw % run.steps) + run.steps) % run.steps));
-}
-
-export function drumPlayheadBeat(
-  run: Pick<PatternRun, "start" | "end" | "steps" | "barSteps">,
-  originTime: number,
-  map: TempoPoint[]
-): number {
-  const step = drumPlayheadStep(run, originTime, map);
-  if (step < 0) return -1;
-  return step - (step % STEPS_PER_BEAT);
-}
-
 function hasPatternData(song: Song | undefined): boolean {
   return (song?.patterns?.length ?? 0) > 0;
 }
@@ -567,11 +543,9 @@ export function DrumChartBody(props: {
   );
   const map = props.song?.tempoMap ?? [];
   const rootRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef(chart);
   const formRef = useRef(form);
   const mapRef = useRef(map);
   const origin = useRef({ time, wall: performance.now() });
-  chartRef.current = chart;
   formRef.current = form;
   mapRef.current = map;
   useEffect(() => {
@@ -585,7 +559,6 @@ export function DrumChartBody(props: {
         ? followClockTime()
         : origin.current.time + Math.max(0, performance.now() - origin.current.wall) / 1000;
       const pos = formAt(formRef.current, t);
-      const playTime = pos?.originTime ?? t;
       const root = rootRef.current;
       if (root) {
         for (const el of root.querySelectorAll<HTMLElement>("[data-drum-section]")) {
@@ -595,19 +568,6 @@ export function DrumChartBody(props: {
             "--playhead",
             String(visit ? sectionFill(true, t, visit.start, visit.end, mapRef.current) : 0)
           );
-        }
-        for (const row of chartRef.current) {
-          for (const run of row.runs) {
-            const el = root.querySelector<HTMLElement>(`[data-drum-row="${run.name}-${run.start}"]`);
-            const head = el?.querySelector<HTMLElement>(".drum-playhead");
-            if (!head) continue;
-            const current = Boolean(
-              pos?.block.id === row.block.id && playTime >= run.start && playTime < run.end
-            );
-            const beat = current ? drumPlayheadBeat(run, playTime, mapRef.current) : -1;
-            head.hidden = beat < 0;
-            if (beat >= 0) head.style.left = `${(beat / run.steps) * 100}%`;
-          }
         }
       }
       handle = requestAnimationFrame(loop);
@@ -838,7 +798,6 @@ function DrumRunView(props: {
   const cueLive = phase === "live";
   const elapsed = props.current ? Math.max(0, props.time - props.run.start) : 0;
   const barSteps = Math.max(STEPS_PER_BEAT, props.run.barSteps);
-  const currentBeat = props.current ? drumPlayheadBeat(props.run, props.time, props.map) : -1;
   const currentRepeat = props.current
     ? Math.min(props.run.repeats, Math.floor(elapsed / props.run.cycle) + 1)
     : 1;
@@ -887,11 +846,6 @@ function DrumRunView(props: {
               </div>
             );
           })}
-          <div
-            className="drum-playhead"
-            hidden={currentBeat < 0}
-            style={{ left: `${(Math.max(0, currentBeat) / props.run.steps) * 100}%` }}
-          />
         </div>
       </div>
     </div>
