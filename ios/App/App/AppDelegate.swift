@@ -107,6 +107,13 @@ final class PracticeShareServer {
     }
 
     private func response(for path: String) -> Data {
+        if path == "/library/1.flac" || path == "/library/2.flac" ||
+            path == "/client-library/1.flac" || path == "/client-library/2.flac" {
+            if let file = Self.metroIntro(path) {
+                return Self.http(200, "audio/flac", (try? Data(contentsOf: file)) ?? Data())
+            }
+            return Self.http(404, "text/plain", Data("Not found".utf8))
+        }
         if path == "/practice/index.json" {
             return Self.http(200, "application/json; charset=utf-8", Self.practiceIndex())
         }
@@ -149,6 +156,16 @@ final class PracticeShareServer {
     private static func documentsSongs() -> URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("library/songs", isDirectory: true)
+    }
+
+    private static func metroIntro(_ path: String) -> URL? {
+        let name = URL(fileURLWithPath: path).lastPathComponent.lowercased()
+        guard name == "1.flac" || name == "2.flac" else { return nil }
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("library", isDirectory: true)
+            .appendingPathComponent(name)
+        if FileManager.default.fileExists(atPath: docs.path) { return docs }
+        return webFile("/library/\(name)") ?? webFile("/client-library/\(name)")
     }
 
     private static func practiceIndex() -> Data {

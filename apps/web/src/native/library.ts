@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { parseSongInfo, type Song, type SongInfo } from "@dbk/core";
+import { bufferLooksLikeFlac, metroIntroFileName, metroIntroHttpUrls } from "./metro-intro";
 import { isNativeApp } from "./platform";
 
 const LIBRARY_ROOT = "library/songs";
@@ -358,20 +359,54 @@ async function readDocumentsBytes(path: string): Promise<ArrayBuffer | undefined
   }
 }
 
-export async function readMetroIntroBuffer(url: string): Promise<ArrayBuffer | undefined> {
-  const name = url.split("/").pop() ?? "";
-  if (!/^[12]\.flac$/i.test(name)) return undefined;
-  if (isNativeApp()) {
-    const fromDocs = await readDocumentsBytes(`library/${name}`);
-    if (fromDocs) return fromDocs;
-  }
+async function persistMetroIntro(name: string, data: ArrayBuffer): Promise<void> {
   try {
-    const response = await fetch(`/library/${name}`);
+    await Filesystem.mkdir({
+      path: "library",
+      directory: Directory.Documents,
+      recursive: true
+    });
+  } catch {
+    /* folder may already exist */
+  }
+  let binary = "";
+  const bytes = new Uint8Array(data);
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  await Filesystem.writeFile({
+    path: `library/${name}`,
+    directory: Directory.Documents,
+    data: btoa(binary),
+    recursive: true
+  });
+}
+
+async function fetchFlac(url: string): Promise<ArrayBuffer | undefined> {
+  try {
+    const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) return undefined;
-    return await response.arrayBuffer();
+    const data = await response.arrayBuffer();
+    return bufferLooksLikeFlac(data) ? data : undefined;
   } catch {
     return undefined;
   }
+}
+
+export async function readMetroIntroBuffer(url: string): Promise<ArrayBuffer | undefined> {
+  const name = metroIntroFileName(url);
+  if (!name) return undefined;
+  if (isNativeApp()) {
+    const fromDocs = await readDocumentsBytes(`library/${name}`);
+    if (bufferLooksLikeFlac(fromDocs)) return fromDocs;
+  }
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const base = import.meta.env.BASE_URL || "/";
+  for (const href of metroIntroHttpUrls(name, origin, base)) {
+    const data = await fetchFlac(href);
+    if (!data) continue;
+    if (isNativeApp()) void persistMetroIntro(name, data).catch(() => undefined);
+    return data;
+  }
+  return undefined;
 }
 
 export async function writeSongBytes(

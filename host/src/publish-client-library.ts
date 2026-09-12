@@ -178,8 +178,18 @@ export function publishClientGigs(gigs: unknown = []): PublishedLibrarySummary {
   }
 }
 
+function copyMetroIntroClicks(): void {
+  mkdirSync(CLIENT_LIBRARY, { recursive: true });
+  const srcDir = join(ROOT, "library");
+  for (const name of ["1.flac", "2.flac"]) {
+    const src = join(srcDir, name);
+    if (existsSync(src)) writeFileSync(join(CLIENT_LIBRARY, name), readFileSync(src));
+  }
+}
+
 function writePublishedIndex(songs: PublishedSong[], gigs: unknown = []): PublishedLibrarySummary {
   mkdirSync(CLIENT_LIBRARY, { recursive: true });
+  copyMetroIntroClicks();
   const gigList = Array.isArray(gigs) ? gigs : [];
   const gigsBody = `${JSON.stringify({ gigs: gigList }, null, 2)}\n`;
   const gigsBuf = Buffer.from(gigsBody, "utf8");
