@@ -782,6 +782,17 @@ export class WebAudioEngine implements AudioEngine {
     return this.ctx?.currentTime ?? 0;
   }
 
+  /** Seconds from graph time to the speaker. Zero when the context is not running. */
+  getOutputLatency(): number {
+    const ctx = this.ctx;
+    if (!ctx) return 0;
+    const output = "outputLatency" in ctx ? Number(ctx.outputLatency) : 0;
+    const base = "baseLatency" in ctx ? Number(ctx.baseLatency) : 0;
+    const value = output > 0 ? output : base;
+    if (!Number.isFinite(value) || value <= 0 || value > 0.25) return 0;
+    return value;
+  }
+
   poll(): void {
     const now = this.getContextTime();
     for (const deck of this.decks.values()) deck.poll(now);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { memo, useEffect, useMemo, useRef, type CSSProperties } from "react";
 import {
   createId,
   isLockedElif,
@@ -28,7 +28,7 @@ import {
   type SongForm,
   type TempoPoint
 } from "@dbk/core";
-import { useFollowPlayheadTime } from "../../store/follow-clock";
+import { followClockPlaying, followClockTime } from "../../store/follow-clock";
 import { clientPracticeMode, currentGig, elifCanEditSetlist, elifLookingAhead, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
 import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
 import { StageSetlist } from "./StageSetlist";
@@ -138,6 +138,30 @@ export function stepOf(
   const raw =
     (at.measure - origin.measure) * barSteps + (at.beat - origin.beat) * STEPS_PER_BEAT;
   return Math.max(0, Math.min(steps - 1, Math.round(raw)));
+}
+
+export function drumPlayheadStep(
+  run: Pick<PatternRun, "start" | "end" | "steps" | "barSteps">,
+  originTime: number,
+  map: TempoPoint[]
+): number {
+  if (originTime < run.start - TIME_EPS || originTime >= run.end) return -1;
+  const origin = timeToMusical(map, run.start);
+  const at = timeToMusical(map, originTime);
+  const raw =
+    (at.measure - origin.measure) * run.barSteps + (at.beat - origin.beat) * STEPS_PER_BEAT;
+  if (run.steps <= 0 || raw < 0) return 0;
+  return Math.min(run.steps - 1, Math.floor(((raw % run.steps) + run.steps) % run.steps));
+}
+
+export function drumPlayheadBeat(
+  run: Pick<PatternRun, "start" | "end" | "steps" | "barSteps">,
+  originTime: number,
+  map: TempoPoint[]
+): number {
+  const step = drumPlayheadStep(run, originTime, map);
+  if (step < 0) return -1;
+  return step - (step % STEPS_PER_BEAT);
 }
 
 function hasPatternData(song: Song | undefined): boolean {
@@ -274,6 +298,83 @@ export function writtenChart(song: Song | undefined, form: SongForm): (SectionCh
   });
 }
 
+type DrumChartRow = SectionChart & { block: FormBlock };
+
+function paintDrumChart(
+  root: HTMLElement | null,
+  chart: DrumChartRow[],
+  form: SongForm,
+  map: TempoPoint[],
+  time: number,
+  chainNext: boolean
+): void {
+  if (!root) return;
+  const pos = formAt(form, time);
+  const playTime = pos?.originTime ?? time;
+  const actualMeasureEnd = pos ? measureEndAt(map, time) : 0;
+  const afterOriginTime =
+    pos && actualMeasureEnd >= pos.visit.end - TIME_EPS
+      ? pos.block.originEnd
+      : pos
+        ? measureEndAt(map, playTime)
+        : 0;
+  const nextPos = chainNext ? null : pos ? formNextAt(form, time, afterOriginTime) : null;
+  const visitIndex = pos ? form.visits.indexOf(pos.visit) : -1;
+  const followingBlockId = visitIndex >= 0 ? form.visits[visitIndex + 1]?.blockId : undefined;
+
+  for (const row of chart) {
+    const isCurrent = pos?.block.id === row.block.id;
+    const isNext = nextPos?.block.id === row.block.id && !isCurrent;
+    const fill = pos && isCurrent ? sectionFill(true, time, pos.visit.start, pos.visit.end, map) : 0;
+    for (const el of root.querySelectorAll<HTMLElement>(`[data-drum-section="${row.block.id}"]`)) {
+      el.style.setProperty("--playhead", String(fill));
+      el.classList.toggle("current", Boolean(isCurrent));
+      el.classList.toggle("next", Boolean(isNext));
+    }
+    for (const run of row.runs) {
+      const el = root.querySelector<HTMLElement>(`[data-drum-row="${run.name}-${run.start}"]`);
+      if (!el) continue;
+      const current = Boolean(isCurrent && playTime >= run.start && playTime < run.end);
+      const next = Boolean(
+        !current && nextPos && nextPos.block.id === row.block.id && nextPos.originTime >= run.start && nextPos.originTime < run.end
+      );
+      el.classList.toggle("current", current);
+      el.classList.toggle("next", next);
+      const beat = current ? drumPlayheadBeat(run, playTime, map) : -1;
+      const head = el.querySelector<HTMLElement>(".drum-playhead");
+      if (head) {
+        head.hidden = beat < 0;
+        if (beat >= 0) head.style.left = `${(beat / run.steps) * 100}%`;
+      }
+      const count = el.querySelector(".drum-count");
+      if (count) {
+        const elapsed = current ? Math.max(0, playTime - run.start) : 0;
+        count.textContent = String(current ? Math.min(run.repeats, Math.floor(elapsed / run.cycle) + 1) : 1);
+      }
+      if (run.cue) {
+        const phase = cuePhase(run.cue, playTime, map, current);
+        el.classList.toggle("cue-live", phase === "live");
+        const cue = el.querySelector<HTMLElement>(".drum-run-cue");
+        if (cue) {
+          cue.hidden = phase === "hidden";
+          cue.classList.toggle("current", phase === "live");
+        }
+      }
+    }
+  }
+
+  for (const pack of root.querySelectorAll<HTMLElement>("[data-drum-pack]")) {
+    const ids = (pack.dataset.drumPack ?? "").split("+");
+    const packCurrent = ids.some((id) => pos?.block.id === id);
+    const packLeadIn = pack.hasAttribute("data-lead-in");
+    const packNext = packLeadIn || (!packCurrent && ids.some((id) => nextPos?.block.id === id));
+    const packScrollNext = packLeadIn || (!packCurrent && ids.some((id) => id === followingBlockId));
+    pack.classList.toggle("current", packCurrent);
+    pack.classList.toggle("next", packNext);
+    pack.classList.toggle("scroll-next", packScrollNext);
+  }
+}
+
 export function DrumView() {
   const songs = useMasterStore((s) => s.songs);
   const gig = useMasterStore(currentGig);
@@ -282,7 +383,6 @@ export function DrumView() {
   const updateGig = useMasterStore((s) => s.updateGig);
   const playback = useMasterStore((s) => s.playback);
   const storeTime = useMasterStore(stagePlayheadTime);
-  const followTime = useFollowPlayheadTime(storeTime);
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
   const elifEdits = useMasterStore(elifCanEditSetlist);
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
@@ -324,7 +424,7 @@ export function DrumView() {
       : (entries.find((entry) => entry.entryId === selectedEntryId)?.songId ??
         playback.clock?.songId)
   );
-  const liveTime = followTime;
+  const liveTime = storeTime;
   const upcoming = playingEntryId
     ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, liveTime)
     : undefined;
@@ -362,7 +462,7 @@ export function DrumView() {
       next instanceof HTMLElement ? next : null,
       Boolean(leadIn)
     );
-  }, [autoScroll, followTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
+  }, [autoScroll, storeTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
 
   const addSong = (songId: string) => {
     if (!gig) return;
@@ -516,7 +616,7 @@ function SongPatterns(props: {
   );
 }
 
-export function DrumChartBody(props: {
+export const DrumChartBody = memo(function DrumChartBody(props: {
   song: Song | undefined;
   live?: boolean;
   preview?: boolean;
@@ -530,9 +630,33 @@ export function DrumChartBody(props: {
     : undefined;
   const live = Boolean(props.live);
   const time = props.time ?? 0;
-  const form = songForm(props.song, { identity: "drums" });
-  const chart = hasPatternData(props.song) ? writtenChart(props.song, form) : [];
+  const form = useMemo(() => songForm(props.song, { identity: "drums" }), [props.song]);
+  const chart = useMemo(
+    () => (hasPatternData(props.song) ? writtenChart(props.song, form) : []),
+    [props.song, form]
+  );
   const map = props.song?.tempoMap ?? [];
+  const rootRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef(form);
+  const chartRef = useRef(chart);
+  const mapRef = useRef(map);
+  const timeRef = useRef(time);
+  formRef.current = form;
+  chartRef.current = chart;
+  mapRef.current = map;
+  timeRef.current = time;
+
+  useEffect(() => {
+    if (!live) return;
+    let frame = 0;
+    const loop = () => {
+      const now = followClockPlaying() ? followClockTime() : timeRef.current;
+      paintDrumChart(rootRef.current, chartRef.current, formRef.current, mapRef.current, now, Boolean(props.chainNext));
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [live, props.chainNext, props.song?.id]);
   const runs = chart.flatMap((section) => section.runs);
   const pos = live ? formAt(form, time) : null;
   const currentRun = pos
@@ -573,7 +697,7 @@ export function DrumChartBody(props: {
     );
   }
   return (
-        <div className="drum-section-list">
+        <div ref={rootRef} className="drum-section-list">
         {packSections(chart, props.song).map((pack, packIndex) => {
           const written = pack as (SectionChart & { block: FormBlock })[];
           const packCurrent = written.some((row) => pos?.block.id === row.block.id);
@@ -688,7 +812,16 @@ export function DrumChartBody(props: {
         })}
         </div>
   );
-}
+}, function drumChartBodyPropsEqual(prev, next) {
+  return (
+    prev.song === next.song &&
+    prev.live === next.live &&
+    prev.preview === next.preview &&
+    prev.leadIn === next.leadIn &&
+    prev.chainNext === next.chainNext &&
+    (Boolean(prev.live) || prev.time === next.time)
+  );
+});
 
 function DrumSectionTitle(props: {
   row: SectionChart;
@@ -755,16 +888,8 @@ function DrumRunView(props: {
   const phase = props.run.cue ? cuePhase(props.run.cue, props.time, props.map, props.live) : "hidden";
   const cueLive = phase === "live";
   const elapsed = props.current ? Math.max(0, props.time - props.run.start) : 0;
-  const inCycle = props.current ? elapsed % props.run.cycle : -1;
-  const currentStep =
-    inCycle >= 0
-      ? Math.min(
-          props.run.steps - 1,
-          Math.floor((inCycle / props.run.cycle) * props.run.steps)
-        )
-      : -1;
   const barSteps = Math.max(STEPS_PER_BEAT, props.run.barSteps);
-  const currentBeat = currentStep >= 0 ? currentStep - (currentStep % barSteps) : -1;
+  const currentBeat = props.current ? drumPlayheadBeat(props.run, props.time, props.map) : -1;
   const currentRepeat = props.current
     ? Math.min(props.run.repeats, Math.floor(elapsed / props.run.cycle) + 1)
     : 1;
@@ -790,8 +915,8 @@ function DrumRunView(props: {
             <span>x{props.run.repeats}</span>
             <span className="drum-count">{currentRepeat}</span>
           </span>
-          {props.run.cue && phase !== "hidden" ? (
-            <span className={`drum-run-cue${cueLive ? " current" : ""}`}>
+          {props.run.cue ? (
+            <span className={`drum-run-cue${cueLive ? " current" : ""}`} hidden={phase === "hidden"}>
               {props.run.cue.text}
             </span>
           ) : null}
@@ -813,12 +938,11 @@ function DrumRunView(props: {
               </div>
             );
           })}
-          {currentBeat >= 0 ? (
-            <div
-              className="drum-playhead"
-              style={{ left: `${(currentBeat / props.run.steps) * 100}%` }}
-            />
-          ) : null}
+          <div
+            className="drum-playhead"
+            hidden={currentBeat < 0}
+            style={{ left: `${(Math.max(0, currentBeat) / props.run.steps) * 100}%` }}
+          />
         </div>
       </div>
     </div>

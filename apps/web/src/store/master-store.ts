@@ -218,7 +218,7 @@ export function takeRemoteMetronomeSeq(prev: number | null, seq: number | undefi
 const metronome = new Metronome(
   (running) => engine.setExternalCueActive(running),
   (beat) => {
-    const delay = audioBeatDelay(beat.at);
+    const delay = audioBeatDelay(beat.at) + engine.getOutputLatency();
     notifyMetronomeBeat({ at: remoteMetronomeVisualAt(delay) });
     const state = useMasterStore.getState();
     if (state.deviceKind !== "master") return;
@@ -541,6 +541,14 @@ let lastPracticeStoreAt = 0;
 let applyPanicResume: (() => void) | null = null;
 
 const PLAYBACK_UI_MS = 80;
+
+function audibleEngineTime(): number {
+  return Math.max(0, (controller.getClock()?.time ?? 0) - engine.getOutputLatency());
+}
+
+function audibleMetronomeTime(): number {
+  return Math.max(0, metronome.time - engine.getOutputLatency());
+}
 
 function playbackStoreNeedsWrite(
   previous: PlaybackSnapshot,
@@ -1052,7 +1060,7 @@ function startTick() {
     const playing =
       snap.state === PlaybackState.Playing || snap.state === PlaybackState.Transitioning;
     if (playing) {
-      setFollowClockSource(() => controller.getClock()?.time ?? 0);
+      setFollowClockSource(() => audibleEngineTime());
     }
     const resumeAt = useMasterStore.getState().panicResumeAt;
     if (resumeAt != null) {
@@ -1080,7 +1088,12 @@ function startMetronomeTick() {
       metroTickHandle = 0;
       return;
     }
-    useMasterStore.setState({ previewTime: metronome.time });
+    setFollowClockSource(() => audibleMetronomeTime());
+    const now = performance.now();
+    if (now - lastPlaybackStoreAt >= PLAYBACK_UI_MS) {
+      lastPlaybackStoreAt = now;
+      useMasterStore.setState({ previewTime: audibleMetronomeTime() });
+    }
     metroTickHandle = requestAnimationFrame(loop);
   };
   metroTickHandle = requestAnimationFrame(loop);
@@ -1852,8 +1865,13 @@ export const useMasterStore = create<MasterState>((set, get) => {
     metronomeStartGen += 1;
     freeVisualSongId = null;
     stopMetronomeTick();
+    const time = audibleMetronomeTime();
     metronome.stop();
     clearMetronomeBeat();
+    const playing =
+      get().playback.state === PlaybackState.Playing ||
+      get().playback.state === PlaybackState.Transitioning;
+    if (!playing) stopFollowClock(time);
     set({ metronomePlaying: false });
     if (get().deviceKind === "master") sendSync({ type: "Metronome", playing: false });
     armContinuousNextVisual();
@@ -1935,7 +1953,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     const playing =
       playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
     if (playing) {
-      setFollowClockSource(() => controller.getClock()?.time ?? 0);
+      setFollowClockSource(() => audibleEngineTime());
     }
     if (!playbackStoreNeedsWrite(get().playback, playback, playing)) {
       if (playing) startTick();
@@ -3083,6 +3101,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
               : {})
           });
           metronome.start(metronomeTempoMap(parsed), time, { silent, intro: !silent });
+          setFollowClockSource(() => audibleMetronomeTime());
           startMetronomeTick();
         };
         if (silent || metronome.introPrepared(ctx)) {

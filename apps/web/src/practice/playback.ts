@@ -119,7 +119,22 @@ export async function loadPracticeAudio(
 }
 
 export async function playPracticeAudio(): Promise<void> {
-  await element().play();
+  const node = element();
+  const from = node.currentTime;
+  await node.play();
+  if (!node.paused && Math.abs(node.currentTime - from) < 1e-4) {
+    await new Promise<void>((resolve) => {
+      const done = () => {
+        window.clearTimeout(timer);
+        node.removeEventListener("playing", done);
+        node.removeEventListener("timeupdate", done);
+        resolve();
+      };
+      const timer = window.setTimeout(done, 400);
+      node.addEventListener("playing", done, { once: true });
+      node.addEventListener("timeupdate", done, { once: true });
+    });
+  }
   startTick();
 }
 

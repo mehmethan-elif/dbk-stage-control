@@ -27,12 +27,23 @@ describe("followClockTime", () => {
     expect(followClockTime(6_000)).toBe(3.5);
   });
 
-  it("reads a live audio source instead of interpolating", () => {
+  it("reads a live audio source when the sample advances", () => {
     let audioTime = 12.4;
-    setFollowClockSource(() => audioTime);
+    stopFollowClock(0, 0);
+    setFollowClockSource(() => audioTime, 8_000);
     expect(followClockTime(8_000)).toBeCloseTo(12.4, 5);
     audioTime = 12.55;
     expect(followClockTime(8_200)).toBeCloseTo(12.55, 5);
+  });
+
+  it("interpolates while an HTML audio sample stays stuck", () => {
+    let audioTime = 4;
+    stopFollowClock(0, 0);
+    setFollowClockSource(() => audioTime, 1_000);
+    expect(followClockTime(1_000)).toBeCloseTo(4, 5);
+    expect(followClockTime(1_250)).toBeCloseTo(4.25, 5);
+    audioTime = 4.2;
+    expect(followClockTime(1_400)).toBeCloseTo(4.2, 5);
   });
 });
 

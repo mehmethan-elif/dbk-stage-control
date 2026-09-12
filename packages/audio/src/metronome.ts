@@ -20,6 +20,15 @@ export function metroIntroClickIndex(clickIndex: number, introCount: number): nu
   return clickIndex;
 }
 
+/** Song time at the speaker — `nextSongTime` is the next scheduled beat, not the audible one. */
+export function metronomeAudibleTime(
+  nextSongTime: number,
+  nextContextTime: number,
+  contextTime: number
+): number {
+  return Math.max(0, nextSongTime - Math.max(0, nextContextTime - contextTime));
+}
+
 export class Metronome {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -52,7 +61,8 @@ export class Metronome {
   }
 
   get time(): number {
-    return this.songTime;
+    if (!this.running || !this.ctx) return this.songTime;
+    return metronomeAudibleTime(this.songTime, this.nextTime, this.ctx.currentTime);
   }
 
   get gain(): number {
@@ -128,6 +138,9 @@ export class Metronome {
 
   stop(): void {
     const wasRunning = this.running;
+    if (wasRunning && this.ctx) {
+      this.songTime = metronomeAudibleTime(this.songTime, this.nextTime, this.ctx.currentTime);
+    }
     this.running = false;
     if (wasRunning) this.onRunningChange?.(false);
     if (this.timer) {

@@ -5,17 +5,28 @@ type FollowOrigin = {
   at: number;
   playing: boolean;
   source?: () => number;
+  lastSample?: number;
 };
 
 let origin: FollowOrigin = { time: 0, at: 0, playing: false };
 
 export function setFollowClock(time: number, playing: boolean, at = performance.now()): void {
-  origin = { time, at, playing, source: undefined };
+  origin = { time, at, playing, source: undefined, lastSample: undefined };
 }
 
 /** Pin the playhead to a live audio clock (HTML element or engine position). */
-export function setFollowClockSource(source: () => number): void {
-  origin = { time: Math.max(0, source()), at: performance.now(), playing: true, source };
+export function setFollowClockSource(source: () => number, at = performance.now()): void {
+  const time = Math.max(0, source());
+  if (
+    origin.playing &&
+    origin.source &&
+    origin.lastSample != null &&
+    Math.abs(time - origin.lastSample) < 0.25
+  ) {
+    origin = { ...origin, source };
+    return;
+  }
+  origin = { time, at, playing: true, source, lastSample: time };
 }
 
 export function stopFollowClock(time = origin.time, at = performance.now()): void {
@@ -29,9 +40,13 @@ export function followClockPlaying(): boolean {
 export function followClockTime(now = performance.now()): number {
   if (!origin.playing) return origin.time;
   if (origin.source) {
-    const time = origin.source();
-    origin = { ...origin, time: Math.max(0, time), at: now };
-    return origin.time;
+    const sampled = Math.max(0, origin.source());
+    const last = origin.lastSample;
+    if (last == null || Math.abs(sampled - last) > 1e-4) {
+      origin = { ...origin, time: sampled, at: now, lastSample: sampled };
+      return sampled;
+    }
+    return Math.max(0, origin.time + (now - origin.at) / 1000);
   }
   return Math.max(0, origin.time + (now - origin.at) / 1000);
 }
