@@ -11,7 +11,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         activatePlaybackSession()
         PracticeShareServer.shared.start()
+        StageSyncHub.shared.listen()
         LocalNetworkGate.shared.wake()
+        LocalNetworkGate.shared.advertise(port: 8787)
         return true
     }
 
@@ -60,7 +62,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 final class PracticeShareServer {
     static let shared = PracticeShareServer()
     private var listener: NWListener?
-    private var relays: [ObjectIdentifier: SyncPortRelay] = [:]
 
     func start(port: UInt16 = 8788) {
         guard listener == nil else { return }
@@ -86,7 +87,7 @@ final class PracticeShareServer {
             if let range = next.range(of: Data("\r\n\r\n".utf8)) {
                 let header = String(data: next.subdata(in: next.startIndex..<range.lowerBound), encoding: .utf8) ?? ""
                 if header.range(of: "upgrade: websocket", options: .caseInsensitive) != nil {
-                    self.relaySync(from: connection, request: next)
+                    StageSyncHub.shared.accept(connection: connection, request: next)
                     return
                 }
                 let path = Self.requestPath(from: header)
@@ -104,15 +105,6 @@ final class PracticeShareServer {
         }
     }
 
-    private func relaySync(from inbound: NWConnection, request: Data) {
-        let outbound = NWConnection(host: "127.0.0.1", port: 8787, using: .tcp)
-        let relay = SyncPortRelay(inbound: inbound, outbound: outbound) { [weak self] finished in
-            self?.relays.removeValue(forKey: ObjectIdentifier(finished))
-        }
-        relays[ObjectIdentifier(relay)] = relay
-        relay.start(request: request)
-    }
-
     private static func requestPath(from header: String) -> String {
         let first = header.split(separator: "\r\n", maxSplits: 1).first.map(String.init) ?? ""
         let parts = first.split(separator: " ")
@@ -128,6 +120,12 @@ final class PracticeShareServer {
                 return Self.http(200, "audio/flac", (try? Data(contentsOf: file)) ?? Data())
             }
             return Self.http(404, "text/plain", Data("Not found".utf8))
+        }
+        if path == "/health" {
+            let status = StageSyncHub.shared.debugStatus()
+            let last = status.last.replacingOccurrences(of: "\"", with: "'")
+            let body = Data("{\"ok\":true,\"sync\":true,\"sessions\":\(status.sessions),\"last\":\"\(last)\"}".utf8)
+            return Self.http(200, "application/json; charset=utf-8", body)
         }
         if path == "/practice/index.json" {
             return Self.http(200, "application/json; charset=utf-8", Self.practiceIndex())
@@ -262,62 +260,5 @@ final class PracticeShareServer {
         case "flac": return "audio/flac"
         default: return "application/octet-stream"
         }
-    }
-}
-
-final class SyncPortRelay {
-    private let inbound: NWConnection
-    private let outbound: NWConnection
-    private let finished: (SyncPortRelay) -> Void
-    private var closed = false
-
-    init(inbound: NWConnection, outbound: NWConnection, finished: @escaping (SyncPortRelay) -> Void) {
-        self.inbound = inbound
-        self.outbound = outbound
-        self.finished = finished
-    }
-
-    func start(request: Data) {
-        outbound.stateUpdateHandler = { [weak self] state in
-            guard let self else { return }
-            if case .ready = state {
-                self.outbound.send(content: request, completion: .contentProcessed { _ in
-                    self.pipe(from: self.inbound, to: self.outbound)
-                    self.pipe(from: self.outbound, to: self.inbound)
-                })
-            }
-            if case .failed = state { self.close() }
-            if case .cancelled = state { self.close() }
-        }
-        outbound.start(queue: .global(qos: .userInitiated))
-    }
-
-    private func pipe(from: NWConnection, to: NWConnection) {
-        from.receive(minimumIncompleteLength: 1, maximumLength: 64 * 1024) { [weak self] data, _, isComplete, error in
-            guard let self, !self.closed else { return }
-            if let data, !data.isEmpty {
-                to.send(content: data, completion: .contentProcessed { _ in
-                    if isComplete || error != nil {
-                        self.close()
-                        return
-                    }
-                    self.pipe(from: from, to: to)
-                })
-                return
-            }
-            if isComplete || error != nil {
-                self.close()
-                return
-            }
-            self.pipe(from: from, to: to)
-        }
-    }
-
-    private func close() {
-        guard !closed else { return }
-        closed = true
-        inbound.cancel()
-        outbound.cancel()
-        finished(self)
     }
 }

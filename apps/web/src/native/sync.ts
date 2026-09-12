@@ -109,15 +109,26 @@ function lanInterfaceRank(name: string): number {
 }
 
 async function lanAddress(): Promise<string | null> {
-  const { WebsocketServer } = await import("capacitor-websocket-server");
-  const interfaces = await WebsocketServer.getInterfaces();
-  const names = Object.keys(interfaces).sort((left, right) => lanInterfaceRank(left) - lanInterfaceRank(right));
-  for (const name of names) {
-    if (name.startsWith("lo") || name.startsWith("utun") || name.startsWith("awdl")) continue;
-    const ip = interfaces[name]?.ipv4Addresses?.find(
-      (address) => !address.startsWith("127.") && !address.startsWith("169.254.")
-    );
-    if (ip) return ip;
+  try {
+    const { SyncSocket } = await import("./sync-socket");
+    const result = await SyncSocket.lanAddress();
+    if (result.address) return result.address;
+  } catch {
+    // fall through to the Capacitor plugin if the native hub is missing
+  }
+  try {
+    const { WebsocketServer } = await import("capacitor-websocket-server");
+    const interfaces = await WebsocketServer.getInterfaces();
+    const names = Object.keys(interfaces).sort((left, right) => lanInterfaceRank(left) - lanInterfaceRank(right));
+    for (const name of names) {
+      if (name.startsWith("lo") || name.startsWith("utun") || name.startsWith("awdl")) continue;
+      const ip = interfaces[name]?.ipv4Addresses?.find(
+        (address) => !address.startsWith("127.") && !address.startsWith("169.254.")
+      );
+      if (ip) return ip;
+    }
+  } catch {
+    return null;
   }
   return null;
 }
@@ -206,61 +217,63 @@ function publishNativeRoster(): void {
 }
 
 async function startNativeMaster(hooks: SyncHooks): Promise<string | null> {
-  const { WebsocketServer } = await import("capacitor-websocket-server");
+  const { SyncSocket } = await import("./sync-socket");
   sendNativeRaw = (uuid, message) => {
-    void WebsocketServer.send({ uuid, message });
+    void SyncSocket.hostSend({ uuid, message });
   };
   if (!nativeListenersBound) {
     nativeListenersBound = true;
-    await WebsocketServer.addListener("onOpen", (event) => {
-      connections.add(event.connection.uuid);
+    await SyncSocket.addListener("hostOpen", (event) => {
+      const uuid = String(event.uuid ?? "");
+      if (!uuid) return;
+      connections.add(uuid);
       setLink({ connected: true, hosting: true, peerCount: clientPeerCount(linkState.peers) });
-      if (lastShow) void WebsocketServer.send({ uuid: event.connection.uuid, message: lastShow });
-      if (lastPosition) void WebsocketServer.send({ uuid: event.connection.uuid, message: lastPosition });
+      if (lastShow) void SyncSocket.hostSend({ uuid, message: lastShow });
+      if (lastPosition) void SyncSocket.hostSend({ uuid, message: lastPosition });
     });
-    await WebsocketServer.addListener("onClose", (event) => {
-      connections.delete(event.uuid);
-      nativePeers.delete(event.uuid);
+    await SyncSocket.addListener("hostClose", (event) => {
+      const uuid = String(event.uuid ?? "");
+      connections.delete(uuid);
+      nativePeers.delete(uuid);
       publishNativeRoster();
     });
-    await WebsocketServer.addListener("onMessage", (event) => {
-      if (event.isBinary) return;
-      const raw = event.message;
+    await SyncSocket.addListener("hostMessage", (event) => {
+      const uuid = String(event.uuid ?? "");
+      const raw = String(event.message ?? event.data ?? "");
       const message = parseSyncMessage(raw);
       if (!message) return;
       rememberOutgoing(message, raw);
       if (message.type === "Hello") {
-        for (const [uuid, peer] of nativePeers) {
-          if (peer.deviceId === message.deviceId) nativePeers.delete(uuid);
+        for (const [id, peer] of nativePeers) {
+          if (peer.deviceId === message.deviceId) nativePeers.delete(id);
         }
-        nativePeers.set(event.uuid, {
+        nativePeers.set(uuid, {
           deviceId: message.deviceId,
           deviceKind: message.deviceKind,
           deviceName: message.deviceName
         });
         publishNativeRoster();
       }
-      for (const uuid of connections) {
-        if (uuid === event.uuid) continue;
-        void WebsocketServer.send({ uuid, message: raw });
+      for (const peer of connections) {
+        if (peer === uuid) continue;
+        void SyncSocket.hostSend({ uuid: peer, message: raw });
       }
       handleIncoming(message, hooks, true);
     });
   }
   if (!nativeServerStarted) {
-    await WebsocketServer.start({ port: SYNC_PORT, tcpNoDelay: true });
+    await SyncSocket.startHost({ port: SYNC_PORT });
     nativeServerStarted = true;
   }
   sendImpl = (message) => {
     const raw = JSON.stringify(message);
     rememberOutgoing(message, raw);
     for (const uuid of connections) {
-      void WebsocketServer.send({ uuid, message: raw });
+      void SyncSocket.hostSend({ uuid, message: raw });
     }
   };
   hooks.onMasterOpen();
   try {
-    const { SyncSocket } = await import("./sync-socket");
     await SyncSocket.advertise({ port: SYNC_PORT });
   } catch {
     // Bonjour is only for the iOS local-network prompt
@@ -301,6 +314,16 @@ function connectBrowserSocket(
   }
   const current = socket;
   let opened = false;
+  const giveUp = window.setTimeout(() => {
+    if (opened || socket !== current) return;
+    current.onclose = null;
+    try {
+      current.close();
+    } catch {
+      // abandon this attempt
+    }
+    onConnectFail();
+  }, 2000);
   sendImpl = (message) => {
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
     const raw = JSON.stringify(message);
@@ -309,6 +332,7 @@ function connectBrowserSocket(
   };
   current.onopen = () => {
     if (socket !== current) return;
+    window.clearTimeout(giveUp);
     opened = true;
     setLink({ connected: true, hosting: false });
     sendImpl({
@@ -334,6 +358,7 @@ function connectBrowserSocket(
   };
   current.onclose = () => {
     if (socket !== current) return;
+    window.clearTimeout(giveUp);
     setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
     window.clearTimeout(reconnectTimer);
     if (!allowReconnect) return;
@@ -462,7 +487,12 @@ async function connectNativeClientSocket(
   ]);
   try {
     await SyncSocket.wakeLocalNetwork();
-    await SyncSocket.connect({ url });
+    await Promise.race([
+      SyncSocket.connect({ url }),
+      new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("timeout")), 2500);
+      })
+    ]);
     setLink({ connected: true, hosting: false });
     sendImpl({
       type: "Hello",
@@ -475,6 +505,11 @@ async function connectNativeClientSocket(
       deviceId: hooks.deviceKind() === "master" ? "master" : sessionClientId()
     });
   } catch {
+    try {
+      await SyncSocket.close();
+    } catch {
+      // try the next address
+    }
     setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
     if (!allowReconnect) return;
     onConnectFail();

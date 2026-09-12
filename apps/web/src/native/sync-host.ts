@@ -15,13 +15,13 @@ export function syncSocketUrl(host: string): string | null {
   return syncSocketUrls(host)[0] ?? null;
 }
 
-/** Try the show clock port, then the same HTTP port the client page already uses. */
+/** Prefer the HTTP share port — that listener is up even when 8787 never bound. */
 export function syncSocketUrls(host: string): string[] {
   const hostname = parseSyncHostname(host);
   if (!hostname) return [];
   return [
-    `ws://${hostname}:${SYNC_PORT}/sync`,
     `ws://${hostname}:${PRACTICE_SHARE_PORT}/sync`,
+    `ws://${hostname}:${SYNC_PORT}/sync`,
     `ws://${hostname}:${SYNC_PORT}/`
   ];
 }

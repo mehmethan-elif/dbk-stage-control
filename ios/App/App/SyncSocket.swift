@@ -38,10 +38,28 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "send", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "close", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "wakeLocalNetwork", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "advertise", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "advertise", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startHost", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "hostSend", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "lanAddress", returnType: CAPPluginReturnPromise)
     ]
 
     private var client: NativeSyncClient?
+
+    public override func load() {
+        StageSyncHub.shared.listen()
+        StageSyncHub.shared.bind(
+            onOpen: { [weak self] uuid in
+                self?.notifyListeners("hostOpen", data: ["uuid": uuid])
+            },
+            onClose: { [weak self] uuid in
+                self?.notifyListeners("hostClose", data: ["uuid": uuid])
+            },
+            onMessage: { [weak self] uuid, message in
+                self?.notifyListeners("hostMessage", data: ["uuid": uuid, "message": message])
+            }
+        )
+    }
 
     @objc func wakeLocalNetwork(_ call: CAPPluginCall) {
         LocalNetworkGate.shared.wake()
@@ -51,6 +69,33 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func advertise(_ call: CAPPluginCall) {
         LocalNetworkGate.shared.advertise(port: Int32(call.getInt("port") ?? 8787))
         call.resolve()
+    }
+
+    @objc func startHost(_ call: CAPPluginCall) {
+        StageSyncHub.shared.listen(port: UInt16(call.getInt("port") ?? 8787))
+        StageSyncHub.shared.bind(
+            onOpen: { [weak self] uuid in
+                self?.notifyListeners("hostOpen", data: ["uuid": uuid])
+            },
+            onClose: { [weak self] uuid in
+                self?.notifyListeners("hostClose", data: ["uuid": uuid])
+            },
+            onMessage: { [weak self] uuid, message in
+                self?.notifyListeners("hostMessage", data: ["uuid": uuid, "message": message])
+            }
+        )
+        call.resolve(["address": StageSyncHub.lanIPv4() ?? ""])
+    }
+
+    @objc func hostSend(_ call: CAPPluginCall) {
+        if let uuid = call.getString("uuid"), let message = call.getString("message") {
+            StageSyncHub.shared.send(uuid: uuid, message: message)
+        }
+        call.resolve()
+    }
+
+    @objc func lanAddress(_ call: CAPPluginCall) {
+        call.resolve(["address": StageSyncHub.lanIPv4() ?? ""])
     }
 
     @objc func connect(_ call: CAPPluginCall) {
@@ -105,6 +150,12 @@ final class NativeSyncClient {
     ) {
         self.onMessage = onMessage
         self.onClose = onClose
+        var settled = false
+        let finishConnect: (String?) -> Void = { error in
+            guard !settled else { return }
+            settled = true
+            DispatchQueue.main.async { done(error) }
+        }
         let host = url.host ?? ""
         let port = NWEndpoint.Port(rawValue: UInt16(url.port ?? 8787)) ?? 8787
         let path = url.path.isEmpty ? "/" : url.path
@@ -115,7 +166,7 @@ final class NativeSyncClient {
             case .ready:
                 self?.sendHandshake(host: host, port: port.rawValue, path: path)
             case .failed(let error):
-                done(error.localizedDescription)
+                finishConnect(error.localizedDescription)
             case .cancelled:
                 if self?.upgraded == true { self?.finish() }
             default:
@@ -123,7 +174,12 @@ final class NativeSyncClient {
             }
         }
         connection.start(queue: .global(qos: .userInitiated))
-        receive(done: done)
+        receive(done: finishConnect)
+        DispatchQueue.global().asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self, !self.upgraded, !self.closed else { return }
+            finishConnect("Connection timed out")
+            self.close()
+        }
     }
 
     func send(text: String) {

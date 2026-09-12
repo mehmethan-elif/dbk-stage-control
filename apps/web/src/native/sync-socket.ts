@@ -6,9 +6,12 @@ type SyncSocketApi = {
   close(): Promise<void>;
   wakeLocalNetwork(): Promise<void>;
   advertise(options: { port: number }): Promise<void>;
+  startHost(options: { port: number }): Promise<{ address?: string }>;
+  hostSend(options: { uuid: string; message: string }): Promise<void>;
+  lanAddress(): Promise<{ address?: string }>;
   addListener(
-    eventName: "open" | "message" | "close",
-    listener: (event: { data?: string }) => void
+    eventName: "open" | "message" | "close" | "hostOpen" | "hostClose" | "hostMessage",
+    listener: (event: { data?: string; uuid?: string; message?: string }) => void
   ): Promise<{ remove: () => Promise<void> }>;
 };
 
@@ -57,6 +60,16 @@ class SyncSocketWeb extends WebPlugin implements SyncSocketApi {
   async wakeLocalNetwork(): Promise<void> {}
 
   async advertise(): Promise<void> {}
+
+  async startHost(): Promise<{ address?: string }> {
+    return {};
+  }
+
+  async hostSend(): Promise<void> {}
+
+  async lanAddress(): Promise<{ address?: string }> {
+    return {};
+  }
 }
 
 export const SyncSocket = registerPlugin<SyncSocketApi>("SyncSocket", {
