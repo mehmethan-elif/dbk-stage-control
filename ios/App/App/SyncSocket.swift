@@ -1,4 +1,5 @@
 import Foundation
+import Network
 import Capacitor
 
 final class LocalNetworkGate: NSObject, NetServiceDelegate, NetServiceBrowserDelegate {
@@ -40,9 +41,7 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "advertise", returnType: CAPPluginReturnPromise)
     ]
 
-    private var task: URLSessionWebSocketTask?
-    private var session: URLSession?
-    private var generation = 0
+    private var client: NativeSyncClient?
 
     @objc func wakeLocalNetwork(_ call: CAPPluginCall) {
         LocalNetworkGate.shared.wake()
@@ -59,90 +58,184 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Bad master address")
             return
         }
-        closeTask()
-        generation += 1
-        let current = generation
-        let session = URLSession(configuration: .default)
-        self.session = session
-        let task = session.webSocketTask(with: url)
-        self.task = task
-        task.resume()
-        pingUntilOpen(task, generation: current, attempt: 0) { [weak self] error in
-            guard let self, current == self.generation else { return }
+        client?.close()
+        let next = NativeSyncClient()
+        client = next
+        next.connect(url: url) { [weak self] error in
             if let error {
-                call.reject(error.localizedDescription)
+                call.reject(error)
                 return
             }
-            self.notifyListeners("open", data: [:])
-            self.receive(generation: current)
+            self?.notifyListeners("open", data: [:])
             call.resolve()
+        } onMessage: { [weak self] text in
+            self?.notifyListeners("message", data: ["data": text])
+        } onClose: { [weak self] in
+            self?.notifyListeners("close", data: [:])
         }
     }
 
     @objc func send(_ call: CAPPluginCall) {
-        guard let message = call.getString("message"), let task else {
-            call.resolve()
-            return
+        if let message = call.getString("message") {
+            client?.send(text: message)
         }
-        task.send(.string(message)) { _ in }
         call.resolve()
     }
 
     @objc func close(_ call: CAPPluginCall) {
-        closeTask()
+        client?.close()
+        client = nil
         call.resolve()
     }
+}
 
-    private func pingUntilOpen(
-        _ task: URLSessionWebSocketTask,
-        generation: Int,
-        attempt: Int,
-        done: @escaping (Error?) -> Void
+final class NativeSyncClient {
+    private var connection: NWConnection?
+    private var buffer = Data()
+    private var upgraded = false
+    private var closed = false
+    private var onMessage: ((String) -> Void)?
+    private var onClose: (() -> Void)?
+
+    func connect(
+        url: URL,
+        done: @escaping (String?) -> Void,
+        onMessage: @escaping (String) -> Void,
+        onClose: @escaping () -> Void
     ) {
-        task.sendPing { [weak self] error in
-            guard let self, generation == self.generation else { return }
-            if error == nil {
-                done(nil)
-                return
-            }
-            if attempt >= 12 {
-                done(error)
-                return
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                guard generation == self.generation else { return }
-                self.pingUntilOpen(task, generation: generation, attempt: attempt + 1, done: done)
+        self.onMessage = onMessage
+        self.onClose = onClose
+        let host = url.host ?? ""
+        let port = NWEndpoint.Port(rawValue: UInt16(url.port ?? 8787)) ?? 8787
+        let path = url.path.isEmpty ? "/" : url.path
+        let connection = NWConnection(host: NWEndpoint.Host(host), port: port, using: .tcp)
+        self.connection = connection
+        connection.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .ready:
+                self?.sendHandshake(host: host, port: port.rawValue, path: path)
+            case .failed(let error):
+                done(error.localizedDescription)
+            case .cancelled:
+                if self?.upgraded == true { self?.finish() }
+            default:
+                break
             }
         }
+        connection.start(queue: .global(qos: .userInitiated))
+        receive(done: done)
     }
 
-    private func receive(generation: Int) {
-        guard let task, generation == self.generation else { return }
-        task.receive { [weak self] result in
-            guard let self, generation == self.generation else { return }
-            switch result {
-            case .success(.string(let text)):
-                self.notifyListeners("message", data: ["data": text])
-                self.receive(generation: generation)
-            case .success(.data(let data)):
-                if let text = String(data: data, encoding: .utf8) {
-                    self.notifyListeners("message", data: ["data": text])
+    func send(text: String) {
+        guard upgraded, let data = text.data(using: .utf8) else { return }
+        connection?.send(content: Self.maskedFrame(opcode: 0x01, payload: [UInt8](data)), completion: .contentProcessed { _ in })
+    }
+
+    func close() {
+        closed = true
+        connection?.cancel()
+        connection = nil
+    }
+
+    private func sendHandshake(host: String, port: UInt16, path: String) {
+        var bytes = [UInt8](repeating: 0, count: 16)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        let key = Data(bytes).base64EncodedString()
+        var request = "GET \(path) HTTP/1.1\r\n"
+        request += "Host: \(host):\(port)\r\n"
+        request += "Upgrade: websocket\r\n"
+        request += "Connection: Upgrade\r\n"
+        request += "Sec-WebSocket-Key: \(key)\r\n"
+        request += "Sec-WebSocket-Version: 13\r\n\r\n"
+        connection?.send(content: Data(request.utf8), completion: .contentProcessed { _ in })
+    }
+
+    private func receive(done: @escaping (String?) -> Void) {
+        connection?.receive(minimumIncompleteLength: 1, maximumLength: 64 * 1024) { [weak self] data, _, isComplete, error in
+            guard let self, !self.closed else { return }
+            if let error {
+                if !self.upgraded { done(error.localizedDescription) } else { self.finish() }
+                return
+            }
+            if let data { self.buffer.append(data) }
+            if !self.upgraded {
+                if let range = self.buffer.range(of: Data("\r\n\r\n".utf8)) {
+                    let header = String(data: self.buffer.subdata(in: self.buffer.startIndex..<range.lowerBound), encoding: .utf8) ?? ""
+                    self.buffer.removeSubrange(self.buffer.startIndex..<range.upperBound)
+                    if header.contains("101") {
+                        self.upgraded = true
+                        DispatchQueue.main.async { done(nil) }
+                    } else {
+                        DispatchQueue.main.async { done("Master refused the connection") }
+                        self.close()
+                        return
+                    }
+                } else if isComplete {
+                    DispatchQueue.main.async { done("No master at that address") }
+                    return
                 }
-                self.receive(generation: generation)
-            case .failure:
-                self.notifyListeners("close", data: [:])
-                self.closeTask()
-            @unknown default:
-                self.receive(generation: generation)
+            }
+            if self.upgraded { self.drainFrames() }
+            if isComplete {
+                if self.upgraded { self.finish() }
+                return
+            }
+            self.receive(done: done)
+        }
+    }
+
+    private func drainFrames() {
+        while buffer.count >= 2 {
+            let bytes = [UInt8](buffer)
+            let opcode = bytes[0] & 0x0F
+            let masked = (bytes[1] & 0x80) != 0
+            var length = UInt64(bytes[1] & 0x7F)
+            var offset = 2
+            if length == 126 {
+                guard buffer.count >= 4 else { return }
+                length = UInt64(bytes[2]) << 8 | UInt64(bytes[3])
+                offset = 4
+            } else if length == 127 {
+                return
+            }
+            if masked { offset += 4 }
+            guard buffer.count >= offset + Int(length) else { return }
+            var payload = Array(bytes[offset..<offset + Int(length)])
+            if masked {
+                let mask = Array(bytes[(offset - 4)..<offset])
+                for i in payload.indices { payload[i] ^= mask[i % 4] }
+            }
+            buffer.removeFirst(offset + Int(length))
+            if opcode == 0x01, let text = String(bytes: payload, encoding: .utf8) {
+                DispatchQueue.main.async { self.onMessage?(text) }
+            } else if opcode == 0x08 {
+                finish()
+                return
             }
         }
     }
 
-    private func closeTask() {
-        generation += 1
-        task?.cancel(with: .goingAway, reason: nil)
-        task = nil
-        session?.invalidateAndCancel()
-        session = nil
+    private func finish() {
+        guard !closed else { return }
+        closed = true
+        connection?.cancel()
+        DispatchQueue.main.async { self.onClose?() }
+    }
+
+    private static func maskedFrame(opcode: UInt8, payload: [UInt8]) -> Data {
+        var frame = [UInt8]()
+        frame.append(0x80 | opcode)
+        var mask = [UInt8](repeating: 0, count: 4)
+        _ = SecRandomCopyBytes(kSecRandomDefault, 4, &mask)
+        if payload.count < 126 {
+            frame.append(0x80 | UInt8(payload.count))
+        } else {
+            frame.append(0x80 | 126)
+            frame.append(UInt8((payload.count >> 8) & 0xFF))
+            frame.append(UInt8(payload.count & 0xFF))
+        }
+        frame.append(contentsOf: mask)
+        for i in payload.indices { frame.append(payload[i] ^ mask[i % 4]) }
+        return Data(frame)
     }
 }

@@ -6,10 +6,9 @@ import {
   parseSyncMessage
 } from "@dbk/protocol";
 import { isNativeApp } from "./platform";
-import { parseSyncHostname, SYNC_PORT, syncSocketUrl } from "./sync-host";
+import { parseSyncHostname, PRACTICE_SHARE_PORT, SYNC_PORT, syncSocketUrls } from "./sync-host";
 
-export { SYNC_PORT };
-export const PRACTICE_SHARE_PORT = 8788;
+export { PRACTICE_SHARE_PORT, SYNC_PORT };
 export const MASTER_HOST_KEY = "dbk-master-host";
 export const STAGE_NAME_KEY = "dbk-stage-name";
 
@@ -102,12 +101,20 @@ export function rememberOutgoing(message: SyncMessage, raw = JSON.stringify(mess
   }
 }
 
+function lanInterfaceRank(name: string): number {
+  if (name === "en0") return 0;
+  if (name.startsWith("en")) return 1;
+  if (name.startsWith("pdp_ip") || name.startsWith("bridge")) return 3;
+  return 2;
+}
+
 async function lanAddress(): Promise<string | null> {
   const { WebsocketServer } = await import("capacitor-websocket-server");
   const interfaces = await WebsocketServer.getInterfaces();
-  for (const [name, info] of Object.entries(interfaces)) {
+  const names = Object.keys(interfaces).sort((left, right) => lanInterfaceRank(left) - lanInterfaceRank(right));
+  for (const name of names) {
     if (name.startsWith("lo") || name.startsWith("utun") || name.startsWith("awdl")) continue;
-    const ip = info.ipv4Addresses?.find(
+    const ip = interfaces[name]?.ipv4Addresses?.find(
       (address) => !address.startsWith("127.") && !address.startsWith("169.254.")
     );
     if (ip) return ip;
@@ -269,7 +276,12 @@ async function startNativeMaster(hooks: SyncHooks): Promise<string | null> {
   return address;
 }
 
-function connectBrowserSocket(url: string, hooks: SyncHooks, retry: () => void): void {
+function connectBrowserSocket(
+  url: string,
+  hooks: SyncHooks,
+  onConnectFail: () => void,
+  retryAll: () => void
+): void {
   if (socket) {
     socket.onopen = null;
     socket.onmessage = null;
@@ -284,9 +296,11 @@ function connectBrowserSocket(url: string, hooks: SyncHooks, retry: () => void):
   try {
     socket = new WebSocket(url);
   } catch {
+    onConnectFail();
     return;
   }
   const current = socket;
+  let opened = false;
   sendImpl = (message) => {
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
     const raw = JSON.stringify(message);
@@ -295,6 +309,7 @@ function connectBrowserSocket(url: string, hooks: SyncHooks, retry: () => void):
   };
   current.onopen = () => {
     if (socket !== current) return;
+    opened = true;
     setLink({ connected: true, hosting: false });
     sendImpl({
       type: "Hello",
@@ -322,7 +337,11 @@ function connectBrowserSocket(url: string, hooks: SyncHooks, retry: () => void):
     setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
     window.clearTimeout(reconnectTimer);
     if (!allowReconnect) return;
-    reconnectTimer = window.setTimeout(retry, 2000);
+    if (!opened) {
+      onConnectFail();
+      return;
+    }
+    reconnectTimer = window.setTimeout(retryAll, 2000);
   };
 }
 
@@ -367,9 +386,9 @@ export async function connectSyncTransport(hooks: SyncHooks): Promise<string | n
   const host = hookSyncHost(hooks);
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   const hostname = parseSyncHostname(host);
-  const url = hostname
-    ? syncSocketUrl(host) ?? `${protocol}://${hostname}:${SYNC_PORT}/sync`
-    : `${protocol}://${window.location.host}/sync`;
+  const urls = hostname
+    ? syncSocketUrls(host)
+    : [`${protocol}://${window.location.host}/sync`];
   setLink({
     connected: false,
     hosting: false,
@@ -382,12 +401,24 @@ export async function connectSyncTransport(hooks: SyncHooks): Promise<string | n
     if (isFollowerKind(hooks.deviceKind()) && !hookSyncHost(hooks)) return;
     void connectSyncTransport(hooks);
   };
-  if (isNativeApp() && hostname) {
-    void connectNativeClientSocket(url, hooks, retry);
-  } else {
-    connectBrowserSocket(url, hooks, retry);
-  }
+  connectFollower(urls, hooks, retry);
   return hostname ? `${hostname}:${SYNC_PORT}` : null;
+}
+
+function connectFollower(urls: string[], hooks: SyncHooks, retryAll: () => void): void {
+  let index = 0;
+  const attempt = () => {
+    const url = urls[index];
+    if (!url) {
+      window.clearTimeout(reconnectTimer);
+      reconnectTimer = window.setTimeout(retryAll, 2000);
+      return;
+    }
+    index += 1;
+    if (isNativeApp()) void connectNativeClientSocket(url, hooks, attempt, retryAll);
+    else connectBrowserSocket(url, hooks, attempt, retryAll);
+  };
+  attempt();
 }
 
 let nativeClientUnsubs: Array<{ remove: () => Promise<void> }> = [];
@@ -398,7 +429,12 @@ async function dropNativeClientListeners(): Promise<void> {
   await Promise.all(pending.map((handle) => handle.remove().catch(() => undefined)));
 }
 
-async function connectNativeClientSocket(url: string, hooks: SyncHooks, retry: () => void): Promise<void> {
+async function connectNativeClientSocket(
+  url: string,
+  hooks: SyncHooks,
+  onConnectFail: () => void,
+  retryAll: () => void
+): Promise<void> {
   const { SyncSocket } = await import("./sync-socket");
   await dropNativeClientListeners();
   try {
@@ -421,7 +457,7 @@ async function connectNativeClientSocket(url: string, hooks: SyncHooks, retry: (
       setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
       window.clearTimeout(reconnectTimer);
       if (!allowReconnect) return;
-      reconnectTimer = window.setTimeout(retry, 2000);
+      reconnectTimer = window.setTimeout(retryAll, 2000);
     })
   ]);
   try {
@@ -440,8 +476,7 @@ async function connectNativeClientSocket(url: string, hooks: SyncHooks, retry: (
     });
   } catch {
     setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
-    window.clearTimeout(reconnectTimer);
     if (!allowReconnect) return;
-    reconnectTimer = window.setTimeout(retry, 2000);
+    onConnectFail();
   }
 }
