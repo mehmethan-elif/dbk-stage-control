@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 import {
   createId,
   isLockedElif,
@@ -28,7 +28,7 @@ import {
   type SongForm,
   type TempoPoint
 } from "@dbk/core";
-import { followClockPlaying, followClockTime } from "../../store/follow-clock";
+import { followClockPlaying, followClockTime, useFollowPlayheadTime } from "../../store/follow-clock";
 import { clientPracticeMode, currentGig, elifCanEditSetlist, elifLookingAhead, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
 import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
 import { StageSetlist } from "./StageSetlist";
@@ -298,83 +298,6 @@ export function writtenChart(song: Song | undefined, form: SongForm): (SectionCh
   });
 }
 
-type DrumChartRow = SectionChart & { block: FormBlock };
-
-function paintDrumChart(
-  root: HTMLElement | null,
-  chart: DrumChartRow[],
-  form: SongForm,
-  map: TempoPoint[],
-  time: number,
-  chainNext: boolean
-): void {
-  if (!root) return;
-  const pos = formAt(form, time);
-  const playTime = pos?.originTime ?? time;
-  const actualMeasureEnd = pos ? measureEndAt(map, time) : 0;
-  const afterOriginTime =
-    pos && actualMeasureEnd >= pos.visit.end - TIME_EPS
-      ? pos.block.originEnd
-      : pos
-        ? measureEndAt(map, playTime)
-        : 0;
-  const nextPos = chainNext ? null : pos ? formNextAt(form, time, afterOriginTime) : null;
-  const visitIndex = pos ? form.visits.indexOf(pos.visit) : -1;
-  const followingBlockId = visitIndex >= 0 ? form.visits[visitIndex + 1]?.blockId : undefined;
-
-  for (const row of chart) {
-    const isCurrent = pos?.block.id === row.block.id;
-    const isNext = nextPos?.block.id === row.block.id && !isCurrent;
-    const fill = pos && isCurrent ? sectionFill(true, time, pos.visit.start, pos.visit.end, map) : 0;
-    for (const el of root.querySelectorAll<HTMLElement>(`[data-drum-section="${row.block.id}"]`)) {
-      el.style.setProperty("--playhead", String(fill));
-      el.classList.toggle("current", Boolean(isCurrent));
-      el.classList.toggle("next", Boolean(isNext));
-    }
-    for (const run of row.runs) {
-      const el = root.querySelector<HTMLElement>(`[data-drum-row="${run.name}-${run.start}"]`);
-      if (!el) continue;
-      const current = Boolean(isCurrent && playTime >= run.start && playTime < run.end);
-      const next = Boolean(
-        !current && nextPos && nextPos.block.id === row.block.id && nextPos.originTime >= run.start && nextPos.originTime < run.end
-      );
-      el.classList.toggle("current", current);
-      el.classList.toggle("next", next);
-      const beat = current ? drumPlayheadBeat(run, playTime, map) : -1;
-      const head = el.querySelector<HTMLElement>(".drum-playhead");
-      if (head) {
-        head.hidden = beat < 0;
-        if (beat >= 0) head.style.left = `${(beat / run.steps) * 100}%`;
-      }
-      const count = el.querySelector(".drum-count");
-      if (count) {
-        const elapsed = current ? Math.max(0, playTime - run.start) : 0;
-        count.textContent = String(current ? Math.min(run.repeats, Math.floor(elapsed / run.cycle) + 1) : 1);
-      }
-      if (run.cue) {
-        const phase = cuePhase(run.cue, playTime, map, current);
-        el.classList.toggle("cue-live", phase === "live");
-        const cue = el.querySelector<HTMLElement>(".drum-run-cue");
-        if (cue) {
-          cue.hidden = phase === "hidden";
-          cue.classList.toggle("current", phase === "live");
-        }
-      }
-    }
-  }
-
-  for (const pack of root.querySelectorAll<HTMLElement>("[data-drum-pack]")) {
-    const ids = (pack.dataset.drumPack ?? "").split("+");
-    const packCurrent = ids.some((id) => pos?.block.id === id);
-    const packLeadIn = pack.hasAttribute("data-lead-in");
-    const packNext = packLeadIn || (!packCurrent && ids.some((id) => nextPos?.block.id === id));
-    const packScrollNext = packLeadIn || (!packCurrent && ids.some((id) => id === followingBlockId));
-    pack.classList.toggle("current", packCurrent);
-    pack.classList.toggle("next", packNext);
-    pack.classList.toggle("scroll-next", packScrollNext);
-  }
-}
-
 export function DrumView() {
   const songs = useMasterStore((s) => s.songs);
   const gig = useMasterStore(currentGig);
@@ -383,6 +306,7 @@ export function DrumView() {
   const updateGig = useMasterStore((s) => s.updateGig);
   const playback = useMasterStore((s) => s.playback);
   const storeTime = useMasterStore(stagePlayheadTime);
+  const followTime = useFollowPlayheadTime(storeTime);
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
   const elifEdits = useMasterStore(elifCanEditSetlist);
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
@@ -424,7 +348,8 @@ export function DrumView() {
       : (entries.find((entry) => entry.entryId === selectedEntryId)?.songId ??
         playback.clock?.songId)
   );
-  const liveTime = storeTime;
+  const liveTime =
+    playingSong && playingSong.duration > 0 ? Math.min(playingSong.duration, followTime) : followTime;
   const upcoming = playingEntryId
     ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, liveTime)
     : undefined;
@@ -462,7 +387,7 @@ export function DrumView() {
       next instanceof HTMLElement ? next : null,
       Boolean(leadIn)
     );
-  }, [autoScroll, storeTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
+  }, [autoScroll, followTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
 
   const addSong = (songId: string) => {
     if (!gig) return;
@@ -528,16 +453,18 @@ export function DrumView() {
                 }
                 if (!isSongEntry(entry)) return null;
                 const item = findSongByRef(songs, entry.songId);
+                const live = playingEntryId === entry.entryId;
                 return (
                   <SongPatterns
                     key={entry.entryId}
                     entryId={entry.entryId}
                     song={item}
-                    live={playingEntryId === entry.entryId}
+                    live={live}
                     preview={selectedEntryId === entry.entryId}
                     time={liveTime}
+                    smooth={readOnly && following && live}
                     leadIn={upcoming?.entryId === entry.entryId}
-                    chainNext={Boolean(upcoming) && playingEntryId === entry.entryId}
+                    chainNext={Boolean(upcoming) && live}
                   />
                 );
               })}
@@ -591,6 +518,7 @@ function SongPatterns(props: {
   live: boolean;
   preview?: boolean;
   time: number;
+  smooth?: boolean;
   leadIn?: boolean;
   chainNext?: boolean;
 }) {
@@ -609,6 +537,7 @@ function SongPatterns(props: {
         live={props.live}
         preview={props.preview}
         time={props.time}
+        smooth={props.smooth}
         leadIn={props.leadIn}
         chainNext={props.chainNext}
       />
@@ -616,11 +545,12 @@ function SongPatterns(props: {
   );
 }
 
-export const DrumChartBody = memo(function DrumChartBody(props: {
+export function DrumChartBody(props: {
   song: Song | undefined;
   live?: boolean;
   preview?: boolean;
   time?: number;
+  smooth?: boolean;
   leadIn?: boolean;
   chainNext?: boolean;
 }) {
@@ -637,26 +567,54 @@ export const DrumChartBody = memo(function DrumChartBody(props: {
   );
   const map = props.song?.tempoMap ?? [];
   const rootRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef(form);
   const chartRef = useRef(chart);
+  const formRef = useRef(form);
   const mapRef = useRef(map);
-  const timeRef = useRef(time);
-  formRef.current = form;
+  const origin = useRef({ time, wall: performance.now() });
   chartRef.current = chart;
+  formRef.current = form;
   mapRef.current = map;
-  timeRef.current = time;
-
   useEffect(() => {
-    if (!live) return;
-    let frame = 0;
+    origin.current = { time, wall: performance.now() };
+  }, [time]);
+  useEffect(() => {
+    if (!live || !props.smooth) return;
+    let handle = 0;
     const loop = () => {
-      const now = followClockPlaying() ? followClockTime() : timeRef.current;
-      paintDrumChart(rootRef.current, chartRef.current, formRef.current, mapRef.current, now, Boolean(props.chainNext));
-      frame = requestAnimationFrame(loop);
+      const t = followClockPlaying()
+        ? followClockTime()
+        : origin.current.time + Math.max(0, performance.now() - origin.current.wall) / 1000;
+      const pos = formAt(formRef.current, t);
+      const playTime = pos?.originTime ?? t;
+      const root = rootRef.current;
+      if (root) {
+        for (const el of root.querySelectorAll<HTMLElement>("[data-drum-section]")) {
+          const id = el.dataset.drumSection;
+          const visit = pos?.block.id === id ? pos.visit : null;
+          el.style.setProperty(
+            "--playhead",
+            String(visit ? sectionFill(true, t, visit.start, visit.end, mapRef.current) : 0)
+          );
+        }
+        for (const row of chartRef.current) {
+          for (const run of row.runs) {
+            const el = root.querySelector<HTMLElement>(`[data-drum-row="${run.name}-${run.start}"]`);
+            const head = el?.querySelector<HTMLElement>(".drum-playhead");
+            if (!head) continue;
+            const current = Boolean(
+              pos?.block.id === row.block.id && playTime >= run.start && playTime < run.end
+            );
+            const beat = current ? drumPlayheadBeat(run, playTime, mapRef.current) : -1;
+            head.hidden = beat < 0;
+            if (beat >= 0) head.style.left = `${(beat / run.steps) * 100}%`;
+          }
+        }
+      }
+      handle = requestAnimationFrame(loop);
     };
-    frame = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frame);
-  }, [live, props.chainNext, props.song?.id]);
+    handle = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(handle);
+  }, [live, props.smooth, props.song?.id]);
   const runs = chart.flatMap((section) => section.runs);
   const pos = live ? formAt(form, time) : null;
   const currentRun = pos
@@ -812,16 +770,7 @@ export const DrumChartBody = memo(function DrumChartBody(props: {
         })}
         </div>
   );
-}, function drumChartBodyPropsEqual(prev, next) {
-  return (
-    prev.song === next.song &&
-    prev.live === next.live &&
-    prev.preview === next.preview &&
-    prev.leadIn === next.leadIn &&
-    prev.chainNext === next.chainNext &&
-    (Boolean(prev.live) || prev.time === next.time)
-  );
-});
+}
 
 function DrumSectionTitle(props: {
   row: SectionChart;
