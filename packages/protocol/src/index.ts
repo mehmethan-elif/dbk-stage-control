@@ -57,7 +57,7 @@ export type LoadGigSetlistEntry =
       title?: string;
       duration?: number;
       finishMode?: "STOP" | "PLAY_NEXT";
-      playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY";
+      playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY" | "FREE";
       skipped?: boolean;
       startAt?: number;
     }
@@ -65,6 +65,7 @@ export type LoadGigSetlistEntry =
       type: "break" | "talk" | "costume_change" | "set_marker";
       entryId: string;
       label: string;
+      notes?: string;
     };
 
 export interface LoadGigMessage {
@@ -73,6 +74,7 @@ export interface LoadGigMessage {
   name: string;
   setlistEntryIds: string[];
   setlist?: LoadGigSetlistEntry[];
+  selectedEntryId?: string;
   performanceMode?:
     | "FOLLOW_SONG_INFO"
     | "CLICK_ONLY"
@@ -105,6 +107,8 @@ export interface PlayMessage {
   songId: string;
   setlistEntryId: string;
   at: number;
+  /** Master wall clock (Date.now) when the packet was sent. */
+  sent?: number;
 }
 
 export interface StopMessage {
@@ -114,6 +118,8 @@ export interface StopMessage {
 export interface SeekMessage {
   type: "Seek";
   time: number;
+  /** Master wall clock (Date.now) when the packet was sent. */
+  sent?: number;
 }
 
 export interface PositionMessage {
@@ -127,6 +133,18 @@ export interface PositionMessage {
   playing: boolean;
   nextSongId?: string;
   finishMode?: "STOP" | "PLAY_NEXT";
+  /** Master wall clock (Date.now) when the packet was sent. */
+  sent?: number;
+}
+
+export interface MetronomeMessage {
+  type: "Metronome";
+  /** False stops the pulse. Omitted on ticks. */
+  playing?: boolean;
+  /** Seconds until the click should paint. Master schedules ahead; clients wait this long. */
+  in?: number;
+  /** Monotonic pulse id. Clients ignore older or echoed ids. */
+  seq?: number;
 }
 
 export interface SectionChangedMessage {
@@ -177,7 +195,7 @@ export interface MixerStateMessage {
   songTitle?: string;
   songMix?: RemoteMixBank;
   songChannels?: string[];
-  playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY";
+  playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY" | "FREE";
   songMixer?: boolean;
 }
 
@@ -202,6 +220,7 @@ export type SyncMessage =
   | StopMessage
   | SeekMessage
   | PositionMessage
+  | MetronomeMessage
   | SectionChangedMessage
   | NextSongMessage
   | ClientStatusMessage

@@ -86,9 +86,9 @@ export function clickAsset(song: Song): AssetRef | undefined {
   return song.assets.find((asset) => asset.kind === "audio" && asset.audioRole === "click");
 }
 
-export function hasClickFlac(song: Song, files?: string[]): boolean {
+export function hasClickFlac(song: Song | undefined, files?: string[]): boolean {
   if (files) return files.some((file) => isClickFlacPath(file));
-  return Boolean(song.assets?.some((asset) => isClickFlacPath(asset.path)));
+  return Boolean(song?.assets?.some((asset) => isClickFlacPath(asset.path)));
 }
 
 export function backingAssets(song: Song): AssetRef[] {
@@ -113,6 +113,19 @@ export function hasPlaybackAudio(song: Song | undefined, files?: string[]): bool
   );
 }
 
+export function hasSectionInfo(song?: Pick<Song, "sections">): boolean {
+  return (song?.sections?.length ?? 0) > 0;
+}
+
+/** No stems and no form chart — a metronome song, not Playback used as metronome. */
+export function isRealMetronomeTrack(
+  song?: Pick<Song, "assets" | "sections">,
+  files?: string[]
+): boolean {
+  if (!song) return false;
+  return !hasBackingAudio(song as Song, files) && !hasSectionInfo(song);
+}
+
 export function hasBackingAudio(song: Song | undefined, files?: string[]): boolean {
   if (files) {
     return files.some(
@@ -123,6 +136,23 @@ export function hasBackingAudio(song: Song | undefined, files?: string[]): boole
     );
   }
   return Boolean(song && backingAssets(song).length > 0);
+}
+
+export function defaultLibraryPlayMode(song: Song | undefined, files?: string[]): PlayMode {
+  if (hasPlaybackAudio(song, files)) return PlayModes.Playback;
+  return PlayModes.View;
+}
+
+/** Saved song-info play mode wins; Click Only and Free map to Backing Tracks / Metronome. */
+export function savedOrDefaultLibraryPlayMode(
+  info: { playMode?: PlayMode } | undefined,
+  song?: Song,
+  files?: string[]
+): PlayMode {
+  const saved = info?.playMode;
+  if (saved === PlayModes.View || saved === PlayModes.Free) return PlayModes.View;
+  if (saved === PlayModes.Playback || saved === PlayModes.ClickOnly) return PlayModes.Playback;
+  return defaultLibraryPlayMode(song, files);
 }
 
 export function hasOnlyClickAudio(song: Song | undefined, files?: string[]): boolean {

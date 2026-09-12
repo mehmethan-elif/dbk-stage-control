@@ -1,9 +1,9 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import {
   createId,
-  ELIF_KONUSMA_LABEL,
-  isElifKonusma,
   isLockedElif,
+  isTalkEntry,
+  talkDisplayLabel,
   insertAfterSelected,
   trimElifAfterLastSong,
   isSongEntry,
@@ -17,6 +17,7 @@ import {
   timeToMusical,
   formAt,
   formNextAt,
+  isRealMetronomeTrack,
   songForm,
   type FormBlock,
   type FormVisit,
@@ -27,14 +28,20 @@ import {
   type SongForm,
   type TempoPoint
 } from "@dbk/core";
-import { clientPracticeMode, currentGig, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, stageAutoScroll, stagePlayheadTime, useMasterStore, usesFreeMetroTransport } from "../../store/master-store";
+import { useFollowPlayheadTime } from "../../store/follow-clock";
+import { clientPracticeMode, currentGig, elifCanEditSetlist, elifLookingAhead, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
 import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
 import { StageSetlist } from "./StageSetlist";
 import { CONCERT_FINAL_LABEL, StageFinishRow, stageBodyEntries } from "./setlist-marker";
+import { MetroDraftNotes } from "./metro-draft-notes";
 import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
-import { useFreeStageScrollSelection } from "./free-stage-scroll";
-import { scrollStageToFullSections, scrollStageToSongTitle } from "./stage-scroll";
+import {
+  scrollStageToFullSections,
+  scrollStageToNextSongTitleInUpperHalf,
+  scrollStageToSongTitleWhenReady,
+  stageLeadInNode
+} from "./stage-scroll";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { ChordRepeatMark, FormSectionBar } from "./form-marks";
 import { isCountSection } from "./count-section";
@@ -246,7 +253,7 @@ function sectionChart(song: Song | undefined): SectionChart[] {
   });
 }
 
-function writtenChart(song: Song | undefined, form: SongForm): (SectionChart & { block: FormBlock })[] {
+export function writtenChart(song: Song | undefined, form: SongForm): (SectionChart & { block: FormBlock })[] {
   const linear = sectionChart(song);
   return form.blocks.flatMap((block) => {
     const row = linear[block.originIndex];
@@ -274,15 +281,18 @@ export function DrumView() {
   const selectSetlistEntry = useMasterStore((s) => s.selectSetlistEntry);
   const updateGig = useMasterStore((s) => s.updateGig);
   const playback = useMasterStore((s) => s.playback);
-  const followTime = useMasterStore(stagePlayheadTime);
+  const storeTime = useMasterStore(stagePlayheadTime);
+  const followTime = useFollowPlayheadTime(storeTime);
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
+  const elifEdits = useMasterStore(elifCanEditSetlist);
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
   const zoom = useMasterStore((s) => s.stageZooms.drums);
   const autoScroll = useMasterStore(stageAutoScroll);
   const panicFollow = useMasterStore(panicBlocksFollow);
   const detached = useMasterStore(followsSharedPlayhead);
-  const freeMode = useMasterStore(usesFreeMetroTransport);
+  const lookingAhead = useMasterStore(elifLookingAhead);
+  const metroFollow = useMasterStore((s) => s.metronomePlaying);
   const stageRef = useRef<HTMLElement>(null);
   const listEntries = gig
     ? isSongLibraryGig(gig)
@@ -299,15 +309,14 @@ export function DrumView() {
       : listEntries;
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
-  const playingEntryId =
-    playing || panicFollow
-      ? (detached
-          ? (playback.clock?.setlistEntryId ?? undefined)
-          : (selectedEntryId ?? playback.clock?.setlistEntryId ?? undefined))
-      : readOnly && !detached
-        ? (selectedEntryId ?? undefined)
+  const following = playing || panicFollow || metroFollow;
+  const playingEntryId = lookingAhead
+    ? undefined
+    : detached && (playing || panicFollow)
+      ? (playback.clock?.setlistEntryId ?? undefined)
+      : !detached && following
+        ? (selectedEntryId ?? playback.clock?.setlistEntryId ?? undefined)
         : undefined;
-  const liveTime = followTime;
   const playingSong = findSongByRef(
     songs,
     detached
@@ -315,6 +324,8 @@ export function DrumView() {
       : (entries.find((entry) => entry.entryId === selectedEntryId)?.songId ??
         playback.clock?.songId)
   );
+  const liveTime =
+    playingSong && playingSong.duration > 0 ? Math.min(playingSong.duration, followTime) : followTime;
   const upcoming = playingEntryId
     ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, liveTime)
     : undefined;
@@ -322,20 +333,12 @@ export function DrumView() {
     (entry) => !entry.skipped
   );
   const bodyEntries = stageBodyEntries(bodySource);
-  useFreeStageScrollSelection(
-    stageRef,
-    "data-drum-song",
-    listEntries.map((entry) => entry.entryId).join("\0")
-  );
-
   useEffect(() => {
-    if (freeMode) return;
-    if (detached) return;
     if (panicFollow) return;
     if (autoScroll && playingEntryId) return;
     if (!selectedEntryId) return;
-    scrollStageToSongTitle(stageRef.current, `[data-drum-song="${selectedEntryId}"]`);
-  }, [selectedEntryId, autoScroll, playingEntryId, panicFollow, detached, freeMode]);
+    scrollStageToSongTitleWhenReady(stageRef.current, `[data-drum-song="${selectedEntryId}"]`);
+  }, [selectedEntryId, autoScroll, playingEntryId, panicFollow]);
 
   useEffect(() => {
     if (!autoScroll || !playingEntryId) return;
@@ -344,7 +347,11 @@ export function DrumView() {
     const row = stage.querySelector(".drum-run.current");
     const current =
       row?.closest(".drum-pack") ?? stage.querySelector(".drum-pack.current");
-    const leadIn = stage.querySelector("[data-lead-in]");
+    const leadIn = stageLeadInNode(stage, "data-drum-song", upcoming?.entryId);
+    if (leadIn instanceof HTMLElement && !(current instanceof HTMLElement)) {
+      scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
+      return;
+    }
     const next = leadIn ?? stage.querySelector(".drum-pack.scroll-next");
     const fallbackId = playingEntryId ?? selectedEntryId;
     const fallback = fallbackId ? stage.querySelector(`[data-drum-song="${fallbackId}"]`) : null;
@@ -356,7 +363,7 @@ export function DrumView() {
       next instanceof HTMLElement ? next : null,
       Boolean(leadIn)
     );
-  }, [autoScroll, liveTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
+  }, [autoScroll, storeTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
 
   const addSong = (songId: string) => {
     if (!gig) return;
@@ -389,7 +396,8 @@ export function DrumView() {
             library={library}
             songs={songs}
             selectedEntryId={selectedEntryId}
-            readOnly={readOnly}
+            readOnly={readOnly && !elifEdits}
+            hideTalkAdd
             onSelect={selectSetlistEntry}
             onRemove={removeSong}
             onAdd={addSong}
@@ -408,11 +416,11 @@ export function DrumView() {
           ) : (
             <>
               {bodyEntries.map((entry) => {
-                if (isElifKonusma(entry)) {
+                if (isTalkEntry(entry)) {
                   return (
                     <StageFinishRow
                       key={entry.entryId}
-                      label={ELIF_KONUSMA_LABEL}
+                      label={talkDisplayLabel(entry)}
                       entryId={entry.entryId}
                       locked={isLockedElif(entry)}
                       attr="data-drum-song"
@@ -487,15 +495,51 @@ function SongPatterns(props: {
   leadIn?: boolean;
   chainNext?: boolean;
 }) {
+  return (
+    <article
+      className="lyrics-song"
+      data-drum-song={props.entryId}
+      data-lead-in={props.leadIn && !hasPatternData(props.song) ? "" : undefined}
+    >
+      <StageSongHead songId={props.song?.id} entryId={props.entryId} page="drums">
+        <span className="nota-song-name">{songDisplayName(props.song)}</span>
+        <SongTitleMeta song={props.song} entryId={props.entryId} />
+      </StageSongHead>
+      <DrumChartBody
+        song={props.song}
+        live={props.live}
+        preview={props.preview}
+        time={props.time}
+        leadIn={props.leadIn}
+        chainNext={props.chainNext}
+      />
+    </article>
+  );
+}
+
+export function DrumChartBody(props: {
+  song: Song | undefined;
+  live?: boolean;
+  preview?: boolean;
+  time?: number;
+  leadIn?: boolean;
+  chainNext?: boolean;
+}) {
+  const fileIndex = useMasterStore((s) => s.fileIndex);
+  const files = props.song
+    ? [...(fileIndex[props.song.id] ?? []), ...(props.song.folder ? (fileIndex[props.song.folder] ?? []) : [])]
+    : undefined;
+  const live = Boolean(props.live);
+  const time = props.time ?? 0;
   const form = songForm(props.song, { identity: "drums" });
   const chart = hasPatternData(props.song) ? writtenChart(props.song, form) : [];
   const map = props.song?.tempoMap ?? [];
   const runs = chart.flatMap((section) => section.runs);
-  const pos = props.live ? formAt(form, props.time) : null;
+  const pos = live ? formAt(form, time) : null;
   const currentRun = pos
     ? runs.find((run) => pos.originTime >= run.start && pos.originTime < run.end)
     : undefined;
-  const actualMeasureEnd = pos ? measureEndAt(map, props.time) : 0;
+  const actualMeasureEnd = pos ? measureEndAt(map, time) : 0;
   const afterOriginTime =
     pos && actualMeasureEnd >= pos.visit.end - TIME_EPS
       ? pos.block.originEnd
@@ -505,7 +549,7 @@ function SongPatterns(props: {
   const nextPos = props.chainNext
     ? null
     : pos
-      ? formNextAt(form, props.time, afterOriginTime)
+      ? formNextAt(form, time, afterOriginTime)
       : null;
   const nextRow = nextPos ? chart.find((row) => row.block.id === nextPos.block.id) : undefined;
   const nextRun = nextRow?.runs.find(
@@ -514,17 +558,22 @@ function SongPatterns(props: {
   const visitIndex = pos ? form.visits.indexOf(pos.visit) : -1;
   const followingBlockId =
     visitIndex >= 0 ? form.visits[visitIndex + 1]?.blockId : undefined;
-  const playTime = pos?.originTime ?? props.time;
+  const playTime = pos?.originTime ?? time;
 
+  if (chart.length === 0) {
+    return isRealMetronomeTrack(props.song, files) ? (
+      <MetroDraftNotes
+        song={props.song}
+        files={files}
+        page="drums"
+        label="Paste pattern notes"
+        emptyLabel="No Pattern Data"
+      />
+    ) : (
+      <div className="lyrics-empty meta">No Pattern Data</div>
+    );
+  }
   return (
-    <article className="lyrics-song" data-drum-song={props.entryId}>
-      <StageSongHead songId={props.song?.id} page="drums">
-        <span className="nota-song-name">{songDisplayName(props.song)}</span>
-        <SongTitleMeta song={props.song} entryId={props.entryId} />
-      </StageSongHead>
-      {chart.length === 0 ? (
-        <div className="lyrics-empty meta">No Pattern Data</div>
-      ) : (
         <div className="drum-section-list">
         {packSections(chart, props.song).map((pack, packIndex) => {
           const written = pack as (SectionChart & { block: FormBlock })[];
@@ -563,8 +612,8 @@ function SongPatterns(props: {
                       packLeadIn ||
                       (pos?.block.id !== row.block.id && nextPos?.block.id === row.block.id)
                     }
-                    live={props.live}
-                    time={props.time}
+                    live={live}
+                    time={time}
                   />
                 ))}
               </div>
@@ -618,14 +667,14 @@ function SongPatterns(props: {
                               }
                               time={playTime}
                               map={map}
-                              live={props.live && pos?.block.id === row.block.id}
+                              live={live && pos?.block.id === row.block.id}
                               showRall={showRall}
                               rallAlign={rallAlign}
                               sectionCurrent={sectionFollowsPlayhead(
                                 props.song,
                                 row.section,
-                                props.time,
-                                props.live || Boolean(props.preview)
+                                time,
+                                live || Boolean(props.preview)
                               )}
                             />
                           );
@@ -639,8 +688,6 @@ function SongPatterns(props: {
           );
         })}
         </div>
-      )}
-    </article>
   );
 }
 

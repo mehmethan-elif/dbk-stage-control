@@ -1,0 +1,20 @@
+{
+  "kita": 3,
+  "info": {
+    "bpm": 75,
+    "numerator": 2,
+    "denominator": 4,
+    "beats": [
+      true,
+      false
+    ],
+    "duration": 180,
+    "key": "B",
+    "scale": "KURDI",
+    "style": "SLOW",
+    "kita": 3,
+    "playMode": "VIEW"
+  },
+  "title": "Mihriban",
+  "id": "Mihriban"
+}

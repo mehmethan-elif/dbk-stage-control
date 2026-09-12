@@ -3,6 +3,7 @@ import {
   filterPracticeFiles,
   isMasterPracticeAudio,
   isPracticeFile,
+  practiceClickAudio,
   practiceExportFolder,
   practiceFolderSlug,
   practiceMasterAudio,
@@ -11,7 +12,7 @@ import {
 } from "./practice-files.js";
 
 describe("practice files", () => {
-  it("keeps charts and the Master mix only", () => {
+  it("keeps charts and the Master mix, not Click.flac", () => {
     expect(
       filterPracticeFiles([
         "song.json",
@@ -25,7 +26,14 @@ describe("practice files", () => {
         "Drums.flac",
         "backing.wav"
       ])
-    ).toEqual(["song.json", "settings.json", "nota.pdf", "guitar.musicxml", "lyrics.json", "Master.mp3"]);
+    ).toEqual([
+      "song.json",
+      "settings.json",
+      "nota.pdf",
+      "guitar.musicxml",
+      "lyrics.json",
+      "Master.mp3"
+    ]);
   });
 
   it("prefers Master.mp3 over flac", () => {
@@ -33,8 +41,9 @@ describe("practice files", () => {
     expect(practiceMasterAudio(["Master.flac", "Master.mp3"])).toBe("Master.mp3");
   });
 
-  it("rejects stems and click", () => {
+  it("rejects Click.flac and stems from the client pack", () => {
     expect(isPracticeFile("Click.flac")).toBe(false);
+    expect(practiceClickAudio(["Master.mp3", "Click.flac"])).toBe("Click.flac");
     expect(isPracticeFile("Kick.flac")).toBe(false);
   });
 

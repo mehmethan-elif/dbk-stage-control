@@ -6,11 +6,13 @@ import {
   applyRemoteSetlist,
   canInsertElifAfter,
   effectiveFinishMode,
+  shouldAutoStartMetronome,
   elifPlacementValid,
   estimateSetDuration,
   insertAfterSelected,
   insertElifAfterSelected,
   moveEntry,
+  nextEndedSelectionId,
   songFollowedByElif,
   withKeyChangeElifs
 } from "./setlist.js";
@@ -146,19 +148,28 @@ describe("setlist helpers", () => {
       "elif",
       "2"
     ]);
+    expect(insertElifAfterSelected([a, b], "1", "elif")[1]).toMatchObject({
+      type: "talk",
+      label: "STOP"
+    });
     expect(insertElifAfterSelected([a, b], "2", "elif")).toEqual([a, b]);
     expect(insertElifAfterSelected([a, b], null, "elif")).toEqual([a, b]);
     expect(songFollowedByElif([a, talk, b], 0)).toBe(true);
     expect(songFollowedByElif([a, b], 0)).toBe(false);
     expect(songFollowedByElif([a, { ...b, skipped: true }, talk], 0)).toBe(true);
     expect(songFollowedByElif([a, { ...b, skipped: true }], 0)).toBe(false);
+    expect(nextEndedSelectionId([a, { type: "talk", entryId: "stop", label: "STOP" }, b], 0)).toBe(
+      "stop"
+    );
+    expect(nextEndedSelectionId([a, talk, b], 0)).toBe("2");
+    expect(nextEndedSelectionId([a, b], 0)).toBe("2");
     expect(effectiveFinishMode(a, false, [a, { ...b, skipped: true }], 0)).toBe(FinishMode.Stop);
     expect(
       effectiveFinishMode(a, false, [a, { ...b, skipped: true }, { type: "song", entryId: "4", songId: "c" }], 0)
     ).toBe(FinishMode.PlayNext);
   });
 
-  it("stops before a VIEW song so the metronome can start it", () => {
+  it("plays next into a VIEW song so the metronome can start over the tail", () => {
     const a = { type: "song" as const, entryId: "1", songId: "click", finishMode: FinishMode.PlayNext };
     const b = { type: "song" as const, entryId: "2", songId: "view", finishMode: FinishMode.Stop };
     const songs = new Map<string, Song>([
@@ -181,7 +192,39 @@ describe("setlist helpers", () => {
         })
       ]
     ]);
-    expect(effectiveFinishMode(a, false, [a, b], 0, songs)).toBe(FinishMode.Stop);
+    expect(effectiveFinishMode(a, false, [a, b], 0, songs)).toBe(FinishMode.PlayNext);
+    expect(shouldAutoStartMetronome(songs.get("view"))).toBe(true);
+  });
+
+  it("does not auto-start a metronome whose START is SERBEST", () => {
+    expect(
+      shouldAutoStartMetronome(
+        song({
+          id: "view",
+          title: "View",
+          info: { bpm: 110, numerator: 4, denominator: 4, playMode: PlayMode.View, startMode: "SERBEST" }
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldAutoStartMetronome(
+        song({
+          id: "packed",
+          title: "Packed",
+          info: { bpm: 110, numerator: 4, denominator: 4, playMode: PlayMode.View },
+          sections: [{ name: "SERBEST", start: 0, end: 8 }]
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldAutoStartMetronome(
+        song({
+          id: "count",
+          title: "Count",
+          info: { bpm: 110, numerator: 4, denominator: 4, playMode: PlayMode.View, startMode: "COUNT" }
+        })
+      )
+    ).toBe(true);
   });
 
   it("inserts a locked ELIF KONUSMA when adjacent song keys change", () => {

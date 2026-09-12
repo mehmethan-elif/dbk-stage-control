@@ -3,6 +3,7 @@ import {
   DEFAULT_METRONOME_BPM,
   metronomeTempoMap,
   normalizeSong,
+  normalizeUserPlayMode,
   parseSongInfo,
   PlayMode,
   songDisplayName,
@@ -14,27 +15,41 @@ describe("parseSongInfo", () => {
     expect(parseSongInfo(undefined)).toEqual({
       bpm: DEFAULT_METRONOME_BPM,
       numerator: 4,
-      denominator: 4,
-      beats: [true, false, false, false]
+      denominator: 4
     });
     expect(parseSongInfo({})).toEqual({
       bpm: 120,
       numerator: 4,
-      denominator: 4,
-      beats: [true, false, false, false]
+      denominator: 4
     });
     expect(parseSongInfo({ bpm: 0 })).toEqual({
       bpm: 120,
       numerator: 4,
-      denominator: 4,
-      beats: [true, false, false, false]
+      denominator: 4
     });
   });
 
-  it("parses click-only playback mode", () => {
+  it("keeps a single-digit kita including 0", () => {
+    expect(parseSongInfo({ kita: 0 }).kita).toBe(0);
+    expect(parseSongInfo({ kita: "7" }).kita).toBe(7);
+    expect(parseSongInfo({ kita: 10 }).kita).toBeUndefined();
+  });
+
+  it("keeps click-only on disk for panic mixes", () => {
     expect(parseSongInfo({ playMode: PlayMode.ClickOnly }).playMode).toBe(
       PlayMode.ClickOnly
     );
+  });
+
+  it("keeps free play mode on disk for older files", () => {
+    expect(parseSongInfo({ playMode: PlayMode.Free }).playMode).toBe(PlayMode.Free);
+  });
+
+  it("maps removed play modes to Backing Tracks or Metronome", () => {
+    expect(normalizeUserPlayMode(PlayMode.ClickOnly)).toBe(PlayMode.Playback);
+    expect(normalizeUserPlayMode(PlayMode.Playback)).toBe(PlayMode.Playback);
+    expect(normalizeUserPlayMode(PlayMode.Free)).toBe(PlayMode.View);
+    expect(normalizeUserPlayMode(PlayMode.View)).toBe(PlayMode.View);
   });
 
   it("keeps optional metronome fields", () => {
@@ -47,42 +62,38 @@ describe("parseSongInfo", () => {
         key: "D",
         scale: "MINOR",
         style: "SLOW",
+        kita: 2,
         startMode: "SERBEST",
         notes: "wait for applause",
         playMode: PlayMode.Playback,
         startAt: 8,
-        pageNotes: { lyrics: "Audience sings", drums: "Half time" }
+        pageNotes: { lyrics: "Audience sings", drums: "Half time" },
+        metroNotes: { lyrics: "verse one", drums: "D D t k" }
       })
     ).toEqual({
       bpm: 96,
       numerator: 9,
       denominator: 8,
-      beats: [true, false, false, false, false, false, false, false, false],
       duration: 185,
       key: "D",
       scale: "MINOR",
       style: "SLOW",
+      kita: 2,
       startMode: "SERBEST",
       notes: "wait for applause",
       playMode: PlayMode.Playback,
       startAt: 8,
-      pageNotes: { lyrics: "Audience sings", drums: "Half time" }
+      pageNotes: { lyrics: "Audience sings", drums: "Half time" },
+      metroNotes: { lyrics: "verse one", drums: "D D t k" }
     });
   });
 
-  it("keeps click beats and resizes them to the time signature", () => {
-    expect(parseSongInfo({ numerator: 5, beats: [true, false, true] }).beats).toEqual([
-      true,
-      false,
-      true,
-      false,
-      false
-    ]);
-    expect(parseSongInfo({ numerator: 3, beats: [true, false, true, true] }).beats).toEqual([
-      true,
-      false,
-      true
-    ]);
+  it("ignores a stored click pattern", () => {
+    expect(parseSongInfo({ numerator: 5, beats: [true, false, true] })).toEqual({
+      bpm: DEFAULT_METRONOME_BPM,
+      numerator: 5,
+      denominator: 4
+    });
   });
 });
 
@@ -125,24 +136,25 @@ describe("normalizeSong", () => {
 });
 
 describe("songInfoFromPlayback", () => {
-  it("copies duration, tempo, key, scale, and style from song.json fields", () => {
+  it("copies duration, tempo, key, scale, style, and kita from song.json fields", () => {
     expect(
       songInfoFromPlayback({
         duration: 183.6,
         key: "D",
         scale: "MINOR",
         style: "MID",
+        kita: 3,
         tempoMap: [{ time: 0, measure: 1, bpm: 132, numerator: 7, denominator: 8 }]
       })
     ).toEqual({
       bpm: 132,
       numerator: 7,
       denominator: 8,
-      beats: [true, false, false, false, false, false, false],
       duration: 183.6,
       key: "D",
       scale: "MINOR",
-      style: "MID"
+      style: "MID",
+      kita: 3
     });
   });
 
@@ -150,8 +162,7 @@ describe("songInfoFromPlayback", () => {
     expect(songInfoFromPlayback({ duration: 0, tempoMap: undefined as never })).toEqual({
       bpm: DEFAULT_METRONOME_BPM,
       numerator: 4,
-      denominator: 4,
-      beats: [true, false, false, false]
+      denominator: 4
     });
   });
 });
@@ -169,7 +180,7 @@ describe("songDisplayName", () => {
 
 describe("metronomeTempoMap", () => {
   it("builds a tempo map from View-mode settings", () => {
-    expect(metronomeTempoMap({ bpm: 132, numerator: 4, denominator: 4, beats: [true, false, false, false] })).toEqual([
+    expect(metronomeTempoMap({ bpm: 132, numerator: 4, denominator: 4 })).toEqual([
       { time: 0, measure: 1, bpm: 132, numerator: 4, denominator: 4 }
     ]);
   });

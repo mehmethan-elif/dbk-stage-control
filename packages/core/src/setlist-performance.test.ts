@@ -3,6 +3,8 @@ import { hasClickFlac } from "./audio-engine.js";
 import { PlayMode, SetlistPerformanceMode, type Song } from "./models.js";
 import {
   effectivePlayMode,
+  hidesLeftoverNotaRects,
+  isFakeMetronomeTrack,
   bandRoster,
   isFreeSetlistMode,
   isVocalBandName,
@@ -31,7 +33,7 @@ function song(id: string, playMode: PlayMode, files: string[] = []): Song {
     })),
     tempoMap: [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }],
     sections: [],
-    info: { playMode, bpm: 120, numerator: 4, denominator: 4, beats: [true, false, false, false] }
+    info: { playMode, bpm: 120, numerator: 4, denominator: 4 }
   };
 }
 
@@ -41,10 +43,11 @@ describe("setlist performance mode", () => {
     expect(parseSetlistPerformanceMode("nope")).toBe(SetlistPerformanceMode.FollowSongInfo);
   });
 
-  it("parses free mode as visual-only", () => {
-    expect(parseSetlistPerformanceMode("FREE")).toBe(SetlistPerformanceMode.Free);
-    expect(isFreeSetlistMode(SetlistPerformanceMode.Free)).toBe(true);
-    expect(setlistModeIsSilent(SetlistPerformanceMode.Free)).toBe(true);
+  it("maps removed free and click-only setlist modes to follow song info", () => {
+    expect(parseSetlistPerformanceMode("FREE")).toBe(SetlistPerformanceMode.FollowSongInfo);
+    expect(parseSetlistPerformanceMode("CLICK_ONLY")).toBe(SetlistPerformanceMode.FollowSongInfo);
+    expect(isFreeSetlistMode(SetlistPerformanceMode.Free)).toBe(false);
+    expect(setlistModeIsSilent(SetlistPerformanceMode.Free)).toBe(false);
     expect(setlistModeIsSilent(SetlistPerformanceMode.MetronomeContinuous)).toBe(false);
   });
 
@@ -57,7 +60,7 @@ describe("setlist performance mode", () => {
     );
   });
 
-  it("follows each song unless an overlay applies", () => {
+  it("follows each song unless metronome overlay applies", () => {
     const click = song("a", PlayMode.Playback, ["Click.flac", "Bass.flac"]);
     const files = ["Click.flac", "Bass.flac"];
     expect(hasClickFlac(click, files)).toBe(true);
@@ -65,27 +68,81 @@ describe("setlist performance mode", () => {
       PlayMode.Playback
     );
     expect(effectivePlayMode(click, files, SetlistPerformanceMode.ClickOnly)).toBe(
-      PlayMode.ClickOnly
+      PlayMode.Playback
     );
     expect(effectivePlayMode(click, files, SetlistPerformanceMode.MetronomeContinuous)).toBe(
       PlayMode.View
     );
-    expect(effectivePlayMode(click, files, SetlistPerformanceMode.Free)).toBe(PlayMode.View);
+    expect(effectivePlayMode(click, files, SetlistPerformanceMode.Free)).toBe(PlayMode.Playback);
   });
 
-  it("keeps songs without click on their own mode in click-only overlay", () => {
-    const view = song("b", PlayMode.View);
-    expect(effectivePlayMode(view, [], SetlistPerformanceMode.ClickOnly)).toBe(PlayMode.View);
+  it("keeps backing-track rects when the client only has Master.mp3", () => {
+    const backing = {
+      ...song("biz", PlayMode.Playback, ["Master.mp3"]),
+      sections: [{ name: "SAN", start: 0, end: 8 }]
+    };
+    expect(hidesLeftoverNotaRects(backing)).toBe(false);
+    expect(isFakeMetronomeTrack(backing, ["Master.mp3"])).toBe(true);
+    expect(
+      hidesLeftoverNotaRects(
+        { ...backing, info: { ...backing.info, playMode: PlayMode.View } }
+      )
+    ).toBe(true);
+    expect(
+      hidesLeftoverNotaRects(backing, SetlistPerformanceMode.MetronomeContinuous)
+    ).toBe(true);
   });
 
-  it("does not rewrite songs when building a temporary click-only overlay", () => {
+  it("treats a backing song in metronome mode as a fake metro track", () => {
+    const backing = song("biz", PlayMode.View, ["Bass.flac", "Master.mp3"]);
+    const files = ["Bass.flac", "Master.mp3"];
+    expect(isFakeMetronomeTrack(backing, files)).toBe(true);
+    expect(
+      isFakeMetronomeTrack(
+        { ...backing, info: { ...backing.info, playMode: PlayMode.Playback } },
+        files
+      )
+    ).toBe(false);
+    expect(isFakeMetronomeTrack(song("stub", PlayMode.View), [])).toBe(false);
+    expect(
+      isFakeMetronomeTrack(
+        song("biz", PlayMode.Playback, ["Bass.flac"]),
+        ["Bass.flac"],
+        SetlistPerformanceMode.MetronomeContinuous
+      )
+    ).toBe(true);
+  });
+
+  it("treats click-only audio as backing tracks", () => {
+    const click = song("a", PlayMode.Playback, ["Click.flac"]);
+    expect(effectivePlayMode(click, ["Click.flac"], SetlistPerformanceMode.FollowSongInfo)).toBe(
+      PlayMode.Playback
+    );
+    expect(effectivePlayMode(click, ["Master.mp3"], SetlistPerformanceMode.FollowSongInfo)).toBe(
+      PlayMode.View
+    );
+  });
+
+  it("maps a saved free song to metronome", () => {
+    const free = song("f", PlayMode.Free, ["Click.flac", "Bass.flac"]);
+    const files = ["Click.flac", "Bass.flac"];
+    expect(effectivePlayMode(free, files, SetlistPerformanceMode.FollowSongInfo)).toBe(
+      PlayMode.View
+    );
+    expect(setlistPlayModeIcon(free, files, SetlistPerformanceMode.FollowSongInfo)).toEqual({
+      playMode: PlayMode.View,
+      color: "#ffffff"
+    });
+  });
+
+  it("does not apply a click-only overlay after that setlist mode was removed", () => {
     const original = song("a", PlayMode.Playback, ["Click.flac"]);
     const overlay = songsForSetlistPerformance(
       [original],
       { a: ["Click.flac"] },
       SetlistPerformanceMode.ClickOnly
     );
-    expect(overlay[0]?.info?.playMode).toBe(PlayMode.ClickOnly);
+    expect(overlay[0]?.info?.playMode).toBe(PlayMode.Playback);
     expect(original.info?.playMode).toBe(PlayMode.Playback);
   });
 
@@ -105,15 +162,15 @@ describe("setlist performance mode", () => {
       PlayMode.Playback
     );
     expect(setlistPlayModeIcon(click, files, SetlistPerformanceMode.FollowSongInfo).playMode).toBe(
-      PlayMode.ClickOnly
+      PlayMode.Playback
     );
     expect(setlistPlayModeIcon(view, files, SetlistPerformanceMode.ClickOnly)).toEqual({
       playMode: PlayMode.View,
       color: "#ffffff"
     });
     expect(setlistPlayModeIcon(playback, files, SetlistPerformanceMode.ClickOnly)).toEqual({
-      playMode: PlayMode.ClickOnly,
-      color: "#e24a4a"
+      playMode: PlayMode.Playback,
+      color: "#ffffff"
     });
   });
 
@@ -125,12 +182,12 @@ describe("setlist performance mode", () => {
       color: "#ffffff"
     });
     expect(setlistPlayModeIcon(click, files, SetlistPerformanceMode.ClickOnly).color).toBe(
-      "#e24a4a"
+      "#ffffff"
     );
     expect(
       setlistPlayModeIcon(click, files, SetlistPerformanceMode.MetronomeContinuous).color
     ).toBe("#8b5cf6");
-    expect(setlistPlayModeIcon(click, files, SetlistPerformanceMode.Free).color).toBe("#22d3ee");
+    expect(setlistPlayModeIcon(click, files, SetlistPerformanceMode.Free).color).toBe("#ffffff");
   });
 
   it("pads six on-stage names", () => {

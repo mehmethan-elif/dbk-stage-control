@@ -21,6 +21,8 @@ import type {
 import {
   effectiveFinishMode,
   songChainStartAt,
+  songPlaysAsMetronome,
+  nextEndedSelectionId,
   nextUnskippedSongIndex,
   previousSongIndex
 } from "./setlist.js";
@@ -116,7 +118,9 @@ export class PlaybackController {
     const song = this.currentSong();
     if (!entry || !song) return null;
     const deck = this.decks[this.primary];
-    const time = deck.getPosition();
+    const metroHandoff =
+      songPlaysAsMetronome(song, entry) && deck.loadedSongId !== song.id;
+    const time = metroHandoff ? 0 : deck.getPosition();
     const musical = timeToMusical(song.tempoMap, time);
     const section = sectionAt(song.sections, time);
     const playing =
@@ -350,7 +354,13 @@ export class PlaybackController {
     this.logger.playback("click_eof", { songId: song, deck: id });
     if (this.beginSilentSerbestNext(id)) return;
     if (this.beginPlayNext(id)) return;
-    if (this.chainEnabled && this.nextPlayableIndex() >= 0) this.emitEndedToNext(id, song);
+    if (
+      this.chainEnabled &&
+      this.currentFinishMode() === FinishMode.PlayNext &&
+      this.nextPlayableIndex() >= 0
+    ) {
+      this.emitEndedToNext(id, song);
+    }
   }
 
   private handleLongestEof(id: DeckIdType): void {
@@ -377,13 +387,14 @@ export class PlaybackController {
 
   private emitEndedToNext(fromDeck: DeckIdType, songId: string | null): void {
     if (fromDeck !== this.primary) return;
+    if (this.outgoing != null) return;
     if (this.state !== PlaybackState.Playing && this.state !== PlaybackState.Transitioning) return;
     this.state = PlaybackState.Stopping;
     this.decks[fromDeck].stop();
     this.state = PlaybackState.Ready;
-    const next = this.gig ? nextUnskippedSongIndex(this.gig.setlist, this.currentIndex) : -1;
-    const nextEntry = next >= 0 ? this.gig?.setlist[next] : undefined;
-    this.endedToEntryId = nextEntry && isSongEntry(nextEntry) ? nextEntry.entryId : null;
+    this.endedToEntryId = this.gig
+      ? nextEndedSelectionId(this.gig.setlist, this.currentIndex)
+      : null;
     this.logger.playback("song_ended", { songId });
     this.emit();
     this.endedToEntryId = null;
@@ -397,6 +408,11 @@ export class PlaybackController {
     const nextIndex = this.nextPlayableIndex();
     const nextEntry = nextIndex >= 0 ? this.gig?.setlist[nextIndex] : undefined;
     if (!nextEntry || !isSongEntry(nextEntry)) return false;
+    const nextSong = this.songs.get(nextEntry.songId);
+    if (songPlaysAsMetronome(nextSong, nextEntry)) {
+      this.startMetronomeHandoff(fromDeck, nextIndex, nextEntry);
+      return true;
+    }
 
     const nextDeck = this.decks[otherDeck(fromDeck)];
     if (!nextDeck.isLoaded || nextDeck.loadedSongId !== nextEntry.songId) {
@@ -468,6 +484,24 @@ export class PlaybackController {
     this.startNextDeck(fromDeck, nextIndex, nextEntry, nextDeck);
   }
 
+  private startMetronomeHandoff(
+    fromDeck: DeckIdType,
+    nextIndex: number,
+    nextEntry: SongSetlistEntry
+  ): void {
+    this.outgoing = fromDeck;
+    this.currentIndex = nextIndex;
+    this.playNextScheduled = false;
+    this.state = PlaybackState.Transitioning;
+    this.endedToEntryId = nextEntry.entryId;
+    this.logger.playback("play_next_metronome", {
+      fromSongId: this.decks[fromDeck].loadedSongId,
+      toSongId: nextEntry.songId
+    });
+    this.emit();
+    this.endedToEntryId = null;
+  }
+
   private startNextDeck(
     fromDeck: DeckIdType,
     nextIndex: number,
@@ -514,7 +548,7 @@ export class PlaybackController {
     if (secondary.loadedSongId === entry.songId && secondary.isLoaded) return;
 
     const song = this.songs.get(entry.songId);
-    if (!song) return;
+    if (!song || songPlaysAsMetronome(song, entry)) return;
     const buffers = await this.loadBuffers(song);
     await secondary.load(song, buffers);
     this.logger.playback("preloaded", { songId: song.id, deck: secondary.id });

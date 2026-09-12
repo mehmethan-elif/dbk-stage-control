@@ -4,14 +4,16 @@ const VIEW_SLOP_BOTTOM = 36;
 
 let frame = 0;
 let pendingTo = Number.NaN;
+let pendingStage: HTMLElement | null = null;
 
-export function scrollStageTo(stage: HTMLElement, top: number, ms = AUTO_SCROLL_MS, force = false) {
+export function scrollStageTo(stage: HTMLElement, top: number, ms = AUTO_SCROLL_MS) {
   const from = stage.scrollTop;
   const to = Math.max(0, top);
   const delta = to - from;
   if (Math.abs(delta) < 2) return;
-  if (Number.isFinite(pendingTo) && Math.abs(pendingTo - to) < 2) return;
+  if (pendingStage === stage && Number.isFinite(pendingTo) && Math.abs(pendingTo - to) < 2) return;
   cancelAnimationFrame(frame);
+  pendingStage = stage;
   pendingTo = to;
   const started = performance.now();
   const tick = (now: number) => {
@@ -23,74 +25,27 @@ export function scrollStageTo(stage: HTMLElement, top: number, ms = AUTO_SCROLL_
       return;
     }
     pendingTo = Number.NaN;
+    pendingStage = null;
     stage.dispatchEvent(new Event("stagescrollend"));
   };
   frame = requestAnimationFrame(tick);
 }
 
-export function isStageScrollAnimating(): boolean {
-  return Number.isFinite(pendingTo);
-}
-
-export function currentEntryIdFromTitleTops(
-  titles: ReadonlyArray<{ entryId: string; top: number }>,
-  readLine: number
-): string | null {
-  if (titles.length === 0) return null;
-  let current: string | null = null;
-  for (const title of titles) {
-    if (title.top <= readLine) current = title.entryId;
-  }
-  return current ?? titles[0]?.entryId ?? null;
-}
-
-export function stageTitleReadLine(stage: HTMLElement): number {
-  const box = stage.getBoundingClientRect();
-  return box.top + box.height / 2;
-}
-
-export function currentEntryIdFromStageTitles(stage: HTMLElement, attr: string): string | null {
-  const nodes = [...stage.querySelectorAll<HTMLElement>(`[${attr}]`)];
-  if (nodes.length === 0) return null;
-  return currentEntryIdFromTitleTops(
-    nodes.flatMap((node) => {
-      const entryId = node.getAttribute(attr);
-      if (!entryId) return [];
-      const title =
-        node.querySelector(".lyrics-song-title") ?? node.querySelector(".stage-finish-row");
-      const el = title instanceof HTMLElement ? title : node;
-      return [{ entryId, top: el.getBoundingClientRect().top }];
-    }),
-    stageTitleReadLine(stage)
-  );
-}
-
-export function stageNodeInView(stage: HTMLElement, node: HTMLElement): boolean {
+export function stageNodeIntersectsView(stage: HTMLElement, node: HTMLElement): boolean {
   const stageBox = stage.getBoundingClientRect();
   const box = node.getBoundingClientRect();
-  return box.bottom > stageBox.top + VIEW_SLOP && box.top < stageBox.bottom - VIEW_SLOP;
+  return box.bottom > stageBox.top + 1 && box.top < stageBox.bottom - 1;
 }
 
-export function scrollStageToSections(
+export function stageLeadInNode(
   stage: HTMLElement,
-  current: HTMLElement,
-  next: HTMLElement | null
-) {
-  const currentIn = stageNodeInView(stage, current);
-  const nextIn = !next || stageNodeInView(stage, next);
-  if (currentIn && nextIn) return;
-  const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
-  const stageBox = stage.getBoundingClientRect();
-  const target = !currentIn ? current : next;
-  if (!target) return;
-  const box = target.getBoundingClientRect();
-  if (box.bottom <= stageBox.top + VIEW_SLOP) {
-    scrollStageTo(stage, box.top - stageBox.top + stage.scrollTop - pad);
-    return;
-  }
-  if (box.top >= stageBox.bottom - VIEW_SLOP) {
-    scrollStageTo(stage, box.bottom - stageBox.top + stage.scrollTop - stage.clientHeight + pad);
-  }
+  entryAttr: string,
+  entryId?: string
+): HTMLElement | null {
+  const scoped = entryId
+    ? stage.querySelector(`[${entryAttr}="${entryId}"][data-lead-in], [${entryAttr}="${entryId}"] [data-lead-in]`)
+    : stage.querySelector("[data-lead-in]");
+  return scoped instanceof HTMLElement ? scoped : null;
 }
 
 export function stageNodeFullyInView(stage: HTMLElement, node: HTMLElement): boolean {
@@ -182,6 +137,58 @@ export function spanForNotaBoxes(
   return unionStageSpan(spans);
 }
 
+export function stageSpanIntersectsView(
+  span: StageSpan,
+  viewTop: number,
+  viewBottom: number
+): boolean {
+  return span.top < viewBottom - 1 && span.bottom > viewTop + 1;
+}
+
+/** Hand off to the next title only after the current span is already on screen. */
+export function preferNextSongTitle(
+  current: StageSpan | null,
+  viewTop: number,
+  viewBottom: number
+): boolean {
+  return !current || stageSpanIntersectsView(current, viewTop, viewBottom);
+}
+
+function stageSongTitleNode(from: HTMLElement): HTMLElement {
+  const article = from.closest("article.lyrics-song");
+  const root = article instanceof HTMLElement ? article : from;
+  const title = root.querySelector(".lyrics-song-title");
+  return title instanceof HTMLElement ? title : root;
+}
+
+/** Scroll so the next song title sits at or above the view midpoint. */
+export function nextSongTitleScrollTop(opts: {
+  viewTop: number;
+  viewBottom: number;
+  scrollTop: number;
+  titleTop: number;
+}): number | null {
+  const available = opts.viewBottom - opts.viewTop;
+  if (available <= 0) return null;
+  const mid = opts.viewTop + available / 2;
+  if (opts.titleTop >= opts.viewTop - 1 && opts.titleTop <= mid + 1) return null;
+  const targetY = opts.titleTop < opts.viewTop - 1 ? opts.viewTop : mid;
+  return opts.scrollTop + (opts.titleTop - targetY);
+}
+
+export function scrollStageToNextSongTitleInUpperHalf(stage: HTMLElement, from: HTMLElement) {
+  const stageBox = stage.getBoundingClientRect();
+  const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
+  const top = nextSongTitleScrollTop({
+    viewTop: stageBox.top + VIEW_SLOP + pad,
+    viewBottom: stageBox.bottom - VIEW_SLOP_BOTTOM,
+    scrollTop: stage.scrollTop,
+    titleTop: stageSongTitleNode(from).getBoundingClientRect().top
+  });
+  if (top == null) return;
+  scrollStageTo(stage, top);
+}
+
 export function scrollStageToNotaSectionMeasures(
   stage: HTMLElement,
   songRoot: HTMLElement,
@@ -192,26 +199,24 @@ export function scrollStageToNotaSectionMeasures(
 ) {
   const stageBox = stage.getBoundingClientRect();
   const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
+  const viewTop = stageBox.top + VIEW_SLOP + pad;
+  const viewBottom = stageBox.bottom - VIEW_SLOP_BOTTOM;
   const current = spanForNotaBoxes(songRoot, currentBoxes);
-  const next =
-    spanForNotaBoxes(songRoot, nextBoxes) ??
-    (leadIn
-      ? {
-          top: leadIn.getBoundingClientRect().top,
-          bottom: leadIn.getBoundingClientRect().bottom
-        }
-      : null);
-  const wrap = Boolean(current && next && next.top + 1 < current.top);
+  if (leadIn && preferNextSongTitle(current, viewTop, viewBottom)) {
+    scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
+    return;
+  }
+  const next = spanForNotaBoxes(songRoot, nextBoxes);
   const top = stageScrollTopForSpans({
-    viewTop: stageBox.top + VIEW_SLOP + pad,
-    viewBottom: stageBox.bottom - VIEW_SLOP_BOTTOM,
+    viewTop,
+    viewBottom,
     scrollTop: stage.scrollTop,
     current,
     next,
     focus: spanForNotaBoxes(songRoot, focusBoxes)
   });
   if (top == null) return;
-  scrollStageTo(stage, top, AUTO_SCROLL_MS, wrap);
+  scrollStageTo(stage, top);
 }
 
 export function scrollStageToFullSections(
@@ -221,6 +226,7 @@ export function scrollStageToFullSections(
   preferNext = false
 ) {
   const currentIn = stageNodeFullyInView(stage, current);
+  const currentVisible = stageNodeIntersectsView(stage, current);
   const nextIn = !next || stageNodeFullyInView(stage, next);
   const stageBox = stage.getBoundingClientRect();
   const available = stageBox.height - VIEW_SLOP * 2;
@@ -229,10 +235,8 @@ export function scrollStageToFullSections(
       Math.min(current.getBoundingClientRect().top, next.getBoundingClientRect().top)
     : 0;
   const bothFit = !next || combinedHeight <= available;
-  if (preferNext && next && !nextIn) {
-    const box = next.getBoundingClientRect();
-    const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
-    scrollStageTo(stage, box.bottom - stageBox.top + stage.scrollTop - stage.clientHeight + pad);
+  if (preferNext && next && currentVisible) {
+    scrollStageToNextSongTitleInUpperHalf(stage, next);
     return;
   }
   if (currentIn && (nextIn || !bothFit)) return;
@@ -257,6 +261,7 @@ export function scrollStageToFullSectionsCentered(
   preferNext = false
 ) {
   const currentIn = stageNodeFullyInView(stage, current);
+  const currentVisible = stageNodeIntersectsView(stage, current);
   const nextIn = !next || stageNodeFullyInView(stage, next);
   const stageBox = stage.getBoundingClientRect();
   const available = stageBox.height - VIEW_SLOP * 2;
@@ -266,10 +271,8 @@ export function scrollStageToFullSectionsCentered(
       Math.min(currentBox.top, next.getBoundingClientRect().top)
     : 0;
   const bothFit = !next || combinedHeight <= available;
-  if (preferNext && next && !nextIn) {
-    const box = next.getBoundingClientRect();
-    const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
-    scrollStageTo(stage, box.bottom - stageBox.top + stage.scrollTop - stage.clientHeight + pad);
+  if (preferNext && next && currentVisible) {
+    scrollStageToNextSongTitleInUpperHalf(stage, next);
     return;
   }
   if (currentIn && (nextIn || !bothFit)) return;
@@ -292,5 +295,19 @@ export function scrollStageToSongTitle(stage: HTMLElement | null, entrySelector:
   const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
   const top =
     target.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop - pad;
-  scrollStageTo(stage, top, 280, true);
+  scrollStageTo(stage, top, 280);
+}
+
+export function scrollStageToSongTitleWhenReady(
+  stage: HTMLElement | null,
+  entrySelector: string,
+  tries = 12
+) {
+  if (!stage) return;
+  if (stage.querySelector(entrySelector) instanceof HTMLElement) {
+    scrollStageToSongTitle(stage, entrySelector);
+    return;
+  }
+  if (tries <= 0) return;
+  requestAnimationFrame(() => scrollStageToSongTitleWhenReady(stage, entrySelector, tries - 1));
 }

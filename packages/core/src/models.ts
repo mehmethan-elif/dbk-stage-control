@@ -11,7 +11,8 @@ export type FinishMode = (typeof FinishMode)[keyof typeof FinishMode];
 export const PlayMode = {
   View: "VIEW",
   Playback: "PLAYBACK",
-  ClickOnly: "CLICK_ONLY"
+  ClickOnly: "CLICK_ONLY",
+  Free: "FREE"
 } as const;
 
 export type PlayMode = (typeof PlayMode)[keyof typeof PlayMode];
@@ -26,15 +27,30 @@ export const SetlistPerformanceMode = {
 export type SetlistPerformanceMode =
   (typeof SetlistPerformanceMode)[keyof typeof SetlistPerformanceMode];
 
+/** User-facing play modes: Backing Tracks or Metronome. Click Only and Free map away. */
+export function normalizeUserPlayMode(mode?: PlayMode | string): PlayMode {
+  if (mode === PlayMode.Playback || mode === PlayMode.ClickOnly) return PlayMode.Playback;
+  return PlayMode.View;
+}
+
 export function entryPlayMode(
   entry: { playMode?: PlayMode } | undefined,
   info?: { playMode?: PlayMode }
 ): PlayMode {
-  if (info?.playMode === PlayMode.Playback) return PlayMode.Playback;
-  if (info?.playMode === PlayMode.ClickOnly) return PlayMode.ClickOnly;
-  if (info?.playMode === PlayMode.View) return PlayMode.View;
-  if (entry?.playMode === PlayMode.ClickOnly) return PlayMode.ClickOnly;
-  return entry?.playMode === PlayMode.Playback ? PlayMode.Playback : PlayMode.View;
+  if (info?.playMode === PlayMode.Playback || info?.playMode === PlayMode.ClickOnly) {
+    return PlayMode.Playback;
+  }
+  if (info?.playMode === PlayMode.View || info?.playMode === PlayMode.Free) {
+    return PlayMode.View;
+  }
+  if (entry?.playMode === PlayMode.Playback || entry?.playMode === PlayMode.ClickOnly) {
+    return PlayMode.Playback;
+  }
+  return PlayMode.View;
+}
+
+export function isFreePlayMode(mode?: PlayMode | string): boolean {
+  return mode === PlayMode.Free;
 }
 
 export const AppMode = {
@@ -154,16 +170,18 @@ export interface SongInfo {
   bpm: number;
   numerator: number;
   denominator: number;
-  beats?: boolean[];
   startMode?: "COUNT" | "SERBEST";
   duration?: number;
   key?: string;
   scale?: string;
   style?: string;
+  kita?: number;
   notes?: string;
   playMode?: PlayMode;
   startAt?: number;
   pageNotes?: Partial<Record<"lyrics" | "score" | "chord" | "drums", string>>;
+  /** Free-text lyrics / drum notes for a real metronome song (no backing, no sections). */
+  metroNotes?: { lyrics?: string; drums?: string };
 }
 
 export const DEFAULT_METRONOME_BPM = 120;
@@ -181,6 +199,7 @@ export interface Song {
   key?: string;
   scale?: string;
   style?: string;
+  kita?: number;
   assets: AssetRef[];
   tempoMap: TempoPoint[];
   sections: Section[];
@@ -202,10 +221,10 @@ function optionalText(value: unknown): string | undefined {
   return text.length > 0 ? text : undefined;
 }
 
-export function clickBeats(numerator: number, raw?: unknown): boolean[] {
-  const count = Math.max(1, Math.floor(numerator) || DEFAULT_METRONOME_NUMERATOR);
-  const stored = Array.isArray(raw) && raw.length > 0 ? raw : undefined;
-  return Array.from({ length: count }, (_, i) => (stored ? stored[i] === true : i === 0));
+function optionalKita(value: unknown): number | undefined {
+  const parsed = typeof value === "string" && value.trim() !== "" ? Number(value) : Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 9) return undefined;
+  return parsed;
 }
 
 export function parseSongInfo(raw: unknown): SongInfo {
@@ -214,8 +233,7 @@ export function parseSongInfo(raw: unknown): SongInfo {
   const info: SongInfo = {
     bpm: positiveInt(record?.bpm, DEFAULT_METRONOME_BPM),
     numerator,
-    denominator: positiveInt(record?.denominator, DEFAULT_METRONOME_DENOMINATOR),
-    beats: clickBeats(numerator, record?.beats)
+    denominator: positiveInt(record?.denominator, DEFAULT_METRONOME_DENOMINATOR)
   };
   const duration = positiveInt(record?.duration, 0);
   if (duration > 0) info.duration = duration;
@@ -225,15 +243,18 @@ export function parseSongInfo(raw: unknown): SongInfo {
   const key = optionalText(record?.key);
   const scale = optionalText(record?.scale);
   const style = optionalText(record?.style);
+  const kita = optionalKita(record?.kita);
   const notes = optionalText(record?.notes);
   if (key) info.key = key;
   if (scale) info.scale = scale;
   if (style) info.style = style;
+  if (kita != null) info.kita = kita;
   if (notes) info.notes = notes;
   if (
     record?.playMode === PlayMode.View ||
     record?.playMode === PlayMode.Playback ||
-    record?.playMode === PlayMode.ClickOnly
+    record?.playMode === PlayMode.ClickOnly ||
+    record?.playMode === PlayMode.Free
   ) {
     info.playMode = record.playMode;
   }
@@ -247,11 +268,25 @@ export function parseSongInfo(raw: unknown): SongInfo {
     }
     if (Object.keys(pageNotes).length > 0) info.pageNotes = pageNotes;
   }
+  const metroNotes = parseMetroNotes(record?.metroNotes);
+  if (metroNotes) info.metroNotes = metroNotes;
   return info;
 }
 
+function parseMetroNotes(raw: unknown): SongInfo["metroNotes"] | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const record = raw as Record<string, unknown>;
+  const lyrics = optionalText(record.lyrics);
+  const drums = optionalText(record.drums);
+  if (!lyrics && !drums) return undefined;
+  return {
+    ...(lyrics ? { lyrics } : {}),
+    ...(drums ? { drums } : {})
+  };
+}
+
 export function songInfoFromPlayback(
-  song: Pick<Song, "duration" | "tempoMap" | "key" | "scale" | "style">
+  song: Pick<Song, "duration" | "tempoMap" | "key" | "scale" | "style" | "kita">
 ): SongInfo {
   const point = song.tempoMap?.[0];
   return parseSongInfo({
@@ -261,7 +296,8 @@ export function songInfoFromPlayback(
     duration: song.duration,
     key: song.key,
     scale: song.scale,
-    style: song.style
+    style: song.style,
+    kita: song.kita
   });
 }
 
@@ -284,6 +320,7 @@ export function normalizeSong(raw: unknown, folder?: string): Song {
     key: typeof record.key === "string" ? record.key : info.key,
     scale: typeof record.scale === "string" ? record.scale : info.scale,
     style: typeof record.style === "string" ? record.style : info.style,
+    kita: optionalKita(record.kita) ?? info.kita,
     assets: Array.isArray(record.assets) ? (record.assets as AssetRef[]) : [],
     tempoMap:
       Array.isArray(record.tempoMap) && record.tempoMap.length > 0
@@ -319,6 +356,7 @@ export function metronomeSongView(song: Song): Song {
     key: info.key ?? song.key,
     scale: info.scale ?? song.scale,
     style: info.style ?? song.style,
+    kita: info.kita ?? song.kita,
     tempoMap: song.info ? metronomeTempoMap(info) : song.tempoMap
   };
 }
@@ -364,6 +402,7 @@ export interface BreakSetlistEntry {
   entryId: string;
   label: string;
   locked?: boolean;
+  notes?: string;
 }
 
 export type SetlistEntry = SongSetlistEntry | BreakSetlistEntry;
@@ -422,9 +461,22 @@ export function isSongEntry(entry: SetlistEntry): entry is SongSetlistEntry {
 }
 
 export const ELIF_KONUSMA_LABEL = "ELIF KONUSMA";
+export const STOP_LABEL = "STOP";
+
+export function isTalkEntry(entry: SetlistEntry): entry is BreakSetlistEntry {
+  return entry.type === "talk";
+}
 
 export function isElifKonusma(entry: SetlistEntry): entry is BreakSetlistEntry {
-  return entry.type === "talk" && entry.label === ELIF_KONUSMA_LABEL;
+  return isTalkEntry(entry) && entry.label === ELIF_KONUSMA_LABEL;
+}
+
+export function isStopMarker(entry: SetlistEntry): entry is BreakSetlistEntry {
+  return isTalkEntry(entry) && entry.label === STOP_LABEL;
+}
+
+export function talkDisplayLabel(entry: BreakSetlistEntry): string {
+  return isStopMarker(entry) ? STOP_LABEL : ELIF_KONUSMA_LABEL;
 }
 
 export function isLockedElif(entry: SetlistEntry): entry is BreakSetlistEntry {

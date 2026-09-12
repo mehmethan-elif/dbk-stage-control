@@ -3,11 +3,11 @@ import {
   createId,
   currentLyricIndex,
   measureRangeFill,
-  hasBackingAudio,
-  hasClickFlac,
-  ELIF_KONUSMA_LABEL,
-  isElifKonusma,
+  hasPlaybackAudio,
+  isRealMetronomeTrack,
   isLockedElif,
+  isTalkEntry,
+  talkDisplayLabel,
   insertAfterSelected,
   trimElifAfterLastSong,
   isSongEntry,
@@ -17,79 +17,39 @@ import {
   PlaybackState,
   PlayMode,
   songDisplayName,
-  type LyricLine,
   type Song,
   type TempoPoint,
   type SongSetlistEntry
 } from "@dbk/core";
+import { followClockPlaying, followClockTime, useFollowPlayheadTime } from "../../store/follow-clock";
 import {
   clientPracticeMode,
   currentGig,
   elifCanEditSetlist,
+  elifLookingAhead,
   panicBlocksFollow,
   selectAddedSetlistEntry,
   stageAutoScroll,
   followsSharedPlayhead,
   stagePlayheadTime,
-  useMasterStore,
-  usesFreeMetroTransport
+  useMasterStore
 } from "../../store/master-store";
 import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
 import { StageSetlist } from "./StageSetlist";
 import { CONCERT_FINAL_LABEL, StageFinishRow, stageBodyEntries } from "./setlist-marker";
+import { MetroDraftNotes } from "./metro-draft-notes";
 import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
-import { useFreeStageScrollSelection } from "./free-stage-scroll";
-import { scrollStageToFullSectionsCentered, scrollStageToSongTitle } from "./stage-scroll";
+import {
+  scrollStageToFullSectionsCentered,
+  scrollStageToNextSongTitleInUpperHalf,
+  scrollStageToSongTitleWhenReady,
+  stageLeadInNode
+} from "./stage-scroll";
 import { upcomingSongLeadIn } from "./next-song-section";
+import { lyricLineShowsRall } from "./rall-alert";
 import { sectionBarClass } from "./section-color";
-
-const TIME_EPS = 0.05;
-
-type StageRow =
-  | { kind: "section"; time: number; end: number; name: string }
-  | { kind: "lyric"; time: number; end: number; line: LyricLine; lyricIndex: number };
-
-function lyricBlocks(line: LyricLine): string[] {
-  return line.text.split(/\r?\n/).map((part) => part.trim()).filter(Boolean);
-}
-
-function lyricCovers(lyrics: LyricLine[], time: number): boolean {
-  return lyrics.some((line) => {
-    if (Math.abs(line.time - time) <= TIME_EPS) return true;
-    if (line.end == null) return false;
-    return line.time < time + TIME_EPS && time + TIME_EPS < line.end;
-  });
-}
-
-function stageRows(song: Song | undefined, showSections = true): StageRow[] {
-  const lyrics = song?.lyrics ?? [];
-  const rows: StageRow[] = [];
-  if (showSections) {
-    for (const section of song?.sections ?? []) {
-      if (!lyricCovers(lyrics, section.start)) {
-        rows.push({ kind: "section", time: section.start, end: section.end, name: section.name });
-      }
-    }
-  }
-  lyrics.forEach((line, lyricIndex) => {
-    rows.push({
-      kind: "lyric",
-      time: line.time,
-      end: line.end ?? line.time,
-      line,
-      lyricIndex
-    });
-  });
-  rows.sort((a, b) => a.time - b.time || (a.kind === "section" ? -1 : 1));
-  const duration = song?.duration ?? 0;
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || row.end > row.time) continue;
-    row.end = rows[i + 1]?.time ?? duration;
-  }
-  return rows;
-}
+import { lyricBlocks, stageRows } from "./lyric-rows";
 
 function cueFill(
   current: number,
@@ -116,8 +76,7 @@ function songShowsSections(
   if (client) return true;
   const mode = effectivePlayMode(song, files, setlistMode);
   return (
-    (mode === PlayMode.Playback && hasBackingAudio(song, files)) ||
-    (mode === PlayMode.ClickOnly && Boolean(song && hasClickFlac(song, files)))
+    mode === PlayMode.Playback && hasPlaybackAudio(song, files)
   );
 }
 
@@ -134,7 +93,8 @@ export function LyricsView() {
   const selectSetlistEntry = useMasterStore((s) => s.selectSetlistEntry);
   const updateGig = useMasterStore((s) => s.updateGig);
   const playback = useMasterStore((s) => s.playback);
-  const followTime = useMasterStore(stagePlayheadTime);
+  const storeTime = useMasterStore(stagePlayheadTime);
+  const followTime = useFollowPlayheadTime(storeTime);
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
   const elifEdits = useMasterStore(elifCanEditSetlist);
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
@@ -143,7 +103,7 @@ export function LyricsView() {
   const autoScroll = useMasterStore(stageAutoScroll);
   const panicFollow = useMasterStore(panicBlocksFollow);
   const detached = useMasterStore(followsSharedPlayhead);
-  const freeMode = useMasterStore(usesFreeMetroTransport);
+  const lookingAhead = useMasterStore(elifLookingAhead);
   const stageRef = useRef<HTMLElement>(null);
   const listEntries = gig
     ? isSongLibraryGig(gig)
@@ -163,8 +123,9 @@ export function LyricsView() {
     : undefined;
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
-  const playingEntryId =
-    detached && (playing || panicFollow)
+  const playingEntryId = lookingAhead
+    ? undefined
+    : detached && (playing || panicFollow)
       ? (playback.clock?.setlistEntryId ?? undefined)
       : !detached && (playing || panicFollow)
         ? (selectedEntryId ?? playback.clock?.setlistEntryId ?? undefined)
@@ -200,27 +161,23 @@ export function LyricsView() {
   const upcoming = playingEntryId
     ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, liveTime)
     : undefined;
-  useFreeStageScrollSelection(
-    stageRef,
-    "data-lyric-song",
-    listEntries.map((entry) => entry.entryId).join("\0")
-  );
-
   useEffect(() => {
-    if (freeMode) return;
-    if (detached) return;
     if (panicFollow) return;
     if (autoScroll && currentIdx >= 0) return;
     if (!selectedEntryId) return;
-    scrollStageToSongTitle(stageRef.current, `[data-lyric-song="${selectedEntryId}"]`);
-  }, [selectedEntryId, autoScroll, currentIdx, panicFollow, detached, freeMode]);
+    scrollStageToSongTitleWhenReady(stageRef.current, `[data-lyric-song="${selectedEntryId}"]`);
+  }, [selectedEntryId, autoScroll, currentIdx, panicFollow]);
 
   useEffect(() => {
     if (!autoScroll || currentIdx < 0) return;
     const stage = stageRef.current;
     if (!stage) return;
     const current = stage.querySelector(".lyrics-cue.current");
-    const leadIn = stage.querySelector("[data-lead-in]");
+    const leadIn = stageLeadInNode(stage, "data-lyric-song", upcoming?.entryId);
+    if (leadIn instanceof HTMLElement && !(current instanceof HTMLElement)) {
+      scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
+      return;
+    }
     const next = leadIn ?? stage.querySelector(".lyrics-cue.next");
     const fallbackId = playingEntryId ?? selectedEntryId;
     const fallback = fallbackId ? stage.querySelector(`[data-lyric-song="${fallbackId}"]`) : null;
@@ -288,14 +245,15 @@ export function LyricsView() {
           ) : (
             <>
               {bodyEntries.map((entry) => {
-                if (isElifKonusma(entry)) {
+                if (isTalkEntry(entry)) {
                   return (
                     <StageFinishRow
                       key={entry.entryId}
-                      label={ELIF_KONUSMA_LABEL}
+                      label={talkDisplayLabel(entry)}
                       entryId={entry.entryId}
                       locked={isLockedElif(entry)}
                       showNotes
+                      notes={entry.notes}
                       attr="data-lyric-song"
                     />
                   );
@@ -308,9 +266,15 @@ export function LyricsView() {
                     key={entry.entryId}
                     entryId={entry.entryId}
                     song={item}
+                    files={
+                      item
+                        ? [...(fileIndex[item.id] ?? []), ...(item.folder ? (fileIndex[item.folder] ?? []) : [])]
+                        : undefined
+                    }
                     live={live}
+                    followRall={live || (!playing && selectedEntryId === entry.entryId)}
                     time={liveTime}
-                    smooth={readOnly && !practice && playing && live}
+                    smooth={readOnly && playing && live}
                     leadIn={upcoming?.entryId === entry.entryId}
                     chainNext={Boolean(upcoming) && live}
                     showSections={songShowsSections(
@@ -335,7 +299,9 @@ export function LyricsView() {
 function SongLyrics(props: {
   entryId: string;
   song: Song | undefined;
+  files?: string[];
   live: boolean;
+  followRall?: boolean;
   time: number;
   showSections: boolean;
   smooth?: boolean;
@@ -355,7 +321,9 @@ function SongLyrics(props: {
     if (!props.live || !props.smooth) return;
     let handle = 0;
     const loop = () => {
-      const t = origin.current.time + Math.max(0, performance.now() - origin.current.wall) / 1000;
+      const t = followClockPlaying()
+        ? followClockTime()
+        : origin.current.time + Math.max(0, performance.now() - origin.current.wall) / 1000;
       const list = rowsRef.current;
       const at = currentLyricIndex(list, t);
       const root = rootRef.current;
@@ -368,25 +336,45 @@ function SongLyrics(props: {
             "--playhead",
             String(cueFill(at, index, row.time, row.end, t, props.song?.tempoMap))
           );
+          applyCueClasses(el, at, index, Boolean(props.chainNext));
         }
       }
       handle = requestAnimationFrame(loop);
     };
     handle = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(handle);
-  }, [props.live, props.smooth]);
+  }, [props.live, props.smooth, props.chainNext, props.song?.id]);
   return (
-    <article ref={rootRef} className="lyrics-song" data-lyric-song={props.entryId}>
-      <StageSongHead songId={props.song?.id} page="lyrics">
+    <article
+      ref={rootRef}
+      className="lyrics-song"
+      data-lyric-song={props.entryId}
+      data-lead-in={props.leadIn && rows.length === 0 ? "" : undefined}
+    >
+      <StageSongHead songId={props.song?.id} entryId={props.entryId} page="lyrics">
         <span className="nota-song-name">{songDisplayName(props.song)}</span>
         <SongTitleMeta song={props.song} entryId={props.entryId} />
       </StageSongHead>
       {rows.length === 0 ? (
-        <div className="lyrics-empty meta">No lyrics</div>
+        isRealMetronomeTrack(props.song, props.files) ? (
+          <MetroDraftNotes
+            song={props.song}
+            files={props.files}
+            page="lyrics"
+            label="Paste lyrics"
+            emptyLabel="No lyrics"
+          />
+        ) : (
+          <div className="lyrics-empty meta">No lyrics</div>
+        )
       ) : (
         rows.map((row, index) => {
           const lead = Boolean(props.leadIn && index === 0);
           const state = lead ? " next future" : cueClass(current, index, props.chainNext);
+          const rall =
+            Boolean(props.followRall) &&
+            row.kind === "lyric" &&
+            lyricLineShowsRall(props.song, row.line, props.time);
           return row.kind === "section" ? (
             <CueRow
               key={`section-${row.time}-${row.name}-${index}`}
@@ -401,13 +389,24 @@ function SongLyrics(props: {
             <CueRow
               key={`${row.line.time}-${row.lyricIndex}`}
               index={index}
-              className={`lyrics-line lyrics-cue${state}`}
+              className={`lyrics-line lyrics-cue${state}${rall ? " is-rall" : ""}`}
               fill={cueFill(current, index, row.time, row.end, props.time, props.song?.tempoMap)}
               leadIn={lead}
             >
-              {lyricBlocks(row.line).map((block, blockIndex) => (
-                <div key={`${row.line.time}-${row.lyricIndex}-${blockIndex}`}>{block}</div>
-              ))}
+              {rall ? (
+                <>
+                  <div className="lyrics-rall-text">
+                    {lyricBlocks(row.line).map((block, blockIndex) => (
+                      <div key={`${row.line.time}-${row.lyricIndex}-${blockIndex}`}>{block}</div>
+                    ))}
+                  </div>
+                  <span className="lyrics-rall-mark">RALL</span>
+                </>
+              ) : (
+                lyricBlocks(row.line).map((block, blockIndex) => (
+                  <div key={`${row.line.time}-${row.lyricIndex}-${blockIndex}`}>{block}</div>
+                ))
+              )}
             </CueRow>
           );
         })
@@ -421,6 +420,22 @@ function cueClass(current: number, index: number, chainNext = false): string {
   if (index === current) return " current";
   if (index === current + 1 && !chainNext) return " next future";
   return index < current ? " past" : " future";
+}
+
+function applyCueClasses(
+  el: HTMLElement,
+  current: number,
+  index: number,
+  chainNext: boolean
+): void {
+  const isCurrent = current >= 0 && index === current;
+  const isNext = current >= 0 && index === current + 1 && !chainNext;
+  const isPast = current >= 0 && index < current;
+  const isFuture = current >= 0 && index > current && !isNext;
+  el.classList.toggle("current", isCurrent);
+  el.classList.toggle("next", isNext);
+  el.classList.toggle("future", isNext || isFuture);
+  el.classList.toggle("past", isPast);
 }
 
 function CueRow(props: {

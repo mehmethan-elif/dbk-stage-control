@@ -1,12 +1,16 @@
-import { practiceMasterAudio } from "@dbk/core";
+import { practiceClickAudio, practiceMasterAudio } from "@dbk/core";
 import { folderForSong } from "../library/api";
 import { readPracticeFileBuffer } from "./store";
 
+export type PracticeAudioKind = "master" | "click";
+
 const MASTER_CANDIDATES = ["Master.mp3", "master.mp3", "Master.flac", "master.flac"];
+const CLICK_CANDIDATES = ["Click.flac", "click.flac"];
 
 let audio: HTMLAudioElement | null = null;
 let objectUrl: string | null = null;
 let loadedSongId: string | null = null;
+let loadedKind: PracticeAudioKind | null = null;
 let timeListener: ((time: number, ended: boolean) => void) | null = null;
 let tick: number | null = null;
 
@@ -61,15 +65,28 @@ export function stopPracticeAudio(): void {
     objectUrl = null;
   }
   loadedSongId = null;
+  loadedKind = null;
 }
 
-export function isPracticeAudioLoaded(songId: string): boolean {
-  return loadedSongId === songId && Boolean(audio?.src);
+export function isPracticeAudioLoaded(songId: string, kind?: PracticeAudioKind): boolean {
+  return (
+    loadedSongId === songId &&
+    Boolean(audio?.src) &&
+    (kind == null || loadedKind === kind)
+  );
 }
 
-export async function loadPracticeAudio(songId: string, files: string[]): Promise<boolean> {
+export async function loadPracticeAudio(
+  songId: string,
+  files: string[],
+  kind: PracticeAudioKind = "master"
+): Promise<boolean> {
   const folder = folderForSong(songId);
-  const names = [practiceMasterAudio(files), ...MASTER_CANDIDATES].filter(
+  const names = (
+    kind === "click"
+      ? [practiceClickAudio(files), ...CLICK_CANDIDATES]
+      : [practiceMasterAudio(files), ...MASTER_CANDIDATES]
+  ).filter(
     (name, index, list): name is string => Boolean(name) && list.indexOf(name) === index
   );
   let found: { path: string; data: ArrayBuffer } | null = null;
@@ -92,6 +109,7 @@ export async function loadPracticeAudio(songId: string, files: string[]): Promis
   node.pause();
   node.src = objectUrl;
   loadedSongId = songId;
+  loadedKind = kind;
   return true;
 }
 

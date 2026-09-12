@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { AudioRoutingMode } from "@dbk/audio";
+import { looksLikeMultiOutInterface, type AudioRoutingMode } from "@dbk/audio";
 import { useMasterStore } from "../../store/master-store";
 
 const ROUTING_MODES: Array<{
@@ -50,7 +50,9 @@ export function AudioView() {
   const channels = useMasterStore((state) => state.audioOutputChannels);
   const routingMode = useMasterStore((state) => state.audioRoutingMode);
   const error = useMasterStore((state) => state.audioError);
+  const hint = useMasterStore((state) => state.audioHint);
   const refreshOutputs = useMasterStore((state) => state.refreshAudioOutputs);
+  const recheckOutputs = useMasterStore((state) => state.recheckAudioOutputs);
   const setDevice = useMasterStore((state) => state.setAudioDevice);
   const setRoutingMode = useMasterStore((state) => state.setAudioRoutingMode);
 
@@ -115,7 +117,23 @@ export function AudioView() {
 
         <div className="audio-device-status">
           {channels} output{channels === 1 ? "" : "s"} available
+          {channels < 3 ? (
+            <button
+              type="button"
+              className="audio-recheck"
+              onClick={() => void recheckOutputs()}
+            >
+              Recheck
+            </button>
+          ) : null}
         </div>
+        {channels < 3 && looksLikeMultiOutInterface(outputs.find((item) => item.id === deviceId)?.label ?? "") ? (
+          <div className="audio-device-hint">
+            The browser only sees stereo on this card. In Audio MIDI Setup, select the
+            interface, click Configure Speakers, choose Quadraphonic, then Recheck.
+          </div>
+        ) : null}
+        {hint ? <div className="audio-device-hint">{hint}</div> : null}
         {error ? <div className="audio-device-error">{error}</div> : null}
       </section>
     </main>

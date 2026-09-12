@@ -13,13 +13,18 @@ export {
   DEFAULT_METRONOME_DENOMINATOR,
   DEFAULT_METRONOME_NUMERATOR,
   ELIF_KONUSMA_LABEL,
+  STOP_LABEL,
   entryPlayMode,
+  isFreePlayMode,
+  normalizeUserPlayMode,
   isElifKonusma,
   isLockedElif,
+  isStopMarker,
+  isTalkEntry,
+  talkDisplayLabel,
   isSongEntry,
   metronomeTempoMap,
   metronomeSongView,
-  clickBeats,
   parseSongInfo,
   normalizeSong,
   songInfoFromPlayback,
@@ -55,7 +60,7 @@ export type {
 } from "./models.js";
 
 export type { AudioDeck, AudioEngine, DeckEvent, DeckEventHandler } from "./audio-engine.js";
-export { backingAssets, clickAsset, clickOnlyMixSilences, clickOnlySong, CLICK_FLAC, hasBackingAudio, hasClickFlac, hasOnlyClickAudio, hasPlaybackAudio, isClickFlacPath, isClickPlaybackTrack, performanceAudioSong, playNextCueSeconds } from "./audio-engine.js";
+export { backingAssets, clickAsset, clickOnlyMixSilences, clickOnlySong, CLICK_FLAC, defaultLibraryPlayMode, hasBackingAudio, hasClickFlac, hasOnlyClickAudio, hasPlaybackAudio, hasSectionInfo, isClickFlacPath, isClickPlaybackTrack, isRealMetronomeTrack, performanceAudioSong, playNextCueSeconds, savedOrDefaultLibraryPlayMode } from "./audio-engine.js";
 
 export { FakeAudioDeck, FakeAudioEngine } from "./fake-audio-engine.js";
 export { PlaybackController } from "./playback-controller.js";
@@ -91,6 +96,9 @@ export {
   applyRemoteSetlist,
   canInsertElifAfter,
   effectiveFinishMode,
+  songPlaysAsMetronome,
+  metronomeStartsSerbest,
+  shouldAutoStartMetronome,
   elifPlacementValid,
   entryStartAt,
   songChainStartAt,
@@ -105,6 +113,7 @@ export {
   listedSongKey,
   lockedElifEntry,
   moveEntry,
+  nextEndedSelectionId,
   nextSongIndex,
   nextUnskippedSongIndex,
   previousSongIndex,
@@ -131,10 +140,12 @@ export type { FileIndex, ReadinessIssue } from "./readiness.js";
 export {
   fileNameOf,
   filterPracticeFiles,
+  isClickPracticeAudio,
   isMasterPracticeAudio,
   isPracticeFile,
   isSafePracticeFolder,
   normalizePracticeName,
+  practiceClickAudio,
   practiceExportFolder,
   practiceFolderSlug,
   practiceMasterAudio,
@@ -194,6 +205,8 @@ export {
   isBandNameConnected,
   isMasterBandName,
   isVocalBandName,
+  hidesLeftoverNotaRects,
+  isFakeMetronomeTrack,
   isFreeSetlistMode,
   isMetronomeSetlistMode,
   setlistModeIsSilent,

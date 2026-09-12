@@ -1,5 +1,6 @@
-import { hasBackingAudio, hasClickFlac } from "./audio-engine.js";
+import { hasClickFlac, hasPlaybackAudio, hasSectionInfo, isRealMetronomeTrack } from "./audio-engine.js";
 import {
+  normalizeUserPlayMode,
   PlayMode,
   SetlistPerformanceMode,
   parseSongInfo,
@@ -8,10 +9,12 @@ import {
 
 const MODE_VALUES = new Set<string>(Object.values(SetlistPerformanceMode));
 const LEGACY_METRONOME_MODES = new Set(["METRONOME_AUTO_STOP", "METRONOME_VISUAL_ONLY"]);
+const REMOVED_SETLIST_MODES = new Set(["CLICK_ONLY", "FREE"]);
 
 export function parseSetlistPerformanceMode(raw: unknown): SetlistPerformanceMode {
   if (typeof raw !== "string") return SetlistPerformanceMode.FollowSongInfo;
   if (LEGACY_METRONOME_MODES.has(raw)) return SetlistPerformanceMode.MetronomeContinuous;
+  if (REMOVED_SETLIST_MODES.has(raw)) return SetlistPerformanceMode.FollowSongInfo;
   return MODE_VALUES.has(raw)
     ? (raw as SetlistPerformanceMode)
     : SetlistPerformanceMode.FollowSongInfo;
@@ -22,14 +25,13 @@ export function resolvedSongPlayMode(
   files?: string[],
   requested?: PlayMode
 ): PlayMode {
-  const requestedMode = requested ?? parseSongInfo(song?.info).playMode ?? PlayMode.View;
-  const canBacking = hasBackingAudio(song, files);
-  const canClick = Boolean(song && hasClickFlac(song, files));
+  const requestedMode = normalizeUserPlayMode(
+    requested ?? parseSongInfo(song?.info).playMode
+  );
   if (requestedMode === PlayMode.Playback) {
-    return canBacking ? PlayMode.Playback : canClick ? PlayMode.ClickOnly : PlayMode.View;
+    return hasPlaybackAudio(song, files) ? PlayMode.Playback : PlayMode.View;
   }
-  if (requestedMode === PlayMode.ClickOnly && !canClick) return PlayMode.View;
-  return requestedMode;
+  return PlayMode.View;
 }
 
 export function effectivePlayMode(
@@ -40,10 +42,28 @@ export function effectivePlayMode(
   const songMode = resolvedSongPlayMode(song, files);
   const mode = parseSetlistPerformanceMode(setlistMode);
   if (mode === SetlistPerformanceMode.FollowSongInfo) return songMode;
-  if (mode === SetlistPerformanceMode.ClickOnly) {
-    return song && hasClickFlac(song, files) ? PlayMode.ClickOnly : songMode;
-  }
   return PlayMode.View;
+}
+
+/** Backing or chart song playing as metronome — not a real metro stub. */
+export function isFakeMetronomeTrack(
+  song?: Song,
+  files?: string[],
+  setlistMode?: SetlistPerformanceMode | string
+): boolean {
+  if (!song) return false;
+  if (effectivePlayMode(song, files, setlistMode) !== PlayMode.View) return false;
+  return !isRealMetronomeTrack(song, files);
+}
+
+/** Hide leftover Reaper boxes on metronome songs. Uses saved play mode, not local files. */
+export function hidesLeftoverNotaRects(
+  song?: Song,
+  setlistMode?: SetlistPerformanceMode | string
+): boolean {
+  if (!song || !hasSectionInfo(song)) return false;
+  if (isMetronomeSetlistMode(setlistMode)) return true;
+  return declaredSongPlayMode(song) === PlayMode.View;
 }
 
 export function isMetronomeSetlistMode(mode?: SetlistPerformanceMode | string): boolean {
@@ -191,7 +211,7 @@ export const SETLIST_MODE_ICON_COLOR = {
 } as const;
 
 export function declaredSongPlayMode(song?: Song): PlayMode {
-  return parseSongInfo(song?.info).playMode ?? PlayMode.View;
+  return normalizeUserPlayMode(parseSongInfo(song?.info).playMode);
 }
 
 export function setlistPlayModeIcon(
@@ -203,14 +223,6 @@ export function setlistPlayModeIcon(
   const mode = parseSetlistPerformanceMode(setlistMode);
   if (mode === SetlistPerformanceMode.FollowSongInfo) {
     return { playMode: songMode, color: SETLIST_MODE_ICON_COLOR.follow };
-  }
-  if (mode === SetlistPerformanceMode.ClickOnly) {
-    return songMode === PlayMode.View
-      ? { playMode: songMode, color: SETLIST_MODE_ICON_COLOR.follow }
-      : { playMode: PlayMode.ClickOnly, color: SETLIST_MODE_ICON_COLOR.click };
-  }
-  if (mode === SetlistPerformanceMode.Free) {
-    return { playMode: PlayMode.View, color: SETLIST_MODE_ICON_COLOR.free };
   }
   return { playMode: PlayMode.View, color: SETLIST_MODE_ICON_COLOR.continuous };
 }

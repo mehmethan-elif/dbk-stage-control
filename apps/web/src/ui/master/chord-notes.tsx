@@ -317,6 +317,31 @@ export function chordNamesForBox(
   );
 }
 
+function chordBoxRank(box: Pick<NotaSectionBox, "sectionIndex">): number {
+  return box.sectionIndex ?? -1;
+}
+
+export function uniqueChordLabelBoxes(rects: readonly NotaSectionBox[]): NotaSectionBox[] {
+  const byKey = new Map<string, NotaSectionBox>();
+  for (const box of rects) {
+    if (isSectionLabel(box)) continue;
+    const key = [
+      box.page,
+      box.name,
+      box.measure,
+      box.x.toFixed(5),
+      box.y.toFixed(5),
+      box.w.toFixed(5),
+      box.h.toFixed(5)
+    ].join("|");
+    const current = byKey.get(key);
+    if (!current || chordBoxRank(box) < chordBoxRank(current)) {
+      byKey.set(key, box);
+    }
+  }
+  return [...byKey.values()];
+}
+
 export function notesForBox(
   song: Song | undefined,
   box: Pick<NotaSectionBox, "name" | "measure" | "sectionIndex"> | undefined

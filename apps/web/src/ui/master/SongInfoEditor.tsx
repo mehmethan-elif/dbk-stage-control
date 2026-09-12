@@ -65,7 +65,7 @@ export function SongInfoEditor(props: {
   const saveSongInfo = useMasterStore((s) => s.saveSongInfo);
   const source = props.playbackValues
     ? songInfoFromPlayback(props.song)
-    : parseSongInfo(props.song.info);
+    : parseSongInfo({ ...props.song.info, kita: props.song.info?.kita ?? props.song.kita });
   const parsedKey = splitKey(source.key);
   const [duration, setDuration] = useState(source.duration ? formatClock(source.duration) : "");
   const [bpm, setBpm] = useState(String(source.bpm));
@@ -75,7 +75,7 @@ export function SongInfoEditor(props: {
   const [keyAccidental, setKeyAccidental] = useState<KeyAccidental>(parsedKey.accidental);
   const [scale, setScale] = useState(source.scale ?? "");
   const [style, setStyle] = useState(source.style ?? "");
-  const [beats, setBeats] = useState(source.beats ?? [true]);
+  const [kita, setKita] = useState(kitaDigit(source.kita));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -110,7 +110,7 @@ export function SongInfoEditor(props: {
     keyAccidental: KeyAccidental;
     scale: string;
     style: string;
-    beats: boolean[];
+    kita: string;
   }>) => {
     const parsed = parseDurationInput(patch.duration ?? duration);
     if (!parsed.ok) {
@@ -123,13 +123,12 @@ export function SongInfoEditor(props: {
       bpm: Number(patch.bpm ?? bpm),
       numerator: patch.numerator ?? numerator,
       denominator: patch.denominator ?? denominator,
-      beats: patch.beats ?? beats,
       duration: parsed.seconds,
       key: joinKey(patch.keyLetter ?? keyLetter, patch.keyAccidental ?? keyAccidental),
       scale: patch.scale ?? scale,
-      style: patch.style ?? style
+      style: patch.style ?? style,
+      kita: Number(kitaDigit(patch.kita ?? kita))
     });
-    setBeats(next.beats ?? [true]);
     persist(next);
   };
 
@@ -139,6 +138,7 @@ export function SongInfoEditor(props: {
       ["Key", source.key || "—", fills.key],
       ["Scale", source.scale || "—", fills.scale],
       ["Style", source.style || "—", fills.style],
+      ["Kita", source.kita != null && source.kita > 0 ? String(source.kita) : "—", undefined],
       ["TS", `${source.numerator}/${source.denominator}`, fills.ts],
       ["BPM", String(source.bpm), fills.bpm],
       ["Duration", source.duration ? formatClock(source.duration) : "—", undefined]
@@ -248,6 +248,21 @@ export function SongInfoEditor(props: {
         </select>
       </div>
       <div className="song-info-line">
+        <span>Kita</span>
+        <input
+          className="song-info-line-compact"
+          value={kita}
+          inputMode="numeric"
+          pattern="[0-9]"
+          maxLength={1}
+          autoComplete="off"
+          aria-label="Kita"
+          disabled={disabled}
+          onChange={(event) => setKita(kitaDigit(event.target.value))}
+          onBlur={() => commit({ kita })}
+        />
+      </div>
+      <div className="song-info-line">
         <span>TS</span>
         <div className="song-info-ts">
           <div className="song-info-meter">
@@ -276,23 +291,6 @@ export function SongInfoEditor(props: {
                 commit({ denominator: next });
               }}
             />
-          </div>
-          <div className="song-info-beats" role="group" aria-label="Time signature pattern">
-            {beats.map((on, index) => (
-              <button
-                key={index}
-                type="button"
-                className={on ? "on" : ""}
-                aria-pressed={on}
-                aria-label={`Beat ${index + 1}`}
-                disabled={disabled}
-                onClick={() => {
-                  const next = beats.map((value, beat) => (beat === index ? !value : value));
-                  setBeats(next);
-                  commit({ beats: next });
-                }}
-              />
-            ))}
           </div>
         </div>
       </div>
@@ -361,6 +359,11 @@ function TsStepper(props: {
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
+}
+
+function kitaDigit(value: string | number | undefined): string {
+  const digit = String(value ?? "0").replace(/\D/g, "").slice(-1);
+  return digit === "" ? "0" : digit;
 }
 
 function choiceOptions(preset: string[], extra: string[], current: string): string[] {

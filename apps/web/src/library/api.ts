@@ -8,6 +8,7 @@ import {
   resetSongFolders,
   setLibraryFileOverride,
   writeSongJsonFile,
+  writeSongBytes,
   type LibraryIndex
 } from "../native/library";
 
@@ -17,6 +18,7 @@ export interface LibraryApi {
   readBytes(songId: string, path: string): Promise<ArrayBuffer>;
   readJson(songId: string, path: string): Promise<unknown | null>;
   writeJson(songId: string, path: string, data: unknown): Promise<void>;
+  writeBytes(songId: string, path: string, data: ArrayBuffer | Uint8Array): Promise<void>;
 }
 
 export const libraryApi: LibraryApi = {
@@ -24,7 +26,8 @@ export const libraryApi: LibraryApi = {
   fileUrl: libraryFileUrl,
   readBytes: readSongFile,
   readJson: readSongJsonFile,
-  writeJson: writeSongJsonFile
+  writeJson: writeSongJsonFile,
+  writeBytes: writeSongBytes
 };
 
 export {

@@ -1,0 +1,26 @@
+{
+  "kita": 2,
+  "info": {
+    "bpm": 113,
+    "numerator": 4,
+    "denominator": 4,
+    "beats": [
+      true,
+      false,
+      false,
+      false
+    ],
+    "duration": 180,
+    "key": "B",
+    "scale": "KURDI",
+    "style": "SLOW",
+    "kita": 2,
+    "playMode": "VIEW",
+    "metroNotes": {
+      "lyrics": "BİZİM PENCERELER YELE KARŞIDIR\nMUHABBET DEDİĞİN KARŞI KARŞIDIR\n\nGİREBİLSEN BU SİNEMDE NELER VAR\nGÜLÜP OYNADIĞIM ELE KARŞIDIR\n\nGİREBİLSEN BU SİNEMDE NELER VAR\nGÜLÜP OYNADIĞIM ELE KARŞIDIR\n\nARA\n\nSABAHIN SEHERİ GÜNDEN İLERİ\nBEN KİMİ SEVMİŞİM SENDEN İLERİ\n\nZİYARET OLMUŞSUN KURBAN İSTERSİN\nKURBAN BULAMADIM CANDAN İLERİ\n\nZİYARET OLMUŞSUN KURBAN İSTERSİN\nKURBAN BULAMADIM CANDAN İLERİ",
+      "drums": "D - - D - - T -"
+    }
+  },
+  "title": "Candan İleri",
+  "id": "Candan İleri"
+}

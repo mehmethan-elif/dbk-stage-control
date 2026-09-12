@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { bandRoster, lanRosterState } from "@dbk/core";
 import { currentGig, useMasterStore } from "../../store/master-store";
 import {
+  ChordIcon,
   ChronometerIcon,
+  DrumsIcon,
   EditSectionsIcon,
+  LyricsIcon,
   MixerIcon,
   PreparationIcon,
-  SpeakerMonitorIcon
+  ScoreIcon,
+  SpeakerMonitorIcon,
+  StageConnectIcon
 } from "../shared/icons";
 import { AudioView } from "./AudioView";
 import { DrumView } from "./DrumView";
@@ -15,7 +20,8 @@ import { useNavigatorOnline } from "../shared/BandRoster";
 import { LyricsView } from "./LyricsView";
 import { MixerView } from "./MixerView";
 import { NotaView } from "./NotaView";
-import { PrepTransport } from "./PrepTransport";
+import { PdfExportButton } from "./pdf-export/PdfExportButton";
+import { FadeButton, PanicButton, PrepTransport, StageSetlistButton, StageViewTools } from "./PrepTransport";
 import { PrepView } from "./PrepView";
 import { isNativeApp } from "../../native/platform";
 import { LibraryMissing } from "../native/RoleGate";
@@ -78,74 +84,62 @@ export function MasterApp() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div className="brand-block">
-          <div className="brand">DBK STAGE</div>
-          <div className="brand-name">ELIF AVCI</div>
+        <div className="topbar-transport-actions">
+          <FadeButton />
+          <PanicButton />
         </div>
-        <div className="topbar-time-cluster">
-          <button
-            type="button"
-            className={`chrono-btn${concertOn ? " on" : ""}`}
-            title={concertOn ? "Reset concert time" : "Start concert time"}
-            aria-label={concertOn ? "Reset concert time" : "Start concert time"}
-            aria-pressed={concertOn}
-            onClick={() => {
-              if (concertOn) {
-                concertStarted.current = null;
-                setConcertOn(false);
-                setConcertMs(0);
-                return;
-              }
-              concertStarted.current = Date.now();
-              setConcertOn(true);
-              setConcertMs(0);
-            }}
-          >
-            <ChronometerIcon />
-          </button>
-          <span className="concert-time-value">{formatElapsed(concertMs)}</span>
-        </div>
+        <StageSetlistButton />
         <button
           type="button"
-          className={`lyrics-btn${masterPage === "lyrics" ? " on" : ""}`}
+          className={`lyrics-btn page-icon${masterPage === "prep" ? " on" : ""}`}
+          title="Preparation"
+          aria-label="Preparation"
+          aria-pressed={masterPage === "prep"}
+          onClick={() => setMasterPage("prep")}
+        >
+          <PreparationIcon />
+        </button>
+        <button
+          type="button"
+          className={`lyrics-btn page-icon${masterPage === "lyrics" ? " on" : ""}`}
+          title="Lyrics"
+          aria-label="Lyrics"
           aria-pressed={masterPage === "lyrics"}
           onClick={() => setMasterPage(masterPage === "lyrics" ? "prep" : "lyrics")}
         >
-          LYRICS
+          <LyricsIcon />
         </button>
         <button
           type="button"
-          className={`lyrics-btn${masterPage === "nota" ? " on" : ""}`}
+          className={`lyrics-btn page-icon${masterPage === "nota" ? " on" : ""}`}
+          title="Score"
+          aria-label="Score"
           aria-pressed={masterPage === "nota"}
           onClick={() => setMasterPage(masterPage === "nota" ? "prep" : "nota")}
         >
-          SCORE
+          <ScoreIcon />
         </button>
         <button
           type="button"
-          className={`lyrics-btn${masterPage === "chords" ? " on" : ""}`}
+          className={`lyrics-btn page-icon${masterPage === "chords" ? " on" : ""}`}
+          title="Chord"
+          aria-label="Chord"
           aria-pressed={masterPage === "chords"}
           onClick={() => setMasterPage(masterPage === "chords" ? "prep" : "chords")}
         >
-          CHORD
+          <ChordIcon />
         </button>
         <button
           type="button"
-          className={`lyrics-btn${masterPage === "drums" ? " on" : ""}`}
+          className={`lyrics-btn page-icon${masterPage === "drums" ? " on" : ""}`}
+          title="Drums"
+          aria-label="Drums"
           aria-pressed={masterPage === "drums"}
           onClick={() => setMasterPage(masterPage === "drums" ? "prep" : "drums")}
         >
-          DRUMS
+          <DrumsIcon />
         </button>
         <div className="grow" />
-        <button
-          type="button"
-          className={`lyrics-btn${masterPage === "lan" ? " on" : lanState === "ready" ? " lan-ok" : lanState === "problem" ? " lan-bad" : " lan-warn"}`}
-          aria-pressed={masterPage === "lan"}
-          onClick={() => setMasterPage(masterPage === "lan" ? "prep" : "lan")}
-        >
-          LAN
-        </button>
         <div className="mode-toggle">
           <button
             className={editOpen && masterPage === "chords" ? "on" : ""}
@@ -181,16 +175,42 @@ export function MasterApp() {
           >
             <MixerIcon />
           </button>
-          <button
-            className={masterPage === "prep" ? "on" : ""}
-            title="Preparation"
-            aria-label="Preparation"
-            aria-pressed={masterPage === "prep"}
-            onClick={() => setMasterPage("prep")}
-          >
-            <PreparationIcon />
-          </button>
         </div>
+        <PdfExportButton />
+        <StageViewTools />
+        <div className="topbar-time-cluster">
+          <button
+            type="button"
+            className={`chrono-btn${concertOn ? " on" : ""}`}
+            title={concertOn ? "Reset concert time" : "Start concert time"}
+            aria-label={concertOn ? "Reset concert time" : "Start concert time"}
+            aria-pressed={concertOn}
+            onClick={() => {
+              if (concertOn) {
+                concertStarted.current = null;
+                setConcertOn(false);
+                setConcertMs(0);
+                return;
+              }
+              concertStarted.current = Date.now();
+              setConcertOn(true);
+              setConcertMs(0);
+            }}
+          >
+            <ChronometerIcon />
+          </button>
+          <span className="concert-time-value">{formatElapsed(concertMs)}</span>
+        </div>
+        <button
+          type="button"
+          className={`lyrics-btn page-icon${masterPage === "lan" ? " on" : lanState === "ready" ? " lan-ok" : lanState === "problem" ? " lan-bad" : " lan-warn"}`}
+          title="LAN"
+          aria-label="LAN"
+          aria-pressed={masterPage === "lan"}
+          onClick={() => setMasterPage(masterPage === "lan" ? "prep" : "lan")}
+        >
+          <StageConnectIcon />
+        </button>
       </header>
       <div className="app-transport">
         <PrepTransport />

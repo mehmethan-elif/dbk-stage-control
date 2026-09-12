@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import {
   ELIF_KONUSMA_LABEL,
   firstSectionNamed,
-  hasBackingAudio,
-  hasClickFlac,
+  hasPlaybackAudio,
   isElifKonusma,
   isSongEntry,
+  isStopMarker,
+  isTalkEntry,
+  talkDisplayLabel,
   parseSongInfo,
   PlayMode,
+  resolvedSongPlayMode,
   songDisplayName,
   songPlaybackName,
   type Song
@@ -65,21 +68,16 @@ export function PrepSongInfo(props: {
     selected && isSongEntry(selected) ? songs.find((song) => song.id === selected.songId) : undefined;
   const song = librarySong ?? setlistSong;
   const info = parseSongInfo(song?.info);
-  const files = song ? fileIndex[song.id] : undefined;
+  const files = song
+    ? [
+        ...(fileIndex[song.id] ?? []),
+        ...(song.folder && song.folder !== song.id ? (fileIndex[song.folder] ?? []) : [])
+      ]
+    : undefined;
   const packedSong = hasPackedSong(song, files);
-  const canBacking = hasBackingAudio(song, files);
-  const canClick = Boolean(song && hasClickFlac(song, files));
+  const canBacking = hasPlaybackAudio(song, files);
   const requestedMode = info.playMode ?? PlayMode.View;
-  const playMode =
-    requestedMode === PlayMode.Playback
-      ? canBacking
-        ? requestedMode
-        : canClick
-          ? PlayMode.ClickOnly
-          : PlayMode.View
-      : requestedMode === PlayMode.ClickOnly && !canClick
-        ? PlayMode.View
-        : requestedMode;
+  const playMode = resolvedSongPlayMode(song, files, requestedMode);
   const metronome = playMode === PlayMode.View;
   const startsSerbest = firstSectionNamed(song?.sections, "SERBEST");
   const metronomeStartMode = song?.info?.startMode === "SERBEST" ? "SERBEST" : "COUNT";
@@ -87,36 +85,57 @@ export function PrepSongInfo(props: {
   const canCount = Boolean(countEnabled(song));
   const scales = extraValues(songs, (item) => [item.scale, item.info?.scale]);
   const styles = extraValues(songs, (item) => [item.style, item.info?.style]);
+  const talkSelected = Boolean(
+    !librarySong && ((selected && isTalkEntry(selected)) || selectedEntryId?.startsWith("elif_key_"))
+  );
   const elifSelected = Boolean(
     !librarySong &&
       ((selected && isElifKonusma(selected)) || selectedEntryId?.startsWith("elif_key_"))
   );
-  const [elifNotes, setElifNotes] = useState(gig?.notes ?? "");
-  const elifNotesDirty = useRef(false);
+  const stopSelected = Boolean(!librarySong && selected && isStopMarker(selected));
+  const storedTalkNotes = elifSelected
+    ? (gig?.notes ?? "")
+    : stopSelected && selected && isTalkEntry(selected)
+      ? (selected.notes ?? "")
+      : "";
+  const [talkNotes, setTalkNotes] = useState(storedTalkNotes);
+  const talkNotesDirty = useRef(false);
 
   useEffect(() => {
-    elifNotesDirty.current = false;
-    setElifNotes(gig?.notes ?? "");
-  }, [gig?.id]);
+    talkNotesDirty.current = false;
+    setTalkNotes(storedTalkNotes);
+  }, [gig?.id, selectedEntryId]);
 
   useEffect(() => {
-    if (elifNotesDirty.current) return;
-    setElifNotes(gig?.notes ?? "");
-  }, [gig?.notes]);
+    if (talkNotesDirty.current) return;
+    setTalkNotes(storedTalkNotes);
+  }, [storedTalkNotes]);
 
-  const persistElifNotes = async () => {
-    if (readOnly || !gig || !elifNotesDirty.current) return;
-    const next = elifNotes;
-    elifNotesDirty.current = false;
+  const persistTalkNotes = async () => {
+    if (readOnly || !gig || !talkNotesDirty.current) return;
+    const next = talkNotes;
+    talkNotesDirty.current = false;
+    if (elifSelected) {
+      await updateGig((current) => ({
+        ...current,
+        notes: next.trim() ? next : undefined
+      }));
+      return;
+    }
+    if (!selected || !isStopMarker(selected)) return;
+    const entryId = selected.entryId;
     await updateGig((current) => ({
       ...current,
-      notes: next.trim() ? next : undefined
+      setlist: current.setlist.map((entry) =>
+        entry.entryId === entryId && isTalkEntry(entry)
+          ? { ...entry, notes: next.trim() ? next : undefined }
+          : entry
+      )
     }));
   };
 
   const setPlayMode = (mode: PlayMode) => {
     if (mode === PlayMode.Playback && !canBacking) return;
-    if (mode === PlayMode.ClickOnly && !canClick) return;
     if (!song) return;
     void saveSongInfo(song.id, { ...info, playMode: mode });
   };
@@ -134,45 +153,49 @@ export function PrepSongInfo(props: {
   };
 
   const songName = song
-    ? playMode !== PlayMode.View
+    ? playMode === PlayMode.Playback
       ? songPlaybackName(song)
       : songDisplayName(song)
     : "";
 
-  const title = elifSelected ? ELIF_KONUSMA_LABEL : songName;
+  const title = talkSelected
+    ? selected && isTalkEntry(selected)
+      ? talkDisplayLabel(selected)
+      : ELIF_KONUSMA_LABEL
+    : songName;
 
   return (
-    <section className={`panel prep-side-panel${!song && !elifSelected ? " is-empty" : ""}`}>
+    <section className={`panel prep-side-panel${!song && !talkSelected ? " is-empty" : ""}`}>
       <div className="panel-head">
         <h2>
           <span className="prep-active-setlist">{title}</span>
         </h2>
       </div>
       <div className="panel-body prep-song-info-body">
-        {elifSelected ? (
+        {elifSelected || stopSelected ? (
           readOnly ? (
-            elifNotes.trim() ? (
-              <p className="prep-elif-notes-read">{elifNotes}</p>
+            talkNotes.trim() ? (
+              <p className="prep-elif-notes-read">{talkNotes}</p>
             ) : (
               <p className="meta">No notes</p>
             )
           ) : (
             <div className="prep-elif-notes">
               <textarea
-                aria-label="ELIF KONUSMA notes"
-                placeholder="Notes for ELIF KONUSMA…"
-                value={elifNotes}
+                aria-label={stopSelected ? "STOP notes" : "ELIF KONUSMA notes"}
+                placeholder={stopSelected ? "Notes for STOP…" : "Notes for ELIF KONUSMA…"}
+                value={talkNotes}
                 onChange={(event) => {
-                  elifNotesDirty.current = true;
-                  setElifNotes(event.target.value);
+                  talkNotesDirty.current = true;
+                  setTalkNotes(event.target.value);
                 }}
                 onBlur={() => {
-                  void persistElifNotes();
+                  void persistTalkNotes();
                 }}
               />
             </div>
           )
-        ) : !song ? (
+        ) : talkSelected ? null : !song ? (
           <p className="meta">Select a song to edit its info.</p>
         ) : (
           <>
@@ -180,17 +203,6 @@ export function PrepSongInfo(props: {
               <div className="song-info-line song-info-play-mode">
                 <span>Play Mode</span>
                 <div className="song-info-modes play-mode-options" role="radiogroup" aria-label="Play Mode">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-label="Metronome"
-                    aria-checked={playMode === PlayMode.View}
-                    className={playMode === PlayMode.View ? "on" : ""}
-                    disabled={readOnly}
-                    onClick={() => setPlayMode(PlayMode.View)}
-                  >
-                    METRONOME
-                  </button>
                   <button
                     type="button"
                     role="radio"
@@ -207,15 +219,13 @@ export function PrepSongInfo(props: {
                   <button
                     type="button"
                     role="radio"
-                    aria-label="Click Only"
-                    aria-checked={playMode === PlayMode.ClickOnly}
-                    className={playMode === PlayMode.ClickOnly ? "on" : ""}
-                    disabled={readOnly || !canClick}
-                    onClick={() => setPlayMode(PlayMode.ClickOnly)}
+                    aria-label="Metronome"
+                    aria-checked={playMode === PlayMode.View}
+                    className={playMode === PlayMode.View ? "on" : ""}
+                    disabled={readOnly}
+                    onClick={() => setPlayMode(PlayMode.View)}
                   >
-                    CLICK
-                    <br />
-                    ONLY
+                    METRONOME
                   </button>
                 </div>
               </div>

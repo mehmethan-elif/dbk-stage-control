@@ -1,30 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currentEntryIdFromTitleTops, stageScrollTopForSpans } from "./stage-scroll";
-
-describe("currentEntryIdFromTitleTops", () => {
-  const titles = [
-    { entryId: "evvel", top: 80 },
-    { entryId: "elif_key", top: 400 },
-    { entryId: "kara", top: 520 }
-  ];
-
-  it("keeps the current song until the next title crosses mid-view", () => {
-    expect(currentEntryIdFromTitleTops(titles, 300)).toBe("evvel");
-  });
-
-  it("promotes the next title once it is at or above mid-view", () => {
-    expect(currentEntryIdFromTitleTops(titles, 400)).toBe("elif_key");
-    expect(currentEntryIdFromTitleTops(titles, 520)).toBe("kara");
-  });
-
-  it("falls back to the first title when none have reached the read line", () => {
-    expect(currentEntryIdFromTitleTops(titles, 40)).toBe("evvel");
-  });
-
-  it("returns null when the page has no titles", () => {
-    expect(currentEntryIdFromTitleTops([], 100)).toBeNull();
-  });
-});
+import { nextSongTitleScrollTop, preferNextSongTitle, stageScrollTopForSpans } from "./stage-scroll";
 
 describe("stageScrollTopForSpans", () => {
   const view = { viewTop: 100, viewBottom: 500, scrollTop: 0 };
@@ -102,5 +77,36 @@ describe("stageScrollTopForSpans", () => {
         next: { top: 800, bottom: 1180 }
       })
     ).toBeNull();
+  });
+});
+
+describe("nextSongTitleScrollTop", () => {
+  const view = { viewTop: 100, viewBottom: 500, scrollTop: 240 };
+
+  it("does not move when the title is already in the upper half", () => {
+    expect(nextSongTitleScrollTop({ ...view, titleTop: 180 })).toBeNull();
+    expect(nextSongTitleScrollTop({ ...view, titleTop: 300 })).toBeNull();
+  });
+
+  it("scrolls a title below the midpoint up into the upper half", () => {
+    expect(nextSongTitleScrollTop({ ...view, titleTop: 800 })).toBe(740);
+  });
+
+  it("pulls a title above the view down to the top", () => {
+    expect(nextSongTitleScrollTop({ ...view, titleTop: 40 })).toBe(180);
+  });
+});
+
+describe("preferNextSongTitle", () => {
+  it("hands off when the current span is already on screen", () => {
+    expect(preferNextSongTitle({ top: 120, bottom: 220 }, 100, 500)).toBe(true);
+  });
+
+  it("keeps following when the current span is still off-screen", () => {
+    expect(preferNextSongTitle({ top: 800, bottom: 920 }, 100, 500)).toBe(false);
+  });
+
+  it("hands off when there is no current span", () => {
+    expect(preferNextSongTitle(null, 100, 500)).toBe(true);
   });
 });

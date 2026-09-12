@@ -11,12 +11,15 @@ import {
   createId,
   emptyMixerBank,
   entryStartAt,
+  songChainStartAt,
+  shouldAutoStartMetronome,
   firstSectionNamed,
   gigMixerState,
-  hasBackingAudio,
+  savedOrDefaultLibraryPlayMode,
   hasClickFlac,
-  hasOnlyClickAudio,
+  hasPlaybackAudio,
   isSongEntry,
+  isStopMarker,
   metronomeTempoMap,
   parseSongInfo,
   normalizeSong,
@@ -25,6 +28,7 @@ import {
   PlayMode,
   PlaybackState,
   dropMissingSetlistSongs,
+  entryPlayMode,
   resolvePublishedSongId,
   measureStartTimes,
   nextMeasureStart,
@@ -36,7 +40,9 @@ import {
   songWithMixerStems,
   songsForcedClickOnly,
   songsForSetlistPerformance,
+  isFreePlayMode,
   isFreeSetlistMode,
+  declaredSongPlayMode,
   isMetronomeSetlistMode,
   setlistModeIsSilent,
   effectivePlayMode,
@@ -44,6 +50,7 @@ import {
   padStageNames,
   parseSetlistPerformanceMode,
   practiceMasterAudio,
+  nextEndedSelectionId,
   songFollowedByElif,
   SetlistPerformanceMode,
   FinishMode,
@@ -89,6 +96,7 @@ import { downloadBytes, exportPracticeZip } from "../practice/export";
 import {
   isPracticeAudioLoaded,
   loadPracticeAudio,
+  type PracticeAudioKind,
   onPracticeTime,
   pausePracticeAudio,
   playPracticeAudio,
@@ -103,7 +111,7 @@ import { practiceHostFromInput, pullPracticeFromHost } from "../practice/pull";
 import { loadPracticeLibrary, readPracticeFileBuffer, readPublishedGigs } from "../practice/store";
 import { importPracticeFileList, importPracticeZip } from "../practice/zip";
 import { loadSongMixers, saveSongMixer } from "../ui/master/song-mixer";
-import { writeSongInfo } from "../ui/master/song-settings";
+import { updateSongSettings, writeSongInfo } from "../ui/master/song-settings";
 import { isNativeApp } from "../native/platform";
 import {
   isSongLibraryGig,
@@ -117,7 +125,7 @@ import {
   setlistNameTaken,
   songLibraryGig
 } from "./song-library";
-import { setFollowClock, stopFollowClock } from "./follow-clock";
+import { followPacketTime, setFollowClock, stopFollowClock } from "./follow-clock";
 import { stageConnectOn } from "./stage-connect";
 export { stageConnectOn };
 import {
@@ -131,7 +139,6 @@ import {
 } from "../native/sync";
 
 export type ClientSession = "practice" | "stage";
-export type ClientOfflineMode = "free" | "practice";
 
 export type MasterPage = "prep" | "mixer" | "audio" | "lyrics" | "nota" | "chords" | "drums" | "lan";
 export type StageContentPage = Extract<MasterPage, "lyrics" | "nota" | "chords" | "drums">;
@@ -170,10 +177,57 @@ function clampStageZoom(value: number): number {
 const logger = createLogger();
 const engine = new WebAudioEngine(logger);
 const beatListeners = new Set<(beat: MetronomeBeat) => void>();
+let lastMetronomeBeat: MetronomeBeat | null = null;
+
+function notifyMetronomeBeat(beat: MetronomeBeat) {
+  lastMetronomeBeat = beat;
+  for (const listener of beatListeners) listener(beat);
+}
+
+function clearMetronomeBeat() {
+  lastMetronomeBeat = null;
+  remoteMetroSeq = null;
+}
+
+/** Wall-clock seconds for visual metronome cells (advances even if AudioContext is suspended). */
+export function metronomeVisualNow(): number {
+  return typeof performance !== "undefined" ? performance.now() / 1000 : 0;
+}
+
+/** Remaining seconds until a Web Audio–scheduled beat. */
+export function audioBeatDelay(audioAt: number): number {
+  return Math.max(0, audioAt - engine.getContextTime());
+}
+
+/** When a remote beat should paint, using the same wall clock as `metronomeVisualNow`. */
+export function remoteMetronomeVisualAt(delaySeconds?: number): number {
+  return metronomeVisualNow() + Math.max(0, delaySeconds ?? 0);
+}
+
+let remoteMetroSeq: number | null = null;
+let metronomeSeq = 0;
+let metronomeStartGen = 0;
+
+/** Keep the newest pulse from this master's clock; drop echoes and older packets. */
+export function takeRemoteMetronomeSeq(prev: number | null, seq: number | undefined): number | null {
+  if (typeof seq !== "number" || !Number.isFinite(seq)) return null;
+  if (prev != null && seq <= prev) return null;
+  return seq;
+}
+
 const metronome = new Metronome(
   (running) => engine.setExternalCueActive(running),
   (beat) => {
-    for (const listener of beatListeners) listener(beat);
+    const delay = audioBeatDelay(beat.at);
+    notifyMetronomeBeat({ at: remoteMetronomeVisualAt(delay) });
+    const state = useMasterStore.getState();
+    if (state.deviceKind !== "master") return;
+    if (!state.metronomePlaying && !usesFreeMetroTransport(state)) return;
+    sendSync({
+      type: "Metronome",
+      seq: ++metronomeSeq,
+      ...(delay > 0 ? { in: delay } : {})
+    });
   }
 );
 
@@ -187,19 +241,35 @@ export function audioContextTime(): number {
 
 export function onMetronomeBeat(listener: (beat: MetronomeBeat) => void): () => void {
   beatListeners.add(listener);
+  if (lastMetronomeBeat) listener(lastMetronomeBeat);
   return () => {
     beatListeners.delete(listener);
   };
 }
 
+function preloadMetroIntro() {
+  if (useMasterStore.getState().deviceKind === "client") return;
+  try {
+    const ctx = engine.prime();
+    metronome.attach(ctx, engine.busNode("CUE"));
+    void metronome.ensureIntro(ctx);
+  } catch {
+    // cue bus is ready after the first prime
+  }
+}
+
 export function unlockAudio(): void {
   engine.prime();
+  preloadMetroIntro();
 }
 
 let gestureUnlockInstalled = false;
 if (typeof window !== "undefined" && !gestureUnlockInstalled) {
   gestureUnlockInstalled = true;
-  const kick = () => engine.prime();
+  const kick = () => {
+    engine.prime();
+    preloadMetroIntro();
+  };
   window.addEventListener("pointerdown", kick, true);
   window.addEventListener("keydown", kick, true);
 }
@@ -308,14 +378,27 @@ export function elifCanEditSetlist(
   );
 }
 
-/** Elif can look ahead in the setlist. Other live clients always take the master's song. */
+/** Elif can look ahead. Other live clients take the master's song; idle Position must not undo LoadSong. */
 export function followSyncSelection(
-  state: Pick<MasterState, "deviceKind" | "clientSession" | "syncConnected" | "stageName" | "selectedEntryId">,
-  incomingEntryId: string
+  state: Pick<
+    MasterState,
+    "deviceKind" | "clientSession" | "syncConnected" | "stageName" | "selectedEntryId" | "justJoinedStage"
+  >,
+  incomingEntryId: string,
+  playing = true
 ): string {
-  return elifCanEditSetlist(state) && state.selectedEntryId
-    ? state.selectedEntryId
-    : incomingEntryId;
+  if (state.justJoinedStage) return incomingEntryId;
+  if (elifCanEditSetlist(state) && state.selectedEntryId) return state.selectedEntryId;
+  if (!playing && state.selectedEntryId) return state.selectedEntryId;
+  return incomingEntryId;
+}
+
+/** Idle Position must not consume the join snap. LoadGig / LoadSong / Play do. */
+export function nextJustJoinedStage(
+  justJoinedStage: boolean,
+  consume: boolean
+): boolean {
+  return justJoinedStage && !consume ? true : false;
 }
 
 export function setlistChangeKeepsPlayback(state: MasterState): boolean {
@@ -325,6 +408,14 @@ export function setlistChangeKeepsPlayback(state: MasterState): boolean {
     playback.state === PlaybackState.Playing ||
     playback.state === PlaybackState.Transitioning ||
     state.playbackPaused
+  );
+}
+
+function audioGraphLive(state: MasterState): boolean {
+  if (state.metronomePlaying) return true;
+  return (
+    state.playback.state === PlaybackState.Playing ||
+    state.playback.state === PlaybackState.Transitioning
   );
 }
 
@@ -346,6 +437,7 @@ interface MasterState {
   gigId: string | null;
   librarySongId: string | null;
   selectedEntryId: string | null;
+  justJoinedStage: boolean;
   previewTime: number;
   playbackPaused: boolean;
   panicActive: boolean;
@@ -363,8 +455,6 @@ interface MasterState {
   joinAddress: string | null;
   stageName: string | null;
   clientSession: ClientSession;
-  clientOfflineMode: ClientOfflineMode;
-  setClientOfflineMode: (mode: ClientOfflineMode) => void;
   practiceBusy: string | null;
   libraryStatus: string | null;
   masterPage: MasterPage;
@@ -373,10 +463,8 @@ interface MasterState {
   editOpen: boolean;
   stageZooms: Record<StageContentPage, number>;
   toggleSetlistOpen: () => void;
-  toggleAutoScroll: () => void;
   toggleEditOpen: () => void;
-  zoomIn: () => void;
-  zoomOut: () => void;
+  setStageZoom: (value: number) => void;
   songMix: Record<string, MixerBank>;
   remoteSongMixer: boolean;
   busMix: MixerBank;
@@ -385,6 +473,7 @@ interface MasterState {
   audioOutputChannels: number;
   audioRoutingMode: AudioRoutingMode;
   audioError: string | null;
+  audioHint: string | null;
   load: (kind?: DeviceKind, options?: { syncHost?: string }) => Promise<void>;
   reconnectSync: () => void;
   joinStage: (host: string) => void;
@@ -413,7 +502,8 @@ interface MasterState {
   setSongMixStrip: (songId: string, channel: MixerChannel, patch: Partial<MixStripState>) => void;
   setBusMixStrip: (channel: MixerChannel, patch: Partial<MixStripState>) => void;
   refreshAudioOutputs: () => Promise<void>;
-  setAudioDevice: (deviceId: string) => Promise<void>;
+  recheckAudioOutputs: () => Promise<void>;
+  setAudioDevice: (deviceId: string, opts?: { recreateIfStereo?: boolean }) => Promise<void>;
   setAudioRoutingMode: (mode: AudioRoutingMode) => void;
   setGigId: (id: string) => Promise<void>;
   updateGig: (recipe: (gig: Gig) => Gig) => Promise<void>;
@@ -433,6 +523,7 @@ interface MasterState {
   metronomeVolume: number;
   startMetronome: (fromTime?: number) => void;
   stopMetronome: () => void;
+  syncFreeVisualMetronome: () => void;
   previewContinuousNextMetronome: () => void;
   setMetronomeVolume: (value: number) => void;
   saveSongInfo: (songId: string, info: SongInfo) => Promise<void>;
@@ -443,6 +534,7 @@ interface MasterState {
 
 let tickHandle = 0;
 let metroTickHandle = 0;
+let freeVisualSongId: string | null = null;
 let lastBroadcast = 0;
 let applyPanicResume: (() => void) | null = null;
 
@@ -459,6 +551,7 @@ function loadGigMessage(state: MasterState): LoadGigMessage | null {
     name: gig.name,
     setlistEntryIds: gig.setlist.map((entry) => entry.entryId),
     setlist: remoteGigEntries(gig, state.songs),
+    selectedEntryId: state.selectedEntryId ?? undefined,
     performanceMode: parseSetlistPerformanceMode(gig.performanceMode),
     stageNames: padStageNames(gig.stageNames)
   };
@@ -480,7 +573,10 @@ function mixerSnapshot(state: MasterState): MixerStateMessage {
   const songEntry = entry && isSongEntry(entry) ? entry : undefined;
   const song = songEntry ? findSongByRef(state.songs, songEntry.songId) : undefined;
   const files = song ? filesForSong(song, state.fileIndex) : undefined;
-  const songMixer = Boolean(song && !songUsesMetronome(song, files, gig?.performanceMode));
+  const playMode = effectivePlayMode(song, files, gig?.performanceMode);
+  const songMixer = Boolean(
+    song && isDeckPlayMode(playMode) && !songUsesMetronome(song, files, gig?.performanceMode)
+  );
   return mixerStateMessage({
     busMix: state.busMix,
     metronomeVolume: state.metronomeVolume,
@@ -488,7 +584,7 @@ function mixerSnapshot(state: MasterState): MixerStateMessage {
     songTitle: song?.title,
     songMix: song ? (state.songMix[song.id] ?? emptyMixerBank()) : undefined,
     songChannels: song && songMixer ? enabledMixerChannels(files) : undefined,
-    playMode: effectivePlayMode(song, files, gig?.performanceMode),
+    playMode,
     songMixer
   });
 }
@@ -515,20 +611,20 @@ function broadcastSelection() {
   const entry = state.selectedEntryId
     ? gig?.setlist.find((item) => item.entryId === state.selectedEntryId)
     : undefined;
-  if (!entry || !isSongEntry(entry)) return;
-  const song = state.songs.find((item) => item.id === entry.songId);
+  if (!entry) return;
+  const song = isSongEntry(entry) ? state.songs.find((item) => item.id === entry.songId) : undefined;
   sendSync({
     type: "LoadSong",
-    songId: entry.songId,
+    songId: isSongEntry(entry) ? entry.songId : entry.entryId,
     setlistEntryId: entry.entryId,
-    title: song?.title ?? entry.songId
+    title: song?.title ?? entry.entryId
   });
   broadcastMixer(true);
 }
 
 function broadcastPlay() {
   const state = useMasterStore.getState();
-  if (isFreeSetlistMode(currentGig(state)?.performanceMode)) return;
+  if (isFreeSetlistMode(currentGig(state)?.performanceMode) || selectedSongIsFree(state)) return;
   const gig = state.gigs.find((item) => item.id === state.gigId);
   const clock = controller.getClock();
   const entryId = clock?.setlistEntryId ?? state.selectedEntryId;
@@ -538,7 +634,8 @@ function broadcastPlay() {
     type: "Play",
     songId: clock?.songId ?? entry.songId,
     setlistEntryId: entry.entryId,
-    at: clock?.time ?? state.previewTime
+    at: clock?.time ?? state.previewTime,
+    sent: Date.now()
   });
 }
 
@@ -598,7 +695,12 @@ function applyMasterRemoteControl(message: RemoteControlMessage, get: () => Mast
 }
 
 function applyClientSync(message: SyncMessage, get: () => MasterState, set: (patch: Partial<MasterState>) => void) {
-  if (message.type !== "Position" && message.type !== "Seek" && message.type !== "MixerState") {
+  if (
+    message.type !== "Position" &&
+    message.type !== "Seek" &&
+    message.type !== "MixerState" &&
+    message.type !== "Metronome"
+  ) {
     stopPracticeAudio();
   }
   if (message.type === "RemoteControl") {
@@ -666,6 +768,11 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     };
     const currentId = previous.selectedEntryId;
     const stillThere = currentId ? gig.setlist.some((entry) => entry.entryId === currentId) : false;
+    const incomingSelected =
+      typeof message.selectedEntryId === "string" &&
+      gig.setlist.some((entry) => entry.entryId === message.selectedEntryId)
+        ? message.selectedEntryId
+        : undefined;
     const free = isFreeSetlistMode(gig.performanceMode);
     const wasFree = isFreeSetlistMode(current?.performanceMode);
     const remoteSongs =
@@ -673,7 +780,12 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     set({
       gigs: [gig],
       gigId: gig.id,
-      selectedEntryId: stillThere ? currentId : firstSongEntryId(gig),
+      selectedEntryId: incomingSelected
+        ? followSyncSelection(previous, incomingSelected, true)
+        : stillThere
+          ? currentId
+          : firstSongEntryId(gig),
+      justJoinedStage: nextJustJoinedStage(previous.justJoinedStage, Boolean(incomingSelected)),
       ...(remoteSongs ? { songs: remoteSongs } : {}),
       playback: free || !sameShow
         ? {
@@ -689,15 +801,24 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
   }
   if (message.type === "LoadSong") {
     if (isFreeSetlistMode(currentGig(get())?.performanceMode)) return;
-    set({ selectedEntryId: message.setlistEntryId });
+    set({
+      selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
+      justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true)
+    });
+    if (liveSongIsBackingTracks(get())) {
+      clearMetronomeBeat();
+      if (get().metronomePlaying) set({ metronomePlaying: false });
+    }
     return;
   }
   if (message.type === "Stop") {
     const previous = get().playback;
     const clock = previous.clock;
     stopFollowClock(0);
+    clearMetronomeBeat();
     set({
       previewTime: 0,
+      metronomePlaying: false,
       playback: {
         ...previous,
         state: PlaybackState.Idle,
@@ -719,28 +840,58 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     return;
   }
   if (message.type === "Seek") {
-    if (isFreeSetlistMode(currentGig(get())?.performanceMode)) return;
+    if (isFreeSetlistMode(currentGig(get())?.performanceMode) || selectedSongIsFree(get())) return;
     const playing =
       get().playback.state === PlaybackState.Playing ||
       get().playback.state === PlaybackState.Transitioning;
-    setFollowClock(message.time, playing);
-    set({ previewTime: message.time });
+    const seekTime = followPacketTime(message.time, message.sent);
+    setFollowClock(seekTime, playing);
+    set({ previewTime: seekTime });
+    return;
+  }
+  if (message.type === "Metronome") {
+    if (!clientStageLive(get())) return;
+    if (liveSongIsBackingTracks(get())) {
+      clearMetronomeBeat();
+      if (get().metronomePlaying) set({ metronomePlaying: false });
+      return;
+    }
+    if (message.playing === false) {
+      clearMetronomeBeat();
+      if (!usesFreeMetroTransport(get())) set({ metronomePlaying: false });
+      return;
+    }
+    const nextSeq = takeRemoteMetronomeSeq(remoteMetroSeq, message.seq);
+    if (nextSeq == null) return;
+    remoteMetroSeq = nextSeq;
+    notifyMetronomeBeat({ at: remoteMetronomeVisualAt(message.in) });
+    if (!usesFreeMetroTransport(get())) set({ metronomePlaying: true });
     return;
   }
   if (message.type === "Play") {
-    if (isFreeSetlistMode(currentGig(get())?.performanceMode)) return;
+    if (isFreeSetlistMode(currentGig(get())?.performanceMode) || selectedSongIsFree(get())) {
+      if (get().justJoinedStage && message.setlistEntryId) {
+        set({
+          selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
+          justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true)
+        });
+      }
+      return;
+    }
     const previous = get().playback;
-    setFollowClock(message.at, true);
+    const at = followPacketTime(message.at, message.sent);
+    setFollowClock(at, true);
     set({
-      selectedEntryId: followSyncSelection(get(), message.setlistEntryId),
-      previewTime: message.at,
+      selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
+      justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true),
+      previewTime: at,
       playback: {
         ...previous,
         state: PlaybackState.Playing,
         clock: {
           songId: message.songId,
           setlistEntryId: message.setlistEntryId,
-          time: message.at,
+          time: at,
           measure: previous.clock?.measure ?? 1,
           beat: previous.clock?.beat ?? 1,
           section: previous.clock?.section,
@@ -750,24 +901,38 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
         }
       }
     });
+    if (liveSongIsBackingTracks(get())) {
+      clearMetronomeBeat();
+      if (get().metronomePlaying) set({ metronomePlaying: false });
+    }
     return;
   }
   if (message.type !== "Position") return;
-  if (isFreeSetlistMode(currentGig(get())?.performanceMode)) return;
+  if (isFreeSetlistMode(currentGig(get())?.performanceMode) || selectedSongIsFree(get())) {
+    if (get().justJoinedStage && message.setlistEntryId) {
+      set({
+        selectedEntryId: followSyncSelection(get(), message.setlistEntryId, false),
+        justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing)
+      });
+    }
+    return;
+  }
+  const followTime = followPacketTime(message.time, message.sent);
   if (message.playing) {
-    setFollowClock(message.time, true);
+    setFollowClock(followTime, true);
   } else {
-    stopFollowClock(message.time);
+    stopFollowClock(followTime);
   }
   set({
-    selectedEntryId: followSyncSelection(get(), message.setlistEntryId),
-    previewTime: message.time,
+    selectedEntryId: followSyncSelection(get(), message.setlistEntryId, false),
+    justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing),
+    previewTime: followTime,
     playback: {
       state: message.playing ? PlaybackState.Playing : PlaybackState.Idle,
       clock: {
         songId: message.songId,
         setlistEntryId: message.setlistEntryId,
-        time: message.time,
+        time: followTime,
         measure: message.measure,
         beat: message.beat,
         section: message.section,
@@ -783,6 +948,10 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
       endedToEntryId: null
     }
   });
+  if (liveSongIsBackingTracks(get())) {
+    clearMetronomeBeat();
+    if (get().metronomePlaying) set({ metronomePlaying: false });
+  }
 }
 
 let unsubSyncLink: (() => void) | null = null;
@@ -826,7 +995,10 @@ function connectSync(get: () => MasterState, set: (patch: Partial<MasterState>) 
 
 function broadcastClock(snapshot: PlaybackSnapshot, force = false) {
   if (useMasterStore.getState().deviceKind !== "master") return;
-  if (isFreeSetlistMode(currentGig(useMasterStore.getState())?.performanceMode)) return;
+  if (
+    isFreeSetlistMode(currentGig(useMasterStore.getState())?.performanceMode) ||
+    selectedSongIsFree(useMasterStore.getState())
+  ) return;
   const clock = snapshot.clock;
   if (!clock) return;
   const now = performance.now();
@@ -844,7 +1016,8 @@ function broadcastClock(snapshot: PlaybackSnapshot, force = false) {
     section: clock.section,
     playing: clock.playing,
     nextSongId: clock.nextSongId,
-    finishMode: clock.finishMode
+    finishMode: clock.finishMode,
+    sent: Date.now()
   });
 }
 
@@ -1011,7 +1184,7 @@ async function withLiveHostSongMeta(songs: Song[]): Promise<Song[]> {
   }
 }
 
-async function assignClickOnlyModes(
+async function assignLibraryPlayModes(
   songs: Song[],
   fileIndex: Record<string, string[]>,
   persist: boolean
@@ -1019,16 +1192,11 @@ async function assignClickOnlyModes(
   return Promise.all(
     songs.map(async (song) => {
       const playable = performanceAudioSong(song);
-      const files = fileIndex[song.id];
+      const listed = filesForSong(playable, fileIndex);
+      const files = listed.length > 0 ? listed : undefined;
       const current = parseSongInfo(playable.info);
-      let playMode = current.playMode;
-      if (hasOnlyClickAudio(playable, files)) playMode = PlayMode.ClickOnly;
-      else if (playMode === PlayMode.Playback && !hasBackingAudio(playable, files)) {
-        playMode = hasClickFlac(playable, files) ? PlayMode.ClickOnly : PlayMode.View;
-      } else if (playMode === PlayMode.ClickOnly && !hasClickFlac(playable, files)) {
-        playMode = PlayMode.View;
-      }
-      if (playMode === current.playMode) return playable;
+      const playMode = savedOrDefaultLibraryPlayMode(current, playable, files);
+      if (current.playMode === playMode) return playable;
       const info = parseSongInfo({ ...current, playMode });
       if (persist) void writeSongInfo(playable.id, info).catch(() => undefined);
       return { ...playable, info };
@@ -1127,11 +1295,18 @@ export function songUsesMetronome(
   performanceMode?: string
 ): boolean {
   const mode = effectivePlayMode(song, files, performanceMode);
-  return (
-    mode === PlayMode.View ||
-    (mode === PlayMode.Playback && !hasBackingAudio(song, files)) ||
-    (mode === PlayMode.ClickOnly && (!song || !hasClickFlac(song, files)))
-  );
+  return mode === PlayMode.View || (mode === PlayMode.Playback && !hasPlaybackAudio(song, files));
+}
+
+/** Position slider is for backing tracks only — never real or fake metronome songs. */
+export function songShowsPositionSlider(
+  song: Song | undefined,
+  _files: string[] | undefined,
+  performanceMode?: string
+): boolean {
+  if (!song?.sections.length) return false;
+  if (isMetronomeSetlistMode(performanceMode)) return false;
+  return declaredSongPlayMode(song) !== PlayMode.View;
 }
 
 export function clientStageLive(state: Pick<MasterState, "deviceKind" | "clientSession" | "syncConnected">): boolean {
@@ -1139,33 +1314,101 @@ export function clientStageLive(state: Pick<MasterState, "deviceKind" | "clientS
 }
 
 export function clientPracticeMode(
-  state: Pick<MasterState, "deviceKind" | "clientSession" | "syncConnected" | "clientOfflineMode">
+  state: Pick<MasterState, "deviceKind" | "clientSession" | "syncConnected">
 ): boolean {
-  return clientStageLive(state) ? false : state.deviceKind === "client" && state.clientOfflineMode === "practice";
+  return state.deviceKind === "client" && !clientStageLive(state);
+}
+
+export function stageHasLiveClients(
+  state: Pick<MasterState, "deviceKind" | "syncConnected" | "syncPeers">
+): boolean {
+  if (state.deviceKind !== "master" || !state.syncConnected) return false;
+  return state.syncPeers.some((peer) => peer.deviceKind === "client");
+}
+
+/** Local title slider: master with no clients, or a client that is not live on stage. */
+export function showsTitlePositionSlider(
+  state: Pick<MasterState, "deviceKind" | "clientSession" | "syncConnected" | "syncPeers">
+): boolean {
+  if (state.deviceKind === "client") return !clientStageLive(state);
+  if (state.deviceKind === "master") return !stageHasLiveClients(state);
+  return false;
+}
+
+function songEntryIsFree(state: MasterState, entryId = state.selectedEntryId): boolean {
+  const gig = currentGig(state);
+  if (!entryId || isMetronomeSetlistMode(gig?.performanceMode)) return false;
+  const entry = gig?.setlist.find((item) => item.entryId === entryId);
+  if (!entry || !isSongEntry(entry)) return false;
+  const song = findSongByRef(state.songs, entry.songId);
+  if (!song) return false;
+  return isFreePlayMode(effectivePlayMode(song, filesForSong(song, state.fileIndex), gig?.performanceMode));
+}
+
+function selectedSongIsFree(state: MasterState): boolean {
+  return songEntryIsFree(state);
+}
+
+export function elifLookingAhead(state: MasterState): boolean {
+  return (
+    elifCanEditSetlist(state) &&
+    Boolean(state.selectedEntryId) &&
+    state.selectedEntryId !== (state.playback.clock?.setlistEntryId ?? null)
+  );
 }
 
 export function followsSharedPlayhead(state: MasterState): boolean {
   if (state.deviceKind === "client" && !clientStageLive(state)) return false;
-  return stageConnectOn(state) && !isFreeSetlistMode(currentGig(state)?.performanceMode);
+  if (elifCanEditSetlist(state)) return false;
+  return (
+    stageConnectOn(state) &&
+    !isFreeSetlistMode(currentGig(state)?.performanceMode) &&
+    !selectedSongIsFree(state)
+  );
 }
 
 export function usesFreeMetroTransport(state: MasterState): boolean {
-  if (state.deviceKind === "client" && !clientStageLive(state)) {
-    if (state.clientOfflineMode === "free") return true;
-    return isFreeSetlistMode(currentGig(state)?.performanceMode);
-  }
-  return isFreeSetlistMode(currentGig(state)?.performanceMode);
+  return isFreeSetlistMode(currentGig(state)?.performanceMode) || selectedSongIsFree(state);
 }
 
-/** Practice plays Master.mp3 only when the setlist follows a Playback song. */
-export function practicePlaysMasterMix(state: MasterState, song = songForSelectedEntry(state)): boolean {
-  if (!clientPracticeMode(state)) return false;
+/** Master Free clicks, or a live stage client following those clicks. */
+export function followsFreeMasterClicks(state: MasterState): boolean {
+  if (!usesFreeMetroTransport(state)) return false;
+  return state.deviceKind === "master" || clientStageLive(state);
+}
+
+/** Practice file to play: Master.mp3 for Backing Tracks. */
+export function practiceAudioKind(
+  state: MasterState,
+  song = songForSelectedEntry(state)
+): PracticeAudioKind | null {
+  if (!clientPracticeMode(state) || !song) return null;
   const gig = currentGig(state);
-  const mode = parseSetlistPerformanceMode(gig?.performanceMode);
-  if (mode !== SetlistPerformanceMode.FollowSongInfo) return false;
-  if (!song) return false;
-  if ((parseSongInfo(song.info).playMode ?? PlayMode.View) !== PlayMode.Playback) return false;
-  return Boolean(practiceMasterAudio(filesForSong(song, state.fileIndex)));
+  const setlistMode = parseSetlistPerformanceMode(gig?.performanceMode);
+  if (isMetronomeSetlistMode(setlistMode) || isFreeSetlistMode(setlistMode)) return null;
+  const files = filesForSong(song, state.fileIndex);
+  const entry = gig?.setlist.find(
+    (item) =>
+      isSongEntry(item) && (item.songId === song.id || item.songId === song.folder)
+  );
+  const declared = entryPlayMode(entry && isSongEntry(entry) ? entry : undefined, song.info);
+  if (setlistMode === SetlistPerformanceMode.FollowSongInfo && declared === PlayMode.Playback) {
+    if (practiceMasterAudio(files)) return "master";
+  }
+  return null;
+}
+
+/** Practice plays Master.mp3 instead of the generated metronome. */
+export function practicePlaysMasterMix(state: MasterState, song = songForSelectedEntry(state)): boolean {
+  return practiceAudioKind(state, song) != null;
+}
+
+function queuePracticeAudio(state: MasterState, song?: Song) {
+  const target = song ?? songForSelectedEntry(state);
+  if (!target) return;
+  const kind = practiceAudioKind(state, target);
+  if (!kind) return;
+  void loadPracticeAudio(target.id, filesForSong(target, state.fileIndex), kind);
 }
 
 export function practiceBlocksSongSelect(state: MasterState): boolean {
@@ -1195,6 +1438,41 @@ export function practiceShouldPlayNext(state: MasterState): boolean {
   const nextEntry = gig.setlist.find((item) => item.entryId === nextId);
   if (!nextEntry || !isSongEntry(nextEntry)) return false;
   return practicePlaysMasterMix(state, findSongByRef(state.songs, nextEntry.songId));
+}
+
+/** Song the live transport follows: playhead while a song is running, otherwise the selection. */
+export function livePerformanceEntryId(state: MasterState): string | null {
+  const playing =
+    state.playback.state === PlaybackState.Playing ||
+    state.playback.state === PlaybackState.Transitioning;
+  if (playing && state.playback.clock?.setlistEntryId) return state.playback.clock.setlistEntryId;
+  return state.selectedEntryId;
+}
+
+export function liveSongIsBackingTracks(state: MasterState): boolean {
+  const gig = currentGig(state);
+  if (!gig || isMetronomeSetlistMode(gig.performanceMode) || isFreeSetlistMode(gig.performanceMode)) {
+    return false;
+  }
+  const entryId = livePerformanceEntryId(state);
+  const entry = entryId ? gig.setlist.find((item) => item.entryId === entryId) : undefined;
+  if (!entry || !isSongEntry(entry)) return false;
+  const song = findSongByRef(state.songs, entry.songId);
+  return entryPlayMode(entry, song?.info) === PlayMode.Playback;
+}
+
+/** Live clients watch the metronome pulse but do not drive play/stop. */
+export function followsMasterMetroVisuals(state: MasterState): boolean {
+  if (!clientStageLive(state)) return false;
+  if (liveSongIsBackingTracks(state)) return false;
+  const gig = currentGig(state);
+  if (isFreeSetlistMode(gig?.performanceMode)) return false;
+  if (isMetronomeSetlistMode(gig?.performanceMode)) return true;
+  const entryId = livePerformanceEntryId(state);
+  const entry = entryId ? gig?.setlist.find((item) => item.entryId === entryId) : undefined;
+  if (!entry || !isSongEntry(entry)) return false;
+  const song = findSongByRef(state.songs, entry.songId);
+  return entryPlayMode(entry, song?.info) === PlayMode.View;
 }
 
 export function usesContinuousMetroTransport(state: MasterState): boolean {
@@ -1392,11 +1670,17 @@ async function loadLibraryNow(
       if (!isNativeApp()) {
         const report = (message: string) => set({ libraryStatus: message, practiceBusy: message });
         report("Updating library…");
-        await syncPublishedLibrary((progress) => report(progress.message));
+        try {
+          await syncPublishedLibrary((progress) => report(progress.message));
+        } catch (error) {
+          if (songs.length === 0) throw error;
+        }
         const again = await loadPracticeLibrary();
-        songs = again.songs;
-        fileIndex = again.fileIndex;
-        hostOk = true;
+        if (again.songs.length > 0) {
+          songs = again.songs;
+          fileIndex = again.fileIndex;
+        }
+        hostOk = songs.length > 0;
         set({ practiceBusy: null, libraryStatus: null });
       }
     } else {
@@ -1413,7 +1697,7 @@ async function loadLibraryNow(
   if (kind === "client") {
     songs = await withLiveHostSongMeta(songs);
   } else {
-    songs = await assignClickOnlyModes(songs, fileIndex, true);
+    songs = await assignLibraryPlayModes(songs, fileIndex, true);
   }
   if (songs.length > 0) {
     set({ songs, fileIndex, hostOk });
@@ -1442,13 +1726,14 @@ async function loadLibraryNow(
       practiceBusy: null,
       masterPage: "lyrics",
       clientSession: "practice",
-      clientOfflineMode: "free",
       syncHost: null,
       setlistOpen: true,
       songMix
     });
     const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
-    if (songId) void loadPracticeAudio(songId, fileIndex[songId] ?? []);
+    if (songId) {
+      queuePracticeAudio({ ...get(), ...next }, findSongByRef(next.songs, songId));
+    }
     if (options?.syncHost) get().joinStage(options.syncHost);
     return;
   }
@@ -1497,7 +1782,9 @@ async function loadLibraryNow(
     metronomeVolume: showMix.metronomeVolume,
     libraryStatus: null
   });
-  if (kind === "master") void get().setAudioDevice(get().audioDeviceId);
+  if (kind === "master") {
+    void get().setAudioDevice(get().audioDeviceId).then(() => preloadMetroIntro());
+  }
   broadcastShow();
   if (kind === "master") shareLocalClientPack(get, true);
 }
@@ -1506,6 +1793,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
   const armContinuousNextVisual = () => {
     const state = get();
     if (
+      usesFreeMetroTransport(state) ||
       isFreeSetlistMode(currentGig(state)?.performanceMode) ||
       isMetronomeSetlistMode(currentGig(state)?.performanceMode)
     ) {
@@ -1527,17 +1815,59 @@ export const useMasterStore = create<MasterState>((set, get) => {
       metronome.attach(ctx, engine.busNode("CUE"));
       metronome.setVolume(state.metronomeVolume);
       const parsed = parseSongInfo(song.info);
-      metronome.start(metronomeTempoMap(parsed), parsed.beats, 0, { silent: true });
+      metronome.start(metronomeTempoMap(parsed), 0, { silent: true });
     } catch {
       // visual preview is optional
     }
   };
 
   const endMetronome = () => {
+    metronomeStartGen += 1;
+    freeVisualSongId = null;
     stopMetronomeTick();
     metronome.stop();
+    clearMetronomeBeat();
     set({ metronomePlaying: false });
+    if (get().deviceKind === "master") sendSync({ type: "Metronome", playing: false });
     armContinuousNextVisual();
+  };
+
+  const syncFreeVisualMetronome = () => {
+    const state = get();
+    if (state.deviceKind !== "master") return;
+    if (state.metronomePlaying || !usesFreeMetroTransport(state)) {
+      if (freeVisualSongId && !state.metronomePlaying) {
+        freeVisualSongId = null;
+        metronome.stop();
+        clearMetronomeBeat();
+        sendSync({ type: "Metronome", playing: false });
+      }
+      return;
+    }
+    const song = songForSelectedEntry(state);
+    if (!song) {
+      if (freeVisualSongId) {
+        freeVisualSongId = null;
+        metronome.stop();
+        clearMetronomeBeat();
+        sendSync({ type: "Metronome", playing: false });
+      }
+      return;
+    }
+    if (freeVisualSongId === song.id && metronome.isPlaying && metronome.isSilent) return;
+    try {
+      const ctx = engine.prime();
+      metronome.attach(ctx, engine.busNode("CUE"));
+      metronome.setVolume(state.metronomeVolume);
+      const parsed = parseSongInfo(song.info);
+      freeVisualSongId = song.id;
+      metronome.start(metronomeTempoMap(parsed), 0, { silent: true });
+    } catch (err) {
+      freeVisualSongId = null;
+      logger.audio("free_visual_metro_failed", {
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
   };
 
   const engineSongs = (songs = get().songs, gig = currentGig(get())) =>
@@ -1564,7 +1894,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     });
     controller.replaceSongs(engineSongs());
     controller.seek(target);
-    sendSync({ type: "Seek", time: target });
+    sendSync({ type: "Seek", time: target, sent: Date.now() });
     const snap = controller.getSnapshot();
     if (snap.state === PlaybackState.Playing || snap.state === PlaybackState.Transitioning) {
       broadcastClock(snap, true);
@@ -1586,12 +1916,15 @@ export const useMasterStore = create<MasterState>((set, get) => {
         if (get().selectedEntryId !== nextId) get().selectSetlistEntry(nextId);
         const gig = currentGig(get());
         const entry = gig?.setlist.find((item) => item.entryId === nextId);
-        const song =
-          entry && isSongEntry(entry) ? findSongByRef(get().songs, entry.songId) : undefined;
+        if (!entry || !isSongEntry(entry)) return;
+        const song = findSongByRef(get().songs, entry.songId);
         const files = song ? filesForSong(song, get().fileIndex) : undefined;
         const mode = effectivePlayMode(song, files, gig?.performanceMode);
+        if (mode === PlayMode.Free) return;
         if (mode === PlayMode.View) {
-          get().startMetronome(0);
+          if (!shouldAutoStartMetronome(song)) return;
+          const startAt = songChainStartAt(song, entry);
+          get().startMetronome(startAt);
           return;
         }
         if (firstSectionNamed(song?.sections, "SERBEST")) return;
@@ -1602,7 +1935,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
       entryId &&
       get().selectedEntryId !== entryId &&
       !followsSharedPlayhead(get()) &&
-      !isFreeSetlistMode(currentGig(get())?.performanceMode)
+      !isFreeSetlistMode(currentGig(get())?.performanceMode) &&
+      !selectedSongIsFree(get())
     ) {
       set({
         playback,
@@ -1631,6 +1965,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     gigId: null,
     librarySongId: null,
     selectedEntryId: null,
+    justJoinedStage: false,
     previewTime: 0,
     playbackPaused: false,
     panicActive: false,
@@ -1648,16 +1983,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
     joinAddress: null,
     stageName: storedStageName(),
     clientSession: "practice",
-    clientOfflineMode: "free",
-    setClientOfflineMode: (mode) => {
-      if (clientStageLive(get())) return;
-      if (mode === "free") {
-        if (get().metronomePlaying) endMetronome();
-        if (get().playback.state === PlaybackState.Playing) get().pausePractice();
-        stopPracticeAudio();
-      }
-      set({ clientOfflineMode: mode });
-    },
     practiceBusy: null,
     libraryStatus: null,
     masterPage: "prep",
@@ -1678,6 +2003,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     audioOutputChannels: 2,
     audioRoutingMode: storedRoutingMode(),
     audioError: null,
+    audioHint: null,
     metronomePlaying: false,
     metronomeVolume: 0.7,
 
@@ -1765,7 +2091,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       if (!value || !stageName) return;
       stopPracticeAudio();
       localStorage.setItem(MASTER_HOST_KEY, value);
-      set({ syncHost: value, clientSession: "stage", setlistOpen: true });
+      set({ syncHost: value, clientSession: "stage", setlistOpen: true, justJoinedStage: true });
       connectSync(get, set);
     },
 
@@ -1782,12 +2108,14 @@ export const useMasterStore = create<MasterState>((set, get) => {
       set({
         syncHost: null,
         clientSession: "practice",
-        clientOfflineMode: "free",
         setlistOpen: true,
-        syncConnected: false
+        syncConnected: false,
+        justJoinedStage: false
       });
       void readPublishedGigs().then((published) => {
-        set(applyClientLibrary(get().songs, get().fileIndex, published, keep));
+        const next = applyClientLibrary(get().songs, get().fileIndex, published, keep);
+        set(next);
+        queuePracticeAudio({ ...get(), ...next }, keep ? findSongByRef(get().songs, keep) : undefined);
       });
     },
 
@@ -1808,11 +2136,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         selectedEntryId: entry?.entryId ?? practiceEntryId(id),
         previewTime: 0
       });
-      const files = [
-        ...(get().fileIndex[id] ?? []),
-        ...(song?.folder ? (get().fileIndex[song.folder] ?? []) : [])
-      ];
-      void loadPracticeAudio(id, files);
+      queuePracticeAudio(get(), song ?? findSongByRef(get().songs, id));
     },
 
     reloadPracticeLibrary: async () => {
@@ -1823,7 +2147,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
       const next = applyClientLibrary(songs, index.fileIndex, published, current);
       set(next);
       const songId = next.gigs.find((gig) => gig.id === next.gigId)?.setlist.find(isSongEntry)?.songId;
-      if (songId) void loadPracticeAudio(songId, index.fileIndex[songId] ?? []);
+      if (songId) {
+        queuePracticeAudio({ ...get(), ...next }, findSongByRef(next.songs, songId));
+      }
     },
 
     importPracticePackage: async (file) => {
@@ -1931,6 +2257,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
         const current = useMasterStore.getState();
         const duration = practiceAudioDuration();
         const playing = !ended && practiceAudioPlaying();
+        if (playing) setFollowClock(time, true);
+        else stopFollowClock(time);
         useMasterStore.setState({
           previewTime: time,
           songs:
@@ -1945,29 +2273,43 @@ export const useMasterStore = create<MasterState>((set, get) => {
             clock: practiceClock(entry, time, playing)
           }
         });
-        if (!ended || !practiceShouldPlayNext(useMasterStore.getState())) return;
+        if (!ended) return;
         const store = useMasterStore.getState();
-        const nextId = nextUnskippedSongEntryId(currentGig(store), store.selectedEntryId);
-        if (!nextId) return;
-        store.selectSetlistEntry(nextId, { playNext: true });
-        queueMicrotask(() => {
-          void useMasterStore.getState().playPractice();
-        });
+        const gig = currentGig(store);
+        if (practiceShouldPlayNext(store)) {
+          const nextId = nextUnskippedSongEntryId(gig, store.selectedEntryId);
+          if (!nextId) return;
+          store.selectSetlistEntry(nextId, { playNext: true });
+          queueMicrotask(() => {
+            void useMasterStore.getState().playPractice();
+          });
+          return;
+        }
+        const index = store.selectedEntryId
+          ? (gig?.setlist.findIndex((item) => item.entryId === store.selectedEntryId) ?? -1)
+          : -1;
+        const landOn = gig && index >= 0 ? nextEndedSelectionId(gig.setlist, index) : null;
+        const landEntry = landOn ? gig?.setlist.find((item) => item.entryId === landOn) : undefined;
+        if (landOn && landEntry && isStopMarker(landEntry)) {
+          store.selectSetlistEntry(landOn);
+        }
       });
       const song = state.songs.find((item) => item.id === entry.songId);
       const files = [
         ...(state.fileIndex[entry.songId] ?? []),
         ...(song?.folder ? (state.fileIndex[song.folder] ?? []) : [])
       ];
-      if (!isPracticeAudioLoaded(entry.songId)) {
-        const ok = await loadPracticeAudio(entry.songId, files);
+      const kind = practiceAudioKind(state, song);
+      if (!kind) return;
+      if (!isPracticeAudioLoaded(entry.songId, kind)) {
+        const ok = await loadPracticeAudio(entry.songId, files, kind);
         if (!ok) return;
       }
       seekPracticeAudio(state.previewTime);
       try {
         await playPracticeAudio();
       } catch {
-        const ok = await loadPracticeAudio(entry.songId, files);
+        const ok = await loadPracticeAudio(entry.songId, files, kind);
         if (!ok) return;
         try {
           await playPracticeAudio();
@@ -1976,6 +2318,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
         }
       }
       const duration = practiceAudioDuration();
+      const startAt = get().previewTime;
+      setFollowClock(startAt, true);
       set({
         songs:
           duration > 0
@@ -1986,7 +2330,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         playback: {
           ...get().playback,
           state: PlaybackState.Playing,
-          clock: practiceClock(entry, get().previewTime, true)
+          clock: practiceClock(entry, startAt, true)
         }
       });
     },
@@ -1994,6 +2338,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     pausePractice: () => {
       pausePracticeAudio();
       const time = practiceAudioTime();
+      stopFollowClock(time);
       const entry = get().selectedEntryId
         ? currentGig(get())?.setlist.find((item) => item.entryId === get().selectedEntryId)
         : undefined;
@@ -2016,6 +2361,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         ? currentGig(get())?.setlist.find((item) => item.entryId === get().selectedEntryId)
         : undefined;
       const playing = get().playback.state === PlaybackState.Playing;
+      setFollowClock(time, playing);
       set({
         previewTime: time,
         playback:
@@ -2044,24 +2390,71 @@ export const useMasterStore = create<MasterState>((set, get) => {
     setMasterPage: (page) => set({ masterPage: page }),
     refreshAudioOutputs: async () => {
       try {
+        const channels = engine.refreshOutputChannels();
         const outputs = await engine.listOutputs();
         const routing = engine.getRoutingState();
         set({
           audioOutputs: outputs,
-          audioOutputChannels: routing.channels,
+          audioOutputChannels: channels || routing.channels,
           audioError: null
         });
       } catch (error) {
         set({ audioError: error instanceof Error ? error.message : String(error) });
       }
     },
-    setAudioDevice: async (deviceId) => {
-      if (get().deviceKind === "client") return;
-      controller.stopImmediate();
-      metronome.stop();
-      set({ metronomePlaying: false, audioError: null });
+    recheckAudioOutputs: async () => {
       try {
-        const selected = await engine.selectOutput(deviceId);
+        const channels = engine.refreshOutputChannels();
+        if (channels >= 3) {
+          const requestedMode = get().audioRoutingMode;
+          let mode = engine.getRoutingState().routingMode;
+          if (requestedMode !== mode) {
+            try {
+              engine.setRoutingMode(requestedMode);
+              mode = requestedMode;
+            } catch {
+              // Keep the live mode if the card still cannot host it.
+            }
+          }
+          const outputs = await engine.listOutputs();
+          set({
+            audioOutputs: outputs,
+            audioOutputChannels: channels,
+            audioRoutingMode: mode,
+            audioError: null,
+            audioHint: null
+          });
+          return;
+        }
+        if (audioGraphLive(get())) {
+          const outputs = await engine.listOutputs();
+          set({
+            audioOutputs: outputs,
+            audioOutputChannels: channels,
+            audioError: null,
+            audioHint: "Stop playback, then Recheck to apply a new speaker layout."
+          });
+          return;
+        }
+        await get().setAudioDevice(get().audioDeviceId, { recreateIfStereo: true });
+      } catch (error) {
+        set({ audioError: error instanceof Error ? error.message : String(error) });
+      }
+    },
+    setAudioDevice: async (deviceId, opts) => {
+      if (get().deviceKind === "client") return;
+      const sameDevice =
+        get().audioDeviceId === deviceId && engine.getRoutingState().deviceId === deviceId;
+      const recreateIfStereo = opts?.recreateIfStereo ?? !sameDevice;
+      if (!sameDevice || recreateIfStereo) {
+        controller.stopImmediate();
+        metronome.stop();
+        clearMetronomeBeat();
+        if (get().deviceKind === "master") sendSync({ type: "Metronome", playing: false });
+        set({ metronomePlaying: false, audioError: null, audioHint: null });
+      }
+      try {
+        const selected = await engine.selectOutput(deviceId, { recreateIfStereo });
         const requestedMode = get().audioRoutingMode;
         let mode = selected.routingMode;
         if (requestedMode !== mode) {
@@ -2080,49 +2473,33 @@ export const useMasterStore = create<MasterState>((set, get) => {
           audioDeviceId: deviceId,
           audioOutputChannels: selected.channels,
           audioRoutingMode: mode,
-          audioError: null
+          audioError: null,
+          audioHint: null
         });
+        preloadMetroIntro();
       } catch (error) {
         set({ audioError: error instanceof Error ? error.message : String(error) });
       }
     },
     setAudioRoutingMode: (mode) => {
       if (get().deviceKind === "client") return;
-      controller.stopImmediate();
-      metronome.stop();
-      set({ metronomePlaying: false, audioError: null });
       try {
         engine.setRoutingMode(mode);
         localStorage.setItem(AUDIO_ROUTING_KEY, String(mode));
-        set({ audioRoutingMode: mode });
+        set({ audioRoutingMode: mode, audioError: null, audioHint: null });
       } catch (error) {
         set({ audioError: error instanceof Error ? error.message : String(error) });
       }
     },
     toggleSetlistOpen: () => set((state) => ({ setlistOpen: !state.setlistOpen })),
-    toggleAutoScroll: () => set((state) => ({ autoScroll: !state.autoScroll })),
     toggleEditOpen: () => set((state) => ({ editOpen: !state.editOpen })),
-    zoomOut: () =>
+    setStageZoom: (value) =>
       set((state) => {
         if (!isStageContentPage(state.masterPage)) return {};
         const page = state.masterPage;
-        return {
-          stageZooms: {
-            ...state.stageZooms,
-            [page]: clampStageZoom(state.stageZooms[page] - STAGE_ZOOM_STEP)
-          }
-        };
-      }),
-    zoomIn: () =>
-      set((state) => {
-        if (!isStageContentPage(state.masterPage)) return {};
-        const page = state.masterPage;
-        return {
-          stageZooms: {
-            ...state.stageZooms,
-            [page]: clampStageZoom(state.stageZooms[page] + STAGE_ZOOM_STEP)
-          }
-        };
+        const zoom = clampStageZoom(value);
+        if (zoom === state.stageZooms[page]) return {};
+        return { stageZooms: { ...state.stageZooms, [page]: zoom } };
       }),
 
     setSongMixStrip: (songId, channel, patch) => {
@@ -2346,11 +2723,13 @@ export const useMasterStore = create<MasterState>((set, get) => {
     selectSetlistEntry: (entryId, options) => {
       if (
         stageConnectOn(get()) &&
-        !isFreeSetlistMode(currentGig(get())?.performanceMode)
+        !isFreeSetlistMode(currentGig(get())?.performanceMode) &&
+        !songEntryIsFree(get(), entryId)
       ) {
         if (get().deviceKind === "client" && !elifCanEditSetlist(get())) return;
         set({ selectedEntryId: entryId });
         if (get().deviceKind === "master") broadcastSelection();
+        syncFreeVisualMetronome();
         return;
       }
       if (get().deviceKind === "client") {
@@ -2363,13 +2742,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         const entry = gig?.setlist.find((item) => item.entryId === entryId);
         set({ selectedEntryId: entryId, previewTime: startAtOf(gig, entryId, get().songs) });
         if (clientPracticeMode(get()) && entry && isSongEntry(entry) && practicePlaysMasterMix(get())) {
-          const song = findSongByRef(get().songs, entry.songId);
-          const files = [
-            ...(get().fileIndex[entry.songId] ?? []),
-            ...(song ? (get().fileIndex[song.id] ?? []) : []),
-            ...(song?.folder ? (get().fileIndex[song.folder] ?? []) : [])
-          ];
-          void loadPracticeAudio(song?.id ?? entry.songId, files);
+          queuePracticeAudio(get(), findSongByRef(get().songs, entry.songId));
         }
         return;
       }
@@ -2387,8 +2760,17 @@ export const useMasterStore = create<MasterState>((set, get) => {
         broadcastSelection();
         return;
       }
-      if (playing || get().playbackPaused) controller.stopImmediate();
-      if (get().metronomePlaying) metronome.stop();
+      if (playing || get().playbackPaused) {
+        controller.stopImmediate();
+        if (stageConnectOn(get()) && songEntryIsFree(get(), entryId)) {
+          sendSync({ type: "Stop" });
+        }
+      }
+      if (get().metronomePlaying) {
+        metronome.stop();
+        clearMetronomeBeat();
+        if (get().deviceKind === "master") sendSync({ type: "Metronome", playing: false });
+      }
       clearPanic(false);
       const gig = currentGig(get());
       const librarySongId = isSongLibraryGig(gig)
@@ -2406,6 +2788,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       });
       controller.replaceSongs(engineSongs());
       broadcastSelection();
+      syncFreeVisualMetronome();
     },
 
     seek: (time) => {
@@ -2443,8 +2826,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
       if (index >= 0 && controller.getSnapshot().currentIndex === index) {
         controller.seek(clamped);
       }
-      if (!isFreeSetlistMode(gig?.performanceMode)) {
-        sendSync({ type: "Seek", time: clamped });
+      if (!isFreeSetlistMode(gig?.performanceMode) && !selectedSongIsFree(get())) {
+        sendSync({ type: "Seek", time: clamped, sent: Date.now() });
       }
     },
 
@@ -2472,6 +2855,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
       }
       const song = get().songs.find((item) => item.id === entry.songId);
       const files = song ? filesForSong(song, get().fileIndex) : undefined;
+      if (usesFreeMetroTransport(get()) || effectivePlayMode(song, files, gig.performanceMode) === PlayMode.Free) {
+        return;
+      }
       if (effectivePlayMode(song, files, gig.performanceMode) === PlayMode.View) {
         get().startMetronome(get().previewTime);
         return;
@@ -2561,6 +2947,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
       cancelFadeStop();
       stopMetronomeTick();
       metronome.stop();
+      clearMetronomeBeat();
+      if (get().deviceKind === "master") sendSync({ type: "Metronome", playing: false });
       controller.stopImmediate();
       clearPanic(false);
       set({
@@ -2584,6 +2972,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
         fadeStopTimer = 0;
         stopMetronomeTick();
         metronome.stop();
+        clearMetronomeBeat();
+        if (get().deviceKind === "master") sendSync({ type: "Metronome", playing: false });
         controller.stopImmediate();
         engine.resetFadeOut();
         metronome.resetFadeOut();
@@ -2611,45 +3001,66 @@ export const useMasterStore = create<MasterState>((set, get) => {
 
     startMetronome: (fromTime = 0) => {
       const state = get();
+      if (usesFreeMetroTransport(state)) return;
       const practiceClient = clientPracticeMode(state);
-      const freeStageClient =
-        state.deviceKind === "client" && usesFreeMetroTransport(state);
-      if (state.deviceKind === "client" && !practiceClient && !freeStageClient) return;
+      if (state.deviceKind === "client" && !practiceClient) return;
       cancelFadeStop();
       const song = songForSelectedEntry(state);
       if (!song) return;
       const time = Math.max(0, fromTime);
+      const tailPlaying =
+        !practiceClient &&
+        (state.playback.state === PlaybackState.Playing ||
+          state.playback.state === PlaybackState.Transitioning) &&
+        state.playback.outgoingDeck != null;
       if (practiceClient) {
         pausePracticeAudio();
-      } else if (!freeStageClient) {
+        stopFollowClock(time);
+      } else if (!tailPlaying) {
         controller.stopImmediate();
         controller.seek(time);
       }
+      const startId = ++metronomeStartGen;
       try {
         const ctx = engine.prime();
         metronome.attach(ctx, engine.busNode("CUE"));
         metronome.setVolume(state.metronomeVolume);
         const parsed = parseSongInfo(song.info);
         const silent = setlistModeIsSilent(currentGig(state)?.performanceMode);
-        metronome.start(metronomeTempoMap(parsed), parsed.beats, time, { silent });
-        set({
-          metronomePlaying: true,
-          previewTime: time,
-          playbackPaused: false,
-          ...(practiceClient
-            ? {
-                playback: {
-                  ...get().playback,
-                  state: PlaybackState.Idle,
-                  clock: undefined
+        const begin = () => {
+          if (startId !== metronomeStartGen) return;
+          set({
+            metronomePlaying: true,
+            previewTime: time,
+            playbackPaused: false,
+            ...(practiceClient
+              ? {
+                  playback: {
+                    ...get().playback,
+                    state: PlaybackState.Idle,
+                    clock: undefined
+                  }
                 }
-              }
-            : {})
+              : {})
+          });
+          metronome.start(metronomeTempoMap(parsed), time, { silent, intro: !silent });
+          startMetronomeTick();
+        };
+        if (silent || metronome.introPrepared(ctx)) {
+          begin();
+          return;
+        }
+        void metronome.ensureIntro(ctx).then(begin, (err) => {
+          if (startId !== metronomeStartGen) return;
+          begin();
+          logger.audio("metronome_intro_failed", {
+            error: err instanceof Error ? err.message : String(err)
+          });
         });
-        startMetronomeTick();
       } catch (err) {
         stopMetronomeTick();
         metronome.stop();
+        clearMetronomeBeat();
         set({ metronomePlaying: false });
         armContinuousNextVisual();
         logger.audio("metronome_start_failed", {
@@ -2659,6 +3070,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     },
 
     stopMetronome: () => endMetronome(),
+    syncFreeVisualMetronome,
 
     previewContinuousNextMetronome: () => {
       if (get().metronomePlaying) return;
@@ -2688,13 +3100,18 @@ export const useMasterStore = create<MasterState>((set, get) => {
       const previousMode = parseSongInfo(get().songs.find((song) => song.id === songId)?.info).playMode;
       const parsed = parseSongInfo(info);
       const songs = get().songs.map((song) =>
-        song.id === songId ? { ...song, info: parsed } : song
+        song.id === songId ? { ...song, kita: parsed.kita, info: parsed } : song
       );
       controller.replaceSongs(
         playbackSongs(songs, get().fileIndex, get().gigs.find((item) => item.id === get().gigId), panicClickOnly(get()))
       );
       set({ songs });
       void writeSongInfo(songId, parsed).catch(() => undefined);
+      void updateSongSettings(songId, (current) => ({
+        ...current,
+        metroNotes: parsed.metroNotes
+      })).catch(() => undefined);
+      try {
       const { selectedEntryId, gigs, gigId, metronomePlaying } = get();
       const gig = gigs.find((item) => item.id === gigId);
       const entry = selectedEntryId
@@ -2702,7 +3119,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         : undefined;
       if (!entry || !isSongEntry(entry) || entry.songId !== songId || !gig) {
         if (metronomePlaying) {
-          metronome.start(metronomeTempoMap(parsed), parsed.beats, metronome.time);
+          metronome.start(metronomeTempoMap(parsed), metronome.time);
         }
         return;
       }
@@ -2712,7 +3129,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         get().playback.state === PlaybackState.Transitioning;
       if (previousMode === parsed.playMode) {
         if (metronomePlaying) {
-          metronome.start(metronomeTempoMap(parsed), parsed.beats, metronome.time);
+          metronome.start(metronomeTempoMap(parsed), metronome.time);
         }
         return;
       }
@@ -2724,6 +3141,10 @@ export const useMasterStore = create<MasterState>((set, get) => {
       if (audioPlaying || metronomePlaying) {
         if (parsed.playMode === PlayMode.View) {
           get().startMetronome(0);
+          return;
+        }
+        if (parsed.playMode === PlayMode.Free) {
+          get().stop();
           return;
         }
         if (audioPlaying && isDeckPlayMode(previousMode)) {
@@ -2745,6 +3166,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
       }
       if (isDeckPlayMode(parsed.playMode) && !deckReadyAt(index)) {
         await controller.selectIndex(index);
+      }
+      } finally {
+        syncFreeVisualMetronome();
       }
     },
 
@@ -2780,14 +3204,16 @@ export const useMasterStore = create<MasterState>((set, get) => {
         if (usesContinuousMetroTransport(get()) && !isFreeSetlistMode(nextMode)) {
           get().previewContinuousNextMetronome();
         }
+        syncFreeVisualMetronome();
+        return;
+      }
+      if (effective === PlayMode.Free || isFreeSetlistMode(nextMode)) {
+        get().stop();
+        syncFreeVisualMetronome();
         return;
       }
       if (effective === PlayMode.View) {
         clearPanic();
-        if (isFreeSetlistMode(nextMode)) {
-          get().stop();
-          return;
-        }
         get().startMetronome(0);
         return;
       }

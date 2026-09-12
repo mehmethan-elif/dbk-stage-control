@@ -236,9 +236,12 @@ export function notaHitAt(song: Song | undefined, time: number): NotaPlayHit | u
 export function nextNotaHit(song: Song | undefined, time: number): NotaPlayHit | undefined {
   if (!song) return undefined;
   const starts = measureStartTimes(song.tempoMap, song.duration);
-  const nextStart = starts.find((start) => start > time + 1e-6);
-  if (nextStart == null) return undefined;
-  return notaHitAt(song, nextStart + TIME_EPS);
+  for (const start of starts) {
+    if (start <= time + 1e-6) continue;
+    const hit = notaHitAt(song, start + TIME_EPS);
+    if (hit) return hit;
+  }
+  return undefined;
 }
 
 /** Show the next rect when it starts a section, or when that next measure is unchained. */
@@ -466,6 +469,8 @@ export function rememberNotaLayout(
   rects: NotaSectionBox[],
   brokenChains: BrokenMeasureChain[] = []
 ): void {
+  const previous = notaLayoutMemory.get(songId);
+  if (previous && losesMeasureLayout(previous.rects, rects)) return;
   notaLayoutMemory.set(songId, { rects, brokenChains });
 }
 
@@ -477,23 +482,33 @@ export function clearNotaLayoutMemory(): void {
   notaLayoutMemory.clear();
 }
 
+export function preferNotaLayout(
+  cached: { rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] } | undefined,
+  disk: { rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] }
+): { rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] } {
+  const diskMeasures = disk.rects.filter((box) => !isSectionLabel(box)).length;
+  const cacheMeasures = cached?.rects.filter((box) => !isSectionLabel(box)).length ?? 0;
+  if (cached && cacheMeasures >= diskMeasures) return cached;
+  return disk;
+}
+
 export async function loadNotaLayout(
   songId: string,
   sections: Section[] = []
 ): Promise<{ rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] }> {
   const cached = notaLayoutMemory.get(songId);
-  if (cached) return cached;
   try {
     const settings = await readSongSettings(songId);
     const rects = rectsForLiveSections(parseNotaSections(settings.notaSections, sections), sections);
-    const layout = {
+    const disk = {
       rects,
       brokenChains: effectiveBrokenChains(rects, parseBrokenChains(settings.notaSections))
     };
+    const layout = preferNotaLayout(cached, disk);
     rememberNotaLayout(songId, layout.rects, layout.brokenChains);
     return layout;
   } catch {
-    return { rects: [], brokenChains: [] };
+    return cached ?? { rects: [], brokenChains: [] };
   }
 }
 
@@ -528,7 +543,21 @@ export function mergeNotaRects(
 ): NotaSectionBox[] {
   const kept = base.filter((box) => !touched.has(box.name));
   const overlay = incoming.filter((box) => touched.has(box.name));
-  return dedupeNotaRects([...overlay, ...kept]);
+  const incomingMeasures = overlay.filter((box) => !isSectionLabel(box));
+  const rescued: NotaSectionBox[] = [];
+  if (incoming.length > 0 && incomingMeasures.length === 0) {
+    rescued.push(...base.filter((box) => !isSectionLabel(box)));
+  } else {
+    for (const name of touched) {
+      const incomingForName = overlay.filter((box) => box.name === name);
+      const incomingForNameMeasures = incomingForName.filter((box) => !isSectionLabel(box));
+      const baseMeasures = base.filter((box) => box.name === name && !isSectionLabel(box));
+      if (incomingForName.length > 0 && incomingForNameMeasures.length === 0 && baseMeasures.length > 0) {
+        rescued.push(...baseMeasures);
+      }
+    }
+  }
+  return dedupeNotaRects([...overlay, ...rescued, ...kept]);
 }
 
 function serializeNotaRects(rects: readonly NotaSectionBox[]) {
@@ -575,16 +604,21 @@ export async function saveNotaSections(
   await updateSongSettings(songId, (settings) => {
     const latest = pendingNotaSaves.get(songId) ?? { rects, touched, brokenChains };
     const disk = parseNotaSections(settings.notaSections);
+    const merged = mergeNotaRects(disk, latest.rects, latest.touched);
+    if (losesMeasureLayout(disk, merged)) {
+      return settings;
+    }
     const chains = latest.brokenChains ?? parseBrokenChains(settings.notaSections);
     return {
       ...settings,
       notaSections: {
         version: 1,
-        rects: serializeNotaRects(mergeNotaRects(disk, latest.rects, latest.touched)),
+        rects: serializeNotaRects(merged),
         brokenChains: serializeBrokenChains(effectiveBrokenChains(latest.rects, chains))
       }
     };
   });
+  pendingNotaSaves.delete(songId);
 }
 
 export function upsertNotaBox(rects: NotaSectionBox[], box: NotaSectionBox): NotaSectionBox[] {
@@ -809,8 +843,23 @@ export function shouldPersistNotaLayout(
   previous: readonly NotaSectionBox[],
   next: readonly NotaSectionBox[]
 ): boolean {
+  if (!previous.some((box) => !isSectionLabel(box))) return false;
+  if (losesMeasureLayout(previous, next)) return false;
   const previousIds = new Set(previous.map((box) => box.id));
   return next.some((box) => !previousIds.has(box.id));
+}
+
+/** True when a label rewrite would replace a measured layout with leftover crumbs. */
+export function losesMeasureLayout(
+  previous: readonly NotaSectionBox[],
+  next: readonly NotaSectionBox[]
+): boolean {
+  const previousMeasures = previous.filter((box) => !isSectionLabel(box)).length;
+  const nextMeasures = next.filter((box) => !isSectionLabel(box)).length;
+  if (previousMeasures === 0 || next.length === 0) return false;
+  if (nextMeasures === 0) return true;
+  const nextLabels = next.filter(isSectionLabel).length;
+  return nextLabels > 0 && nextMeasures < previousMeasures && nextMeasures / previousMeasures <= 0.25;
 }
 
 export function ensureSectionLabels(

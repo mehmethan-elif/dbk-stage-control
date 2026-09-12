@@ -195,10 +195,17 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
     }
     const settingsRaw = await readPracticeFileBuffer(folder, "settings.json");
     let info = parseSongInfo(packed?.info);
-    if (!packed?.info && settingsRaw) {
+    if (settingsRaw) {
       try {
-        const settings = JSON.parse(decodeText(settingsRaw)) as { view?: unknown };
-        if (settings.view) info = parseSongInfo(settings.view);
+        const settings = JSON.parse(decodeText(settingsRaw)) as {
+          view?: unknown;
+          metroNotes?: { lyrics?: string; drums?: string };
+        };
+        if (!packed?.info && settings.view) info = parseSongInfo(settings.view);
+        info = parseSongInfo({
+          ...info,
+          metroNotes: { ...settings.metroNotes, ...info.metroNotes }
+        });
       } catch {
         // keep default info
       }

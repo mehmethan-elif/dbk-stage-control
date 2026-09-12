@@ -1,63 +1,86 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import {
   effectivePlayMode,
-  hasBackingAudio,
   hasClickFlac,
+  hasPlaybackAudio,
   ELIF_KONUSMA_LABEL,
-  isElifKonusma,
-  isMetronomeSetlistMode,
   isSongEntry,
-  measureStartTimes,
-  metronomeTempoMap,
-  parseSongInfo,
+  isTalkEntry,
+  talkDisplayLabel,
   PlaybackState,
   PlayMode,
-  secondsPerBeat,
-  sectionForBoundary,
-  snapToSectionBoundary,
   sectionAt,
   sectionNamed,
   songDisplayName,
-  tempoAt,
   withKeyChangeElifs,
   type Song
 } from "@dbk/core";
 import { practiceEntryId } from "../../practice/gig";
 import { findSongByRef } from "../../store/song-library";
 import { nextTransportEntry } from "./next-song-section";
+import { CONCERT_FINAL_LABEL } from "./setlist-marker";
+import { useFollowPlayheadTime } from "../../store/follow-clock";
 import {
-  audioContextTime,
   clientPracticeMode,
+  clientStageLive,
   currentGig,
+  followsFreeMasterClicks,
+  followsMasterMetroVisuals,
+  livePerformanceEntryId,
+  liveSongIsBackingTracks,
   isStageContentPage,
-  practicePlaysMasterMix,
-  nextUnskippedSongEntryId,
-  onMetronomeBeat,
   panicBlocksFollow,
+  practicePlaysMasterMix,
   songPlaying,
+  songShowsPositionSlider,
   STAGE_ZOOM_MAX,
   STAGE_ZOOM_MIN,
+  STAGE_ZOOM_STEP,
   unlockAudio,
   followsSharedPlayhead,
   useMasterStore,
   usesContinuousMetroTransport,
   usesFreeMetroTransport
 } from "../../store/master-store";
-import {
-  AutoScrollIcon,
-  DockLeftIcon,
-  PauseIcon,
-  PlayIcon,
-  StopIcon
-} from "../shared/icons";
-import { sectionBarClass } from "./section-color";
-import {
-  nearestMeasureIndex,
-  sectionStartAtTime,
-  sliderTimeFromClientX,
-  songTransportEnd,
-  songTransportSections
-} from "./transport-sections";
+import { DockLeftIcon, MagnifierIcon, PauseIcon, PlayIcon, StopIcon } from "../shared/icons";
+import { PlayModeMark } from "./play-mode-mark";
+import { MetroPulse } from "./song-metro-beats";
+import { SongPositionTrack } from "./SongPositionTrack";
+
+function TransportSongSlot(props: {
+  play?: ReactNode;
+  song?: Song;
+  files?: string[];
+  setlistMode?: string;
+  title: string;
+  className?: string;
+  showIcon?: boolean;
+  showPulse?: boolean;
+  pulseActive?: boolean;
+  pulseTone?: "current" | "next";
+  follow?: "sound" | "playback";
+  track?: ReactNode;
+}) {
+  return (
+    <div className={`prep-song-slot${props.className ? ` ${props.className}` : ""}`}>
+      {props.showPulse ? (
+        <span className="prep-song-click">
+          <MetroPulse
+            song={props.song}
+            active={Boolean(props.pulseActive)}
+            follow={props.follow}
+            tone={props.pulseTone}
+          />
+        </span>
+      ) : null}
+      {props.play}
+      {props.showIcon && props.song ? (
+        <PlayModeMark song={props.song} files={props.files} setlistMode={props.setlistMode} />
+      ) : null}
+      {props.track ?? <span className="prep-now-title">{props.title}</span>}
+    </div>
+  );
+}
 
 export function StageSetlistButton() {
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
@@ -65,7 +88,7 @@ export function StageSetlistButton() {
   return (
     <button
       type="button"
-      className={`icon-btn${setlistOpen ? " on" : ""}`}
+      className={`lyrics-btn page-icon${setlistOpen ? " on" : ""}`}
       title="Setlist"
       aria-label="Setlist"
       aria-pressed={setlistOpen}
@@ -76,7 +99,7 @@ export function StageSetlistButton() {
   );
 }
 
-function PanicButton() {
+export function PanicButton() {
   const panicActive = useMasterStore((s) => s.panicActive);
   const playing = useMasterStore(songPlaying);
   const setPanic = useMasterStore((s) => s.setPanic);
@@ -101,7 +124,7 @@ function PanicButton() {
   );
 }
 
-function FadeButton() {
+export function FadeButton() {
   const fadeStop = useMasterStore((s) => s.fadeStop);
   return (
     <button
@@ -116,179 +139,66 @@ function FadeButton() {
   );
 }
 
+const ZOOM_DRAG_PX = 20;
+
 export function StageViewTools() {
   const zoom = useMasterStore((s) =>
     isStageContentPage(s.masterPage) ? s.stageZooms[s.masterPage] : 1
   );
-  const autoScroll = useMasterStore((s) => s.autoScroll);
-  const zoomIn = useMasterStore((s) => s.zoomIn);
-  const zoomOut = useMasterStore((s) => s.zoomOut);
-  const toggleAutoScroll = useMasterStore((s) => s.toggleAutoScroll);
+  const setStageZoom = useMasterStore((s) => s.setStageZoom);
+  const dragging = useRef(false);
+  const originY = useRef(0);
+  const originZoom = useRef(1);
+  const [held, setHeld] = useState(false);
+  const percent = Math.round(zoom * 100);
+
+  const endDrag = () => {
+    dragging.current = false;
+    setHeld(false);
+  };
+
   return (
     <div className="prep-transport-tools">
       <button
         type="button"
-        className="icon-btn"
-        title="Zoom out"
-        aria-label="Zoom out"
-        disabled={zoom <= STAGE_ZOOM_MIN}
-        onClick={zoomOut}
+        className={`lyrics-btn page-icon zoom-drag${held ? " on" : ""}`}
+        title={`Zoom ${percent}%. Drag up to zoom in, down to zoom out`}
+        aria-label="Zoom"
+        role="slider"
+        aria-orientation="vertical"
+        aria-valuemin={Math.round(STAGE_ZOOM_MIN * 100)}
+        aria-valuemax={Math.round(STAGE_ZOOM_MAX * 100)}
+        aria-valuenow={percent}
+        aria-valuetext={`${percent} percent`}
+        onPointerDown={(event) => {
+          if (event.button !== 0) return;
+          event.preventDefault();
+          dragging.current = true;
+          originY.current = event.clientY;
+          originZoom.current = zoom;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          setHeld(true);
+        }}
+        onPointerMove={(event) => {
+          if (!dragging.current) return;
+          setStageZoom(
+            originZoom.current + ((originY.current - event.clientY) / ZOOM_DRAG_PX) * STAGE_ZOOM_STEP
+          );
+        }}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onLostPointerCapture={endDrag}
+        onWheel={(event) => {
+          event.preventDefault();
+          const state = useMasterStore.getState();
+          const current = isStageContentPage(state.masterPage)
+            ? state.stageZooms[state.masterPage]
+            : 1;
+          setStageZoom(current + (event.deltaY < 0 ? STAGE_ZOOM_STEP : -STAGE_ZOOM_STEP));
+        }}
       >
-        −
+        <MagnifierIcon />
       </button>
-      <button
-        type="button"
-        className="icon-btn"
-        title="Zoom in"
-        aria-label="Zoom in"
-        disabled={zoom >= STAGE_ZOOM_MAX}
-        onClick={zoomIn}
-      >
-        +
-      </button>
-      <button
-        type="button"
-        className={`icon-btn${autoScroll ? " on" : ""}`}
-        title="Auto Scroll"
-        aria-label="Auto Scroll"
-        aria-pressed={autoScroll}
-        onClick={toggleAutoScroll}
-      >
-        <AutoScrollIcon />
-      </button>
-    </div>
-  );
-}
-
-function MetroFlash({
-  active,
-  tone
-}: {
-  active: boolean;
-  tone?: "current" | "next";
-}) {
-  const flashRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (!active) {
-      flashRef.current?.classList.remove("is-on", "is-accent");
-      return;
-    }
-    const pending: Array<{ at: number; accent: boolean }> = [];
-    const unsub = onMetronomeBeat((beat) => {
-      pending.push(beat);
-    });
-    let raf = 0;
-    const loop = () => {
-      const now = audioContextTime();
-      const el = flashRef.current;
-      while (pending.length > 0 && (pending[0]?.at ?? 0) <= now + 0.004) {
-        const beat = pending.shift();
-        if (!el || !beat) continue;
-        el.classList.remove("is-on", "is-accent");
-        void el.offsetWidth;
-        el.classList.add("is-on");
-        if (beat.accent) el.classList.add("is-accent");
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => {
-      unsub();
-      cancelAnimationFrame(raf);
-    };
-  }, [active]);
-
-  return (
-    <span
-      ref={flashRef}
-      className={`prep-metro-flash${tone ? ` is-${tone}` : ""}`}
-      aria-hidden="true"
-    />
-  );
-}
-
-function SongMetroBeats({
-  song,
-  active,
-  tone
-}: {
-  song?: Song;
-  active: boolean;
-  tone?: "current" | "next";
-}) {
-  const rootRef = useRef<HTMLSpanElement>(null);
-  const parsed = song ? parseSongInfo(song.info) : undefined;
-  const count = Math.max(1, parsed?.numerator ?? 4);
-
-  useEffect(() => {
-    const root = rootRef.current;
-    const info = song ? parseSongInfo(song.info) : undefined;
-    const beats = Math.max(1, info?.numerator ?? 4);
-    const pattern = info?.beats ?? [];
-    const paint = (index: number) => {
-      if (!root) return;
-      const cells = root.children;
-      for (let i = 0; i < cells.length; i++) {
-        const cell = cells[i];
-        if (!(cell instanceof HTMLElement)) continue;
-        cell.classList.toggle("is-on", i === index);
-        cell.classList.toggle("is-accent", i === index && pattern[i] === true);
-      }
-    };
-    if (!active || !song || !info) {
-      paint(-1);
-      return;
-    }
-    const map = metronomeTempoMap(info);
-    let songTime = 0;
-    let beatsInBar = 0;
-    let nextAt = performance.now() / 1000 + 0.05;
-    const pending: Array<{ at: number; index: number }> = [];
-    let raf = 0;
-    const loop = () => {
-      const now = performance.now() / 1000;
-      const horizon = now + 0.12;
-      while (nextAt < horizon) {
-        const point = tempoAt(map, songTime);
-        pending.push({ at: nextAt, index: beatsInBar });
-        const interval = Math.max(0.05, secondsPerBeat(point));
-        nextAt += interval;
-        songTime += interval;
-        beatsInBar += 1;
-        if (beatsInBar >= beats) beatsInBar = 0;
-      }
-      while (pending.length > 0 && (pending[0]?.at ?? 0) <= now + 0.004) {
-        const beat = pending.shift();
-        if (beat) paint(beat.index);
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => {
-      cancelAnimationFrame(raf);
-      paint(-1);
-    };
-  }, [active, song?.id, song?.info]);
-
-  return (
-    <span
-      ref={rootRef}
-      className={`prep-metro-beats${tone ? ` is-${tone}` : ""}`}
-      aria-hidden="true"
-    >
-      {Array.from({ length: count }, (_, index) => (
-        <span key={index} className="prep-metro-beat" />
-      ))}
-    </span>
-  );
-}
-
-export function StageViewChrome() {
-  return (
-    <div className="prep-transport stage-view-chrome">
-      <StageSetlistButton />
-      <StageViewTools />
     </div>
   );
 }
@@ -297,52 +207,45 @@ export function PrepTransport() {
   const songs = useMasterStore((s) => s.songs);
   const fileIndex = useMasterStore((s) => s.fileIndex);
   const deviceKind = useMasterStore((s) => s.deviceKind);
+  const masterPage = useMasterStore((s) => s.masterPage);
   const gig = useMasterStore(currentGig);
   const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
   const playback = useMasterStore((s) => s.playback);
   const previewTime = useMasterStore((s) => s.previewTime);
   const metronomePlaying = useMasterStore((s) => s.metronomePlaying);
-  const masterPage = useMasterStore((s) => s.masterPage);
-  const seek = useMasterStore((s) => s.seek);
-  const panicTargetTime = useMasterStore((s) => s.panicTargetTime);
-  const panicArmed = useMasterStore(panicBlocksFollow);
-  const setPanicTarget = useMasterStore((s) => s.setPanicTarget);
   const detached = useMasterStore(followsSharedPlayhead);
   const practiceClient = useMasterStore(clientPracticeMode);
+  const liveClient = useMasterStore(clientStageLive);
   const playMasterMix = useMasterStore(practicePlaysMasterMix);
   const continuousMetro = useMasterStore(usesContinuousMetroTransport);
+  const liveMetroVisuals = useMasterStore(followsMasterMetroVisuals);
+  const backingLive = useMasterStore(liveSongIsBackingTracks);
+  const performanceEntryId = useMasterStore(livePerformanceEntryId);
   const freeMode = useMasterStore(usesFreeMetroTransport);
-  const dualVisualMetro =
-    freeMode || (continuousMetro && isMetronomeSetlistMode(gig?.performanceMode));
-  const showPlayButtons = continuousMetro && !freeMode && !playMasterMix;
-  const nextSongId = continuousMetro ? nextUnskippedSongEntryId(gig, selectedEntryId) : null;
+  const followFreeClicks = useMasterStore(followsFreeMasterClicks);
+  const showPlayButtons = !liveClient;
+  const prepTransport = masterPage === "prep";
+  const panicOn = useMasterStore(panicBlocksFollow);
   const displayedEntries = gig ? withKeyChangeElifs(gig.setlist, songs) : [];
-  const nextEntry = continuousMetro
-    ? nextTransportEntry(displayedEntries, selectedEntryId ?? undefined)
-    : undefined;
+  const nextEntry = nextTransportEntry(displayedEntries, selectedEntryId ?? undefined);
+  const nextIsTalk = Boolean(nextEntry && isTalkEntry(nextEntry));
+  const nextSong =
+    nextEntry && isSongEntry(nextEntry) ? findSongByRef(songs, nextEntry.songId) : undefined;
+  const nextSongId = nextEntry && isSongEntry(nextEntry) ? nextEntry.entryId : null;
   const selectedDisplayed = selectedEntryId
     ? displayedEntries.find((entry) => entry.entryId === selectedEntryId)
     : undefined;
-  const currentIsElif = Boolean(selectedDisplayed && isElifKonusma(selectedDisplayed));
-  const nextIsElif = Boolean(nextEntry && isElifKonusma(nextEntry));
-  const nextSong =
-    nextEntry && isSongEntry(nextEntry) ? findSongByRef(songs, nextEntry.songId) : undefined;
-  const nextTitle = nextIsElif
-    ? ELIF_KONUSMA_LABEL
-    : nextSong
-      ? songDisplayName(nextSong)
-      : "—";
-  const showNextMetro = Boolean(nextSong) && !nextIsElif;
+  const currentIsTalk = Boolean(
+    (selectedDisplayed && isTalkEntry(selectedDisplayed)) || selectedEntryId?.startsWith("elif_")
+  );
+  const nextTitle =
+    nextIsTalk && nextEntry && isTalkEntry(nextEntry)
+      ? talkDisplayLabel(nextEntry)
+      : nextSong
+        ? songDisplayName(nextSong)
+        : CONCERT_FINAL_LABEL;
+  const showNextSongPulse = Boolean(nextSong) && !nextIsTalk;
   const playFromPointer = useRef(false);
-  const pendingMeasureRef = useRef<number | null>(null);
-  const pendingPanicRef = useRef<number | null>(null);
-  const pendingSectionRef = useRef<number | null>(null);
-  const lastTapRef = useRef(0);
-  const ignoreCommitRef = useRef(false);
-  const [pendingMeasure, setPendingMeasure] = useState<number | null>(null);
-  const [pendingPanicTime, setPendingPanicTime] = useState<number | null>(null);
-  const showStageChrome = isStageContentPage(masterPage);
-
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
   const selected = selectedEntryId
@@ -352,7 +255,10 @@ export function PrepTransport() {
     detached && playing && playback.clock?.setlistEntryId
       ? gig?.setlist.find((entry) => entry.entryId === playback.clock?.setlistEntryId)
       : undefined;
-  const displayEntry = liveEntry ?? selected;
+  const performanceEntry = performanceEntryId
+    ? gig?.setlist.find((entry) => entry.entryId === performanceEntryId)
+    : undefined;
+  const displayEntry = liveClient ? (performanceEntry ?? selected) : (liveEntry ?? selected);
   const selectedIndex = selected && gig ? gig.setlist.indexOf(selected) : -1;
   const song =
     (displayEntry && isSongEntry(displayEntry) ? findSongByRef(songs, displayEntry.songId) : undefined) ??
@@ -372,26 +278,28 @@ export function PrepTransport() {
   const selectedMode = displayEntry && isSongEntry(displayEntry)
     ? effectivePlayMode(song, selectedFiles, gig?.performanceMode)
     : PlayMode.View;
-  const metronomeMode = playMasterMix
-    ? false
-    : freeMode || practiceClient
-      ? true
-      : !displayEntry ||
-        !isSongEntry(displayEntry) ||
-        selectedMode === PlayMode.View ||
-        (selectedMode === PlayMode.Playback && !hasBackingAudio(song, selectedFiles)) ||
-        (selectedMode === PlayMode.ClickOnly &&
-          (!song || !hasClickFlac(song, selectedFiles)));
+  const metronomeMode = liveClient
+    ? liveMetroVisuals
+    : playMasterMix || backingLive
+      ? false
+      : freeMode || practiceClient
+        ? true
+        : !displayEntry ||
+          !isSongEntry(displayEntry) ||
+          selectedMode === PlayMode.View ||
+          (selectedMode === PlayMode.Playback && !hasPlaybackAudio(song, selectedFiles));
+  const dualVisualMetro = metronomeMode;
   const clockMatches = Boolean(displayEntry && playback.clock?.setlistEntryId === displayEntry.entryId);
   const showStop =
     playing &&
     (detached || clockMatches || playback.currentIndex === selectedIndex || !playback.clock);
-  const selectedTime =
+  const storePlayhead =
     metronomePlaying || !playing
       ? previewTime
-      : clockMatches || detached
+      : liveClient || clockMatches || detached
         ? (playback.clock?.time ?? previewTime)
         : previewTime;
+  const selectedTime = useFollowPlayheadTime(storePlayhead);
   const serbestHold =
     !metronomeMode &&
     !playing &&
@@ -412,14 +320,6 @@ export function PrepTransport() {
     else state.startMetronome();
   };
 
-  const startCurrentMetronome = () => {
-    useMasterStore.getState().startMetronome();
-  };
-
-  const stopCurrentMetronome = () => {
-    useMasterStore.getState().stopMetronome();
-  };
-
   const playNextSong = () => {
     if (!nextSongId) return;
     const state = useMasterStore.getState();
@@ -432,15 +332,14 @@ export function PrepTransport() {
 
   useEffect(() => {
     if (freeMode) {
-      if (useMasterStore.getState().metronomePlaying) {
-        useMasterStore.getState().stopMetronome();
-      }
+      useMasterStore.getState().syncFreeVisualMetronome();
       return;
     }
     if (dualVisualMetro) return;
+    if (backingLive) return;
     if (metronomePlaying) return;
     useMasterStore.getState().previewContinuousNextMetronome();
-  }, [continuousMetro, dualVisualMetro, freeMode, metronomePlaying, selectedEntryId, nextSongId]);
+  }, [backingLive, continuousMetro, dualVisualMetro, freeMode, metronomePlaying, selectedEntryId, nextSongId]);
 
   const togglePlayback = () => {
     const state = useMasterStore.getState();
@@ -484,283 +383,105 @@ export function PrepTransport() {
     }
     toggle();
   };
-  const canPlay = Boolean(song);
-  const sections = song?.sections ?? [];
-  const transportSections = songTransportSections(song);
-  const timelineStart = 0;
-  const timelineEnd = songTransportEnd(song);
-  const timelineLength = Math.max(0.001, timelineEnd - timelineStart);
-  const measureStarts = song ? measureStartTimes(song.tempoMap, timelineEnd) : [0];
-  let measureIndex = 0;
-  for (let index = 0; index < measureStarts.length; index++) {
-    if ((measureStarts[index] ?? 0) <= selectedTime + 0.02) measureIndex = index;
-    else break;
-  }
+  const canPlay = Boolean(song) && !currentIsTalk;
+  const currentTitle =
+    currentIsTalk && selectedDisplayed && isTalkEntry(selectedDisplayed)
+      ? talkDisplayLabel(selectedDisplayed)
+      : currentIsTalk
+        ? ELIF_KONUSMA_LABEL
+        : song
+          ? songDisplayName(song)
+          : "—";
+  const nextFiles = nextSong
+    ? [...(fileIndex[nextSong.id] ?? []), ...(nextSong.folder ? (fileIndex[nextSong.folder] ?? []) : [])]
+    : undefined;
+  const currentPulseActive = Boolean(song) && !currentIsTalk;
+  const nextPulseActive = showNextSongPulse;
+  const showCurrentSlider = Boolean(
+    song &&
+      !currentIsTalk &&
+      songShowsPositionSlider(song, selectedFiles, gig?.performanceMode) &&
+      (panicOn || !isStageContentPage(masterPage))
+  );
+  const currentFollow =
+    metronomePlaying || (freeMode && followFreeClicks)
+      ? "sound"
+      : playing && !metronomeMode
+        ? "playback"
+        : undefined;
   const showPanic =
     !practiceClient &&
     !metronomeMode &&
     Boolean(song && hasClickFlac(song, selectedFiles));
-  const panicTime = pendingPanicTime ?? panicTargetTime;
-  const panicSection = sectionForBoundary(sections, panicTime);
-  const panicAtStart = Boolean(
-    panicSection && Math.abs(panicSection.start - panicTime) < 1e-6
-  );
-  const displayedMeasure = pendingMeasure ?? measureIndex;
-  const activeMeasureStart = measureStarts[displayedMeasure] ?? 0;
-  const activeMeasureEnd = measureStarts[displayedMeasure + 1] ?? timelineEnd;
-  const headStart = panicArmed
-    ? panicAtStart
-      ? (panicSection?.start ?? panicTime)
-      : panicTime
-    : activeMeasureStart;
-  const headEnd = panicArmed
-    ? panicAtStart
-      ? (panicSection?.end ?? panicTime)
-      : panicTime
-    : activeMeasureEnd;
-  const sliderValue = panicArmed ? panicTime : activeMeasureStart;
-  const previewSliderTime = (time: number) => {
-    if (panicArmed) {
-      const snapped = snapToSectionBoundary(sections, time);
-      pendingPanicRef.current = snapped;
-      setPendingPanicTime(snapped);
-      setPanicTarget(snapped);
-      return;
-    }
-    const index = nearestMeasureIndex(measureStarts, time);
-    pendingMeasureRef.current = index;
-    setPendingMeasure(index);
-  };
-  const sliderTimeFromEvent = (event: PointerEvent<HTMLInputElement>) =>
-    sliderTimeFromClientX(
-      event.clientX,
-      event.currentTarget.getBoundingClientRect(),
-      timelineStart,
-      timelineEnd
-    );
-  const sectionSeek = deviceKind === "client";
-  const jumpToSongStart = () => {
-    pendingSectionRef.current = null;
-    pendingMeasureRef.current = null;
-    pendingPanicRef.current = null;
-    setPendingMeasure(null);
-    setPendingPanicTime(null);
-    if (panicArmed) {
-      setPanicTarget(timelineStart);
-      return;
-    }
-    seek(timelineStart);
-  };
-  const commitSectionSeek = () => {
-    if (ignoreCommitRef.current) {
-      ignoreCommitRef.current = false;
-      return;
-    }
-    const start = pendingSectionRef.current;
-    pendingSectionRef.current = null;
-    if (start != null) seek(start);
-  };
-  const commitPosition = () => {
-    if (ignoreCommitRef.current) {
-      ignoreCommitRef.current = false;
-      return;
-    }
-    if (panicArmed) {
-      if (pendingPanicRef.current == null) return;
-      setPanicTarget(pendingPanicRef.current);
-      pendingPanicRef.current = null;
-      setPendingPanicTime(null);
-      return;
-    }
-    const index = pendingMeasureRef.current;
-    if (index === null) return;
-    seek(measureStarts[index] ?? 0);
-    pendingMeasureRef.current = null;
-    setPendingMeasure(null);
-  };
+  const currentPlay = showPlayButtons && !currentIsTalk ? (
+    <button
+      type="button"
+      className={`add prep-play ${buttonMode}${buttonMode === "stop" ? " is-playing" : ""}${
+        panicOn ? " is-half" : ""
+      }`}
+      title={buttonMode === "stop" ? "Stop" : buttonMode === "pause" ? "Continue after SERBEST" : "Play"}
+      aria-label={buttonMode === "stop" ? "Stop" : buttonMode === "pause" ? "Continue after SERBEST" : "Play"}
+      disabled={!canPlay}
+      onPointerDown={onPlayPointerDown}
+      onClick={() => onPlayClick(metronomeMode ? toggleMetronome : togglePlayback)}
+    >
+      {buttonMode === "stop" ? <StopIcon /> : buttonMode === "pause" ? <PauseIcon /> : <PlayIcon />}
+    </button>
+  ) : null;
+  const nextPlay = showPlayButtons && showNextSongPulse ? (
+    <button
+      type="button"
+      className="add prep-play play"
+      title="Play next song"
+      aria-label="Play next song"
+      disabled={!showNextSongPulse || !nextSongId}
+      onPointerDown={onPlayPointerDown}
+      onClick={() => onPlayClick(playNextSong)}
+    >
+      <PlayIcon />
+    </button>
+  ) : null;
 
   return (
     <div
-      className={`prep-transport${metronomeMode ? " metro" : ""}${continuousMetro ? " is-continuous-metro" : ""}${freeMode ? " is-free-metro" : ""}`}
+      className={`prep-transport${
+        prepTransport || panicOn ? " is-current-only" : " is-song-pair"
+      }${panicOn ? " is-panic" : ""}${metronomeMode ? " metro" : ""}${continuousMetro || liveMetroVisuals ? " is-continuous-metro" : ""}${freeMode ? " is-free-metro" : ""}`}
     >
-      {showStageChrome ? <StageSetlistButton /> : null}
-      {showPlayButtons ? (
-        <>
-          <button
-            type="button"
-            className={`add prep-play play${metronomePlaying ? " is-playing" : ""}`}
-            title="Play"
-            aria-label="Play"
-            disabled={!canPlay}
-            onPointerDown={onPlayPointerDown}
-            onClick={() => onPlayClick(startCurrentMetronome)}
-          >
-            <PlayIcon />
-          </button>
-          <button
-            type="button"
-            className={`add prep-play stop${metronomePlaying ? " is-playing" : ""}`}
-            title="Stop"
-            aria-label="Stop"
-            disabled={!canPlay}
-            onPointerDown={onPlayPointerDown}
-            onClick={() => onPlayClick(stopCurrentMetronome)}
-          >
-            <StopIcon />
-          </button>
-        </>
-      ) : freeMode ? null : (
-        <button
-          type="button"
-          className={`add prep-play ${buttonMode}${buttonMode === "stop" ? " is-playing" : ""}`}
-          title={buttonMode === "stop" ? "Stop" : buttonMode === "pause" ? "Continue after SERBEST" : "Play"}
-          aria-label={buttonMode === "stop" ? "Stop" : buttonMode === "pause" ? "Continue after SERBEST" : "Play"}
-          disabled={!canPlay}
-          onPointerDown={onPlayPointerDown}
-          onClick={() => onPlayClick(metronomeMode ? toggleMetronome : togglePlayback)}
-        >
-          {buttonMode === "stop" ? <StopIcon /> : buttonMode === "pause" ? <PauseIcon /> : <PlayIcon />}
-        </button>
+      {deviceKind === "master" ? null : showPanic ? <PanicButton /> : null}
+      <TransportSongSlot
+        className="is-current"
+        play={currentPlay}
+        song={currentIsTalk ? undefined : song}
+        files={selectedFiles}
+        setlistMode={gig?.performanceMode}
+        title={currentTitle}
+        showIcon={!panicOn && !currentIsTalk && Boolean(song)}
+        showPulse={!panicOn && !currentIsTalk && Boolean(song)}
+        pulseActive={currentPulseActive}
+        pulseTone="current"
+        follow={currentFollow}
+        track={
+          showCurrentSlider ? (
+            <SongPositionTrack song={song} showTitle={!panicOn} title={currentTitle} />
+          ) : undefined
+        }
+      />
+      {prepTransport || panicOn ? null : (
+        <TransportSongSlot
+          className="is-next"
+          play={nextPlay}
+          song={nextSong}
+          files={nextFiles}
+          setlistMode={gig?.performanceMode}
+          title={nextTitle}
+          showIcon={showNextSongPulse}
+          showPulse={showNextSongPulse}
+          pulseActive={nextPulseActive}
+          pulseTone="next"
+          follow={undefined}
+        />
       )}
-      {deviceKind === "master" && !metronomeMode ? <FadeButton /> : null}
-      {showPanic ? <PanicButton /> : null}
-      <div
-        className={`prep-now-track${metronomeMode ? " metro" : ""}${panicArmed ? " panic" : ""}`}
-        title={currentIsElif ? ELIF_KONUSMA_LABEL : song?.title}
-      >
-        {metronomeMode ? (
-          currentIsElif ? null : dualVisualMetro ? (
-            <SongMetroBeats song={song} active={Boolean(song)} tone="current" />
-          ) : (
-            <MetroFlash active={metronomePlaying} tone="current" />
-          )
-        ) : (
-          <>
-            <div className="prep-now-sections" aria-hidden="true">
-              {transportSections.map((section, index) => (
-                <span
-                  key={`${section.start}-${section.end}-${section.name}-${index}`}
-                  className={`prep-transport-section${sectionBarClass(section.name)}`}
-                  style={
-                    {
-                      left: `${((section.start - timelineStart) / timelineLength) * 100}%`,
-                      width: `calc(${((section.end - section.start) / timelineLength) * 100}% - 2px)`
-                    } as CSSProperties
-                  }
-                />
-              ))}
-            </div>
-            {song ? (
-              <span
-                className={`prep-position-head${panicArmed ? " panic" : ""}`}
-                aria-hidden="true"
-                style={{
-                  left: `${(headStart / timelineLength) * 100}%`,
-                  width: `${(Math.max(0.02, headEnd - headStart) / timelineLength) * 100}%`
-                }}
-              />
-            ) : null}
-            <input
-              className={`prep-position-slider${panicArmed ? " panic" : ""}${sectionSeek ? " is-section-seek" : ""}`}
-              type="range"
-              min={0}
-              max={timelineEnd}
-              step="any"
-              value={sliderValue}
-              disabled={!song}
-              aria-label={
-                panicArmed
-                  ? "Panic resume section"
-                  : sectionSeek
-                    ? "Jump to section"
-                    : "Song position by measure"
-              }
-              onChange={(event) => {
-                if (sectionSeek) return;
-                previewSliderTime(Number(event.target.value));
-              }}
-              onPointerDown={(event) => {
-                if (!song || event.button !== 0) return;
-                event.preventDefault();
-                event.currentTarget.setPointerCapture(event.pointerId);
-                const now = performance.now();
-                if (now - lastTapRef.current < 400) {
-                  lastTapRef.current = 0;
-                  ignoreCommitRef.current = true;
-                  jumpToSongStart();
-                  return;
-                }
-                lastTapRef.current = now;
-                ignoreCommitRef.current = false;
-                if (sectionSeek) {
-                  pendingSectionRef.current =
-                    sectionStartAtTime(transportSections, sliderTimeFromEvent(event)) ?? null;
-                  return;
-                }
-                previewSliderTime(sliderTimeFromEvent(event));
-              }}
-              onPointerMove={(event) => {
-                if (sectionSeek) return;
-                if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-                previewSliderTime(sliderTimeFromEvent(event));
-              }}
-              onPointerUp={sectionSeek ? commitSectionSeek : commitPosition}
-              onLostPointerCapture={sectionSeek ? commitSectionSeek : commitPosition}
-              onPointerCancel={() => {
-                pendingMeasureRef.current = null;
-                pendingPanicRef.current = null;
-                pendingSectionRef.current = null;
-                setPendingMeasure(null);
-                setPendingPanicTime(null);
-              }}
-              onKeyUp={sectionSeek ? undefined : commitPosition}
-              onBlur={sectionSeek ? undefined : commitPosition}
-            />
-          </>
-        )}
-        <div className="prep-now-overlay">
-          <div className="prep-now-copy">
-            <span className="prep-now-title">
-              {currentIsElif ? ELIF_KONUSMA_LABEL : song ? songDisplayName(song) : "—"}
-            </span>
-          </div>
-        </div>
-      </div>
-      {continuousMetro ? (
-        <>
-          <span className="prep-next-song-label">NEXT</span>
-          {showPlayButtons ? (
-            <button
-              type="button"
-              className="add prep-play play"
-              title="Play next song"
-              aria-label="Play next song"
-              disabled={!nextSongId}
-              onPointerDown={onPlayPointerDown}
-              onClick={() => onPlayClick(playNextSong)}
-            >
-              <PlayIcon />
-            </button>
-          ) : null}
-          <div className="prep-now-track metro" title={nextTitle === "—" ? undefined : nextTitle}>
-            {showNextMetro ? (
-              dualVisualMetro ? (
-                <SongMetroBeats song={nextSong} active tone="next" />
-              ) : (
-                <MetroFlash active={!metronomePlaying} tone="next" />
-              )
-            ) : null}
-            <div className="prep-now-overlay">
-              <div className="prep-now-copy">
-                <span className="prep-now-title">{nextTitle}</span>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : null}
-      {showStageChrome ? (
-        <StageViewTools />
-      ) : null}
     </div>
   );
 }

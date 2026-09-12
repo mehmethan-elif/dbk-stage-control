@@ -169,7 +169,13 @@ async function ensureInfo(folder: string, packed: Record<string, unknown> | null
     ...(settings.notes && typeof settings.notes === "object"
       ? { pageNotes: settings.notes }
       : {}),
-    ...(packed?.info && typeof packed.info === "object" ? packed.info : {})
+    ...(packed?.info && typeof packed.info === "object" ? packed.info : {}),
+    metroNotes: {
+      ...(settings.metroNotes && typeof settings.metroNotes === "object" ? settings.metroNotes : {}),
+      ...(packed?.info && typeof packed.info === "object" && (packed.info as { metroNotes?: unknown }).metroNotes
+        ? (packed.info as { metroNotes?: unknown }).metroNotes
+        : {})
+    }
   });
   if (packed && JSON.stringify(parseInfo(packed.info)) !== JSON.stringify(info)) {
     try {
@@ -324,4 +330,29 @@ export async function writeSongJsonFile(songId: string, relPath: string, data: u
     return;
   }
   await writeUtf8(nativePath(folderForSong(songId), relPath), body);
+}
+
+export async function writeSongBytes(
+  songId: string,
+  relPath: string,
+  data: ArrayBuffer | Uint8Array
+): Promise<void> {
+  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+  if (!isNativeApp()) {
+    const response = await fetch(webSongUrl(songId, relPath), {
+      method: "PUT",
+      headers: { "content-type": "application/pdf" },
+      body: bytes,
+      signal: fetchTimeout(30_000)
+    });
+    if (!response.ok) throw new Error(`Could not save ${relPath} (${response.status}).`);
+    return;
+  }
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  await Filesystem.writeFile({
+    path: nativePath(folderForSong(songId), relPath),
+    directory: Directory.Documents,
+    data: btoa(binary)
+  });
 }

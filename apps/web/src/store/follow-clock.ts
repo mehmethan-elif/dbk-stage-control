@@ -25,11 +25,19 @@ export function followClockTime(now = performance.now()): number {
   return Math.max(0, origin.time + (now - origin.at) / 1000);
 }
 
+/** Advance a master packet by its travel time. Ignores clock skew and stale hello replays. */
+export function followPacketTime(time: number, sent?: number, now = Date.now()): number {
+  if (typeof sent !== "number" || !Number.isFinite(sent)) return time;
+  const delay = (now - sent) / 1000;
+  if (delay <= 0 || delay > 0.25) return time;
+  return time + delay;
+}
+
 /** Local playhead only — do not push this through the store or the PDF tree remounts. */
 export function useFollowPlayheadTime(storeTime: number): number {
   const [time, setTime] = useState(storeTime);
   useEffect(() => {
-    setTime(storeTime);
+    if (!followClockPlaying()) setTime(storeTime);
   }, [storeTime]);
   useEffect(() => {
     let frame = 0;

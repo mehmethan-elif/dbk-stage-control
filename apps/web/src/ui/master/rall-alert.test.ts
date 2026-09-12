@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Song, TempoPoint } from "@dbk/core";
 import {
   firstTempoChangeMeasure,
+  lyricLineShowsRall,
   rallDrumTone,
   rallOverlayBoxes,
   runCoversAbsoluteMeasure,
@@ -50,6 +51,27 @@ describe("showsRallAlert", () => {
     expect(showsRallAlert(85, 87)).toBe(false);
     expect(showsRallAlert(86, 87)).toBe(true);
     expect(showsRallAlert(89, 87)).toBe(true);
+  });
+});
+
+describe("lyricLineShowsRall", () => {
+  const song = { tempoMap: karahisarMap };
+  const warning = { time: 176.84, end: 183.3 };
+  const after = { time: 183.3, end: 188.14 };
+
+  it("marks the current line when the next measure is the RALL point", () => {
+    expect(lyricLineShowsRall(song, warning, 179)).toBe(true);
+    expect(lyricLineShowsRall(song, after, 179)).toBe(false);
+  });
+
+  it("keeps the current line marked through the end of the song", () => {
+    expect(lyricLineShowsRall(song, warning, 181.1)).toBe(true);
+    expect(lyricLineShowsRall(song, after, 184)).toBe(true);
+  });
+
+  it("stays off before the warning measure", () => {
+    expect(lyricLineShowsRall(song, warning, 172.63)).toBe(false);
+    expect(lyricLineShowsRall(undefined, warning, 179)).toBe(false);
   });
 });
 

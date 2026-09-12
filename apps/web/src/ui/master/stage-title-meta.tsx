@@ -29,8 +29,13 @@ export function songTimeSig(song: Song | undefined): string | undefined {
   return meters.length > 0 ? meters.join(", ") : undefined;
 }
 
+export function songKita(song: Song | undefined): string | undefined {
+  const kita = song?.kita ?? song?.info?.kita;
+  return kita != null && kita > 0 ? `KITA ${kita}` : undefined;
+}
+
 export function songTitleMetaParts(song: Song | undefined): string[] {
-  return [songToneScale(song), song?.style?.trim(), songTimeSig(song), songBpm(song)].filter(
+  return [songToneScale(song), song?.style?.trim(), songKita(song), songTimeSig(song), songBpm(song)].filter(
     (part): part is string => Boolean(part && part.trim())
   );
 }

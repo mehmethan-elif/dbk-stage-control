@@ -21,6 +21,7 @@ import {
   occurrenceNoteGridsForBox,
   sectionNoteGridCount,
   uniqueSectionNoteGrids,
+  uniqueChordLabelBoxes,
   songHasChordNotes
 } from "./chord-notes";
 
@@ -85,6 +86,24 @@ describe("notesInMeasure", () => {
     ];
     expect(chordNamesForBox(split, { name: "ARA", measure: 1 })).toBe("Dm G");
     expect(chordNamesForBox(split, { name: "ARA", measure: 2 })).toBe("G");
+  });
+
+  it("keeps one chord label box when later repeats share a volta", () => {
+    const first = {
+      id: "a",
+      name: "SAN A",
+      measure: 4,
+      page: 0,
+      x: 0.5,
+      y: 0.3,
+      w: 0.2,
+      h: 0.08,
+      sectionIndex: 3
+    };
+    const later = { ...first, id: "b", sectionIndex: 14 };
+    const secondEnding = { ...first, id: "c", x: 0.73, sectionIndex: 4 };
+    const kept = uniqueChordLabelBoxes([later, first, secondEnding]);
+    expect(kept.map((box) => box.sectionIndex).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([3, 4]);
   });
 
   it("places later chords on the beat they start", () => {

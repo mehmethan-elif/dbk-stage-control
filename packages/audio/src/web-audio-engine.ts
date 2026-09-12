@@ -54,6 +54,31 @@ export interface OutputRoutingPlan {
   mainMono: boolean;
 }
 
+export function destinationChannelCount(dest: {
+  maxChannelCount: number;
+  channelCount: number;
+  channelCountMode?: string;
+  channelInterpretation?: string;
+}): number {
+  const max = Math.max(1, dest.maxChannelCount || dest.channelCount || 2);
+  try {
+    dest.channelCountMode = "explicit";
+    dest.channelInterpretation = "discrete";
+    if (dest.channelCount !== max) dest.channelCount = max;
+  } catch {
+    // Chromium keeps stereo if macOS has not exposed a multi-channel layout.
+  }
+  return Math.max(1, dest.channelCount || 2);
+}
+
+export function looksLikeMultiOutInterface(label: string): boolean {
+  const name = label.trim();
+  return (
+    /^m4$/i.test(name) ||
+    /\b(m\s*4|motu|scarlett|clarett|babyface|fireface|quad-capture|4i4|6i6|18i8|2i4)\b/i.test(name)
+  );
+}
+
 export function outputRoutingPlan(
   mode: AudioRoutingMode,
   maxChannelCount: number
@@ -515,10 +540,7 @@ export class WebAudioEngine implements AudioEngine {
 
   private availableOutputChannels(): number {
     if (!this.ctx) return 2;
-    return Math.max(
-      1,
-      this.ctx.destination.maxChannelCount || this.ctx.destination.channelCount || 2
-    );
+    return destinationChannelCount(this.ctx.destination);
   }
 
   private applyRoutingGraph(mode: AudioRoutingMode): void {
@@ -626,24 +648,76 @@ export class WebAudioEngine implements AudioEngine {
     }));
   }
 
-  async selectOutput(deviceId: string): Promise<{
+  async selectOutput(
+    deviceId: string,
+    opts?: { recreateIfStereo?: boolean }
+  ): Promise<{
     channels: number;
     routingMode: AudioRoutingMode;
   }> {
     await this.init();
-    const context = this.context as AudioContext & {
-      setSinkId?: (sinkId: string) => Promise<void>;
-    };
-    if (context.setSinkId) {
-      await context.setSinkId(deviceId === "default" ? "" : deviceId);
-    } else if (deviceId !== "default") {
-      throw new Error("This browser cannot select a different soundcard.");
-    }
-    this.outputDeviceId = deviceId;
-    this.outputChannels = this.availableOutputChannels();
+    await this.bindOutputDevice(deviceId, opts?.recreateIfStereo);
     if (!outputRoutingPlan(this.routingMode, this.outputChannels)) this.routingMode = 1;
     this.applyRoutingGraph(this.routingMode);
     return { channels: this.outputChannels, routingMode: this.routingMode };
+  }
+
+  refreshOutputChannels(): number {
+    this.outputChannels = this.availableOutputChannels();
+    return this.outputChannels;
+  }
+
+  private async bindOutputDevice(deviceId: string, recreateIfStereo?: boolean): Promise<void> {
+    const sinkId = deviceId === "default" ? "" : deviceId;
+    const context = this.ctx as
+      | (AudioContext & { setSinkId?: (sinkId: string) => Promise<void>; sinkId?: string })
+      | null;
+    if (!context?.setSinkId && sinkId) {
+      throw new Error("This browser cannot select a different soundcard.");
+    }
+    if (context?.setSinkId) {
+      const alreadyOnSink = (context.sinkId ?? "") === sinkId;
+      await context.setSinkId(sinkId);
+      this.outputDeviceId = deviceId;
+      this.outputChannels = this.availableOutputChannels();
+      if (this.outputChannels >= 3) return;
+      if (alreadyOnSink && recreateIfStereo !== true) return;
+    } else {
+      this.outputDeviceId = deviceId;
+      this.outputChannels = this.availableOutputChannels();
+      return;
+    }
+    await this.recreateContext(sinkId);
+    this.outputDeviceId = deviceId;
+    this.outputChannels = this.availableOutputChannels();
+  }
+
+  private async recreateContext(sinkId: string): Promise<void> {
+    for (const deck of this.decks.values()) deck.unload();
+    const previous = this.ctx;
+    this.ctx = null;
+    this.mainGain = null;
+    this.cueGain = null;
+    this.mixerMainGain = null;
+    this.outputGate = null;
+    this.stemGains.clear();
+    this.outputMerger = null;
+    this.mainSplitter = null;
+    this.mainMono = null;
+    this.cueMono = null;
+    if (previous) {
+      try {
+        await previous.close();
+      } catch {
+        // old context may already be closed
+      }
+    }
+    const options: AudioContextOptions & { sinkId?: string } = {};
+    if (sinkId) options.sinkId = sinkId;
+    this.ctx = new AudioContext(options);
+    this.unlockNow(this.ctx);
+    this.buildGraph(this.ctx);
+    await this.resumeContext();
   }
 
   setRoutingMode(mode: AudioRoutingMode): void {

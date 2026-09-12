@@ -8,6 +8,6 @@ export function stageConnectOn(state: {
   syncPeers: readonly { deviceKind?: string; deviceName?: string }[];
 }): boolean {
   if (state.deviceKind === "remote") return state.clientSession === "stage" && state.syncConnected;
-  if (state.deviceKind === "client") return state.clientSession === "stage";
+  if (state.deviceKind === "client") return state.clientSession === "stage" && state.syncConnected;
   return state.syncConnected && isBandNameConnected(VOCAL_BAND_NAME, state.syncPeers);
 }

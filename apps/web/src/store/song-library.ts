@@ -172,6 +172,7 @@ export function overlayHostSongMeta(practice: Song[], host: Song[]): Song[] {
       key: hostSong.key ?? song.key,
       scale: hostSong.scale ?? song.scale,
       style: hostSong.style ?? song.style,
+      kita: hostSong.kita ?? song.kita,
       duration: song.duration > 0 ? song.duration : hostSong.duration,
       nextSongAt: song.nextSongAt ?? hostSong.nextSongAt,
       tempoMap: thinChart && hostSong.tempoMap.length > 0 ? hostSong.tempoMap : song.tempoMap,
@@ -182,7 +183,9 @@ export function overlayHostSongMeta(practice: Song[], host: Song[]): Song[] {
       info: parseSongInfo({
         ...local,
         ...remote,
-        pageNotes: { ...local.pageNotes, ...remote.pageNotes }
+        kita: remote.kita ?? hostSong.kita ?? local.kita ?? song.kita,
+        pageNotes: { ...local.pageNotes, ...remote.pageNotes },
+        metroNotes: { ...local.metroNotes, ...remote.metroNotes }
       })
     };
   });

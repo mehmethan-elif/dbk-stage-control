@@ -15,6 +15,14 @@ describe("stageConnectOn", () => {
       stageConnectOn({
         deviceKind: "client",
         clientSession: "stage",
+        syncConnected: false,
+        syncPeers: []
+      })
+    ).toBe(false);
+    expect(
+      stageConnectOn({
+        deviceKind: "client",
+        clientSession: "stage",
         syncConnected: true,
         syncPeers: []
       })

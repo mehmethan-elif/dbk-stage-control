@@ -13,13 +13,28 @@
         },
         {
           "type": "song",
-          "entryId": "entry_612ee11f-cf23-428d-a67a-d3601a67189a",
+          "entryId": "entry_a4f07c84-7498-4092-9e50-cb763349f686",
           "songId": "karahisar_kalesi"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_700c4400-4c52-4e53-887b-55d5d43d7366",
+          "songId": "kerku_k_zindan"
         },
         {
           "type": "song",
           "entryId": "entry_c2a1fd0f-5b16-46da-bb96-5895b87f457d",
           "songId": "tuna_nehri"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_20a35df2-6bda-485c-92ed-7119c517167a",
+          "songId": "Candan İleri"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_9cfd81c9-ea8e-4b42-9334-5c64bc83ab1b",
+          "songId": "Mihriban"
         }
       ],
       "busMix": {
@@ -84,7 +99,16 @@
           "solo": false
         }
       },
-      "metronomeVolume": 0.7
+      "metronomeVolume": 0.5,
+      "performanceMode": "FOLLOW_SONG_INFO",
+      "stageNames": [
+        "Serkan",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
     }
   ]
 }

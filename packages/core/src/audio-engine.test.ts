@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   clickOnlyMixSilences,
   clickOnlySong,
+  defaultLibraryPlayMode,
   hasBackingAudio,
+  isRealMetronomeTrack,
+  savedOrDefaultLibraryPlayMode,
   hasOnlyClickAudio,
   performanceAudioSong,
   playNextCueSeconds
@@ -32,6 +35,60 @@ describe("hasBackingAudio", () => {
     expect(hasBackingAudio(undefined, ["Master.flac"])).toBe(false);
     expect(hasBackingAudio(undefined, ["Master.mp3"])).toBe(false);
     expect(hasBackingAudio(undefined, ["Master.mp3", "Bass.flac"])).toBe(true);
+  });
+});
+
+describe("isRealMetronomeTrack", () => {
+  const stub = { assets: [], sections: [] } as Pick<Song, "assets" | "sections">;
+
+  it("is true only without backing stems and without sections", () => {
+    expect(isRealMetronomeTrack(stub)).toBe(true);
+    expect(isRealMetronomeTrack(stub, ["song.json", "Nota.pdf"])).toBe(true);
+    expect(isRealMetronomeTrack(stub, ["Click.flac", "Master.mp3"])).toBe(true);
+    expect(isRealMetronomeTrack(stub, ["Bass.flac"])).toBe(false);
+    expect(isRealMetronomeTrack({ assets: [], sections: [{ name: "SAN", start: 0, end: 8 }] })).toBe(
+      false
+    );
+  });
+});
+
+describe("defaultLibraryPlayMode", () => {
+  it("uses backing tracks when a stem exists, ignoring Master.mp3", () => {
+    expect(defaultLibraryPlayMode(undefined, ["Master.mp3", "Bass.flac"])).toBe(PlayMode.Playback);
+    expect(defaultLibraryPlayMode(undefined, ["Click.flac", "Keys.flac"])).toBe(PlayMode.Playback);
+  });
+
+  it("uses backing tracks when Click.flac is the only performance audio", () => {
+    expect(defaultLibraryPlayMode(undefined, ["Click.flac", "Master.mp3"])).toBe(PlayMode.Playback);
+    expect(defaultLibraryPlayMode(undefined, ["Click.flac"])).toBe(PlayMode.Playback);
+  });
+
+  it("uses metronome when there is no click or backing track", () => {
+    expect(defaultLibraryPlayMode(undefined, ["Master.mp3", "song.json"])).toBe(PlayMode.View);
+    expect(defaultLibraryPlayMode(undefined, ["Nota.pdf"])).toBe(PlayMode.View);
+  });
+});
+
+describe("savedOrDefaultLibraryPlayMode", () => {
+  it("assigns a first-import default from the files on disk", () => {
+    expect(savedOrDefaultLibraryPlayMode({}, undefined, ["Bass.flac"])).toBe(PlayMode.Playback);
+    expect(savedOrDefaultLibraryPlayMode({}, undefined, ["Click.flac"])).toBe(PlayMode.Playback);
+    expect(savedOrDefaultLibraryPlayMode({}, undefined, ["Nota.pdf"])).toBe(PlayMode.View);
+  });
+
+  it("keeps a later song-info play mode even when files would default differently", () => {
+    expect(savedOrDefaultLibraryPlayMode({ playMode: PlayMode.View }, undefined, ["Bass.flac"])).toBe(
+      PlayMode.View
+    );
+    expect(
+      savedOrDefaultLibraryPlayMode({ playMode: PlayMode.Playback }, undefined, ["Click.flac"])
+    ).toBe(PlayMode.Playback);
+    expect(
+      savedOrDefaultLibraryPlayMode({ playMode: PlayMode.ClickOnly }, undefined, ["Bass.flac"])
+    ).toBe(PlayMode.Playback);
+    expect(
+      savedOrDefaultLibraryPlayMode({ playMode: PlayMode.Free }, undefined, ["Bass.flac"])
+    ).toBe(PlayMode.View);
   });
 });
 

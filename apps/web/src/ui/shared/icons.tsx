@@ -7,6 +7,59 @@ export function NotesIcon() {
   );
 }
 
+export function LyricsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 3.5h7.2L18.5 8v12.5H7z" />
+      <path d="M14.2 3.5V8H18.5" />
+      <path d="M9.2 11.2h6.4M9.2 14h6.4M9.2 16.8h4.2" />
+    </svg>
+  );
+}
+
+export function ScoreIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <ellipse
+        cx="7.4"
+        cy="16.5"
+        rx="2.55"
+        ry="1.85"
+        transform="rotate(-28 7.4 16.5)"
+        data-fill="1"
+      />
+      <path d="M9.7 4.4v12" />
+      <ellipse
+        cx="15.9"
+        cy="16.5"
+        rx="2.55"
+        ry="1.85"
+        transform="rotate(-28 15.9 16.5)"
+        data-fill="1"
+      />
+      <path d="M18.2 4.4v12" />
+    </svg>
+  );
+}
+
+export function ChordIcon() {
+  return (
+    <span className="page-icon-text" aria-hidden="true">
+      Am7
+    </span>
+  );
+}
+
+export function DrumsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <ellipse cx="12" cy="11.1" rx="7.6" ry="3" />
+      <path d="M4.4 11.1v6.9c0 1.55 3.4 2.8 7.6 2.8s7.6-1.25 7.6-2.8v-6.9" />
+      <path d="M4.5 3.5 11.1 12.1M19.5 3.5 12.9 12.1" />
+    </svg>
+  );
+}
+
 export function InfoIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -133,10 +186,31 @@ export function EighthNoteIcon() {
 export function PreparationIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M9 3.2h6l.7 1.6H18c1 0 1.8.8 1.8 1.8v12.4c0 1-.8 1.8-1.8 1.8H6c-1 0-1.8-.8-1.8-1.8V6.6c0-1 .8-1.8 1.8-1.8h2.3zm1.4 1v2h3.2v-2zM7.6 11h8.8v1.6H7.6zm0 3.2h8.8v1.6H7.6zm0 3.2h6.2v1.6H7.6z"
-      />
+      <rect x="5.5" y="6.4" width="13" height="14.1" rx="1.4" />
+      <rect x="8.4" y="3.4" width="7.2" height="4.2" rx="1.1" />
+      <path d="M8.4 11.6h7.2M8.4 14.6h7.2M8.4 17.6h5" />
+    </svg>
+  );
+}
+
+export function PdfIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 3.4h7.1L18.6 8v12.6H7z" />
+      <path d="M14.1 3.4V8h4.5" />
+      <path d="M9.2 12.2h6.4M9.2 15h6.4M9.2 17.8h4.1" />
+    </svg>
+  );
+}
+
+export function PrinterIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8.2 8.4V3.8h7.6v4.6" />
+      <rect x="4.4" y="8.4" width="15.2" height="8.2" rx="1.4" />
+      <path d="M8.2 13.6h7.6v6.6H8.2z" />
+      <path d="M9.8 16h4.4M9.8 18.1h3.2" />
+      <path d="M16.7 11.2h1.5" />
     </svg>
   );
 }
@@ -144,9 +218,7 @@ export function PreparationIcon() {
 export function MixerIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4.2" y="4.5" width="2.6" height="15" rx="0.6" />
-      <rect x="10.7" y="4.5" width="2.6" height="15" rx="0.6" />
-      <rect x="17.2" y="4.5" width="2.6" height="15" rx="0.6" />
+      <path d="M5.5 4.5v15M12 4.5v15M18.5 4.5v15" />
       <circle cx="5.5" cy="9.2" r="2.1" />
       <circle cx="12" cy="14.4" r="2.1" />
       <circle cx="18.5" cy="8.2" r="2.1" />
@@ -157,7 +229,7 @@ export function MixerIcon() {
 export function SpeakerMonitorIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 2.8h14c1.1 0 2 .9 2 2v14.4c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V4.8c0-1.1.9-2 2-2zm1.2 2v14.4h11.6V4.8z" />
+      <rect x="4.4" y="3.2" width="15.2" height="17.6" rx="1.6" />
       <circle cx="12" cy="14.2" r="3.7" />
       <circle cx="12" cy="7.6" r="1.4" />
     </svg>
@@ -172,19 +244,41 @@ export function LockIcon() {
   );
 }
 
+export function FreeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8.2 10.6V7.6a3.8 3.8 0 0 1 7.5-0.8" />
+      <rect x="6.2" y="10.6" width="11.6" height="9.2" rx="1.5" />
+    </svg>
+  );
+}
+
+export function PracticeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3.2 19.4 20.6H4.6z" />
+      <path d="M12 3.2 8.2 16.2" />
+      <circle cx="8.2" cy="16.2" r="1.15" />
+    </svg>
+  );
+}
+
+export function StageConnectIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="18.2" r="1.35" />
+      <path d="M8.4 15.2a5.4 5.4 0 0 1 7.2 0" />
+      <path d="M5.8 12.2a9 9 0 0 1 12.4 0" />
+      <path d="M3.6 9.2a12.6 12.6 0 0 1 16.8 0" />
+    </svg>
+  );
+}
+
 export function ChronometerIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="14" r="6.8" />
       <path d="M12 7.2V4.5M9.5 3.5h5M17.1 8.7l1.5-1.5M12 10.5v3.8l2.7 1.7" />
-    </svg>
-  );
-}
-
-export function AutoScrollIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3.4 20.2 13h-4.4v7.6H8.2V13H3.8z" />
     </svg>
   );
 }
@@ -197,10 +291,20 @@ export function ChainIcon() {
   );
 }
 
+export function MagnifierIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="5.8" />
+      <path d="M14.8 14.8 20 20" />
+    </svg>
+  );
+}
+
 export function DockLeftIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
+        data-fill
         fillRule="evenodd"
         d="M3.7 4.3h16.6v15.4H3.7zm7.4 1.7v12h7.5v-12z"
       />
@@ -211,13 +315,9 @@ export function DockLeftIcon() {
 export function EditSectionsIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M3.7 4.3h16.6v15.4H3.7zm1.7 1.7v12h13.2v-12z"
-      />
-      <ellipse cx="10.05" cy="15.7" rx="3.5" ry="2.55" transform="rotate(-28 10.05 15.7)" />
-      <rect x="12.7" y="6.55" width="1.85" height="9" />
-      <path d="M14.55 6.55c3.35.15 5.15 2.55 4.55 6.05-1.05-.95-2.45-1.55-4.55-1.35z" />
+      <path d="M14.6 3.8 20.2 9.4 9.1 20.5H3.5v-5.6z" />
+      <path d="M13.2 5.2 18.8 10.8" />
+      <path d="M3.5 21.2h17" />
     </svg>
   );
 }

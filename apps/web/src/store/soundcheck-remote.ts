@@ -39,7 +39,8 @@ export function remoteGigEntries(gig: Gig, songs: readonly Song[]): LoadGigSetli
     return {
       type: entry.type,
       entryId: entry.entryId,
-      label: entry.label
+      label: entry.label,
+      ...(entry.notes?.trim() ? { notes: entry.notes } : {})
     };
   });
 }

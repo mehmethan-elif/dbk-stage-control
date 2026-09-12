@@ -2,12 +2,14 @@ import { hasPlaybackAudio } from "./audio-engine.js";
 import type { BreakSetlistEntry, Gig, SetlistEntry, Song, SongSetlistEntry } from "./models.js";
 import {
   ELIF_KONUSMA_LABEL,
+  STOP_LABEL,
   FinishMode,
   PlayMode,
   entryPlayMode,
-  isElifKonusma,
   isLockedElif,
   isSongEntry,
+  isStopMarker,
+  isTalkEntry,
   parseSongInfo
 } from "./models.js";
 import { firstSectionNamed } from "./timeline.js";
@@ -17,7 +19,7 @@ export function songEntries(gig: Gig): SongSetlistEntry[] {
 }
 
 export function visibleSetlistEntries(setlist: SetlistEntry[]): SetlistEntry[] {
-  return setlist.filter((entry) => isSongEntry(entry) || isElifKonusma(entry));
+  return setlist.filter((entry) => isSongEntry(entry) || isTalkEntry(entry));
 }
 
 export function findSongEntryIndex(setlist: SetlistEntry[], fromIndex: number, direction: 1 | -1): number {
@@ -46,6 +48,21 @@ export function nextUnskippedSongIndex(setlist: SetlistEntry[], currentIndex: nu
     i += 1;
   }
   return -1;
+}
+
+/** After a song ends: land on STOP, otherwise the next unskipped song (ELIF is skipped). */
+export function nextEndedSelectionId(
+  setlist: SetlistEntry[],
+  currentIndex: number
+): string | null {
+  for (let i = currentIndex + 1; i < setlist.length; i++) {
+    const entry = setlist[i];
+    if (!entry) continue;
+    if (isStopMarker(entry)) return entry.entryId;
+    if (isTalkEntry(entry)) continue;
+    if (isSongEntry(entry) && !entry.skipped) return entry.entryId;
+  }
+  return null;
 }
 
 export function isLastSongEntry(setlist: SetlistEntry[], index: number): boolean {
@@ -101,7 +118,7 @@ export function withKeyChangeElifs(
       next.push(entry);
       continue;
     }
-    if (isElifKonusma(entry)) {
+    if (isTalkEntry(entry)) {
       next.push(entry);
       manualElifPending = true;
       continue;
@@ -132,7 +149,7 @@ export function songFollowedByElif(
   for (let i = index + 1; i < setlist.length; i++) {
     const entry = setlist[i];
     if (!entry) continue;
-    if (isElifKonusma(entry)) return true;
+    if (isTalkEntry(entry)) return true;
     if (isSongEntry(entry)) {
       if (entry.skipped) continue;
       if (!current || !isSongEntry(current) || !songs) return false;
@@ -146,14 +163,14 @@ export function elifPlacementValid(setlist: SetlistEntry[]): boolean {
   const last = lastSongIndex(setlist);
   for (let i = 0; i < setlist.length; i++) {
     const entry = setlist[i];
-    if (entry && isElifKonusma(entry) && (last < 0 || i >= last)) return false;
+    if (entry && isTalkEntry(entry) && (last < 0 || i >= last)) return false;
   }
   return true;
 }
 
 export function trimElifAfterLastSong(setlist: SetlistEntry[]): SetlistEntry[] {
   const last = lastSongIndex(setlist);
-  return setlist.filter((entry, index) => !isElifKonusma(entry) || (last >= 0 && index < last));
+  return setlist.filter((entry, index) => !isTalkEntry(entry) || (last >= 0 && index < last));
 }
 
 export function insertAfterSelected(
@@ -197,8 +214,31 @@ export function insertElifAfterSelected(
   const index = setlist.findIndex((entry) => entry.entryId === selectedEntryId);
   if (index < 0) return setlist;
   const next = setlist.slice();
-  next.splice(index + 1, 0, { type: "talk", entryId, label: ELIF_KONUSMA_LABEL });
+  next.splice(index + 1, 0, { type: "talk", entryId, label: STOP_LABEL });
   return next;
+}
+
+/** True when the song should start as metronome instead of a playback deck. */
+export function songPlaysAsMetronome(
+  song?: Song,
+  entry?: { playMode?: PlayMode }
+): boolean {
+  const requested = entry?.playMode ?? song?.info?.playMode;
+  if (requested === PlayMode.View || requested === PlayMode.Free) return true;
+  if (requested === PlayMode.Playback || requested === PlayMode.ClickOnly) {
+    return !hasPlaybackAudio(song);
+  }
+  return !hasPlaybackAudio(song);
+}
+
+/** Metronome START is SERBEST (song info) or the chart begins with a SERBEST section. */
+export function metronomeStartsSerbest(song?: Song): boolean {
+  if (parseSongInfo(song?.info).startMode === "SERBEST") return true;
+  return firstSectionNamed(song?.sections, "SERBEST");
+}
+
+export function shouldAutoStartMetronome(song?: Song): boolean {
+  return !metronomeStartsSerbest(song);
 }
 
 export function effectiveFinishMode(
@@ -222,16 +262,13 @@ export function effectiveFinishMode(
     }
     const next = setlist[nextUnskippedSongIndex(setlist, index)];
     const nextSong = next && isSongEntry(next) ? songs.get(next.songId) : undefined;
-    if (next && isSongEntry(next) && !hasPlaybackAudio(nextSong)) {
-      return FinishMode.Stop;
-    }
-    if (next && isSongEntry(next) && parseSongInfo(nextSong?.info).playMode === PlayMode.View) {
+    if (next && isSongEntry(next) && !songPlaysAsMetronome(nextSong, next) && !hasPlaybackAudio(nextSong)) {
       return FinishMode.Stop;
     }
     if (
       next &&
       isSongEntry(next) &&
-      entryPlayMode(next, songs.get(next.songId)?.info) !== PlayMode.View &&
+      !songPlaysAsMetronome(nextSong, next) &&
       firstSectionNamed(songs.get(next.songId)?.sections, "SERBEST")
     ) {
       return FinishMode.Stop;

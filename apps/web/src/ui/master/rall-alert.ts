@@ -27,6 +27,20 @@ export function showsRallAlert(absMeasure: number, rallMeasure: number | undefin
   return rallMeasure != null && absMeasure >= rallMeasure - 1;
 }
 
+export function lyricLineShowsRall(
+  song: Pick<Song, "tempoMap"> | undefined,
+  line: { time: number; end?: number },
+  time: number
+): boolean {
+  const rall = firstTempoChangeMeasure(song?.tempoMap);
+  if (rall == null) return false;
+  const map = [...(song?.tempoMap ?? [])];
+  const measure = timeToMusical(map, Math.max(0, time)).measure;
+  if (!showsRallAlert(measure, rall)) return false;
+  const end = line.end != null && line.end > line.time ? line.end : line.time;
+  return time + TIME_EPS >= line.time && time < end + TIME_EPS;
+}
+
 export type RallDrumTone = "idle" | "soon" | "now";
 
 export function rallDrumTone(

@@ -1,5 +1,5 @@
 -- @description DBK Stage Control Export
--- @version 0.3.2
+-- @version 0.3.11
 -- @about
 --   Collects duration, tempo map, sections, lyrics, chords, and selected stems
 --   from the current REAPER project and writes song.json plus audio for DBK.
@@ -10,12 +10,18 @@
 --       CLICK, KICK, DRUMS, PERC, BASS, KEYS, PLUCK, STRING, MELODY, CHOIR, GUITAR
 --       "Drums" or "string" is ignored. Children of a DRUMS/STRING folder are not
 --       selected; they are mixed through that folder and the master bus.
+--     NOTA     muted for Master.mp3 (guide / score audio; not part of the mix)
 --     NEXT     project marker → nextSongAt (when PLAY_NEXT starts the following song)
---     MASTER   always available → Master.mp3 (full mix, 128 kbps CBR; CLICK muted)
+--     MASTER   always available → Master.mp3 (full mix, 128 kbps CBR; CLICK and NOTA muted)
 --     CLICK    if present → Click.flac through master bus (44.1 kHz 16-bit)
 --     KICK, DRUMS, ... → one Kick.flac, Drums.flac, ... through master bus
 --
---   Key, scale, and style are chosen in the exporter (not from an INFO track).
+--   Key, scale, style, and kıta are chosen in the exporter (not from an INFO track).
+--   Infos and chart tracks are always written when present. Audio include
+--   checkboxes are stored in the REAPER project and written again after Export.
+--
+--   Duration is the project end (ruler / =END / last marker before leftover
+--   items or regions), not leftover content after that point.
 --
 --   Item text is taken from item notes, then from the active take name.
 --
@@ -42,10 +48,17 @@ local STEM_SPECS = {
   { key = "GUITAR", file = "Guitar" }
 }
 
-local KEY_TONES = { "A", "B", "C", "D", "E", "F", "G" }
+local STEM_KEYS = {}
+for _, spec in ipairs(STEM_SPECS) do
+  STEM_KEYS[spec.key] = true
+end
+
+local KEY_EMPTY = " "
+local KEY_TONES = { KEY_EMPTY, "A", "B", "C", "D", "E", "F", "G" }
 local KEY_ACC = { "#", "b", "" }
-local KEY_SCALES = { "CARGAH", "HICAZ", "KURDI", "MINOR", "USSAK" }
+local KEY_SCALES = { KEY_EMPTY, "CARGAH", "HICAZ", "KURDI", "MINOR", "USSAK" }
 local KEY_STYLES = {
+  KEY_EMPTY,
   "ANKARA",
   "ATATURK",
   "AZERI",
@@ -64,7 +77,7 @@ local KEY_STYLES = {
 }
 local LIBRARY_SONGS = "/Users/md/Projects/dbk-stage-control/library/songs"
 
-local WIN_W, WIN_H = 680, 730
+local WIN_W, WIN_H = 400, 800
 
 local COL = {
   bg = { 22, 22, 26 },
@@ -106,6 +119,22 @@ end
 local function trim(s)
   s = tostring(s or "")
   return (s:gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+local function is_blank_opt(v)
+  return v == nil or v == "" or v == KEY_EMPTY
+end
+
+local function proj_get(key)
+  local ok, val = reaper.GetProjExtState(0, EXT_NS, key)
+  if (ok == 1 or ok == true) and val ~= nil and val ~= "" then
+    return val
+  end
+  return nil
+end
+
+local function proj_set(key, value)
+  reaper.SetProjExtState(0, EXT_NS, key, tostring(value or ""))
 end
 
 local function host_font()
@@ -801,27 +830,6 @@ local function collect_tempo_map()
   return map
 end
 
-local function project_duration()
-  local len = reaper.GetProjectLength(0) or 0
-  if len > 0 then
-    return round(len, 6)
-  end
-  local max_end = 0
-  for t = 0, reaper.CountTracks(0) - 1 do
-    local track = reaper.GetTrack(0, t)
-    for i = 0, reaper.CountTrackMediaItems(track) - 1 do
-      local item = reaper.GetTrackMediaItem(track, i)
-      local pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
-      local item_len = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-      local finish = pos + item_len
-      if finish > max_end then
-        max_end = finish
-      end
-    end
-  end
-  return round(max_end, 6)
-end
-
 local function fold_track_name(name)
   name = trim(name or "")
   name = name:gsub("\196\177", "I"):gsub("\196\176", "I") -- ı / İ
@@ -841,13 +849,7 @@ local function track_matches(name, keyword)
   return nextc == " " or nextc == "_" or nextc == "-"
 end
 
--- Stem/click tracks: exact ALL-CAPS name only. "Drums" / "string" must not match.
-local function track_named_exact(name, keyword)
-  return trim(name or "") == keyword
-end
-
-local function collect_next_marker()
-  -- CountProjectMarkers returns num_markers, num_regions (some builds prefix retval).
+local function each_project_marker(fn)
   local a, b, c = reaper.CountProjectMarkers(0)
   local markers, regions
   if type(c) == "number" then
@@ -856,24 +858,177 @@ local function collect_next_marker()
     markers, regions = a, b
   end
   local total = (tonumber(markers) or 0) + (tonumber(regions) or 0)
-  local found
   for i = 0, total - 1 do
-    local ret, isrgn, pos, _, name
+    local ret, isrgn, pos, rgnend, name
     if reaper.EnumProjectMarkers3 then
-      ret, isrgn, pos, _, name = reaper.EnumProjectMarkers3(0, i)
+      ret, isrgn, pos, rgnend, name = reaper.EnumProjectMarkers3(0, i)
     elseif reaper.EnumProjectMarkers2 then
-      ret, isrgn, pos, _, name = reaper.EnumProjectMarkers2(0, i)
+      ret, isrgn, pos, rgnend, name = reaper.EnumProjectMarkers2(0, i)
     else
-      ret, isrgn, pos, _, name = reaper.EnumProjectMarkers(i)
+      ret, isrgn, pos, rgnend, name = reaper.EnumProjectMarkers(i)
     end
-    local is_region = isrgn == true or isrgn == 1
     local ok = ret ~= false and ret ~= nil and ret ~= 0
-    if ok and not is_region and fold_track_name(name or "") == "NEXT" and type(pos) == "number" then
-      if not found or pos < found then
-        found = pos
+    if ok then
+      fn({
+        is_region = isrgn == true or isrgn == 1,
+        pos = pos,
+        rgnend = rgnend,
+        name = name or ""
+      })
+    end
+  end
+end
+
+local function is_end_marker_name(name)
+  local n = fold_track_name(name)
+  return n == "END" or n == "=END" or n == "PROJECT END" or n == "PROJEND" or n == "SONG END" or n == "FIN"
+end
+
+local function last_media_item_end()
+  local max_end = 0
+  for t = 0, reaper.CountTracks(0) - 1 do
+    local track = reaper.GetTrack(0, t)
+    for i = 0, reaper.CountTrackMediaItems(track) - 1 do
+      local item = reaper.GetTrackMediaItem(track, i)
+      local pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+      local item_len = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+      local finish = pos + item_len
+      if finish > max_end then
+        max_end = finish
       end
     end
   end
+  return max_end
+end
+
+local function content_length()
+  local len = reaper.GetProjectLength(0) or 0
+  if len > 0 then
+    return len
+  end
+  return last_media_item_end()
+end
+
+local function last_region_end()
+  local last = 0
+  each_project_marker(function(mark)
+    if mark.is_region and type(mark.rgnend) == "number" and mark.rgnend > last then
+      last = mark.rgnend
+    end
+  end)
+  return last
+end
+
+-- PROJECT_LENGTH is 0 unless "Limit project length" is on. The ruler
+-- still stores MAXPROJLEN in the .rpp, including when the limit is off.
+local function parse_rpp_maxprojlen()
+  local path = project_rpp_path()
+  if not path or path == "" then
+    return nil, nil
+  end
+  local f = io.open(path, "r")
+  if not f then
+    return nil, nil
+  end
+  local limited, length
+  for _ = 1, 500 do
+    local line = f:read("*l")
+    if not line then
+      break
+    end
+    local flag, secs = line:match("^%s*MAXPROJLEN%s+(%d+)%s+([%-%+]?[%d%.eE]+)")
+    if flag then
+      limited = tonumber(flag) == 1
+      length = tonumber(secs)
+      break
+    end
+  end
+  f:close()
+  return limited, length
+end
+
+local function project_end_from_ruler()
+  local plen = reaper.GetSetProjectInfo(0, "PROJECT_LENGTH", 0, false) or 0
+  if plen <= 0.0005 then
+    plen = reaper.GetSetProjectInfo(0, "PROJ_LENGTH", 0, false) or 0
+  end
+  local limited, rpp_len = parse_rpp_maxprojlen()
+  if plen <= 0.0005 and rpp_len and rpp_len > 0.0005 and limited then
+    plen = rpp_len
+  end
+  if plen > 0.0005 then
+    return plen
+  end
+  -- Limit off, but the user dragged the project-end before leftover content.
+  -- Ignore the unused factory default of 10:00.
+  if rpp_len and rpp_len > 0.0005 and math.abs(rpp_len - 600) > 0.05 then
+    local content = content_length()
+    if content > rpp_len + 0.02 then
+      return rpp_len
+    end
+  end
+  return nil
+end
+
+local function project_duration()
+  local named_end
+  local last_marker
+  each_project_marker(function(mark)
+    if mark.is_region or type(mark.pos) ~= "number" then
+      return
+    end
+    if is_end_marker_name(mark.name) then
+      if not named_end or mark.pos < named_end then
+        named_end = mark.pos
+      end
+    end
+    if fold_track_name(mark.name) ~= "NEXT" then
+      if not last_marker or mark.pos > last_marker then
+        last_marker = mark.pos
+      end
+    end
+  end)
+  if named_end and named_end > 0 then
+    return round(named_end, 6)
+  end
+  local ruler = project_end_from_ruler()
+  if ruler then
+    return round(ruler, 6)
+  end
+  local content = content_length()
+  -- Leftover items/regions after the last project marker must not stretch
+  -- the song. Do not grow duration to meet leftover section items.
+  if last_marker and last_marker > 0 then
+    local leftover = last_media_item_end() > last_marker + 0.02
+      or last_region_end() > last_marker + 0.02
+      or content > last_marker + 0.02
+    if leftover then
+      return round(last_marker, 6)
+    end
+  end
+  if content > 0 then
+    return round(content, 6)
+  end
+  return 0
+end
+
+-- Stem/click tracks: exact ALL-CAPS name only. "Drums" / "string" must not match.
+local function track_named_exact(name, keyword)
+  return trim(name or "") == keyword
+end
+
+local function collect_next_marker()
+  local found
+  each_project_marker(function(mark)
+    if mark.is_region or type(mark.pos) ~= "number" then
+      return
+    end
+    if fold_track_name(mark.name) == "NEXT" then
+      if not found or mark.pos < found then
+        found = mark.pos
+      end
+    end
+  end)
   if found then
     return round(found, 6)
   end
@@ -1127,13 +1282,42 @@ local function collect_stems()
   return stems
 end
 
+local function clip_timed(items, ending)
+  if not ending or ending <= 0 or not items then
+    return items or {}
+  end
+  local out = {}
+  for _, item in ipairs(items) do
+    local start = item.time or item.start or 0
+    if start < ending - 0.0005 then
+      local copy = {}
+      for k, v in pairs(item) do
+        copy[k] = v
+      end
+      if copy.finish and copy.finish > ending then
+        copy.finish = ending
+      end
+      if copy["end"] and copy["end"] > ending then
+        copy["end"] = ending
+      end
+      out[#out + 1] = copy
+    end
+  end
+  return out
+end
+
 local function collect_project()
   local title = project_title()
   local rpp = project_rpp_path()
+  local duration = project_duration()
   local section_found, section_items = collect_named_items("SECTION")
   local lyrics_found, lyrics_items = collect_named_items("LYRICS")
   local chords_found, chords_items = collect_chords()
   local pattern_found, pattern_items = collect_patterns()
+  section_items = clip_timed(section_items, duration)
+  lyrics_items = clip_timed(lyrics_items, duration)
+  chords_items = clip_timed(chords_items, duration)
+  pattern_items = clip_timed(pattern_items, duration)
   local click = collect_click()
   local stems = collect_stems()
   local sections = {}
@@ -1147,7 +1331,7 @@ local function collect_project()
   return {
     id = song_id(title, rpp),
     title = title,
-    duration = project_duration(),
+    duration = duration,
     tempoMap = collect_tempo_map(),
     nextSongAt = collect_next_marker(),
     sections = sections,
@@ -1171,6 +1355,114 @@ end
 --------------------------------------------------------------------------------
 -- Export
 --------------------------------------------------------------------------------
+
+local function read_text(path)
+  local file = io.open(path, "r")
+  if not file then
+    return nil
+  end
+  local body = file:read("*a")
+  file:close()
+  if type(body) == "string" and body ~= "" then
+    return body
+  end
+  return nil
+end
+
+local function extract_json_array(body, key)
+  if not body or body == "" then
+    return nil
+  end
+  local start = body:find('"' .. key .. '"%s*:', 1)
+  if not start then
+    return nil
+  end
+  local i = body:find("%[", start)
+  if not i then
+    return nil
+  end
+  local depth, in_str, esc = 0, false, false
+  for pos = i, #body do
+    local c = body:sub(pos, pos)
+    if in_str then
+      if esc then
+        esc = false
+      elseif c == "\\" then
+        esc = true
+      elseif c == '"' then
+        in_str = false
+      end
+    elseif c == '"' then
+      in_str = true
+    elseif c == "[" then
+      depth = depth + 1
+    elseif c == "]" then
+      depth = depth - 1
+      if depth == 0 then
+        return body:sub(i, pos)
+      end
+    end
+  end
+  return nil
+end
+
+local function keep_json_array(existing, key, encoded)
+  if encoded and encoded ~= "[]" then
+    return encoded
+  end
+  return (existing and extract_json_array(existing, key)) or encoded or "[]"
+end
+
+local function extract_json_object(body, key)
+  if not body or body == "" then
+    return nil
+  end
+  local start = body:find('"' .. key .. '"%s*:', 1)
+  if not start then
+    return nil
+  end
+  local i = body:find("{", start)
+  if not i then
+    return nil
+  end
+  local depth, in_str, esc = 0, false, false
+  for pos = i, #body do
+    local c = body:sub(pos, pos)
+    if in_str then
+      if esc then
+        esc = false
+      elseif c == "\\" then
+        esc = true
+      elseif c == '"' then
+        in_str = false
+      end
+    elseif c == '"' then
+      in_str = true
+    elseif c == "{" then
+      depth = depth + 1
+    elseif c == "}" then
+      depth = depth - 1
+      if depth == 0 then
+        return body:sub(i, pos)
+      end
+    end
+  end
+  return nil
+end
+
+local function with_kita_in_info(info_json, kita)
+  if kita == nil then
+    return info_json
+  end
+  local kita_json = json_num(kita)
+  if info_json then
+    if info_json:find('"kita"') then
+      return (info_json:gsub('"kita"%s*:%s*-?[0-9]+', '"kita": ' .. kita_json, 1))
+    end
+    return (info_json:gsub("}[%s]*$", ',\n    "kita": ' .. kita_json .. "\n  }"))
+  end
+  return '{\n    "kita": ' .. kita_json .. "\n  }"
+end
 
 local function write_file(path, body)
   local file, err = io.open(path, "wb")
@@ -1388,7 +1680,9 @@ local function render_bounce(opts)
   set_str("RENDER_FORMAT", opts.format)
   set_str("RENDER_FORMAT2", "")
   set_num("RENDER_SETTINGS", opts.source or RENDER_MASTER_MIX)
-  set_num("RENDER_BOUNDSFLAG", 1)
+  set_num("RENDER_BOUNDSFLAG", 0)
+  set_num("RENDER_STARTPOS", 0)
+  set_num("RENDER_ENDPOS", project_duration())
   set_num("RENDER_SRATE", 44100)
   set_num("RENDER_CHANNELS", 2)
   set_num("RENDER_TAILFLAG", 0)
@@ -1432,18 +1726,32 @@ local function render_stem_flac(stem, out_dir)
 end
 
 local function render_master_mp3(out_dir, click_tracks)
+  local mute = {}
+  for _, track in ipairs(click_tracks or {}) do
+    mute[#mute + 1] = track
+  end
+  for _, track in ipairs(find_named_tracks("NOTA")) do
+    mute[#mute + 1] = track
+  end
   return render_bounce({
     out_dir = out_dir,
     file = "Master",
     ext = "mp3",
     format = MP3_128_CFG,
     source = RENDER_MASTER_MIX,
-    mute_tracks = click_tracks or {},
+    mute_tracks = mute,
     remove = { "master.mp3", "Master.flac", "master.flac" }
   })
 end
 
-local function build_song_json(data, master_path, click_path, stem_files, key_str, scale_str, style_str)
+local function build_song_json(data, master_path, click_path, stem_files, opts)
+  opts = opts or {}
+  local key_str = opts.key or ""
+  local scale_str = opts.scale or ""
+  local style_str = opts.style or ""
+  local kita = opts.kita
+  local include = opts.include or {}
+  local existing = opts.existing
   local assets = {}
   if master_path then
     assets[#assets + 1] = {
@@ -1487,25 +1795,53 @@ local function build_song_json(data, master_path, click_path, stem_files, key_st
   if click_path and data.clickDuration then
     parts[#parts + 1] = '  "clickDuration": ' .. json_num(data.clickDuration) .. ","
   end
-  if data.nextSongAt then
+  if include.NEXT ~= false and data.nextSongAt then
     parts[#parts + 1] = '  "nextSongAt": ' .. json_num(data.nextSongAt) .. ","
   end
-  if key_str and key_str ~= "" then
+  if include.KEY ~= false and key_str ~= "" then
     parts[#parts + 1] = '  "key": ' .. json_str(key_str) .. ","
   end
-  if scale_str and scale_str ~= "" then
+  if include.SCALE ~= false and scale_str ~= "" then
     parts[#parts + 1] = '  "scale": ' .. json_str(scale_str) .. ","
   end
-  if style_str and style_str ~= "" then
+  if include.STYLE ~= false and style_str ~= "" then
     parts[#parts + 1] = '  "style": ' .. json_str(style_str) .. ","
+  end
+  if include.KITA ~= false and kita ~= nil then
+    parts[#parts + 1] = '  "kita": ' .. json_num(kita) .. ","
   end
   parts[#parts + 1] = '  "tags": ["reaper-export"],'
   parts[#parts + 1] = '  "tempoMap": ' .. encode_tempo_map(data.tempoMap) .. ","
-  parts[#parts + 1] = '  "sections": ' .. encode_sections(data.sections) .. ","
-  parts[#parts + 1] = '  "lyrics": ' .. encode_timed(data.lyrics) .. ","
-  parts[#parts + 1] = '  "chords": ' .. encode_chords(data.chords) .. ","
-  parts[#parts + 1] = '  "patterns": ' .. encode_patterns(data.patterns or {}) .. ","
-  parts[#parts + 1] = '  "assets": ' .. encode_assets(assets)
+  parts[#parts + 1] = '  "sections": ' .. keep_json_array(
+    existing,
+    "sections",
+    encode_sections((include.SECTION ~= false) and data.sections or {})
+  ) .. ","
+  parts[#parts + 1] = '  "lyrics": ' .. keep_json_array(
+    existing,
+    "lyrics",
+    encode_timed((include.LYRICS ~= false) and data.lyrics or {})
+  ) .. ","
+  parts[#parts + 1] = '  "chords": ' .. keep_json_array(
+    existing,
+    "chords",
+    encode_chords((include.CHORDS ~= false) and data.chords or {})
+  ) .. ","
+  parts[#parts + 1] = '  "patterns": ' .. keep_json_array(
+    existing,
+    "patterns",
+    encode_patterns((include.PATTERN ~= false) and (data.patterns or {}) or {})
+  ) .. ","
+  parts[#parts + 1] = '  "assets": ' .. keep_json_array(existing, "assets", encode_assets(assets))
+  local existing_info = existing and extract_json_object(existing, "info")
+  local info_json = existing_info
+  if include.KITA ~= false then
+    info_json = with_kita_in_info(existing_info, kita)
+  end
+  if info_json then
+    parts[#parts] = parts[#parts] .. ","
+    parts[#parts + 1] = '  "info": ' .. info_json
+  end
   parts[#parts + 1] = "}"
   return table.concat(parts, "\n") .. "\n"
 end
@@ -1569,9 +1905,10 @@ local function export_json(data, out_dir, opts)
   end
 
   local song_path = join_path(out_dir, "song.json")
+  opts.existing = read_text(song_path)
   local ok, err = write_file(
     song_path,
-    build_song_json(data, master_file, click_file, stem_files, opts.key or "", opts.scale or "", opts.style or "")
+    build_song_json(data, master_file, click_file, stem_files, opts)
   )
   if not ok then
     return false, "Could not write song.json: " .. tostring(err)
@@ -1618,7 +1955,7 @@ end
 
 local function load_acc_index()
   local nat = index_of(KEY_ACC, "", 3)
-  local saved = trim(reaper.GetExtState(EXT_NS, "key_acc"))
+  local saved = proj_get("key_acc") or ""
   if saved == "nat" or saved == "" then
     return nat
   end
@@ -1627,7 +1964,15 @@ end
 
 local function persist_acc(i)
   local v = KEY_ACC[i] or ""
-  reaper.SetExtState(EXT_NS, "key_acc", v == "" and "nat" or v, true)
+  proj_set("key_acc", v == "" and "nat" or v)
+end
+
+local function kita_digit(raw)
+  local s = tostring(raw or "0")
+  if s:match("^%d$") then
+    return s
+  end
+  return "0"
 end
 
 local state = {
@@ -1640,10 +1985,12 @@ local state = {
   data = collect_project(),
   include = {},
   open_combo = nil,
-  tone_i = index_of(KEY_TONES, trim(reaper.GetExtState(EXT_NS, "key_tone")), index_of(KEY_TONES, "C", 1)),
+  kita_focus = false,
+  tone_i = index_of(KEY_TONES, proj_get("key_tone") or KEY_EMPTY, 1),
   acc_i = 3,
-  scale_i = index_of(KEY_SCALES, trim(reaper.GetExtState(EXT_NS, "key_scale")), index_of(KEY_SCALES, "MINOR", 1)),
-  style_i = index_of(KEY_STYLES, trim(reaper.GetExtState(EXT_NS, "key_style")), index_of(KEY_STYLES, "MID", 1))
+  scale_i = index_of(KEY_SCALES, proj_get("key_scale") or KEY_EMPTY, 1),
+  style_i = index_of(KEY_STYLES, proj_get("key_style") or KEY_EMPTY, 1),
+  kita = kita_digit(proj_get("kita") or "0")
 }
 state.acc_i = load_acc_index()
 state.out_dir = default_export_dir(state.data.title)
@@ -1663,6 +2010,7 @@ local hit = {
   browse_btn = nil,
   combos = {},
   checks = {},
+  kita = nil,
   menu = nil
 }
 
@@ -1708,7 +2056,32 @@ local function draw_row(x, y, w, h, label, value)
 end
 
 local function selected_key()
-  return (KEY_TONES[state.tone_i] or "C") .. (KEY_ACC[state.acc_i] or "")
+  local tone = KEY_TONES[state.tone_i] or KEY_EMPTY
+  if is_blank_opt(tone) then
+    return ""
+  end
+  return tone .. (KEY_ACC[state.acc_i] or "")
+end
+
+local function selected_opt(list, index)
+  local v = list[index]
+  if is_blank_opt(v) then
+    return ""
+  end
+  return v
+end
+
+local function persist_project_settings()
+  proj_set("key_tone", KEY_TONES[state.tone_i] or KEY_EMPTY)
+  persist_acc(state.acc_i)
+  proj_set("key_scale", KEY_SCALES[state.scale_i] or KEY_EMPTY)
+  proj_set("key_style", KEY_STYLES[state.style_i] or KEY_EMPTY)
+  proj_set("kita", kita_digit(state.kita))
+  for key, on in pairs(state.include) do
+    if key == "MASTER" or key == "CLICK" or STEM_KEYS[key] then
+      proj_set("include_" .. key, on and "1" or "0")
+    end
+  end
 end
 
 local function click_exportable(click)
@@ -1721,7 +2094,7 @@ local function wants_include(key, exportable)
   end
   local v = state.include[key]
   if v == nil then
-    local saved = reaper.GetExtState(EXT_NS, "include_" .. key)
+    local saved = proj_get("include_" .. key)
     if saved == "0" then
       state.include[key] = false
       return false
@@ -1738,13 +2111,22 @@ local function toggle_include(key, exportable)
   end
   local on = not wants_include(key, true)
   state.include[key] = on
-  reaper.SetExtState(EXT_NS, "include_" .. key, on and "1" or "0", true)
+  persist_project_settings()
 end
 
 local function include_map(data)
   local m = {
     MASTER = wants_include("MASTER", true),
-    CLICK = wants_include("CLICK", click_exportable(data.click))
+    CLICK = wants_include("CLICK", click_exportable(data.click)),
+    KEY = true,
+    SCALE = true,
+    STYLE = true,
+    KITA = true,
+    SECTION = true,
+    LYRICS = true,
+    CHORDS = true,
+    PATTERN = true,
+    NEXT = true
   }
   for _, stem in ipairs(data.stems or {}) do
     m[stem.key] = wants_include(stem.key, stem.found)
@@ -1801,10 +2183,13 @@ local function do_export()
 
   local ok, a, b, extra_note = export_json(state.data, out_dir, {
     key = selected_key(),
-    scale = KEY_SCALES[state.scale_i] or "",
-    style = KEY_STYLES[state.style_i] or "",
+    scale = selected_opt(KEY_SCALES, state.scale_i),
+    style = selected_opt(KEY_STYLES, state.style_i),
+    kita = tonumber(kita_digit(state.kita)),
     include = include_map(state.data)
   })
+  persist_project_settings()
+  reaper.Main_SaveProject(0, false)
   if not ok then
     state.status_ok = false
     state.status = a
@@ -1827,6 +2212,8 @@ local function draw_combo(id, x, y, w, h, options, index, label_fn)
   local text = options[index] or ""
   if label_fn then
     text = label_fn(text)
+  elseif is_blank_opt(text) then
+    text = KEY_EMPTY
   end
   set_font(15)
   local _, th = gfx.measurestr(text ~= "" and text or "A")
@@ -1891,6 +2278,8 @@ local function draw_open_menu()
     local label = opt
     if combo.label_fn then
       label = combo.label_fn(opt)
+    elseif is_blank_opt(label) then
+      label = KEY_EMPTY
     end
     set_font(15)
     text_at(combo.x + 8, iy + (item_h - 15) / 2, label, COL.text, combo.x + combo.w - 8, iy + item_h)
@@ -1901,17 +2290,19 @@ end
 local function apply_combo_choice(id, i)
   if id == "tone" then
     state.tone_i = i
-    reaper.SetExtState(EXT_NS, "key_tone", KEY_TONES[i] or "", true)
   elseif id == "acc" then
     state.acc_i = i
-    persist_acc(i)
   elseif id == "scale" then
     state.scale_i = i
-    reaper.SetExtState(EXT_NS, "key_scale", KEY_SCALES[i] or "", true)
   elseif id == "style" then
     state.style_i = i
-    reaper.SetExtState(EXT_NS, "key_style", KEY_STYLES[i] or "", true)
   end
+  persist_project_settings()
+end
+
+local function draw_info_label(x, y, label)
+  set_font(13)
+  text_at(x, y, label, COL.muted)
 end
 
 local function draw()
@@ -1928,64 +2319,80 @@ local function draw()
 
   local row_h = 56
   local gap = 10
-  local dur_w = math.floor((w - gap) / 6)
-  local key_w = w - dur_w - gap
-  draw_row(x, y, dur_w, row_h, "DURATION", format_duration(state.data.duration))
-
-  fill_rect(x + dur_w + gap, y, key_w, row_h, COL.panel)
-  set_font(13)
-  text_at(x + dur_w + gap + 12, y + 6, "KEY  ·  SCALE", COL.muted)
-  local cx = x + dur_w + gap + 12
-  local cy = y + 22
+  local half = (w - gap) / 2
   local ch = 30
+  local combo_w = math.floor((half - 24) * 0.68)
+  local kita_w = math.floor((half - 24) / 2)
   local tone_w, acc_w = 56, 48
-  local scale_w = key_w - 24 - tone_w - acc_w - 12
-  draw_combo("tone", cx, cy, tone_w, ch, KEY_TONES, state.tone_i)
-  draw_combo("acc", cx + tone_w + 6, cy, acc_w, ch, KEY_ACC, state.acc_i, acc_label)
-  draw_combo("scale", cx + tone_w + acc_w + 12, cy, scale_w, ch, KEY_SCALES, state.scale_i)
+
+  draw_row(x, y, half, row_h, "DURATION", format_duration(state.data.duration))
+  fill_rect(x + half + gap, y, half, row_h, COL.panel)
+  draw_info_label(x + half + gap + 12, y + 6, "KEY")
+  draw_combo("tone", x + half + gap + 12, y + 22, tone_w, ch, KEY_TONES, state.tone_i)
+  draw_combo("acc", x + half + gap + 12 + tone_w + 6, y + 22, acc_w, ch, KEY_ACC, state.acc_i, acc_label)
   y = y + row_h + gap
 
-  local half = (w - gap) / 2
-  local tempo = tempo_summary(state.data.tempoMap)
-  if state.data.nextSongAt then
-    tempo = tempo .. "  ·  NEXT " .. format_duration(state.data.nextSongAt)
-  end
-  draw_row(x, y, half, row_h, "TEMPO MAP", tempo)
+  fill_rect(x, y, half, row_h, COL.panel)
+  draw_info_label(x + 12, y + 6, "SCALE")
+  draw_combo("scale", x + 12, y + 22, combo_w, ch, KEY_SCALES, state.scale_i)
   fill_rect(x + half + gap, y, half, row_h, COL.panel)
+  draw_info_label(x + half + gap + 12, y + 6, "STYLE")
+  draw_combo("style", x + half + gap + 12, y + 22, combo_w, ch, KEY_STYLES, state.style_i)
+  y = y + row_h + gap
+
+  draw_row(x, y, half, row_h, "TEMPO MAP", tempo_summary(state.data.tempoMap))
+  fill_rect(x + half + gap, y, half, row_h, COL.panel)
+  draw_info_label(x + half + gap + 12, y + 6, "KITA")
+  local kx = x + half + gap + 12
+  local ky = y + 22
+  fill_rect(kx, ky, kita_w, ch, COL.panel2)
+  stroke_rect(kx, ky, kita_w, ch, state.kita_focus and COL.accent or COL.border)
+  set_font(16)
+  text_in_box(kx, ky, kita_w, ch, state.kita, COL.text)
+  hit.kita = { x = kx, y = ky, w = kita_w, h = ch }
+  y = y + row_h + gap
+
+  local next_found = state.data.nextSongAt ~= nil
+  fill_rect(x, y, half, row_h, COL.panel)
+  local next_color = next_found and COL.ok or COL.err
+  fill_rect(x, y, 4, row_h, next_color)
   set_font(13)
-  text_at(x + half + gap + 12, y + 6, "STYLE", COL.muted)
-  draw_combo("style", x + half + gap + 12, y + 22, half - 24, ch, KEY_STYLES, state.style_i)
+  text_at(x + 14, y + 8, "NEXT", COL.muted)
+  set_font(16)
+  local next_msg = next_found and format_duration(state.data.nextSongAt) or "Marker not found"
+  text_at(x + 14, y + 28, next_msg, next_color, x + half - 12, y + row_h - 6)
   y = y + row_h + 14
 
   set_font(13)
   text_at(x, y, "TRACKS", COL.muted)
   y = y + 18
 
-  local function track_chip(cx, cw, label, found, count)
+  local function track_chip(cx, cw, label, found, count, status, status_rgb)
     fill_rect(cx, y, cw, 48, COL.panel)
     local color = found and (count > 0 and COL.ok or COL.warn) or COL.err
     fill_rect(cx, y, 4, 48, color)
     set_font(13)
-    text_at(cx + 14, y + 6, label, COL.muted)
+    text_at(cx + 14, y + 6, label, COL.muted, cx + cw - 8, y + 22)
     set_font(15)
-    local msg
-    if not found then
-      msg = "Track not found"
-    elseif count == 0 then
-      msg = "No item text"
-    else
-      msg = string.format("%d item%s", count, count == 1 and "" or "s")
+    local msg = status
+    if not msg then
+      if not found then
+        msg = "Track not found"
+      elseif count == 0 then
+        msg = "No item text"
+      else
+        msg = string.format("%d item%s", count, count == 1 and "" or "s")
+      end
     end
-    text_at(cx + 14, y + 24, msg, COL.text, cx + cw - 8, y + 44)
+    text_at(cx + 14, y + 24, msg, status_rgb or COL.text, cx + cw - 8, y + 44)
   end
 
   local flags = state.data.flags
-  local chip_w = (w - gap) / 2
-  track_chip(x, chip_w, "SECTION", flags.section_found, #state.data.sections)
-  track_chip(x + chip_w + gap, chip_w, "LYRICS", flags.lyrics_found, #state.data.lyrics)
+  track_chip(x, half, "SECTION", flags.section_found, #state.data.sections)
+  track_chip(x + half + gap, half, "LYRICS", flags.lyrics_found, #state.data.lyrics)
   y = y + 54
-  track_chip(x, chip_w, "CHORDS", flags.chords_found, #state.data.chords)
-  track_chip(x + chip_w + gap, chip_w, "PATTERN", flags.pattern_found, #(state.data.patterns or {}))
+  track_chip(x, half, "CHORDS", flags.chords_found, #state.data.chords)
+  track_chip(x + half + gap, half, "PATTERN", flags.pattern_found, #(state.data.patterns or {}))
   y = y + 58
 
   set_font(13)
@@ -2071,7 +2478,7 @@ local function draw()
   end
   y = y + 48
 
-  local btn_w, btn_h = 180, 40
+  local btn_w, btn_h = 118, 40
   local bx = x + w - btn_w
   local by = y
   local hovered = mouse_in(bx, by, btn_w, btn_h)
@@ -2111,6 +2518,8 @@ local function loop()
   if char == 27 then
     if state.open_combo then
       state.open_combo = nil
+    elseif state.kita_focus then
+      state.kita_focus = false
     else
       shutdown()
       return
@@ -2133,8 +2542,19 @@ local function loop()
   hit.browse_btn = nil
   hit.combos = {}
   hit.checks = {}
+  hit.kita = nil
   hit.menu = nil
   draw()
+
+  if state.kita_focus and char > 0 then
+    if char == 8 or char == 127 then
+      state.kita = "0"
+      persist_project_settings()
+    elseif char >= 48 and char <= 57 then
+      state.kita = string.char(char)
+      persist_project_settings()
+    end
+  end
 
   if not state.pending then
     if mouse.click and not mouse.consumed then
@@ -2185,8 +2605,22 @@ local function loop()
       end
     end
 
+    if mouse.click then
+      local on_kita = hit.kita and mouse_in(hit.kita.x, hit.kita.y, hit.kita.w, hit.kita.h)
+      if on_kita then
+        state.kita_focus = true
+        mouse.consumed = true
+      else
+        state.kita_focus = false
+      end
+    end
+
     if char == 13 and not mouse.consumed then
-      state.pending = "export"
+      if state.kita_focus then
+        state.kita_focus = false
+      else
+        state.pending = "export"
+      end
     end
     if mouse.click and not mouse.consumed and hit.browse_btn then
       if mouse_in(hit.browse_btn.x, hit.browse_btn.y, hit.browse_btn.w, hit.browse_btn.h) then

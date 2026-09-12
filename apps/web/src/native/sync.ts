@@ -87,6 +87,18 @@ export function rememberOutgoing(message: SyncMessage, raw = JSON.stringify(mess
   if (message.type === "LoadGig") lastShow = raw;
   if (message.type === "Position") lastPosition = raw;
   if (message.type === "Stop") lastPosition = "";
+  if (message.type === "LoadSong" && lastPosition) {
+    try {
+      lastPosition = JSON.stringify({
+        ...(JSON.parse(lastPosition) as Record<string, unknown>),
+        songId: message.songId,
+        setlistEntryId: message.setlistEntryId,
+        playing: false
+      });
+    } catch {
+      lastPosition = "";
+    }
+  }
 }
 
 async function lanAddress(): Promise<string | null> {

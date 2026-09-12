@@ -9,7 +9,9 @@ import { publishClientGigs, publishClientLibrary } from "./publish-client-librar
 
 const PORT = Number(process.env.DBK_HOST_PORT ?? 8787);
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
-const LIBRARY = join(ROOT, "library", "songs");
+const LIBRARY_ROOT = join(ROOT, "library");
+const LIBRARY = join(LIBRARY_ROOT, "songs");
+const METRO_INTRO_FILE = /^\/library\/[12]\.flac$/i;
 
 function lanIpv4(): string[] {
   const ips: string[] = [];
@@ -23,7 +25,12 @@ function lanIpv4(): string[] {
 }
 
 const WRITE_FILES = new Set(["song.json", "settings.json"]);
+const EXPORT_PDF = /^.+ - (Lyrics|Score|Chords|Drums)\.pdf$/;
 const MAX_PUT_BYTES = 16 * 1024 * 1024;
+
+function isWritableLibraryFile(name: string): boolean {
+  return WRITE_FILES.has(name) || EXPORT_PDF.test(name);
+}
 
 const MIME: Record<string, string> = {
   ".json": "application/json; charset=utf-8",
@@ -62,22 +69,41 @@ function listFiles(dir: string, prefix = ""): string[] {
   return out;
 }
 
+const AUDIO_FILE = /\.(wav|flac|mp3|aiff|ogg|m4a)$/i;
+
+function fileNameOf(path: string): string {
+  return path.replace(/\\/g, "/").split("/").pop() ?? path;
+}
+
+function defaultPlayModeFromFiles(files: string[]): NonNullable<SongInfo["playMode"]> {
+  const hasBacking = files.some((file) => {
+    const name = fileNameOf(file);
+    return (
+      AUDIO_FILE.test(file) &&
+      name.toLowerCase() !== "master.mp3" &&
+      name.toLowerCase() !== "master.flac"
+    );
+  });
+  return hasBacking ? "PLAYBACK" : "VIEW";
+}
+
 const DEFAULT_INFO = { bpm: 120, numerator: 4, denominator: 4 };
 
 type SongInfo = {
   bpm: number;
   numerator: number;
   denominator: number;
-  beats?: boolean[];
   startMode?: "COUNT" | "SERBEST";
   duration?: number;
   key?: string;
   scale?: string;
   style?: string;
   notes?: string;
-  playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY";
+  playMode?: "VIEW" | "PLAYBACK" | "CLICK_ONLY" | "FREE";
+  kita?: number;
   startAt?: number;
   pageNotes?: Partial<Record<"lyrics" | "score" | "chord" | "drums", string>>;
+  metroNotes?: { lyrics?: string; drums?: string };
 };
 
 function positiveInt(value: unknown, fallback: number): number {
@@ -91,10 +117,10 @@ function optionalText(value: unknown): string | undefined {
   return text.length > 0 ? text : undefined;
 }
 
-function parseBeats(numerator: number, raw: unknown): boolean[] {
-  const count = Math.max(1, Math.floor(numerator) || DEFAULT_INFO.numerator);
-  const stored = Array.isArray(raw) && raw.length > 0 ? raw : undefined;
-  return Array.from({ length: count }, (_, i) => (stored ? stored[i] === true : i === 0));
+function optionalKita(value: unknown): number | undefined {
+  const parsed = typeof value === "string" && value.trim() !== "" ? Number(value) : Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 9) return undefined;
+  return parsed;
 }
 
 function parseInfo(raw: unknown): SongInfo {
@@ -103,8 +129,7 @@ function parseInfo(raw: unknown): SongInfo {
   const info: SongInfo = {
     bpm: positiveInt(record?.bpm, DEFAULT_INFO.bpm),
     numerator,
-    denominator: positiveInt(record?.denominator, DEFAULT_INFO.denominator),
-    beats: parseBeats(numerator, record?.beats)
+    denominator: positiveInt(record?.denominator, DEFAULT_INFO.denominator)
   };
   const duration = positiveInt(record?.duration, 0);
   if (duration > 0) info.duration = duration;
@@ -118,13 +143,13 @@ function parseInfo(raw: unknown): SongInfo {
   if (key) info.key = key;
   if (scale) info.scale = scale;
   if (style) info.style = style;
+  const kita = optionalKita(record?.kita);
+  if (kita != null) info.kita = kita;
   if (notes) info.notes = notes;
-  if (
-    record?.playMode === "VIEW" ||
-    record?.playMode === "PLAYBACK" ||
-    record?.playMode === "CLICK_ONLY"
-  ) {
-    info.playMode = record.playMode;
+  if (record?.playMode === "VIEW" || record?.playMode === "FREE") {
+    info.playMode = "VIEW";
+  } else if (record?.playMode === "PLAYBACK" || record?.playMode === "CLICK_ONLY") {
+    info.playMode = "PLAYBACK";
   }
   const startAt = Number(record?.startAt);
   if (Number.isFinite(startAt) && startAt >= 0) info.startAt = startAt;
@@ -135,6 +160,16 @@ function parseInfo(raw: unknown): SongInfo {
       if (text) pageNotes[page] = text;
     }
     if (Object.keys(pageNotes).length > 0) info.pageNotes = pageNotes;
+  }
+  if (record?.metroNotes && typeof record.metroNotes === "object") {
+    const lyrics = optionalText((record.metroNotes as Record<string, unknown>).lyrics);
+    const drums = optionalText((record.metroNotes as Record<string, unknown>).drums);
+    if (lyrics || drums) {
+      info.metroNotes = {
+        ...(lyrics ? { lyrics } : {}),
+        ...(drums ? { drums } : {})
+      };
+    }
   }
   return info;
 }
@@ -163,11 +198,12 @@ function playbackInfo(packed: Record<string, unknown> | null): SongInfo {
     duration: packed.duration,
     key: packed.key,
     scale: packed.scale,
-    style: packed.style
+    style: packed.style,
+    kita: packed.kita
   });
 }
 
-function ensureInfoJson(dir: string): SongInfo {
+function ensureInfoJson(dir: string, files: string[]): SongInfo {
   const packed = readSongJson(dir);
   const settingsPath = join(dir, "settings.json");
   let settings: Record<string, unknown> = {};
@@ -182,7 +218,7 @@ function ensureInfoJson(dir: string): SongInfo {
     }
   }
   const baseline = infoIsComplete(settings.view) ? settings.view : playbackInfo(packed);
-  const info = parseInfo({
+  let info = parseInfo({
     ...(baseline && typeof baseline === "object" ? baseline : {}),
     ...(settings.performance && typeof settings.performance === "object"
       ? settings.performance
@@ -190,13 +226,26 @@ function ensureInfoJson(dir: string): SongInfo {
     ...(settings.notes && typeof settings.notes === "object"
       ? { pageNotes: settings.notes }
       : {}),
-    ...(packed?.info && typeof packed.info === "object" ? packed.info : {})
+    ...(packed?.info && typeof packed.info === "object" ? packed.info : {}),
+    metroNotes: {
+      ...(settings.metroNotes && typeof settings.metroNotes === "object" ? settings.metroNotes : {}),
+      ...(packed?.info && typeof packed.info === "object" && (packed.info as { metroNotes?: unknown }).metroNotes
+        ? (packed.info as { metroNotes?: unknown }).metroNotes
+        : {})
+    }
   });
+  if (!info.playMode) {
+    info = { ...info, playMode: defaultPlayModeFromFiles(files) };
+  }
+  if (info.kita == null && packed) {
+    const kita = optionalKita(packed.kita);
+    if (kita != null) info = { ...info, kita };
+  }
   if (packed && JSON.stringify(parseInfo(packed.info)) !== JSON.stringify(info)) {
     try {
       writeFileSync(
         join(dir, "song.json"),
-        `${JSON.stringify({ ...packed, info }, null, 2)}\n`,
+        `${JSON.stringify({ ...packed, ...(info.kita != null ? { kita: info.kita } : {}), info }, null, 2)}\n`,
         "utf8"
       );
     } catch {
@@ -256,8 +305,8 @@ function scanLibrary(): LibraryIndex {
     if (folder.startsWith(".")) continue;
     const dir = join(LIBRARY, folder);
     if (!statSync(dir).isDirectory()) continue;
-    const info = ensureInfoJson(dir);
     const files = listFiles(dir);
+    const info = ensureInfoJson(dir, files);
     const packed = readSongJson(dir);
     const song = {
       ...stubSong(folder, info),
@@ -317,7 +366,7 @@ function findSongDirectory(head: string): string | null {
   return null;
 }
 
-async function readBody(req: IncomingMessage, maxBytes: number): Promise<string> {
+async function readBodyBytes(req: IncomingMessage, maxBytes: number): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
@@ -326,7 +375,11 @@ async function readBody(req: IncomingMessage, maxBytes: number): Promise<string>
     if (size > maxBytes) throw new Error("too large");
     chunks.push(buf);
   }
-  return Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks);
+}
+
+async function readBody(req: IncomingMessage, maxBytes: number): Promise<string> {
+  return (await readBodyBytes(req, maxBytes)).toString("utf8");
 }
 
 function librarySongFile(reqPath: string): { dir: string; full: string; name: string } | null {
@@ -346,14 +399,18 @@ function librarySongFile(reqPath: string): { dir: string; full: string; name: st
 
 async function putLibraryFile(req: IncomingMessage, res: ServerResponse, reqPath: string): Promise<void> {
   const target = librarySongFile(reqPath);
-  if (!target || !WRITE_FILES.has(target.name)) {
+  if (!target || !isWritableLibraryFile(target.name)) {
     send(res, 403, "Forbidden", "text/plain");
     return;
   }
   try {
-    const body = await readBody(req, MAX_PUT_BYTES);
-    JSON.parse(body);
-    writeFileSync(target.full, body, "utf8");
+    const body = await readBodyBytes(req, MAX_PUT_BYTES);
+    if (target.name.endsWith(".pdf")) {
+      writeFileSync(target.full, body);
+    } else {
+      JSON.parse(body.toString("utf8"));
+      writeFileSync(target.full, body.toString("utf8"), "utf8");
+    }
     send(res, 200, JSON.stringify({ ok: true }), "application/json; charset=utf-8");
   } catch {
     send(res, 400, "Bad request", "text/plain");
@@ -367,6 +424,27 @@ function send(res: ServerResponse, status: number, body: string, type: string): 
     "cache-control": "no-store"
   });
   res.end(body);
+}
+
+function serveLibraryRootAudio(reqPath: string, res: ServerResponse): void {
+  const name = decodeURIComponent(reqPath.replace(/^\/library\//, ""));
+  const full = resolve(LIBRARY_ROOT, name);
+  const rel = relative(LIBRARY_ROOT, full);
+  if (rel.startsWith("..") || normalize(rel).startsWith("..") || rel.includes("/") || rel.includes("\\")) {
+    send(res, 403, "Forbidden", "text/plain");
+    return;
+  }
+  if (!existsSync(full) || statSync(full).isDirectory()) {
+    send(res, 404, "Not found", "text/plain");
+    return;
+  }
+  const type = MIME[extname(full).toLowerCase()] ?? "application/octet-stream";
+  res.writeHead(200, {
+    "content-type": type,
+    "access-control-allow-origin": "*",
+    "cache-control": "no-store"
+  });
+  createReadStream(full).pipe(res);
 }
 
 function serveFile(reqPath: string, res: ServerResponse): void {
@@ -469,6 +547,11 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  if ((req.method === "GET" || req.method === "HEAD") && METRO_INTRO_FILE.test(url.pathname)) {
+    serveLibraryRootAudio(url.pathname, res);
+    return;
+  }
+
   send(res, 404, "Not found", "text/plain");
 }
 
@@ -515,6 +598,20 @@ wss.on("connection", (socket) => {
     if (message.type === "LoadGig") lastShow = raw;
     if (message.type === "Position") lastPosition = raw;
     if (message.type === "Stop") lastPosition = "";
+    if (message.type === "LoadSong") {
+      if (lastPosition) {
+        try {
+          lastPosition = JSON.stringify({
+            ...(JSON.parse(lastPosition) as Record<string, unknown>),
+            songId: message.songId,
+            setlistEntryId: message.setlistEntryId,
+            playing: false
+          });
+        } catch {
+          lastPosition = "";
+        }
+      }
+    }
     if (message.type === "Hello") {
       if (message.deviceKind === "master") {
         const update = masterSessionUpdate(lastMasterSessionId, message.sessionId);

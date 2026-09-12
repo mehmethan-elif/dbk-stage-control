@@ -4,8 +4,9 @@ import {
   createId,
   elifPlacementValid,
   insertElifAfterSelected,
-  isElifKonusma,
   isLockedElif,
+  isStopMarker,
+  isTalkEntry,
   isSongEntry,
   keepSkippedSongsInPlace,
   parseSongInfo,
@@ -18,6 +19,7 @@ import {
 } from "@dbk/core";
 import {
   clientPracticeMode,
+  clientStageLive,
   currentGig,
   selectAddedSetlistEntry,
   setlistLocked,
@@ -29,8 +31,8 @@ import { PlayModeMark } from "./play-mode-mark";
 import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
 import { practiceEntryId } from "../../practice/gig";
 import { listedSongForColor, songRowStyle } from "../shared/key-color";
-import { AddIcon, LockIcon } from "../shared/icons";
-import { ConcertFinalBlock, ElifLabel, ElifNote, setlistHasSongs } from "./setlist-marker";
+import { AddIcon } from "../shared/icons";
+import { ConcertFinalBlock, ElifNote, TalkLabel, TalkLeadIcon, setlistHasSongs } from "./setlist-marker";
 import { groupLibrarySongs } from "./library-groups";
 import { scrollStageToSongTitle } from "./stage-scroll";
 
@@ -84,6 +86,7 @@ export function StageSetlist(props: {
   songs: Song[];
   selectedEntryId: string | null;
   readOnly?: boolean;
+  hideTalkAdd?: boolean;
   stageRef?: RefObject<HTMLElement | null>;
   songAttr?: "data-lyric-song" | "data-chord-song" | "data-drum-song" | "data-nota-song";
   onSelect: (entryId: string) => void;
@@ -101,8 +104,9 @@ export function StageSetlist(props: {
   const practice = useMasterStore(clientPracticeMode);
   const detached = useMasterStore(stageConnectOn);
   const followPlayhead = useMasterStore(followsSharedPlayhead);
+  const liveClient = useMasterStore(clientStageLive);
   const readOnly = Boolean(props.readOnly || songLibrary);
-  const showAddElif = Boolean(detached && !songLibrary && !readOnly);
+  const showAddElif = Boolean(detached && !songLibrary && !readOnly && !props.hideTalkAdd);
   const canAddElif = Boolean(
     showAddElif && gig && canInsertElifAfter(gig.setlist, props.selectedEntryId)
   );
@@ -112,7 +116,7 @@ export function StageSetlist(props: {
     playback.state === PlaybackState.Playing ||
     playback.state === PlaybackState.Transitioning;
   const playingEntryId = songPlaying
-    ? followPlayhead
+    ? followPlayhead || liveClient
       ? playback.clock?.setlistEntryId
       : props.selectedEntryId
     : undefined;
@@ -297,7 +301,7 @@ export function StageSetlist(props: {
         ))
       ) : displayed.map((entry) => {
         const on = draggingId ? draggingId === entry.entryId : entry.entryId === props.selectedEntryId;
-        if (isElifKonusma(entry)) {
+        if (isTalkEntry(entry)) {
           const locked = isLockedElif(entry);
           return (
             <div
@@ -308,13 +312,9 @@ export function StageSetlist(props: {
               onPointerDown={(event) => onPointerDown(entry.entryId, event)}
             >
               <div className={`lyrics-elif-item${on ? " on" : ""}${locked ? " is-locked" : ""}`}>
-                {locked ? (
-                  <span className="elif-lock">
-                    <LockIcon />
-                  </span>
-                ) : null}
+                <TalkLeadIcon locked={locked} stop={isStopMarker(entry)} />
                 <span className="elif-copy">
-                  <ElifLabel />
+                  <TalkLabel entry={entry} />
                   {locked ? <ElifNote /> : null}
                 </span>
                 {!readOnly && !locked ? (

@@ -189,7 +189,7 @@ describe("overlayHostSongMeta", () => {
       assets: [],
       tempoMap: [],
       sections: [],
-      info: { bpm: 120, numerator: 4, denominator: 4, beats: [true, false, false, false] }
+      info: { bpm: 120, numerator: 4, denominator: 4 }
     } as Song;
     const host = {
       ...practice,
@@ -200,7 +200,6 @@ describe("overlayHostSongMeta", () => {
         bpm: 132,
         numerator: 4,
         denominator: 4,
-        beats: [true, false, false, false],
         playMode: PlayMode.Playback,
         key: "D",
         pageNotes: { drums: "fill" }
@@ -225,7 +224,7 @@ describe("overlayHostSongMeta", () => {
       assets: [],
       tempoMap: [],
       sections: [],
-      info: { bpm: 120, numerator: 4, denominator: 4, beats: [true, false, false, false] }
+      info: { bpm: 120, numerator: 4, denominator: 4 }
     } as Song;
     const host = {
       ...practice,

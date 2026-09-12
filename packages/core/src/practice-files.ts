@@ -1,5 +1,6 @@
 const CHART_NAMES = new Set(["song.json", "settings.json", "lyrics.json", "lyrics.txt"]);
 const MASTER_AUDIO = new Set(["master.mp3", "master.flac"]);
+const CLICK_AUDIO = new Set(["click.flac"]);
 const CHART_EXT = [".pdf", ".musicxml"];
 const TURKISH_ASCII: Record<string, string> = {
   ç: "c",
@@ -57,6 +58,10 @@ export function isMasterPracticeAudio(relPath: string): boolean {
   return MASTER_AUDIO.has(fileNameOf(relPath).toLowerCase());
 }
 
+export function isClickPracticeAudio(relPath: string): boolean {
+  return CLICK_AUDIO.has(fileNameOf(relPath).toLowerCase());
+}
+
 export function isPracticeFile(relPath: string): boolean {
   const name = fileNameOf(relPath);
   const base = name.toLowerCase();
@@ -72,6 +77,10 @@ export function practiceMasterAudio(files: readonly string[]): string | undefine
   const lower = files.find((file) => fileNameOf(file).toLowerCase() === "master.mp3");
   if (lower) return lower;
   return files.find((file) => fileNameOf(file).toLowerCase() === "master.flac");
+}
+
+export function practiceClickAudio(files: readonly string[]): string | undefined {
+  return files.find((file) => fileNameOf(file).toLowerCase() === "click.flac");
 }
 
 export function practiceSongFolder(path: string): string | null {

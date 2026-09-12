@@ -3,7 +3,9 @@ import { measureStartTimes, normalizeSong, type Section, type Song, type TempoPo
 import {
   clearNotaLayoutMemory,
   loadNotaLayout,
+  losesMeasureLayout,
   peekNotaLayout,
+  preferNotaLayout,
   rememberNotaLayout,
   addNotaBox,
   FIRST_NOTA_RECT_HEIGHT_PX,
@@ -340,6 +342,39 @@ describe("nota play hits", () => {
     expect(nextNotaHit(song(), 1.99)).toEqual({ name: "ARA", measure: 1, sectionIndex: 1 });
     expect(nowLooksAheadHit(song(), 1.99)).toEqual({ name: "ARA", measure: 1, sectionIndex: 1 });
     expect(notaHitAt(song(), 1.99)).toBeUndefined();
+  });
+
+  it("treats COUNT as any number of measures and still looks ahead to ARA", () => {
+    const twoBars: Song = {
+      ...song(),
+      duration: 16,
+      sections: [
+        { name: "COUNT", start: 0, end: 4 },
+        { name: "ARA", start: 4, end: 8 },
+        { name: "SAN", start: 8, end: 12 },
+        { name: "ARA", start: 12, end: 16 }
+      ]
+    };
+    expect(sectionMeasureNumbers(twoBars.sections, twoBars.tempoMap, "COUNT")).toEqual([1, 2]);
+    expect(notaHitAt(twoBars, 0.5)).toBeUndefined();
+    expect(notaHitAt(twoBars, 2.5)).toBeUndefined();
+    expect(notaSectionHitAt(twoBars, 2.5)).toEqual({ name: "COUNT", measure: 2, sectionIndex: 0 });
+    expect(nextNotaHit(twoBars, 0.5)).toEqual({ name: "ARA", measure: 1, sectionIndex: 1 });
+    expect(nextNotaHit(twoBars, 2.5)).toEqual({ name: "ARA", measure: 1, sectionIndex: 1 });
+    expect(nowLooksAheadHit(twoBars, 0.5)).toEqual({ name: "ARA", measure: 1, sectionIndex: 1 });
+
+    const threeBars: Song = {
+      ...twoBars,
+      duration: 18,
+      sections: [
+        { name: "COUNT", start: 0, end: 6 },
+        { name: "ARA", start: 6, end: 10 },
+        { name: "SAN", start: 10, end: 14 },
+        { name: "ARA", start: 14, end: 18 }
+      ]
+    };
+    expect(sectionMeasureNumbers(threeBars.sections, threeBars.tempoMap, "COUNT")).toEqual([1, 2, 3]);
+    expect(nextNotaHit(threeBars, 3.5)).toEqual({ name: "ARA", measure: 1, sectionIndex: 1 });
   });
 
   it("shows the next Now rect only when it is the first measure of a section", () => {
@@ -726,7 +761,7 @@ describe("one rect per measure", () => {
     expect(next?.some((box) => box.name === "FINAL")).toBe(false);
     expect(next?.filter(isSectionLabel).map((box) => box.name)).toEqual(["ARA", "SAN"]);
     expect(shouldPersistNotaLayout(next ?? [], next ?? [])).toBe(false);
-    expect(shouldPersistNotaLayout([leftover], next ?? [])).toBe(true);
+    expect(shouldPersistNotaLayout([leftover], next ?? [])).toBe(false);
   });
 
   it("keeps edited label text", () => {
@@ -807,6 +842,134 @@ describe("mergeNotaRects", () => {
     expect(mergeNotaRects([ara, san], [ara], new Set(["ARA", "SAN"])).map((box) => box.name)).toEqual([
       "ARA"
     ]);
+  });
+
+  it("does not let a label-only save wipe measure rects", () => {
+    const label = {
+      id: "lab",
+      name: "ARA",
+      measure: 0,
+      kind: "label" as const,
+      label: "ARA",
+      page: 0,
+      x: 0.04,
+      y: 0.06,
+      w: 0.04,
+      h: 0.03
+    };
+    const merged = mergeNotaRects([ara, san], [label], new Set(["ARA", "SAN"]));
+    expect(merged.some((box) => box.id === "a")).toBe(true);
+    expect(merged.some((box) => box.id === "s")).toBe(true);
+    expect(merged.some((box) => box.id === "lab")).toBe(true);
+  });
+
+  it("rescues other sections when one leftover measure remains", () => {
+    const leftover = { ...ara, id: "crumb" };
+    const labels = [
+      {
+        id: "lab-a",
+        name: "ARA",
+        measure: 0,
+        kind: "label" as const,
+        label: "ARA",
+        page: 0,
+        x: 0.04,
+        y: 0.06,
+        w: 0.04,
+        h: 0.03
+      },
+      {
+        id: "lab-s",
+        name: "SAN",
+        measure: 0,
+        kind: "label" as const,
+        label: "SAN",
+        page: 0,
+        x: 0.04,
+        y: 0.12,
+        w: 0.04,
+        h: 0.03
+      }
+    ];
+    const merged = mergeNotaRects([ara, san], [leftover, ...labels], new Set(["ARA", "SAN"]));
+    expect(merged.some((box) => box.id === "s")).toBe(true);
+    expect(merged.some((box) => box.name === "ARA" && !("kind" in box && box.kind === "label"))).toBe(
+      true
+    );
+  });
+});
+
+describe("preferNotaLayout", () => {
+  const measure = {
+    id: "m",
+    name: "ARA",
+    measure: 1,
+    page: 0,
+    x: 0.1,
+    y: 0.1,
+    w: 0.2,
+    h: 0.1
+  };
+  const label = {
+    id: "lab",
+    name: "ARA",
+    kind: "label" as const,
+    label: "ARA",
+    measure: 0,
+    page: 0,
+    x: 0.04,
+    y: 0.06,
+    w: 0.04,
+    h: 0.03
+  };
+
+  it("keeps in-memory edits when they have at least as many measures as disk", () => {
+    const cached = { rects: [{ ...measure, x: 0.4 }], brokenChains: [] };
+    expect(preferNotaLayout(cached, { rects: [measure], brokenChains: [] })).toBe(cached);
+  });
+
+  it("uses disk when the session cache is leftover crumbs", () => {
+    const disk = {
+      rects: [measure, { ...measure, id: "m2", measure: 2 }, { ...measure, id: "m3", measure: 3 }],
+      brokenChains: []
+    };
+    const cached = { rects: [label, measure], brokenChains: [] };
+    expect(preferNotaLayout(cached, disk)).toBe(disk);
+  });
+});
+
+describe("losesMeasureLayout", () => {
+  const measures = [1, 2, 3, 4].map((measure) => ({
+    id: `m${measure}`,
+    name: "ARA",
+    measure,
+    page: 0,
+    x: 0.1,
+    y: 0.1,
+    w: 0.2,
+    h: 0.1
+  }));
+  const label = {
+    id: "lab",
+    name: "ARA",
+    kind: "label" as const,
+    label: "ARA",
+    measure: 0,
+    page: 0,
+    x: 0.04,
+    y: 0.06,
+    w: 0.04,
+    h: 0.03
+  };
+
+  it("blocks label-only and leftover-crumb overwrites", () => {
+    expect(losesMeasureLayout(measures, [label])).toBe(true);
+    expect(losesMeasureLayout(measures, [label, measures[0]!])).toBe(true);
+  });
+
+  it("allows adding a label or deleting one measure", () => {
+    expect(losesMeasureLayout(measures, [...measures, label])).toBe(false);
+    expect(losesMeasureLayout(measures, measures.slice(1))).toBe(false);
   });
 });
 

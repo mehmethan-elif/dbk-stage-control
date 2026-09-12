@@ -4,13 +4,14 @@ import {
   createId,
   insertElifAfterSelected,
   elifPlacementValid,
-  hasBackingAudio,
-  hasClickFlac,
-  isElifKonusma,
   isLockedElif,
+  isStopMarker,
+  isTalkEntry,
+  type BreakSetlistEntry,
   isSongEntry,
   parseSongInfo,
   PlayMode,
+  resolvedSongPlayMode,
   insertAfterSelected,
   keepSkippedSongsInPlace,
   songDisplayName,
@@ -27,7 +28,7 @@ import {
   isSongLibraryGig,
   songLibraryEntryId
 } from "../../store/song-library";
-import { AddIcon, LockIcon } from "../shared/icons";
+import { AddIcon, LockIcon, StopIcon } from "../shared/icons";
 import { PlayModeMark } from "./play-mode-mark";
 import {
   compareFacet,
@@ -38,7 +39,7 @@ import {
   type SongFacet
 } from "../shared/key-color";
 import { groupLibrarySongs } from "./library-groups";
-import { ConcertFinalBlock, ElifLabel, ElifNote, setlistHasSongs } from "./setlist-marker";
+import { ConcertFinalBlock, ElifNote, TalkLabel, setlistHasSongs } from "./setlist-marker";
 
 const DRAG_THRESHOLD = 8;
 
@@ -316,7 +317,7 @@ export function PrepSongList(props: {
           const selected =
             !props.libraryFocusId &&
             (draggingId ? draggingId === entry.entryId : selectedEntryId === entry.entryId);
-          if (isElifKonusma(entry)) {
+          if (isTalkEntry(entry)) {
             const locked = isLockedElif(entry);
             const elifId = entry.entryId;
             return (
@@ -328,6 +329,7 @@ export function PrepSongList(props: {
                 onPointerDown={(event) => onPointerDown(elifId, event)}
               >
                 <ElifItem
+                  entry={entry}
                   locked={locked}
                   onRemove={
                     locked
@@ -378,16 +380,18 @@ export function PrepSongList(props: {
         {!songLibrary ? (
           <div className="set-block is-elif-add">
             <div className="prep-elif-row prep-elif-add-item">
-              <div className="prep-cell num">—</div>
+              <div className="prep-cell num">
+                <StopIcon />
+              </div>
               <div className="prep-cell title">
-                <span className="elif-label">ELIF KONUSMA EKLE</span>
+                <span className="elif-label">STOP</span>
               </div>
               <div className="prep-cell actions">
                 <button
                   type="button"
                   className="add"
                   title="Add"
-                  aria-label="Add ELIF KONUSMA"
+                  aria-label="Add STOP"
                   disabled={!canAddElif}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -465,12 +469,14 @@ function FilterChips(props: {
   );
 }
 
-function ElifItem(props: { locked?: boolean; onRemove?: () => void }) {
+function ElifItem(props: { entry: BreakSetlistEntry; locked?: boolean; onRemove?: () => void }) {
   return (
     <div className={`prep-elif-row${props.locked ? " is-locked" : ""}`}>
-      <div className="prep-cell num">{props.locked ? <LockIcon /> : "—"}</div>
+      <div className="prep-cell num">
+        {props.locked ? <LockIcon /> : isStopMarker(props.entry) ? <StopIcon /> : "—"}
+      </div>
       <div className="prep-cell title">
-        <ElifLabel />
+        <TalkLabel entry={props.entry} />
         {props.locked ? <ElifNote /> : null}
       </div>
       <div className="prep-cell actions">
@@ -503,25 +509,8 @@ function SongItem(props: {
 }) {
   const song = props.song;
   const gigMode = useMasterStore((s) => currentGig(s)?.performanceMode);
-  const canBacking = hasBackingAudio(song, props.files);
-  const canClick = Boolean(song && hasClickFlac(song, props.files));
-  const requestedMode =
-    props.playMode ??
-    (props.entry?.playMode === PlayMode.Playback
-      ? PlayMode.Playback
-      : props.entry?.playMode === PlayMode.ClickOnly
-        ? PlayMode.ClickOnly
-        : PlayMode.View);
-  const playMode =
-    requestedMode === PlayMode.Playback
-      ? canBacking
-        ? requestedMode
-        : canClick
-          ? PlayMode.ClickOnly
-          : PlayMode.View
-      : requestedMode === PlayMode.ClickOnly && !canClick
-        ? PlayMode.View
-        : requestedMode;
+  const requestedMode = props.playMode ?? props.entry?.playMode;
+  const playMode = resolvedSongPlayMode(song, props.files, requestedMode);
   const tint = songRowStyle(
     listedSongForColor(song, playMode, props.files),
     props.selected
@@ -536,7 +525,7 @@ function SongItem(props: {
       <div className="prep-cell title">
         <span className="prep-song-name">
           {song
-            ? playMode !== PlayMode.View
+            ? playMode === PlayMode.Playback
               ? songPlaybackName(song)
               : songDisplayName(song)
             : "—"}

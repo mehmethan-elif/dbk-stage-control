@@ -1,5 +1,6 @@
 import {
   fileNameOf,
+  hasBackingAudio,
   parseSongInfo,
   type MixerBank,
   type Song,
@@ -15,11 +16,13 @@ export function hasSongFile(files?: string[]): boolean {
 }
 
 export function hasPackedSong(
-  song?: Pick<Song, "assets" | "sections">,
+  song?: Pick<Song, "assets" | "sections" | "tags">,
   files?: string[]
 ): boolean {
   if (!song || !hasSongFile(files)) return false;
-  return (song.sections?.length ?? 0) > 0 || (song.assets?.length ?? 0) > 0;
+  if ((song.sections?.length ?? 0) > 0 || (song.assets?.length ?? 0) > 0) return true;
+  if ((song.tags ?? []).includes("reaper-export")) return true;
+  return hasBackingAudio(song as Song, files);
 }
 
 export interface SongPageNotes {
@@ -51,6 +54,7 @@ export interface SongSettings {
   view?: SongInfo;
   mixer?: MixerBank;
   notes?: SongPageNotes;
+  metroNotes?: { lyrics?: string; drums?: string };
   notaSections?: SongNotaSections;
 }
 
@@ -60,6 +64,22 @@ export async function readSongInfo(songId: string): Promise<SongInfo> {
   return parseSongInfo(song.info);
 }
 
+export function songFileWithInfo(
+  song: Record<string, unknown>,
+  info: SongInfo
+): Record<string, unknown> {
+  const existing = parseSongInfo({
+    ...(song.info && typeof song.info === "object" ? song.info : {}),
+    kita: song.kita
+  });
+  const parsed = parseSongInfo({ ...existing, ...info, kita: info.kita ?? existing.kita });
+  return {
+    ...song,
+    ...(parsed.kita != null ? { kita: parsed.kita } : {}),
+    info: parsed
+  };
+}
+
 export function writeSongInfo(songId: string, info: SongInfo): Promise<void> {
   const key = `${songId}:${SONG_FILE}`;
   const previous = writeQueues.get(key) ?? Promise.resolve();
@@ -67,8 +87,8 @@ export function writeSongInfo(songId: string, info: SongInfo): Promise<void> {
     .catch(() => undefined)
     .then(async () => {
       const raw = await libraryApi.readJson(songId, SONG_FILE);
-      const song = settingsObject(raw);
-      await libraryApi.writeJson(songId, SONG_FILE, { ...song, info: parseSongInfo(info) });
+      const song = settingsObject(raw) as Record<string, unknown>;
+      await libraryApi.writeJson(songId, SONG_FILE, songFileWithInfo(song, info));
     });
   writeQueues.set(key, next);
   void next.then(

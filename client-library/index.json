@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 1932,
-    "hash": "c645daa498b3c7717ef0f788a951f06ae94d5d5b5eab6950714cc387d8db9efc"
+    "size": 2532,
+    "hash": "18fa906e6d0ff35418431450cf78e1ff7b2495b01dbd6e9cfb7c429ff56891e0"
   },
   "songs": [
     {
@@ -12,24 +12,81 @@
       "title": "Biz",
       "files": [
         {
+          "path": "Biz - Chords.pdf",
+          "size": 57816,
+          "hash": "40275db45253fcf8219788410f6d46d55d2a4cff2252f40e71e37bbc132b22c6"
+        },
+        {
+          "path": "Biz - Drums.pdf",
+          "size": 110212,
+          "hash": "46be57d2619f33b890965cfbbdcb95dfc071b946697c2ca1a955928f62c468eb"
+        },
+        {
+          "path": "Biz - Lyrics.pdf",
+          "size": 15019,
+          "hash": "34c90618c238d35c4278615e0664e76f40eab7b5155328f23bddd5177b93fd90"
+        },
+        {
+          "path": "Biz.pdf",
+          "size": 33957,
+          "hash": "9967e9f966911327f745bc2a8f0dbabe866ef97112b689d3a0a7da5d03aa1638"
+        },
+        {
           "path": "Master.mp3",
-          "size": 2880991,
-          "hash": "4746704eb3bd1aa499818d58f237426df5b012be7fbca7c14e66f9ad468930d8"
+          "size": 2895620,
+          "hash": "d2e9805531c1bf8ea46aa3ec2792e51bea3b34f38b55a98e398f45f3c94da914"
         },
         {
           "path": "Nota.pdf",
-          "size": 34177,
-          "hash": "7161415f442caaec5882cf01dad6857ad6a7c464b417a3986442ca82c729fbeb"
+          "size": 33957,
+          "hash": "c414bc57bd93308ee0a8420a4c45a02af7595874f60ec69d8d9b5c461224836f"
         },
         {
           "path": "settings.json",
-          "size": 13058,
-          "hash": "cc43ed75f19ad069294d88989c1a9f8f2b852660d5c1c42b0622388dbd4f9e8f"
+          "size": 12893,
+          "hash": "e48338c533dc32ab89b581e3aef2cb3511a407ca6a01cdd3791f0c37b6db81b6"
         },
         {
           "path": "song.json",
-          "size": 199740,
-          "hash": "ec9a1bf60f5de84e1fc06667beac72afa3f868c9bdc47a52883fc5a0d37bfb14"
+          "size": 201941,
+          "hash": "725f020c43b74d0ce9ebfc7a03e6e17414195910731c4253b3b725be10f47c85"
+        }
+      ]
+    },
+    {
+      "id": "Candan İleri",
+      "folder": "candan_ileri",
+      "title": "Candan İleri",
+      "files": [
+        {
+          "path": "Candan İleri - Chords.pdf",
+          "size": 49007,
+          "hash": "7595f0d91ed1e8ea7320063b3ab062f65d2f05e40f9dd3acd0bcaf1575b1051c"
+        },
+        {
+          "path": "Candan İleri - Drums.pdf",
+          "size": 16643,
+          "hash": "3f993f6dcf01918e28fdbdbe4da734d936cd47a105d759635c190224c1faa314"
+        },
+        {
+          "path": "Candan İleri - Lyrics.pdf",
+          "size": 14122,
+          "hash": "e4e2060d1d5152da687c37b5dd0354379ba03c7ac4505c011ba0fc17082b50d1"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 31636,
+          "hash": "e75f0c105bcd025c4f2c2fb5ee4a855e489c14b669a5b742ff95b1bf08c91883"
+        },
+        {
+          "path": "settings.json",
+          "size": 517,
+          "hash": "f9b8706f731967c95399811f8514e296bb8d77ae19a4a0fdb86d936e1b39973e"
+        },
+        {
+          "path": "song.json",
+          "size": 857,
+          "hash": "9936d84f9e178dbc5c985ed9e3354794afad940cd2299718bca457e1a307e529"
         }
       ]
     },
@@ -39,9 +96,24 @@
       "title": "Karahisar Kalesi",
       "files": [
         {
+          "path": "Karahisar Kalesi - Chords.pdf",
+          "size": 70094,
+          "hash": "44bcd8368fa6bbb6c58fe55343e1d403cf5bc7c97fd3d33b7bc3141e7a0b8751"
+        },
+        {
+          "path": "Karahisar Kalesi - Drums.pdf",
+          "size": 95890,
+          "hash": "2e75548902c5143f9e4047031388123c61aa0c4d2b954bf5b4ca1786985f244f"
+        },
+        {
+          "path": "Karahisar Kalesi - Lyrics.pdf",
+          "size": 15287,
+          "hash": "34147be4dcc39506195521090a318f54e704effb53255e11b4c8398fa6f6df6c"
+        },
+        {
           "path": "Master.mp3",
-          "size": 3037308,
-          "hash": "7813d35853e9b6fc96f2b75fdf586fdf0e686776ff84245fb1ee52a1168d1600"
+          "size": 3083701,
+          "hash": "697bb1f6c06e2cadcdcdb89a9697dc24666b3cafc0020e21bfc049bd0aa323d9"
         },
         {
           "path": "Nota.pdf",
@@ -55,8 +127,57 @@
         },
         {
           "path": "song.json",
-          "size": 82903,
-          "hash": "c1771a6f1252275628fa70d71bd6c5ba48764a1860b194546ffb6af0f02deb97"
+          "size": 85250,
+          "hash": "ab2d667a96509ff7b5add542ed893bb50ba96fa1e29d520436b478d867153868"
+        }
+      ]
+    },
+    {
+      "id": "kerku_k_zindan",
+      "folder": "kerku_k_zindan",
+      "title": "Kerkük Zindanı",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3149321,
+          "hash": "7f705d7006d635511bdc006a74ab1e9615c1de466d2a2d91b624e84ee60d238f"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 41993,
+          "hash": "7cf41f85deea16312b7168125dc122c3aee4b6c039a18f75792af91b054e2166"
+        },
+        {
+          "path": "settings.json",
+          "size": 15242,
+          "hash": "3aa24fababcf8ee7d2091ee48cdb7677d01f81c8bf7602c7cba65a0e11dff7f6"
+        },
+        {
+          "path": "song.json",
+          "size": 133007,
+          "hash": "56f79ba9a85b071906e094eb02982fc63edab92dc8a9d9d23ae05e94fe142195"
+        }
+      ]
+    },
+    {
+      "id": "Mihriban",
+      "folder": "Mihriban",
+      "title": "Mihriban",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 34032,
+          "hash": "9b6ea5300f64d83b670bc0b7396091300e783a860e3a6fdecb9e3651b53db545"
+        },
+        {
+          "path": "settings.json",
+          "size": 3,
+          "hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        {
+          "path": "song.json",
+          "size": 297,
+          "hash": "cd0c230ec77a92ce78dfafc4b8a0876f544ce5b699d22659df91e60a7bbb776d"
         }
       ]
     },
@@ -68,7 +189,7 @@
         {
           "path": "Master.mp3",
           "size": 2841703,
-          "hash": "02ae9975c225fe41114a80fb6198ac8d839642e2144b099f043750483e077c39"
+          "hash": "7f3acb5603667a6ac426c9694a0345c42777859aaea5e688f6d38227bf271057"
         },
         {
           "path": "Nota.pdf",
@@ -77,13 +198,13 @@
         },
         {
           "path": "settings.json",
-          "size": 3068,
-          "hash": "78b74b131c448efee006f6b4202e13f3294d7ede398050fd80c53727bb76f835"
+          "size": 13521,
+          "hash": "f71f055ab556e7128865c48872488cc3da4774900b9b3c0c5ab304dd0933c81d"
         },
         {
           "path": "song.json",
-          "size": 74767,
-          "hash": "3075a07932ea2963c7eb6f12a76fe43364573f37424aef23b3781e98d86b15d3"
+          "size": 77143,
+          "hash": "45dbba11c5bebb17412b4f68088143989b2ce4cbf38360354231b10fb47b8f0a"
         }
       ]
     }

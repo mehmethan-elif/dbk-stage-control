@@ -5,8 +5,7 @@ import {
   emptyMixerBank,
   emptyMixerLevels,
   entryPlayMode,
-  hasBackingAudio,
-  hasClickFlac,
+  hasPlaybackAudio,
   isSongEntry,
   songHasMixerFile,
   type MixerChannel
@@ -61,8 +60,7 @@ export function MixerView() {
       ? !remoteSongMixer
       : Boolean(songEntry) &&
         (mode === PlayMode.View ||
-          (mode === PlayMode.Playback && !hasBackingAudio(song, files)) ||
-          (mode === PlayMode.ClickOnly && (!song || !hasClickFlac(song, files))));
+          (mode === PlayMode.Playback && !hasPlaybackAudio(song, files)));
   const songBank = song
     ? (songMix[song.id] ?? (songEntry ? songMix[songEntry.songId] : undefined) ?? emptyMixerBank())
     : emptyMixerBank();

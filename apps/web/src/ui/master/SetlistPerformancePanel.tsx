@@ -8,37 +8,22 @@ import {
 } from "@dbk/core";
 import { currentGig, useMasterStore } from "../../store/master-store";
 import { isSongLibraryGig } from "../../store/song-library";
-import { EighthNoteIcon, ViewIcon } from "../shared/icons";
+import { ViewIcon } from "../shared/icons";
 
 const MODE_OPTIONS: Array<{
   mode: SetlistPerformanceMode;
   label: string;
   color: string;
-  icon: "follow" | "click" | "metro";
 }> = [
   {
     mode: SetlistPerformanceMode.FollowSongInfo,
     label: "Follow Song Info",
-    color: SETLIST_MODE_ICON_COLOR.follow,
-    icon: "follow"
-  },
-  {
-    mode: SetlistPerformanceMode.ClickOnly,
-    label: "Click Only",
-    color: SETLIST_MODE_ICON_COLOR.click,
-    icon: "click"
+    color: SETLIST_MODE_ICON_COLOR.follow
   },
   {
     mode: SetlistPerformanceMode.MetronomeContinuous,
     label: "Metronome",
-    color: SETLIST_MODE_ICON_COLOR.continuous,
-    icon: "metro"
-  },
-  {
-    mode: SetlistPerformanceMode.Free,
-    label: "Free",
-    color: SETLIST_MODE_ICON_COLOR.free,
-    icon: "metro"
+    color: SETLIST_MODE_ICON_COLOR.continuous
   }
 ];
 
@@ -46,7 +31,6 @@ function ModeButton({
   mode,
   label,
   color,
-  icon,
   selected,
   disabled,
   onSelect
@@ -54,7 +38,6 @@ function ModeButton({
   mode: SetlistPerformanceMode;
   label: string;
   color: string;
-  icon: "follow" | "click" | "metro";
   selected: boolean;
   disabled: boolean;
   onSelect: (mode: SetlistPerformanceMode) => void;
@@ -72,7 +55,7 @@ function ModeButton({
     >
       <span className={`setlist-perf-check${selected ? " is-on" : ""}`} aria-hidden="true" />
       <span className="setlist-perf-icon" style={{ color }} aria-hidden="true">
-        {icon === "click" ? <EighthNoteIcon /> : <ViewIcon />}
+        <ViewIcon />
       </span>
       <span className="setlist-perf-label">{label}</span>
     </button>
@@ -143,7 +126,6 @@ export function SetlistPerformancePanel() {
               mode={option.mode}
               label={option.label}
               color={option.color}
-              icon={option.icon}
               selected={selected === option.mode}
               disabled={readOnly || !gig}
               onSelect={(mode) => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createLogger, memorySink, type LogEvent } from "@dbk/logger";
 import { FakeAudioEngine } from "./fake-audio-engine.js";
-import { ELIF_KONUSMA_LABEL, FinishMode, PlaybackState, PlayMode } from "./models.js";
+import { ELIF_KONUSMA_LABEL, FinishMode, PlaybackState, PlayMode, STOP_LABEL } from "./models.js";
 import type { AssetRef, Gig, LoadedBuffers, Song } from "./models.js";
 import { PlaybackController } from "./playback-controller.js";
 
@@ -359,7 +359,7 @@ describe("PlaybackController", () => {
     expect(engine.getDeck("B")?.getPosition()).toBeCloseTo(2, 1);
   });
 
-  it("stops instead of PLAY_NEXT when the next song has no backing track", async () => {
+  it("starts a metronome handoff at PLAY_NEXT and keeps the backing tail", async () => {
     const viewOnly = {
       ...songB,
       assets: []
@@ -375,11 +375,16 @@ describe("PlaybackController", () => {
     });
     await controller.selectIndex(0);
     await controller.play();
-    engine.advance(12.02);
-    expect(controller.getSnapshot().clock?.songId).toBe("song_a");
-    expect(controller.getSnapshot().clock?.playing).toBe(false);
+    engine.advance(8.02);
     expect(endedTo).toBe("e2");
+    expect(controller.getSnapshot().clock?.songId).toBe("song_b");
+    expect(controller.getSnapshot().clock?.playing).toBe(true);
+    expect(controller.getSnapshot().state).toBe(PlaybackState.Transitioning);
+    expect(engine.getDeck("A")?.isPlaying).toBe(true);
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
+    engine.advance(4);
+    expect(engine.getDeck("A")?.isPlaying).toBe(false);
+    expect(controller.getSnapshot().clock?.playing).toBe(false);
   });
 
   it("ends from the last section and hands off a VIEW song", async () => {
@@ -415,7 +420,7 @@ describe("PlaybackController", () => {
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 
-  it("stops instead of PLAY_NEXT when the next song is VIEW", async () => {
+  it("starts a VIEW metronome at PLAY_NEXT and keeps the current tail", async () => {
     const viewOnly = {
       ...songB,
       info: { bpm: 120, numerator: 4, denominator: 4, playMode: PlayMode.View }
@@ -431,10 +436,42 @@ describe("PlaybackController", () => {
     });
     await controller.selectIndex(0);
     await controller.play();
-    engine.advance(12.02);
-    expect(controller.getSnapshot().clock?.songId).toBe("song_a");
-    expect(controller.getSnapshot().clock?.playing).toBe(false);
+    engine.advance(8.02);
     expect(endedTo).toBe("e2");
+    expect(controller.getSnapshot().clock?.songId).toBe("song_b");
+    expect(controller.getSnapshot().state).toBe(PlaybackState.Transitioning);
+    expect(engine.getDeck("A")?.isPlaying).toBe(true);
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+    engine.advance(4);
+    expect(engine.getDeck("A")?.isPlaying).toBe(false);
+  });
+
+  it("hands off a SERBEST metronome at PLAY_NEXT without playing the next deck", async () => {
+    const viewOnly = {
+      ...songB,
+      info: {
+        bpm: 120,
+        numerator: 4,
+        denominator: 4,
+        playMode: PlayMode.View,
+        startMode: "SERBEST" as const
+      }
+    };
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([songA, viewOnly], gig);
+    let endedTo: string | null = null;
+    controller.subscribe((snap) => {
+      if (snap.endedToEntryId) endedTo = snap.endedToEntryId;
+    });
+    await controller.selectIndex(0);
+    await controller.play();
+    engine.advance(8.02);
+    expect(endedTo).toBe("e2");
+    expect(controller.getSnapshot().clock?.songId).toBe("song_b");
+    expect(engine.getDeck("A")?.isPlaying).toBe(true);
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 
@@ -564,6 +601,35 @@ describe("PlaybackController", () => {
     expect(snap.state).toBe(PlaybackState.Ready);
     expect(snap.clock?.songId).toBe("song_a");
     expect(snap.clock?.playing).toBe(false);
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+  });
+
+  it("plays a STOP song to the end and selects STOP instead of PLAY_NEXT", async () => {
+    const markedA = { ...makeSong("song_a", "Song A", 12, 8), nextSongAt: 4 };
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "talk", entryId: "stop", label: STOP_LABEL },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([markedA, songB], gig);
+    let endedTo: string | null = null;
+    controller.subscribe((snap) => {
+      if (snap.endedToEntryId) endedTo = snap.endedToEntryId;
+    });
+    await controller.selectIndex(0);
+    await controller.play();
+
+    engine.advance(4.02);
+    expect(controller.getSnapshot().clock?.songId).toBe("song_a");
+    expect(controller.getSnapshot().clock?.playing).toBe(true);
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+
+    engine.advance(8);
+    const snap = controller.getSnapshot();
+    expect(snap.state).toBe(PlaybackState.Ready);
+    expect(snap.clock?.songId).toBe("song_a");
+    expect(snap.clock?.playing).toBe(false);
+    expect(endedTo).toBe("stop");
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 

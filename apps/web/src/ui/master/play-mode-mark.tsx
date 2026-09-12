@@ -1,11 +1,12 @@
 import { PlayMode, setlistPlayModeIcon, type Song } from "@dbk/core";
-import { EighthNoteIcon, NotationIcon, ViewIcon } from "../shared/icons";
+import { EighthNoteIcon, FreeIcon, NotationIcon, ViewIcon } from "../shared/icons";
 
 export function PlayModeMark(props: {
   song: Song | undefined;
   files?: string[];
   setlistMode?: string;
   className?: string;
+  inheritColor?: boolean;
 }) {
   const mark = setlistPlayModeIcon(props.song, props.files, props.setlistMode);
   const Icon =
@@ -13,9 +14,17 @@ export function PlayModeMark(props: {
       ? EighthNoteIcon
       : mark.playMode === PlayMode.Playback
         ? NotationIcon
-        : ViewIcon;
+        : mark.playMode === PlayMode.Free
+          ? FreeIcon
+          : ViewIcon;
+  const label = mark.playMode === PlayMode.Playback ? "Backing tracks" : "Metronome";
   return (
-    <span className={`play-mode-mark${props.className ? ` ${props.className}` : ""}`} style={{ color: mark.color }} aria-hidden="true">
+    <span
+      className={`play-mode-mark${props.className ? ` ${props.className}` : ""}`}
+      style={props.inheritColor ? undefined : { color: mark.color }}
+      title={label}
+      aria-hidden="true"
+    >
       <Icon />
     </span>
   );

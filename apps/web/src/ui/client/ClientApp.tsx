@@ -2,16 +2,22 @@ import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode 
 import {
   clientPracticeMode,
   clientStageLive,
-  useMasterStore,
-  usesFreeMetroTransport
+  useMasterStore
 } from "../../store/master-store";
-import { ChronometerIcon } from "../shared/icons";
+import {
+  ChordIcon,
+  ChronometerIcon,
+  DrumsIcon,
+  LyricsIcon,
+  ScoreIcon,
+  StageConnectIcon
+} from "../shared/icons";
 import { DrumView } from "../master/DrumView";
 import { LyricsView } from "../master/LyricsView";
 import { NotaView } from "../master/NotaView";
-import { PrepTransport, StageViewChrome } from "../master/PrepTransport";
+import { PrepTransport, StageSetlistButton, StageViewTools } from "../master/PrepTransport";
 import { ClientLibrary } from "./ClientLibrary";
-import { holdLibraryLoading, LibraryLoading } from "../shared/LibraryLoading";
+import { LibraryLoading } from "../shared/LibraryLoading";
 
 class StageCrashGuard extends Component<{ children: ReactNode }, { message: string | null }> {
   state = { message: null as string | null };
@@ -43,14 +49,10 @@ function formatElapsed(ms: number): string {
 
 export function ClientApp() {
   const ready = useMasterStore((s) => s.ready);
-  const gigId = useMasterStore((s) => s.gigId);
   const masterPage = useMasterStore((s) => s.masterPage);
   const setMasterPage = useMasterStore((s) => s.setMasterPage);
-  const syncConnected = useMasterStore((s) => s.syncConnected);
   const songs = useMasterStore((s) => s.songs);
   const clientSession = useMasterStore((s) => s.clientSession);
-  const offlineMode = useMasterStore((s) => s.clientOfflineMode);
-  const setClientOfflineMode = useMasterStore((s) => s.setClientOfflineMode);
   const stageLive = useMasterStore(clientStageLive);
   const connected = clientSession === "stage";
   const page =
@@ -64,7 +66,6 @@ export function ClientApp() {
             ? "lan"
             : "lyrics";
   const practice = useMasterStore(clientPracticeMode);
-  const freeTransport = useMasterStore(usesFreeMetroTransport);
   const libraryStatus = useMasterStore((s) => s.libraryStatus);
   const practiceBusy = useMasterStore((s) => s.practiceBusy);
   const [concertOn, setConcertOn] = useState(false);
@@ -80,7 +81,7 @@ export function ClientApp() {
     return () => window.clearInterval(id);
   }, []);
 
-  if (!ready || holdLibraryLoading()) {
+  if (!ready) {
     return <LibraryLoading status={libraryStatus ?? practiceBusy} />;
   }
 
@@ -93,6 +94,49 @@ export function ClientApp() {
           <div className="brand">DBK STAGE</div>
           <div className="brand-name">ELIF AVCI</div>
         </div>
+        <StageSetlistButton />
+        <button
+          type="button"
+          className={`lyrics-btn page-icon${page === "lyrics" ? " on" : ""}`}
+          title="Lyrics"
+          aria-label="Lyrics"
+          aria-pressed={page === "lyrics"}
+          onClick={() => setMasterPage("lyrics")}
+        >
+          <LyricsIcon />
+        </button>
+        <button
+          type="button"
+          className={`lyrics-btn page-icon${page === "nota" ? " on" : ""}`}
+          title="Score"
+          aria-label="Score"
+          aria-pressed={page === "nota"}
+          onClick={() => setMasterPage("nota")}
+        >
+          <ScoreIcon />
+        </button>
+        <button
+          type="button"
+          className={`lyrics-btn page-icon${page === "chords" ? " on" : ""}`}
+          title="Chord"
+          aria-label="Chord"
+          aria-pressed={page === "chords"}
+          onClick={() => setMasterPage("chords")}
+        >
+          <ChordIcon />
+        </button>
+        <button
+          type="button"
+          className={`lyrics-btn page-icon${page === "drums" ? " on" : ""}`}
+          title="Drums"
+          aria-label="Drums"
+          aria-pressed={page === "drums"}
+          onClick={() => setMasterPage("drums")}
+        >
+          <DrumsIcon />
+        </button>
+        <div className="grow" />
+        <StageViewTools />
         <div className="topbar-time-cluster">
           <button
             type="button"
@@ -118,79 +162,18 @@ export function ClientApp() {
         </div>
         <button
           type="button"
-          className={`lyrics-btn${page === "lyrics" ? " on" : ""}`}
-          aria-pressed={page === "lyrics"}
-          onClick={() => setMasterPage("lyrics")}
+          className={`lyrics-btn page-icon topbar-connect${page === "lan" ? " on" : stageLive ? " lan-ok" : ""}`}
+          title="Stage connect"
+          aria-label="Stage connect"
+          aria-pressed={page === "lan" || connected}
+          onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
         >
-          LYRICS
+          <StageConnectIcon />
         </button>
-        <button
-          type="button"
-          className={`lyrics-btn${page === "nota" ? " on" : ""}`}
-          aria-pressed={page === "nota"}
-          onClick={() => setMasterPage("nota")}
-        >
-          SCORE
-        </button>
-        <button
-          type="button"
-          className={`lyrics-btn${page === "chords" ? " on" : ""}`}
-          aria-pressed={page === "chords"}
-          onClick={() => setMasterPage("chords")}
-        >
-          CHORD
-        </button>
-        <button
-          type="button"
-          className={`lyrics-btn${page === "drums" ? " on" : ""}`}
-          aria-pressed={page === "drums"}
-          onClick={() => setMasterPage("drums")}
-        >
-          DRUMS
-        </button>
-        <div className="topbar-end">
-          {stageLive ? null : (
-            <div className="topbar-offline-modes" role="radiogroup" aria-label="Offline mode">
-              <button
-                type="button"
-                role="radio"
-                aria-checked={offlineMode === "free"}
-                className={`lyrics-btn${offlineMode === "free" ? " on" : ""}`}
-                onClick={() => setClientOfflineMode("free")}
-              >
-                FREE
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={offlineMode === "practice"}
-                className={`lyrics-btn${offlineMode === "practice" ? " on" : ""}`}
-                onClick={() => setClientOfflineMode("practice")}
-              >
-                PRACTICE
-              </button>
-            </div>
-          )}
-          <button
-            type="button"
-            className={`lyrics-btn topbar-connect${page === "lan" ? " on" : stageLive ? " lan-ok" : ""}`}
-            aria-label="Stage connect"
-            aria-pressed={page === "lan" || connected}
-            onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
-          >
-            <span>STAGE</span>
-            <span>CONNECT</span>
-          </button>
-        </div>
       </header>
-      {page !== "lan" && practice && !empty ? (
+      {page !== "lan" && ((practice && !empty) || stageLive) ? (
         <div className="app-transport">
           <PrepTransport />
-        </div>
-      ) : null}
-      {page !== "lan" && !practice && gigId ? (
-        <div className="app-transport">
-          {freeTransport ? <PrepTransport /> : <StageViewChrome />}
         </div>
       ) : null}
       {empty && page !== "lan" ? (
