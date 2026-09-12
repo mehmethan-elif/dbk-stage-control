@@ -621,6 +621,12 @@ function DrumFollow(props: {
   formRef.current = form;
 
   useEffect(() => {
+    if (!props.playingEntryId) {
+      setScrollKey("");
+      setLeadInId(undefined);
+      props.onLeadIn(undefined, false);
+      return;
+    }
     let handle = 0;
     let lastKey = "";
     let lastLead: string | undefined;
@@ -648,7 +654,7 @@ function DrumFollow(props: {
     };
     handle = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(handle);
-  }, []);
+  }, [props.playingEntryId, props.onLeadIn]);
 
   useEffect(() => {
     if (!props.autoScroll || !props.playingEntryId) return;
@@ -912,7 +918,12 @@ function DrumRunView(props: {
       data-drum-row={`${props.run.name}-${props.run.start}`}
       data-block-id={props.blockId}
       data-run-start={String(props.run.start)}
-      style={{ "--drum-steps": String(props.run.steps) } as CSSProperties}
+      style={
+        {
+          "--drum-steps": String(props.run.steps),
+          "--drum-bar-steps": String(barSteps)
+        } as CSSProperties
+      }
     >
       {props.showRall ? (
         <div className="drum-rall-bar idle" data-drum-rall="idle" aria-label="RALL">
@@ -936,16 +947,15 @@ function DrumRunView(props: {
         </div>
         <div className="drum-grid">
           {NOTE_LANES.map((lane) => {
-            const steps = props.run.hits.get(lane.name);
+            const hits = [...(props.run.hits.get(lane.name) ?? [])].sort((left, right) => left - right);
             return (
               <div key={lane.name} className="drum-lane">
-                {Array.from({ length: props.run.steps }, (_, step) => (
+                {hits.map((step) => (
                   <span
                     key={step}
                     data-note={lane.name}
-                    className={`drum-step${steps?.has(step) ? " hit" : ""}${
-                      step % barSteps === 0 ? " measure" : step % STEPS_PER_BEAT === 0 ? " beat" : ""
-                    }`}
+                    className="drum-hit"
+                    style={{ "--drum-hit": String(step) } as CSSProperties}
                   />
                 ))}
               </div>

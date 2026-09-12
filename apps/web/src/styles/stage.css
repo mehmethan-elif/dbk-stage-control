@@ -3172,10 +3172,13 @@ button {
 }
 
 .chord-note-lane {
+  display: grid;
+  grid-template-columns: repeat(var(--drum-steps, 16), minmax(0, 1fr));
   height: 100%;
   min-width: 0;
   overflow: hidden;
   border-top: 0;
+  background-image: none;
 }
 
 .chord-note-lane .drum-step.measure,
@@ -3263,6 +3266,8 @@ button {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 220px;
 }
 
 .drum-pack-titles {
@@ -3569,11 +3574,43 @@ button {
 }
 
 .drum-lane {
+  position: relative;
   height: var(--drum-lane-h);
-  display: grid;
-  grid-template-columns: repeat(var(--drum-steps, 16), minmax(0, 1fr));
   border-top: 1px solid #4a4a4a;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      #fff 0 2px,
+      transparent 2px calc(100% * var(--drum-bar-steps, 16) / var(--drum-steps, 16))
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.5) 0 2px,
+      transparent 2px calc(100% * 4 / var(--drum-steps, 16))
+    ),
+    repeating-linear-gradient(
+      90deg,
+      #4a4a4a 0 1px,
+      transparent 1px calc(100% / var(--drum-steps, 16))
+    );
 }
+
+.drum-hit {
+  position: absolute;
+  top: 18%;
+  height: 64%;
+  left: calc((var(--drum-hit, 0) + 0.12) * 100% / var(--drum-steps, 16));
+  width: calc(76% / var(--drum-steps, 16));
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.drum-hit[data-note="C"] { background: #ea8400; }
+.drum-grid .drum-hit[data-note="C"] { background: #fff; }
+.drum-hit[data-note="D"] { background: #e24a4a; }
+.drum-hit[data-note="E"] { background: #e6c14a; }
+.drum-hit[data-note="F"] { background: #3dba7a; }
+.drum-hit[data-note="G"] { background: #2f6fed; }
 
 .drum-step {
   position: relative;
@@ -4155,6 +4192,9 @@ button {
   border-radius: 6px;
   overflow: hidden;
   background: #000;
+  isolation: isolate;
+  contain: strict;
+  transform: translateZ(0);
 }
 
 .lyrics-song-head .prep-metro-flash {

@@ -133,9 +133,8 @@ export function MetroPulse({
     const el = flashRef.current;
     const flash = () => {
       if (!el) return;
-      el.classList.remove("is-on");
-      void el.offsetWidth;
-      el.classList.add("is-on");
+      for (const animation of el.getAnimations()) animation.cancel();
+      el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: "ease-out" });
     };
     if (!active) {
       el?.classList.remove("is-on");
