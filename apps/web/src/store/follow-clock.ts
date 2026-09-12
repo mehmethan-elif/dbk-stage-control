@@ -4,12 +4,18 @@ type FollowOrigin = {
   time: number;
   at: number;
   playing: boolean;
+  source?: () => number;
 };
 
 let origin: FollowOrigin = { time: 0, at: 0, playing: false };
 
 export function setFollowClock(time: number, playing: boolean, at = performance.now()): void {
-  origin = { time, at, playing };
+  origin = { time, at, playing, source: undefined };
+}
+
+/** Pin the playhead to a live audio clock (HTML element or engine position). */
+export function setFollowClockSource(source: () => number): void {
+  origin = { time: Math.max(0, source()), at: performance.now(), playing: true, source };
 }
 
 export function stopFollowClock(time = origin.time, at = performance.now()): void {
@@ -22,6 +28,11 @@ export function followClockPlaying(): boolean {
 
 export function followClockTime(now = performance.now()): number {
   if (!origin.playing) return origin.time;
+  if (origin.source) {
+    const time = origin.source();
+    origin = { ...origin, time: Math.max(0, time), at: now };
+    return origin.time;
+  }
   return Math.max(0, origin.time + (now - origin.at) / 1000);
 }
 

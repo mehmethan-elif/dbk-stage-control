@@ -4,6 +4,7 @@ import {
   followClockTime,
   followPacketTime,
   setFollowClock,
+  setFollowClockSource,
   stopFollowClock
 } from "./follow-clock";
 
@@ -24,6 +25,14 @@ describe("followClockTime", () => {
     setFollowClock(3, true, 5_000);
     stopFollowClock(3.5, 5_500);
     expect(followClockTime(6_000)).toBe(3.5);
+  });
+
+  it("reads a live audio source instead of interpolating", () => {
+    let audioTime = 12.4;
+    setFollowClockSource(() => audioTime);
+    expect(followClockTime(8_000)).toBeCloseTo(12.4, 5);
+    audioTime = 12.55;
+    expect(followClockTime(8_200)).toBeCloseTo(12.55, 5);
   });
 });
 

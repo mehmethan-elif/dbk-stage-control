@@ -125,7 +125,7 @@ import {
   setlistNameTaken,
   songLibraryGig
 } from "./song-library";
-import { followPacketTime, setFollowClock, stopFollowClock } from "./follow-clock";
+import { followPacketTime, setFollowClock, setFollowClockSource, stopFollowClock } from "./follow-clock";
 import { stageConnectOn } from "./stage-connect";
 export { stageConnectOn };
 import {
@@ -536,7 +536,31 @@ let tickHandle = 0;
 let metroTickHandle = 0;
 let freeVisualSongId: string | null = null;
 let lastBroadcast = 0;
+let lastPlaybackStoreAt = 0;
+let lastPracticeStoreAt = 0;
 let applyPanicResume: (() => void) | null = null;
+
+const PLAYBACK_UI_MS = 80;
+
+function playbackStoreNeedsWrite(
+  previous: PlaybackSnapshot,
+  next: PlaybackSnapshot,
+  playing: boolean
+): boolean {
+  if (next.endedToEntryId) return true;
+  if (previous.state !== next.state) return true;
+  if (previous.currentIndex !== next.currentIndex) return true;
+  if (previous.errorMessage !== next.errorMessage) return true;
+  if (previous.clock?.songId !== next.clock?.songId) return true;
+  if (previous.clock?.setlistEntryId !== next.clock?.setlistEntryId) return true;
+  if (!playing) return true;
+  const now = performance.now();
+  if (now - lastPlaybackStoreAt >= PLAYBACK_UI_MS) {
+    lastPlaybackStoreAt = now;
+    return true;
+  }
+  return false;
+}
 
 function sendSync(message: SyncMessage) {
   sendSyncMessage(message);
@@ -1025,15 +1049,18 @@ function startTick() {
   cancelAnimationFrame(tickHandle);
   const loop = () => {
     const snap = controller.tick();
+    const playing =
+      snap.state === PlaybackState.Playing || snap.state === PlaybackState.Transitioning;
+    if (playing) {
+      setFollowClockSource(() => controller.getClock()?.time ?? 0);
+    }
     const resumeAt = useMasterStore.getState().panicResumeAt;
     if (resumeAt != null) {
       const time = snap.clock?.time ?? 0;
-      const playing =
-        snap.state === PlaybackState.Playing || snap.state === PlaybackState.Transitioning;
       if (!playing || time + 0.02 >= resumeAt) applyPanicResume?.();
     }
     broadcastClock(snap);
-    if (snap.state === PlaybackState.Playing || snap.state === PlaybackState.Transitioning) {
+    if (playing) {
       tickHandle = requestAnimationFrame(loop);
     }
   };
@@ -1907,6 +1934,13 @@ export const useMasterStore = create<MasterState>((set, get) => {
     if (get()?.deviceKind !== "master") return;
     const playing =
       playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
+    if (playing) {
+      setFollowClockSource(() => controller.getClock()?.time ?? 0);
+    }
+    if (!playbackStoreNeedsWrite(get().playback, playback, playing)) {
+      if (playing) startTick();
+      return;
+    }
     const entryId = playback.clock?.setlistEntryId;
     if (playback.endedToEntryId) {
       const nextId = playback.endedToEntryId;
@@ -2257,8 +2291,11 @@ export const useMasterStore = create<MasterState>((set, get) => {
         const current = useMasterStore.getState();
         const duration = practiceAudioDuration();
         const playing = !ended && practiceAudioPlaying();
-        if (playing) setFollowClock(time, true);
+        if (playing) setFollowClockSource(() => practiceAudioTime());
         else stopFollowClock(time);
+        const now = performance.now();
+        if (playing && !ended && now - lastPracticeStoreAt < PLAYBACK_UI_MS) return;
+        lastPracticeStoreAt = now;
         useMasterStore.setState({
           previewTime: time,
           songs:
@@ -2318,8 +2355,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
         }
       }
       const duration = practiceAudioDuration();
-      const startAt = get().previewTime;
-      setFollowClock(startAt, true);
+      const startAt = practiceAudioTime();
+      setFollowClockSource(() => practiceAudioTime());
       set({
         songs:
           duration > 0
@@ -2937,6 +2974,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       }
       const time = controller.getClock()?.time ?? get().previewTime;
       controller.pause();
+      stopFollowClock(time);
       clearPanic();
       set({ previewTime: time, playbackPaused: true });
       broadcastClock(controller.getSnapshot(), true);
@@ -2950,6 +2988,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       clearMetronomeBeat();
       if (get().deviceKind === "master") sendSync({ type: "Metronome", playing: false });
       controller.stopImmediate();
+      stopFollowClock(0);
       clearPanic(false);
       set({
         previewTime: 0,

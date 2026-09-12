@@ -21,15 +21,20 @@ function emitTime(ended = false): void {
 
 function startTick(): void {
   if (tick != null) return;
-  tick = window.setInterval(() => {
-    if (!audio || audio.paused || audio.ended) return;
+  const loop = () => {
+    if (!audio || audio.paused || audio.ended) {
+      tick = null;
+      return;
+    }
     emitTime(false);
-  }, 100);
+    tick = requestAnimationFrame(loop);
+  };
+  tick = requestAnimationFrame(loop);
 }
 
 function stopTick(): void {
   if (tick == null) return;
-  window.clearInterval(tick);
+  cancelAnimationFrame(tick);
   tick = null;
 }
 

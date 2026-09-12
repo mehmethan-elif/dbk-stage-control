@@ -324,8 +324,7 @@ export function DrumView() {
       : (entries.find((entry) => entry.entryId === selectedEntryId)?.songId ??
         playback.clock?.songId)
   );
-  const liveTime =
-    playingSong && playingSong.duration > 0 ? Math.min(playingSong.duration, followTime) : followTime;
+  const liveTime = followTime;
   const upcoming = playingEntryId
     ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, liveTime)
     : undefined;
@@ -363,7 +362,7 @@ export function DrumView() {
       next instanceof HTMLElement ? next : null,
       Boolean(leadIn)
     );
-  }, [autoScroll, storeTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
+  }, [autoScroll, followTime, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
 
   const addSong = (songId: string) => {
     if (!gig) return;
