@@ -112,7 +112,8 @@ import { loadPracticeLibrary, readPracticeFileBuffer, readPublishedGigs } from "
 import { importPracticeFileList, importPracticeZip } from "../practice/zip";
 import { loadSongMixers, saveSongMixer } from "../ui/master/song-mixer";
 import { updateSongSettings, writeSongInfo } from "../ui/master/song-settings";
-import { readMetroIntroBuffer } from "../native/library";
+import { readMetroIntroBuffer, readShippedGigs, writeLibraryGigs } from "../native/library";
+import { mergeShippedGigs } from "../persist/shipped-gigs";
 import { isNativeApp } from "../native/platform";
 import {
   isSongLibraryGig,
@@ -132,12 +133,14 @@ export { stageConnectOn };
 import {
   MASTER_HOST_KEY,
   STAGE_NAME_KEY,
+  clientDeviceName,
   connectSyncTransport,
   disconnectSyncTransport,
   refreshJoinAddress as refreshNativeJoinAddress,
   sendSyncMessage,
   subscribeSyncLink
 } from "../native/sync";
+import { parseSyncHostname } from "../native/sync-host";
 
 export type ClientSession = "practice" | "stage";
 
@@ -1151,7 +1154,15 @@ function orderOnlyGig(gig: Gig): Gig {
 }
 
 function saveGig(gig: Gig): Promise<void> {
-  return persistGig(orderOnlyGig(gig));
+  const next = persistGig(orderOnlyGig(gig));
+  const shows = useMasterStore.getState().gigs.filter((item) => !isSongLibraryGig(item));
+  persistLibraryGigs(shows.some((item) => item.id === gig.id) ? shows.map((item) => (item.id === gig.id ? gig : item)) : [...shows, gig]);
+  return next;
+}
+
+function persistLibraryGigs(gigs: Gig[]): void {
+  const shows = gigs.filter((gig) => !isSongLibraryGig(gig)).map(orderOnlyGig);
+  void writeLibraryGigs(shows).catch(() => undefined);
 }
 
 function publishableGigs(state: MasterState): Gig[] {
@@ -1787,9 +1798,21 @@ async function loadLibraryNow(
   }
   const legacyGigs = local.gigs.filter((item) => item.id !== SONG_LIBRARY_GIG_ID);
   songs = await migrateLegacySongInfo(songs, legacyGigs);
-  const savedGigs = legacyGigs.map(orderOnlyGig);
+  let savedGigs = legacyGigs.map(orderOnlyGig);
   try {
-    await raceTimeout(Promise.all(savedGigs.map(saveGig)), 3_000, undefined);
+    const shipped = await readShippedGigs();
+    if (shipped.length) {
+      const merged = mergeShippedGigs(savedGigs, shipped, songs);
+      const keep = new Set(merged.map((gig) => gig.id));
+      await Promise.all(savedGigs.filter((gig) => !keep.has(gig.id)).map((gig) => deleteGig(gig.id)));
+      savedGigs = merged;
+    }
+  } catch {
+    // keep local setlists if the shipped pack cannot be read
+  }
+  try {
+    await raceTimeout(Promise.all(savedGigs.map((gig) => persistGig(orderOnlyGig(gig)))), 3_000, undefined);
+    persistLibraryGigs(savedGigs);
   } catch {
     // keep using in-memory setlists if IndexedDB cannot persist them
   }
@@ -2140,12 +2163,18 @@ export const useMasterStore = create<MasterState>((set, get) => {
     },
 
     joinStage: (host) => {
-      const value = host.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-      const stageName = get().stageName?.trim();
-      if (!value || !stageName) return;
+      const value = parseSyncHostname(host);
+      const stageName = get().stageName?.trim() || clientDeviceName();
+      if (!value) return;
       stopPracticeAudio();
       localStorage.setItem(MASTER_HOST_KEY, value);
-      set({ syncHost: value, clientSession: "stage", setlistOpen: true, justJoinedStage: true });
+      set({
+        syncHost: value,
+        stageName,
+        clientSession: "stage",
+        setlistOpen: true,
+        justJoinedStage: true
+      });
       connectSync(get, set);
     },
 

@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { Gig } from "@dbk/core";
+import { isNativeApp } from "../native/platform";
 import { seedGig } from "./seed";
 
 const DB_NAME = "dbk-stage-control";
@@ -45,9 +46,8 @@ export async function loadLocalLibrary(): Promise<{ gigs: Gig[] }> {
   const database = await db();
   const seeded = await database.get("meta", "seeded");
   if (!seeded) {
-    const gig = seedGig();
     const tx = database.transaction(["gigs", "meta"], "readwrite");
-    await tx.objectStore("gigs").put(gig);
+    if (!isNativeApp()) await tx.objectStore("gigs").put(seedGig());
     await tx.objectStore("meta").put("1", "seeded");
     await tx.done;
   }

@@ -187,9 +187,17 @@ function copyMetroIntroClicks(): void {
   }
 }
 
+function copyGigsToMasterLibrary(): void {
+  const src = join(CLIENT_LIBRARY, "gigs.json");
+  if (!existsSync(src)) return;
+  mkdirSync(join(ROOT, "library"), { recursive: true });
+  writeFileSync(join(ROOT, "library", "gigs.json"), readFileSync(src));
+}
+
 function writePublishedIndex(songs: PublishedSong[], gigs: unknown = []): PublishedLibrarySummary {
   mkdirSync(CLIENT_LIBRARY, { recursive: true });
   copyMetroIntroClicks();
+  copyGigsToMasterLibrary();
   const gigList = Array.isArray(gigs) ? gigs : [];
   const gigsBody = `${JSON.stringify({ gigs: gigList }, null, 2)}\n`;
   const gigsBuf = Buffer.from(gigsBody, "utf8");

@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
-import { parseSongInfo, type Song, type SongInfo } from "@dbk/core";
+import { parseSongInfo, type Gig, type Song, type SongInfo } from "@dbk/core";
+import { parsePackedGigs } from "../persist/shipped-gigs";
 import { bufferLooksLikeFlac, metroIntroFileName, metroIntroHttpUrls } from "./metro-intro";
 import { isNativeApp } from "./platform";
 
@@ -407,6 +408,61 @@ export async function readMetroIntroBuffer(url: string): Promise<ArrayBuffer | u
     return data;
   }
   return undefined;
+}
+
+function decodePackedGigs(data: ArrayBuffer | undefined): Gig[] {
+  if (!data) return [];
+  try {
+    return parsePackedGigs(JSON.parse(new TextDecoder().decode(data)));
+  } catch {
+    return [];
+  }
+}
+
+export async function readShippedGigs(): Promise<Gig[]> {
+  if (isNativeApp()) {
+    const fromDocs = decodePackedGigs(await readDocumentsBytes("library/gigs.json"));
+    if (fromDocs.length) return fromDocs;
+  }
+  const urls = ["/client-library/gigs.json", "/library/gigs.json"];
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) continue;
+      const packed = decodePackedGigs(await response.arrayBuffer());
+      if (packed.length) return packed;
+    } catch {
+      // try the next copy
+    }
+  }
+  return [];
+}
+
+export async function writeLibraryGigs(gigs: Gig[]): Promise<void> {
+  const body = `${JSON.stringify({ gigs }, null, 2)}\n`;
+  if (!isNativeApp()) {
+    try {
+      await fetch("/library/gigs.json", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body,
+        signal: fetchTimeout(10_000)
+      });
+    } catch {
+      // Mac host may not accept this file yet
+    }
+    return;
+  }
+  try {
+    await Filesystem.mkdir({
+      path: "library",
+      directory: Directory.Documents,
+      recursive: true
+    });
+  } catch {
+    /* folder may already exist */
+  }
+  await writeUtf8("library/gigs.json", body);
 }
 
 export async function writeSongBytes(

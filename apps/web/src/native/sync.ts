@@ -6,8 +6,9 @@ import {
   parseSyncMessage
 } from "@dbk/protocol";
 import { isNativeApp } from "./platform";
+import { parseSyncHostname, SYNC_PORT, syncSocketUrl } from "./sync-host";
 
-export const SYNC_PORT = 8787;
+export { SYNC_PORT };
 export const PRACTICE_SHARE_PORT = 8788;
 export const MASTER_HOST_KEY = "dbk-master-host";
 export const STAGE_NAME_KEY = "dbk-stage-name";
@@ -251,6 +252,12 @@ async function startNativeMaster(hooks: SyncHooks): Promise<string | null> {
     }
   };
   hooks.onMasterOpen();
+  try {
+    const { SyncSocket } = await import("./sync-socket");
+    await SyncSocket.advertise({ port: SYNC_PORT });
+  } catch {
+    // Bonjour is only for the iOS local-network prompt
+  }
   const address = await nativeJoinAddress();
   setLink({
     connected: true,
@@ -332,6 +339,10 @@ export function disconnectSyncTransport(): void {
   seenMasterSessionId = null;
   allowReconnect = false;
   window.clearTimeout(reconnectTimer);
+  void dropNativeClientListeners();
+  void import("./sync-socket")
+    .then(({ SyncSocket }) => SyncSocket.close())
+    .catch(() => undefined);
   if (socket) {
     socket.onopen = null;
     socket.onmessage = null;
@@ -355,13 +366,10 @@ export async function connectSyncTransport(hooks: SyncHooks): Promise<string | n
   }
   const host = hookSyncHost(hooks);
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const hostname = host
-    ? host.replace(/^wss?:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "")
-    : "";
-  const url =
-    hostname.length > 0
-      ? `ws://${hostname}:${SYNC_PORT}/sync`
-      : `${protocol}://${window.location.host}/sync`;
+  const hostname = parseSyncHostname(host);
+  const url = hostname
+    ? syncSocketUrl(host) ?? `${protocol}://${hostname}:${SYNC_PORT}/sync`
+    : `${protocol}://${window.location.host}/sync`;
   setLink({
     connected: false,
     hosting: false,
@@ -369,10 +377,71 @@ export async function connectSyncTransport(hooks: SyncHooks): Promise<string | n
     peerCount: 0,
     peers: []
   });
-  connectBrowserSocket(url, hooks, () => {
+  const retry = () => {
     if (!allowReconnect) return;
     if (isFollowerKind(hooks.deviceKind()) && !hookSyncHost(hooks)) return;
     void connectSyncTransport(hooks);
-  });
-  return host ? `${host.replace(/:\d+$/, "")}:${SYNC_PORT}` : null;
+  };
+  if (isNativeApp() && hostname) {
+    void connectNativeClientSocket(url, hooks, retry);
+  } else {
+    connectBrowserSocket(url, hooks, retry);
+  }
+  return hostname ? `${hostname}:${SYNC_PORT}` : null;
+}
+
+let nativeClientUnsubs: Array<{ remove: () => Promise<void> }> = [];
+
+async function dropNativeClientListeners(): Promise<void> {
+  const pending = nativeClientUnsubs;
+  nativeClientUnsubs = [];
+  await Promise.all(pending.map((handle) => handle.remove().catch(() => undefined)));
+}
+
+async function connectNativeClientSocket(url: string, hooks: SyncHooks, retry: () => void): Promise<void> {
+  const { SyncSocket } = await import("./sync-socket");
+  await dropNativeClientListeners();
+  try {
+    await SyncSocket.close();
+  } catch {
+    // first connect
+  }
+  sendImpl = (message) => {
+    const raw = JSON.stringify(message);
+    rememberOutgoing(message, raw);
+    void SyncSocket.send({ message: raw });
+  };
+  nativeClientUnsubs = await Promise.all([
+    SyncSocket.addListener("message", (event) => {
+      const message = parseSyncMessage(String(event.data ?? ""));
+      if (!message) return;
+      handleIncoming(message, hooks, true);
+    }),
+    SyncSocket.addListener("close", () => {
+      setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
+      window.clearTimeout(reconnectTimer);
+      if (!allowReconnect) return;
+      reconnectTimer = window.setTimeout(retry, 2000);
+    })
+  ]);
+  try {
+    await SyncSocket.wakeLocalNetwork();
+    await SyncSocket.connect({ url });
+    setLink({ connected: true, hosting: false });
+    sendImpl({
+      type: "Hello",
+      protocolVersion: PROTOCOL_VERSION,
+      deviceKind: hooks.deviceKind(),
+      deviceName:
+        hooks.deviceKind() === "remote"
+          ? hooks.deviceName?.().trim() || REMOTE_DEVICE_NAME
+          : hooks.deviceName?.().trim() || clientDeviceName(),
+      deviceId: hooks.deviceKind() === "master" ? "master" : sessionClientId()
+    });
+  } catch {
+    setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
+    window.clearTimeout(reconnectTimer);
+    if (!allowReconnect) return;
+    reconnectTimer = window.setTimeout(retry, 2000);
+  }
 }

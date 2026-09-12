@@ -34,6 +34,10 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>DBK Stage Control shares the setlist clock with other iPads on this Wi-Fi.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dbk-stage._tcp</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

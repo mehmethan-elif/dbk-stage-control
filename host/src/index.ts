@@ -12,6 +12,7 @@ const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
 const LIBRARY_ROOT = join(ROOT, "library");
 const LIBRARY = join(LIBRARY_ROOT, "songs");
 const METRO_INTRO_FILE = /^\/library\/[12]\.flac$/i;
+const LIBRARY_GIGS_FILE = /^\/library\/gigs\.json$/i;
 
 function lanIpv4(): string[] {
   const ips: string[] = [];
@@ -545,6 +546,31 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
     }
     serveFile(url.pathname, res);
     return;
+  }
+
+  if (LIBRARY_GIGS_FILE.test(url.pathname)) {
+    const full = join(LIBRARY_ROOT, "gigs.json");
+    if (req.method === "PUT") {
+      void (async () => {
+        try {
+          const body = await readBody(req, 1024 * 1024);
+          JSON.parse(body);
+          writeFileSync(full, body.endsWith("\n") ? body : `${body}\n`, "utf8");
+          send(res, 200, JSON.stringify({ ok: true }), "application/json; charset=utf-8");
+        } catch {
+          send(res, 400, "Bad request", "text/plain");
+        }
+      })();
+      return;
+    }
+    if (req.method === "GET" || req.method === "HEAD") {
+      if (!existsSync(full)) {
+        send(res, 404, "Not found", "text/plain");
+        return;
+      }
+      serveLibraryRootAudio(url.pathname, res);
+      return;
+    }
   }
 
   if ((req.method === "GET" || req.method === "HEAD") && METRO_INTRO_FILE.test(url.pathname)) {

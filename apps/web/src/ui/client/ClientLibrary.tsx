@@ -38,11 +38,21 @@ export function ClientLibrary() {
   const roster = clientBandRoster(gig);
   const onStage = clientSession === "stage";
   const connected = onStage && syncConnected;
-  const canConnect = Boolean(stageName?.trim()) && Boolean(host.trim());
+  const canConnect = Boolean(host.trim());
+  const [waited, setWaited] = useState(false);
 
   useEffect(() => {
     if (stageName && isMasterBandName(stageName)) setStageName(null);
   }, [stageName, setStageName]);
+
+  useEffect(() => {
+    if (!onStage || connected) {
+      setWaited(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setWaited(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, [onStage, connected, syncHost]);
 
   return (
     <section className="panel lan-page">
@@ -102,6 +112,15 @@ export function ClientLibrary() {
               {onStage ? "Disconnect" : "Connect"}
             </button>
           </div>
+          <p className="meta">
+            {connected
+              ? "Connected to master."
+              : onStage
+                ? waited
+                  ? "No master at that address. Same Wi-Fi? Allow Local Network for this app."
+                  : `Connecting to ${syncHost ?? host}…`
+                : "Type the master address, then Connect."}
+          </p>
         </form>
       </div>
     </section>

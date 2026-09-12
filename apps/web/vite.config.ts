@@ -50,7 +50,7 @@ function copyMetroIntroClicks(dist: string): void {
   const srcDir = path.resolve(__dirname, "../../library");
   for (const dest of [path.join(dist, "library"), path.join(dist, "client-library")]) {
     mkdirSync(dest, { recursive: true });
-    for (const name of ["1.flac", "2.flac"]) {
+    for (const name of ["1.flac", "2.flac", "gigs.json"]) {
       const src = path.join(srcDir, name);
       if (existsSync(src)) copyFileSync(src, path.join(dest, name));
     }
