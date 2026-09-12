@@ -18,12 +18,6 @@ import {
 
 const TIME_EPS = 0.02;
 const MAJ7 = /maj7/gi;
-const SCORE_FIFTH_SEMITONES = 7;
-const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-const SHARP_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const FLAT_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
-const PITCH_TOKEN = /^([A-Ga-g])([#b♯♭]{0,2})(.*)$/;
-const NON_PITCH_MARK = /^(n\.?\s*c\.?|n\/c|-|%|\.?\.+)$/i;
 
 export const STEPS_PER_BEAT = 4;
 export const STEPS_PER_MEASURE = STEPS_PER_BEAT * 4;
@@ -39,53 +33,6 @@ export function stepsFromTempoMap(map: TempoPoint[], measure: number): number {
 
 export function displayChordText(text: string): string {
   return text.replace(MAJ7, "Δ");
-}
-
-function accidentalDelta(marks: string): number {
-  let delta = 0;
-  for (const mark of marks) {
-    if (mark === "#" || mark === "♯") delta += 1;
-    else delta -= 1;
-  }
-  return delta;
-}
-
-function spellPitch(pc: number, marks: string): string {
-  const index = ((pc % 12) + 12) % 12;
-  const sharp = marks.includes("#") || marks.includes("♯");
-  const flat = marks.includes("b") || marks.includes("♭");
-  const name = (sharp ? SHARP_NAMES[index] : flat ? FLAT_NAMES[index] : SHARP_NAMES[index]) ?? "C";
-  if (marks.includes("♯")) return name.replaceAll("#", "♯");
-  if (marks.includes("♭")) return name.replaceAll("b", "♭");
-  return name;
-}
-
-function transposePitchToken(token: string, semitones: number): string | null {
-  const match = token.match(PITCH_TOKEN);
-  if (!match) return null;
-  const letter = match[1]?.toUpperCase() ?? "";
-  const marks = match[2] ?? "";
-  const rest = match[3] ?? "";
-  const base = LETTER_PC[letter];
-  if (base == null) return null;
-  return `${spellPitch(base + accidentalDelta(marks) + semitones, marks)}${rest}`;
-}
-
-export function transposeChordText(text: string, semitones: number): string {
-  const raw = text.trim();
-  if (!raw || NON_PITCH_MARK.test(raw)) return text;
-  const slash = raw.indexOf("/");
-  const main = slash >= 0 ? raw.slice(0, slash) : raw;
-  const bass = slash >= 0 ? raw.slice(slash + 1) : "";
-  const nextMain = transposePitchToken(main, semitones);
-  if (nextMain == null) return text;
-  if (slash < 0) return nextMain;
-  const nextBass = transposePitchToken(bass, semitones);
-  return nextBass == null ? `${nextMain}/${bass}` : `${nextMain}/${nextBass}`;
-}
-
-export function scoreChordText(text: string): string {
-  return displayChordText(transposeChordText(text, SCORE_FIFTH_SEMITONES));
 }
 
 export const NOTE_LANES = [

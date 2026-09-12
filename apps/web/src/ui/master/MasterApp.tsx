@@ -142,12 +142,12 @@ export function MasterApp() {
         <div className="grow" />
         <div className="mode-toggle">
           <button
-            className={editOpen && masterPage === "chords" ? "on" : ""}
+            className={editOpen && (masterPage === "chords" || masterPage === "nota") ? "on" : ""}
             title="Edit sections"
             aria-label="Edit sections"
-            aria-pressed={editOpen && masterPage === "chords"}
+            aria-pressed={editOpen && (masterPage === "chords" || masterPage === "nota")}
             onClick={() => {
-              if (masterPage !== "chords") {
+              if (masterPage !== "chords" && masterPage !== "nota") {
                 setMasterPage("chords");
                 if (!editOpen) toggleEditOpen();
                 return;

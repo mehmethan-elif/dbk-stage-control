@@ -168,7 +168,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
   const editOpen = useMasterStore((s) => s.editOpen);
-  const sectionEditing = Boolean(!readOnly && editOpen && layer === "chord");
+  const sectionEditing = Boolean(!readOnly && editOpen);
   const zoom = useMasterStore((s) => s.stageZooms[layer === "chord" ? "chords" : "nota"]);
   const autoScroll = useMasterStore(stageAutoScroll);
   const panicFollow = useMasterStore(panicBlocksFollow);
@@ -482,9 +482,10 @@ function SongNota(props: {
   const song = props.song;
   const file = props.file;
   const title = songDisplayName(song);
-  const hideRects =
-    !props.editing &&
-    useMasterStore((s) => hidesLeftoverNotaRects(song, currentGig(s)?.performanceMode));
+  const leftoverHidden = useMasterStore((s) =>
+    hidesLeftoverNotaRects(song, currentGig(s)?.performanceMode)
+  );
+  const hideRects = !props.editing && leftoverHidden;
   const liveRects = hideRects ? [] : rectsForLiveSections(props.rects, song?.sections ?? []);
   const choices = editableNotaSections(song?.sections ?? []);
   const articleRef = useRef<HTMLElement>(null);
@@ -726,7 +727,7 @@ function SongNota(props: {
   return (
     <article
       ref={articleRef}
-      className={`lyrics-song nota-song${props.editing && props.layer === "chord" ? " chord-editing" : ""}`}
+      className={`lyrics-song nota-song${props.editing ? " chord-editing" : ""}`}
       data-nota-song={props.entryId}
       data-lead-in={sectionlessLeadIn ? "" : undefined}
     >
@@ -947,7 +948,7 @@ function RectChordLabels(props: {
   sectionIndex?: number;
   editing?: boolean;
 }) {
-  const shown = (text: string) => displayChordText(text);
+  const shown = displayChordText;
   const musicBox = (box: NotaSectionBox): NotaSectionBox =>
     props.sectionIndex != null ? { ...box, sectionIndex: props.sectionIndex } : box;
   return (

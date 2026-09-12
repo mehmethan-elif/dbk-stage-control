@@ -45,7 +45,7 @@ export async function captureDrumChartPng(song: Song): Promise<{
   const root = createRoot(host);
   try {
     flushSync(() => {
-      root.render(<DrumChartBody song={song} live={false} time={0} />);
+      root.render(<DrumChartBody song={song} live={false} />);
     });
     if (document.fonts?.ready) await document.fonts.ready;
     await waitFrames(3);

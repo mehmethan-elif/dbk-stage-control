@@ -3,8 +3,6 @@ import type { Song, TempoPoint } from "@dbk/core";
 import {
   beatIndexForStep,
   displayChordText,
-  scoreChordText,
-  transposeChordText,
   chordMarksForMeasure,
   chordNamesForBox,
   measureSpan,
@@ -235,18 +233,6 @@ describe("notesInMeasure", () => {
     expect(displayChordText("Cmaj7/E")).toBe("CΔ/E");
     expect(displayChordText("Maj7")).toBe("Δ");
     expect(displayChordText("Dm")).toBe("Dm");
-  });
-
-  it("transposes chord names up a fifth for SCORE", () => {
-    expect(transposeChordText("D", 7)).toBe("A");
-    expect(transposeChordText("Dm", 7)).toBe("Am");
-    expect(transposeChordText("Bb", 7)).toBe("F");
-    expect(transposeChordText("Dm/A", 7)).toBe("Am/E");
-    expect(transposeChordText("C#m", 7)).toBe("G#m");
-    expect(transposeChordText("E♭", 7)).toBe("B♭");
-    expect(transposeChordText("N.C.", 7)).toBe("N.C.");
-    expect(scoreChordText("Gmaj7")).toBe("DΔ");
-    expect(scoreChordText("Cmaj7/E")).toBe("GΔ/B");
   });
 
   it("is empty when there are no chord notes", () => {
