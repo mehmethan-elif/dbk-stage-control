@@ -29,11 +29,26 @@ import {
   type MixerStem
 } from "@dbk/core";
 import { PEAK_METER_PROCESSOR, PEAK_METER_PROCESSOR_NAME } from "./peak-meter-worklet.js";
+import { frameAtTime, frameStartTime, parseFlac, sliceFlac, type FlacFile } from "./flac-slice.js";
+
+/**
+ * Song seconds decoded at a time. Decoded audio costs sampleRate * channels * 4 bytes a
+ * second, so a whole eleven stem song is hundreds of megabytes; a window of it is tens.
+ */
+const WINDOW_SECONDS = 15;
+/** How far ahead of the playhead the next window is decoded and scheduled. */
+const WINDOW_LEAD_SECONDS = 7;
 
 interface WebTrack {
   id: string;
   asset: LoadedTrack["asset"];
-  buffer: AudioBuffer;
+  duration: number;
+  /** Audio decoded in one piece. Null when the track plays a window at a time. */
+  buffer: AudioBuffer | null;
+  /** Compressed source for windowed playback, indexed so any window can be cut out. */
+  flac: FlacFile | null;
+  /** Decoded windows waiting to be scheduled, by window index. */
+  ready: Map<number, AudioBuffer>;
   gain: GainNode;
   panner: StereoPannerNode;
   muted: boolean;
@@ -43,6 +58,28 @@ interface WebTrack {
 
 function dbToGain(db: number): number {
   return Math.pow(10, db / 20);
+}
+
+function isFlacFile(value: unknown): value is FlacFile {
+  return typeof value === "object" && value !== null && "frameOffsets" in value;
+}
+
+/** Sample rate of the library's stems. */
+const LIBRARY_SAMPLE_RATE = 44100;
+
+/**
+ * Runs the graph at the rate the stems are recorded at. Windows are decoded separately,
+ * and a resampler tapers the edges of every buffer it is handed, so a context running at
+ * some other rate would put a dip at each window join. At the stems' own rate
+ * `decodeAudioData` copies the samples through untouched and the joins are exact.
+ */
+function createContext(options: AudioContextOptions = {}): AudioContext {
+  try {
+    return new AudioContext({ ...options, sampleRate: LIBRARY_SAMPLE_RATE });
+  } catch {
+    // A device that refuses that rate still has to play; windowing backs off instead.
+    return new AudioContext(options);
+  }
 }
 
 export type AudioRoutingMode = 1 | 2 | 3;
@@ -113,6 +150,12 @@ export class WebAudioDeck implements AudioDeck {
   private longestDuration = 0;
   private clickFired = false;
   private longestFired = false;
+  /** Song time this run started from, so a mid-window start keeps its offset. */
+  private playFrom = 0;
+  private nextWindow = 0;
+  /** Bumped whenever playback is torn down, to drop decodes that are no longer wanted. */
+  private epoch = 0;
+  private readonly pending = new Map<number, Promise<void>>();
 
   applyMixer(): void {
     this.applyMix();
@@ -124,7 +167,9 @@ export class WebAudioDeck implements AudioDeck {
   }
 
   hasLiveSources(): boolean {
-    return this.sources.length > 0;
+    // A deck that is playing but still decoding the window it needs is live too. Seeking
+    // lands here, and without this the output gate closes for the rest of the song.
+    return this.sources.length > 0 || (this.playing && this.pending.size > 0);
   }
 
   get loadedSongId(): string | null {
@@ -154,11 +199,14 @@ export class WebAudioDeck implements AudioDeck {
 
   async load(song: Song, files: LoadedBuffers): Promise<void> {
     this.stopSources();
+    this.releaseTracks();
     this.song = song;
     const ctx = this.engine.context;
     this.tracks = files.tracks.map((track) => {
-      const buffer = track.payload as AudioBuffer | undefined;
-      if (!buffer) {
+      const payload = track.payload;
+      const flac = isFlacFile(payload) ? payload : null;
+      const buffer = flac ? null : (payload as AudioBuffer | undefined) ?? null;
+      if (!flac && !buffer) {
         throw new Error("Song cannot play: Audio is not decoded.");
       }
       const gain = ctx.createGain();
@@ -170,7 +218,10 @@ export class WebAudioDeck implements AudioDeck {
       return {
         id: track.id,
         asset: track.asset,
+        duration: flac ? flac.info.duration : (buffer?.duration ?? 0),
         buffer,
+        flac,
+        ready: new Map<number, AudioBuffer>(),
         gain,
         panner,
         muted: false,
@@ -180,8 +231,11 @@ export class WebAudioDeck implements AudioDeck {
     });
     this.applyMix();
     const click = this.tracks.find((track) => track.asset.audioRole === "click");
-    this.clickDuration = click?.buffer.duration ?? song.clickDuration ?? 0;
-    this.longestDuration = this.tracks.reduce((max, track) => Math.max(max, track.buffer.duration), 0);
+    this.clickDuration = click?.duration ?? song.clickDuration ?? 0;
+    this.longestDuration = this.tracks.reduce((max, track) => Math.max(max, track.duration), 0);
+    // `play` cannot wait for a decode, so the opening window is decoded here. That is what
+    // makes both the play button and a gapless hand-off start on the sample they ask for.
+    await this.decodeWindow(0);
     this.startedAt = null;
     this.pausedAt = null;
     this.playing = false;
@@ -211,13 +265,17 @@ export class WebAudioDeck implements AudioDeck {
     this.playing = true;
     this.clickFired = false;
     this.longestFired = false;
+    this.playFrom = offset;
+    this.nextWindow = Math.floor(offset / WINDOW_SECONDS);
     for (const track of this.tracks) {
+      if (!track.buffer) continue;
       const source = ctx.createBufferSource();
       source.buffer = track.buffer;
       source.connect(track.gain);
       source.start(when, offset);
       this.sources.push(source);
     }
+    this.ensureWindows();
     this.engine.syncTransportGate();
   }
 
@@ -225,6 +283,7 @@ export class WebAudioDeck implements AudioDeck {
     if (this.playing) this.pausedAt = this.getPosition();
     this.playing = false;
     this.stopSources();
+    this.prefetchAt(this.pausedAt ?? 0);
     this.engine.syncTransportGate();
   }
 
@@ -245,6 +304,7 @@ export class WebAudioDeck implements AudioDeck {
       this.play();
     } else {
       this.pausedAt = t;
+      this.prefetchAt(t);
     }
   }
 
@@ -292,16 +352,149 @@ export class WebAudioDeck implements AudioDeck {
 
   unload(): void {
     this.stop();
+    this.releaseTracks();
+    this.song = null;
+  }
+
+  /**
+   * Loading a song replaces the track list, so the previous gain/panner pairs have to be
+   * disconnected here. Left attached they stay wired into the mixer graph for the rest of
+   * the show — two orphan nodes per stem, every song change.
+   */
+  private releaseTracks(): void {
     for (const track of this.tracks) {
       track.gain.disconnect();
       track.panner.disconnect();
+      track.ready.clear();
     }
+    this.pending.clear();
     this.tracks = [];
-    this.song = null;
+  }
+
+  /** Longest windowed track, in windows. */
+  private windowCount(): number {
+    let longest = 0;
+    for (const track of this.tracks) {
+      if (track.flac) longest = Math.max(longest, track.duration);
+    }
+    return Math.ceil(longest / WINDOW_SECONDS);
+  }
+
+  /**
+   * Arms windows so the next one is always scheduled before the playhead reaches it.
+   * Driven from `poll`, which the engine calls while the transport runs.
+   */
+  private ensureWindows(): void {
+    if (!this.playing || this.startedAt === null) return;
+    const windows = this.windowCount();
+    const position = this.getPosition();
+    while (
+      this.nextWindow < windows &&
+      this.nextWindow * WINDOW_SECONDS - position <= WINDOW_LEAD_SECONDS
+    ) {
+      const index = this.nextWindow;
+      this.nextWindow += 1;
+      this.scheduleWindow(index);
+    }
+  }
+
+  private scheduleWindow(index: number): void {
+    const songStart = Math.max(index * WINDOW_SECONDS, this.playFrom);
+    const tracks = this.tracks.filter((track) => track.flac && track.duration > songStart);
+    if (tracks.length === 0) return;
+    if (tracks.every((track) => track.ready.has(index))) {
+      for (const track of tracks) this.startWindow(track, index, songStart);
+      return;
+    }
+    const epoch = this.epoch;
+    void this.decodeWindow(index)
+      .then(() => {
+        if (epoch !== this.epoch || !this.playing) return;
+        for (const track of tracks) this.startWindow(track, index, songStart);
+      })
+      .catch(() => {
+        for (const cb of this.listeners.error) cb({ message: "Song cannot play: Audio failed." });
+      });
+  }
+
+  /**
+   * Decodes window `index` for every track that plays in it. Windows are cut on frame
+   * boundaries, so a decoded window starts at or just before the song time it covers.
+   */
+  private decodeWindow(index: number): Promise<void> {
+    const running = this.pending.get(index);
+    if (running) return running;
+    const ctx = this.engine.context;
+    const from = index * WINDOW_SECONDS;
+    const run = Promise.all(
+      this.tracks.map(async (track) => {
+        const file = track.flac;
+        if (!file || track.ready.has(index) || track.duration <= from) return;
+        const to = Math.min(from + WINDOW_SECONDS, track.duration);
+        const slice = sliceFlac(
+          file,
+          frameAtTime(file, from),
+          Math.min(frameAtTime(file, to) + 1, file.frameCount)
+        );
+        const decoded = await ctx.decodeAudioData(slice.buffer as ArrayBuffer);
+        track.ready.set(index, decoded);
+      })
+    )
+      .then(() => undefined)
+      .finally(() => {
+        this.pending.delete(index);
+      });
+    this.pending.set(index, run);
+    return run;
+  }
+
+  /** Decodes the window holding `time`, so playing from there does not have to wait. */
+  private prefetchAt(time: number): void {
+    const index = Math.floor(Math.max(0, time) / WINDOW_SECONDS);
+    if (!this.tracks.some((track) => track.flac)) return;
+    void this.decodeWindow(index).catch(() => undefined);
+  }
+
+  /**
+   * Starts one window at the context time its song position maps to. Every window and
+   * every stem is placed against `startedAt` rather than against the window before it, so
+   * they stay locked to the same clock however long a decode took.
+   */
+  private startWindow(track: WebTrack, index: number, songStart: number): void {
+    const file = track.flac;
+    const buffer = track.ready.get(index);
+    if (!file || !buffer || this.startedAt === null) return;
+    // The opening window is kept so replaying or handing over to this deck is instant.
+    if (index !== 0) track.ready.delete(index);
+
+    const ctx = this.engine.context;
+    const at = this.startedAt + songStart;
+    const end = Math.min((index + 1) * WINDOW_SECONDS, track.duration);
+    // A window that had to be decoded first can arrive after its slot. Skip the part that
+    // is already late rather than playing it behind everything else.
+    const late = Math.max(0, ctx.currentTime - at);
+    const start = songStart + late;
+    if (start >= end) return;
+
+    const bufferStart = frameStartTime(file, frameAtTime(file, index * WINDOW_SECONDS));
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(track.gain);
+    source.start(Math.max(ctx.currentTime, at), start - bufferStart, end - start);
+    source.onended = () => {
+      source.disconnect();
+      const found = this.sources.indexOf(source);
+      if (found >= 0) this.sources.splice(found, 1);
+    };
+    this.sources.push(source);
+    // Windows that had to be decoded start after the transport was last checked, so the
+    // gate has to be told about them or they play into a closed output.
+    this.engine.syncTransportGate();
   }
 
   poll(now: number): void {
     if (!this.playing || this.startedAt === null) return;
+    this.ensureWindows();
     if (now < this.startedAt) return;
 
     const clickAt = this.clickEndsAt;
@@ -337,7 +530,10 @@ export class WebAudioDeck implements AudioDeck {
   }
 
   private stopSources(): void {
+    // Any window still decoding belongs to the run being torn down here.
+    this.epoch += 1;
     for (const source of this.sources) {
+      source.onended = null;
       try {
         source.stop();
       } catch {
@@ -496,8 +692,9 @@ export class WebAudioEngine implements AudioEngine {
 
   prime(): AudioContext {
     if (!this.ctx) {
-      this.ctx = new AudioContext();
+      this.ctx = createContext();
       this.unlockNow(this.ctx);
+      this.watchContextState(this.ctx);
       this.buildGraph(this.ctx);
       this.logger?.audio("engine_created", { sampleRate: this.ctx.sampleRate, state: this.ctx.state });
     } else {
@@ -617,6 +814,22 @@ export class WebAudioEngine implements AudioEngine {
     }
   }
 
+  /**
+   * iOS parks the context as "interrupted" for a phone call, an alarm or a route change.
+   * Nothing else notices: the transport keeps reporting Playing while currentTime stops
+   * advancing, so the show looks frozen until somebody taps something. Nothing in this app
+   * ever suspends the context deliberately, so any non-running state here is a fault to
+   * recover from. If the OS refuses the resume no further statechange fires, so this
+   * cannot spin.
+   */
+  private watchContextState(ctx: AudioContext): void {
+    ctx.addEventListener("statechange", () => {
+      this.logger?.audio("engine_state_changed", { state: ctx.state });
+      if (ctx !== this.ctx || ctx.state === "running" || ctx.state === "closed") return;
+      void this.resumeContext();
+    });
+  }
+
   private async resumeContext(): Promise<void> {
     const ctx = this.ctx;
     if (!ctx || ctx.state === "running") return;
@@ -626,7 +839,8 @@ export class WebAudioEngine implements AudioEngine {
       this.logger?.audio("engine_resume_failed", { error: String(error), state: ctx.state });
       return;
     }
-    if (ctx.state === "running") {
+    // `resume()` flips the state, which TypeScript cannot see through the narrowing above.
+    if ((ctx.state as AudioContextState) === "running") {
       this.logger?.audio("engine_resumed", {});
     }
   }
@@ -714,8 +928,9 @@ export class WebAudioEngine implements AudioEngine {
     }
     const options: AudioContextOptions & { sinkId?: string } = {};
     if (sinkId) options.sinkId = sinkId;
-    this.ctx = new AudioContext(options);
+    this.ctx = createContext(options);
     this.unlockNow(this.ctx);
+    this.watchContextState(this.ctx);
     this.buildGraph(this.ctx);
     await this.resumeContext();
   }
@@ -811,6 +1026,15 @@ export async function decodeSongBuffers(
     audioAssets.map(async (asset) => {
       try {
         const raw = await fetchBuffer(asset.path);
+        // FLAC is indexed and played a window at a time, which keeps a song at tens of
+        // megabytes instead of hundreds and means nothing has to be decoded to load it.
+        // Anything else, and any FLAC this cannot index, is decoded whole as before.
+        const flac = parseFlac(raw);
+        // Windows are decoded one at a time, so a rate that needs resampling would have
+        // its joins tapered by the resampler. Decode that whole instead.
+        if (flac && flac.info.sampleRate === ctx.sampleRate) {
+          return { id: asset.id, asset, duration: flac.info.duration, payload: flac };
+        }
         const buffer = await ctx.decodeAudioData(raw);
         return {
           id: asset.id,

@@ -328,7 +328,8 @@ export function keepSkippedSongsInPlace(
 ): SetlistEntry[] {
   const nextIds = new Set(next.map((entry) => entry.entryId));
   const missing = original.filter(
-    (entry) => isSongEntry(entry) && entry.skipped && !nextIds.has(entry.entryId)
+    (entry): entry is SongSetlistEntry =>
+      isSongEntry(entry) && Boolean(entry.skipped) && !nextIds.has(entry.entryId)
   );
   if (missing.length === 0) return next;
   const result = next.slice();

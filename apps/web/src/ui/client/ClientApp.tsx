@@ -14,7 +14,7 @@ import {
 } from "../shared/icons";
 import { DrumView } from "../master/DrumView";
 import { LyricsView } from "../master/LyricsView";
-import { NotaView } from "../master/NotaView";
+import { NotaViewAsync, usePdfWarmup } from "../master/lazy-pdf";
 import { PrepTransport, StageSetlistButton, StageViewTools } from "../master/PrepTransport";
 import { ClientLibrary } from "./ClientLibrary";
 import { LibraryLoading } from "../shared/LibraryLoading";
@@ -48,6 +48,7 @@ function formatElapsed(ms: number): string {
 }
 
 export function ClientApp() {
+  usePdfWarmup();
   const ready = useMasterStore((s) => s.ready);
   const masterPage = useMasterStore((s) => s.masterPage);
   const setMasterPage = useMasterStore((s) => s.setMasterPage);
@@ -185,7 +186,7 @@ export function ClientApp() {
           <div className="client-stage">
             <StageCrashGuard>
               {page === "nota" || page === "chords" ? (
-                <NotaView layer={page === "chords" ? "chord" : "score"} />
+                <NotaViewAsync layer={page === "chords" ? "chord" : "score"} />
               ) : page === "drums" ? (
                 <DrumView />
               ) : (

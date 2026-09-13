@@ -268,6 +268,28 @@ export async function libraryFileUrl(songId: string, relPath: string): Promise<s
   return Capacitor.convertFileSrc(uri);
 }
 
+/**
+ * WKWebView serves Capacitor's file URLs through a custom scheme handler, and `fetch` does
+ * not go through one — it rejects, which is why every stem was falling back to the bridge
+ * and arriving as a base64 string. XHR does use the handler, so this reads a library file
+ * as bytes without copying it through JSON. A custom scheme answers with status 0.
+ */
+function requestBytes(url: string): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("GET", url, true);
+    request.responseType = "arraybuffer";
+    request.onload = () => {
+      const body = request.response as ArrayBuffer | null;
+      const ok = request.status === 0 || (request.status >= 200 && request.status < 300);
+      if (ok && body) resolve(body);
+      else reject(new Error(`File request failed (${request.status})`));
+    };
+    request.onerror = () => reject(new Error("File request failed"));
+    request.send();
+  });
+}
+
 export async function readSongFile(songId: string, relPath: string): Promise<ArrayBuffer> {
   if (fileOverride) {
     const overridden = await fileOverride(songId, relPath);
@@ -282,21 +304,12 @@ export async function readSongFile(songId: string, relPath: string): Promise<Arr
   const folder = folderForSong(songId);
   const path = nativePath(folder, relPath);
   try {
-    const response = await fetch(await libraryFileUrl(songId, relPath));
-    if (response.ok) return await response.arrayBuffer();
+    return await requestBytes(await libraryFileUrl(songId, relPath));
   } catch {
-    /* iOS sometimes cannot fetch the converted file URL; read bytes instead. */
+    /* fall back to the bridge below */
   }
   const file = await Filesystem.readFile({ path, directory: Directory.Documents });
-  const data = file.data;
-  if (typeof data !== "string") {
-    if (data instanceof ArrayBuffer) return data;
-    throw new Error(`Missing ${relPath}`);
-  }
-  const binary = atob(data);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
+  return decodeFilesystemBytes(file.data);
 }
 
 export async function readSongJsonFile(songId: string, relPath: string): Promise<unknown | null> {
@@ -338,19 +351,25 @@ async function decodeFilesystemBytes(data: string | Blob | ArrayBuffer): Promise
   if (data instanceof ArrayBuffer) return data;
   if (typeof Blob !== "undefined" && data instanceof Blob) return data.arrayBuffer();
   if (typeof data !== "string") throw new Error("Missing library file");
-  const binary = atob(data);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
+  // Stems arrive here as base64 when the file URL cannot be fetched. WebKit decodes a
+  // data URL in native code, where `atob` plus a per-byte copy means a multi-million
+  // iteration JS loop and holding the file in memory twice.
+  try {
+    return await (await fetch(`data:application/octet-stream;base64,${data}`)).arrayBuffer();
+  } catch {
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  }
 }
 
 async function readDocumentsBytes(path: string): Promise<ArrayBuffer | undefined> {
   try {
     const { uri } = await Filesystem.getUri({ path, directory: Directory.Documents });
-    const response = await fetch(Capacitor.convertFileSrc(uri));
-    if (response.ok) return await response.arrayBuffer();
+    return await requestBytes(Capacitor.convertFileSrc(uri));
   } catch {
-    /* iOS sometimes cannot fetch the converted file URL; read bytes instead. */
+    /* fall back to the bridge below */
   }
   try {
     const file = await Filesystem.readFile({ path, directory: Directory.Documents });

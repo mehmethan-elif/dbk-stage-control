@@ -1,5 +1,18 @@
 import { registerPlugin, WebPlugin } from "@capacitor/core";
 
+export type NativeHostEvent = {
+  type?: string;
+  uuid?: string;
+  message?: string;
+};
+
+export type NativeHostPeer = {
+  uuid?: string;
+  deviceId?: string;
+  deviceKind?: string;
+  deviceName?: string;
+};
+
 type SyncSocketApi = {
   connect(options: { url: string }): Promise<void>;
   send(options: { message: string }): Promise<void>;
@@ -8,10 +21,11 @@ type SyncSocketApi = {
   advertise(options: { port: number }): Promise<void>;
   startHost(options: { port: number }): Promise<{ address?: string }>;
   hostSend(options: { uuid: string; message: string }): Promise<void>;
+  drainHost(): Promise<{ events?: NativeHostEvent[]; peers?: NativeHostPeer[] }>;
   lanAddress(): Promise<{ address?: string }>;
   addListener(
-    eventName: "open" | "message" | "close" | "hostOpen" | "hostClose" | "hostMessage",
-    listener: (event: { data?: string; uuid?: string; message?: string }) => void
+    eventName: "open" | "message" | "close",
+    listener: (event: { data?: string }) => void
   ): Promise<{ remove: () => Promise<void> }>;
 };
 
@@ -66,6 +80,10 @@ class SyncSocketWeb extends WebPlugin implements SyncSocketApi {
   }
 
   async hostSend(): Promise<void> {}
+
+  async drainHost(): Promise<{ events?: NativeHostEvent[]; peers?: NativeHostPeer[] }> {
+    return { events: [], peers: [] };
+  }
 
   async lanAddress(): Promise<{ address?: string }> {
     return {};

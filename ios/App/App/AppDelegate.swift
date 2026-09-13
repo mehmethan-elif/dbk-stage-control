@@ -12,7 +12,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         activatePlaybackSession()
         PracticeShareServer.shared.start()
         StageSyncHub.shared.listen()
-        LocalNetworkGate.shared.wake()
         LocalNetworkGate.shared.advertise(port: 8787)
         return true
     }
@@ -97,14 +96,25 @@ final class PracticeShareServer {
             }
             let method = Self.requestMethod(from: header)
             let path = Self.requestPath(from: header)
-            let needed = Self.contentLength(from: header)
+            let length = Self.contentLength(from: header)
             let bodyStart = range.upperBound
-            if next.distance(from: bodyStart, to: next.endIndex) < needed {
-                if isComplete || error != nil { connection.cancel(); return }
+            let available = next.distance(from: bodyStart, to: next.endIndex)
+            if let needed = length {
+                if available < needed {
+                    if isComplete || error != nil { connection.cancel(); return }
+                    self.receive(on: connection, buffer: next)
+                    return
+                }
+                let body = next.subdata(in: bodyStart..<next.index(bodyStart, offsetBy: needed))
+                self.handleHttp(on: connection, method: method, path: path, body: body)
+                return
+            }
+            if method == "POST" && available == 0 && !isComplete && error == nil {
                 self.receive(on: connection, buffer: next)
                 return
             }
-            let body = next.subdata(in: bodyStart..<next.index(bodyStart, offsetBy: needed))
+            let bodyLen = method == "POST" ? available : 0
+            let body = next.subdata(in: bodyStart..<next.index(bodyStart, offsetBy: bodyLen))
             self.handleHttp(on: connection, method: method, path: path, body: body)
         }
     }
@@ -115,8 +125,12 @@ final class PracticeShareServer {
             return
         }
         if path == "/sync-http/session" && method == "POST" {
-            let id = StageSyncHub.shared.openHttp()
-            let payload = Data("{\"id\":\"\(id)\"}".utf8)
+            let hello = String(data: body, encoding: .utf8) ?? ""
+            let opened = StageSyncHub.shared.openHttp(hello: hello)
+            let payload = (try? JSONSerialization.data(withJSONObject: [
+                "id": opened.id,
+                "messages": opened.messages
+            ])) ?? Data("{\"id\":\"\(opened.id)\",\"messages\":[]}".utf8)
             self.reply(connection, Self.http(200, "application/json; charset=utf-8", payload))
             return
         }
@@ -156,13 +170,13 @@ final class PracticeShareServer {
         return first.split(separator: " ").first.map(String.init)?.uppercased() ?? "GET"
     }
 
-    private static func contentLength(from header: String) -> Int {
+    private static func contentLength(from header: String) -> Int? {
         for line in header.split(separator: "\r\n") {
             if line.lowercased().hasPrefix("content-length:") {
-                return Int(line.split(separator: ":", maxSplits: 1).last?.trimmingCharacters(in: .whitespaces) ?? "") ?? 0
+                return Int(line.split(separator: ":", maxSplits: 1).last?.trimmingCharacters(in: .whitespaces) ?? "")
             }
         }
-        return 0
+        return nil
     }
 
     private static func requestPath(from header: String) -> String {
@@ -182,9 +196,17 @@ final class PracticeShareServer {
             return Self.http(404, "text/plain", Data("Not found".utf8))
         }
         if path == "/health" {
-            let status = StageSyncHub.shared.debugStatus()
-            let last = status.last.replacingOccurrences(of: "\"", with: "'")
-            let body = Data("{\"ok\":true,\"sync\":true,\"sessions\":\(status.sessions),\"last\":\"\(last)\"}".utf8)
+            let status = StageSyncHub.shared.status()
+            let payload: [String: Any] = [
+                "ok": true,
+                "address": StageSyncHub.lanIPv4() ?? "",
+                "sessions": status.sessions,
+                "peers": status.peers,
+                // Seconds since the app's web layer last polled, or -1 if it never has.
+                "drainAge": StageSyncHub.shared.drainAge()
+            ]
+            let body = (try? JSONSerialization.data(withJSONObject: payload))
+                ?? Data("{\"ok\":true}".utf8)
             return Self.http(200, "application/json; charset=utf-8", body)
         }
         if path == "/practice/index.json" {

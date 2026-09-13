@@ -5297,3 +5297,8 @@ button {
 .remote-app .mixer-fader {
   width: 32px;
 }
+
+.stage-lazy {
+  flex: 1;
+  min-height: 100%;
+}

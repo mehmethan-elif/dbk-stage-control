@@ -19,7 +19,7 @@ import { LanView } from "./LanView";
 import { useNavigatorOnline } from "../shared/BandRoster";
 import { LyricsView } from "./LyricsView";
 import { MixerView } from "./MixerView";
-import { NotaView } from "./NotaView";
+import { NotaViewAsync, usePdfWarmup } from "./lazy-pdf";
 import { PdfExportButton } from "./pdf-export/PdfExportButton";
 import { FadeButton, PanicButton, PrepTransport, StageSetlistButton, StageViewTools } from "./PrepTransport";
 import { PrepView } from "./PrepView";
@@ -37,6 +37,7 @@ function formatElapsed(ms: number): string {
 }
 
 export function MasterApp() {
+  usePdfWarmup();
   const ready = useMasterStore((s) => s.ready);
   const libraryStatus = useMasterStore((s) => s.libraryStatus);
   const load = useMasterStore((s) => s.load);
@@ -222,7 +223,7 @@ export function MasterApp() {
       ) : masterPage === "lyrics" ? (
         <LyricsView />
       ) : masterPage === "nota" || masterPage === "chords" ? (
-        <NotaView layer={masterPage === "chords" ? "chord" : "score"} />
+        <NotaViewAsync layer={masterPage === "chords" ? "chord" : "score"} />
       ) : masterPage === "drums" ? (
         <DrumView />
       ) : masterPage === "lan" ? (

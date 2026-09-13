@@ -165,7 +165,7 @@ export function LanView() {
                   {copiedPage ? "Copied" : "Copy"}
                 </button>
               </div>
-              <p className="meta">On the other iPad, open this link in Safari.</p>
+              <p className="meta">On the other iPad or Android tablet, open this link on the same Wi-Fi.</p>
               {extraUrls.length > 0 ? (
                 <ul className="lan-extra">
                   {extraUrls.map((url) => (

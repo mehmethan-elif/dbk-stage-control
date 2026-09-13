@@ -10,13 +10,16 @@ final class StageSyncHub {
     private var listener: NWListener?
     private var sessions: [String: StageSyncSession] = [:]
     private var httpSessions: [String: HttpSyncGate] = [:]
-    private var inbox: [String: [String]] = [:]
-    private var onOpen: ((String) -> Void)?
-    private var onClose: ((String) -> Void)?
-    private var onMessage: ((String, String) -> Void)?
+    /// The web layer is the only consumer, and it drains this by polling `drainHost`.
+    /// Pushing events at it as well would deliver every message more than once.
+    private var pending: [[String: String]] = []
+    private var httpPeers: [String: [String: String]] = [:]
+    private var lastDrainAt: Date?
+    private var reaperOn = false
 
     func listen(port: UInt16 = 8787) {
         queue.async {
+            self.startReaper()
             guard self.listener == nil else { return }
             do {
                 let params = NWParameters.tcp
@@ -36,41 +39,18 @@ final class StageSyncHub {
         }
     }
 
-    func bind(
-        onOpen: @escaping (String) -> Void,
-        onClose: @escaping (String) -> Void,
-        onMessage: @escaping (String, String) -> Void
-    ) {
-        queue.async {
-            self.onOpen = onOpen
-            self.onClose = onClose
-            self.onMessage = onMessage
-            for uuid in self.sessions.keys + Array(self.httpSessions.keys) {
-                DispatchQueue.main.async { onOpen(uuid) }
-            }
-            for (uuid, messages) in self.inbox {
-                for text in messages {
-                    DispatchQueue.main.async { onMessage(uuid, text) }
-                }
-            }
-        }
-    }
-
     func accept(connection: NWConnection, request: Data) {
         queue.async {
             let session = StageSyncSession(uuid: UUID().uuidString, connection: connection)
             session.onOpen = { [weak self] uuid in
                 self?.queue.async {
-                    let handler = self?.onOpen
-                    DispatchQueue.main.async { handler?(uuid) }
+                    self?.emit("open", uuid: uuid)
                 }
             }
             session.onClose = { [weak self] uuid in
                 self?.queue.async {
                     self?.sessions.removeValue(forKey: uuid)
-                    self?.inbox.removeValue(forKey: uuid)
-                    let handler = self?.onClose
-                    DispatchQueue.main.async { handler?(uuid) }
+                    self?.drop(uuid: uuid)
                 }
             }
             session.onMessage = { [weak self] uuid, text in
@@ -94,20 +74,43 @@ final class StageSyncHub {
         }
     }
 
-    func openHttp() -> String {
+    func openHttp(hello: String = "") -> (id: String, messages: [String]) {
         queue.sync {
             let uuid = UUID().uuidString
-            self.httpSessions[uuid] = HttpSyncGate()
-            let handler = self.onOpen
-            DispatchQueue.main.async { handler?(uuid) }
-            return uuid
+            let gate = HttpSyncGate()
+            self.httpSessions[uuid] = gate
+            self.emit("open", uuid: uuid)
+            let trimmed = hello.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty && trimmed != "{}" {
+                self.note(uuid: uuid, text: trimmed)
+            }
+            return (uuid, gate.takeOutgoing())
         }
     }
 
     func postHttp(uuid: String, message: String) {
         queue.async {
-            guard self.httpSessions[uuid] != nil else { return }
+            guard let gate = self.httpSessions[uuid] else { return }
+            gate.lastSeen = Date()
             self.note(uuid: uuid, text: message)
+        }
+    }
+
+    /// A tablet that sleeps or closes Safari never sends DELETE, so drop gates that
+    /// stopped long-polling. The poll itself returns every 8s, so 25s is a safe cutoff.
+    private func startReaper() {
+        guard !reaperOn else { return }
+        reaperOn = true
+        tickReaper()
+    }
+
+    private func tickReaper() {
+        queue.asyncAfter(deadline: .now() + 5) { [weak self] in
+            guard let self else { return }
+            for (uuid, gate) in self.httpSessions where -gate.lastSeen.timeIntervalSinceNow > 25 {
+                self.drop(uuid: uuid)
+            }
+            self.tickReaper()
         }
     }
 
@@ -117,38 +120,99 @@ final class StageSyncHub {
                 DispatchQueue.main.async { done([]) }
                 return
             }
-            gate.wait { messages in
+            let token = gate.wait { messages in
                 DispatchQueue.main.async { done(messages) }
             }
+            guard token != 0 else { return }
             self.queue.asyncAfter(deadline: .now() + 8) {
-                gate.timeoutIfWaiting()
+                gate.timeoutIfWaiting(token: token)
             }
         }
     }
 
     func closeHttp(uuid: String) {
-        queue.async {
-            self.httpSessions.removeValue(forKey: uuid)
-            self.inbox.removeValue(forKey: uuid)
-            let handler = self.onClose
-            DispatchQueue.main.async { handler?(uuid) }
+        queue.async { self.drop(uuid: uuid) }
+    }
+
+    /// Releases a session from every table and tells the remaining clients. Any poll the
+    /// client still has open is answered now rather than left hanging until it times out.
+    private func drop(uuid: String) {
+        let gate = httpSessions.removeValue(forKey: uuid)
+        let known = httpPeers.removeValue(forKey: uuid) != nil
+        gate?.finish()
+        guard gate != nil || known else { return }
+        emit("close", uuid: uuid)
+        broadcastRoster()
+    }
+
+    func takeEvents() -> [[String: String]] {
+        queue.sync {
+            let batch = pending
+            pending.removeAll()
+            lastDrainAt = Date()
+            return batch
         }
+    }
+
+    /// Seconds since the web layer last polled, or -1 if it never has. `/health` reports
+    /// this so a laptop on the LAN can tell whether the master is really hosting.
+    func drainAge() -> Double {
+        queue.sync { lastDrainAt.map { -$0.timeIntervalSinceNow } ?? -1 }
+    }
+
+    func status() -> (sessions: Int, peers: [[String: String]]) {
+        queue.sync { (sessions.count + httpSessions.count, Array(httpPeers.values)) }
+    }
+
+    func knownPeers() -> [[String: String]] {
+        queue.sync { Array(httpPeers.values) }
+    }
+
+    private func emit(_ type: String, uuid: String, message: String = "") {
+        pending.append(["type": type, "uuid": uuid, "message": message])
+        if pending.count > 80 { pending.removeFirst(pending.count - 80) }
     }
 
     private func note(uuid: String, text: String) {
-        NSLog("DBK stage sync message \(text.prefix(80))")
-        var held = inbox[uuid] ?? []
-        held.append(text)
-        if held.count > 8 { held.removeFirst(held.count - 8) }
-        inbox[uuid] = held
-        let handler = onMessage
-        DispatchQueue.main.async { handler?(uuid, text) }
+        emit("message", uuid: uuid, message: text)
+        rememberHello(uuid: uuid, text: text)
     }
 
-    func debugStatus() -> (sessions: Int, last: String) {
-        queue.sync {
-            (sessions.count + httpSessions.count, inbox.values.flatMap { $0 }.last ?? "")
+    private func rememberHello(uuid: String, text: String) {
+        guard let data = text.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              obj["type"] as? String == "Hello"
+        else { return }
+        let peer: [String: String] = [
+            "uuid": uuid,
+            "deviceId": obj["deviceId"] as? String ?? uuid,
+            "deviceKind": obj["deviceKind"] as? String ?? "client",
+            "deviceName": obj["deviceName"] as? String ?? ""
+        ]
+        httpPeers[uuid] = peer
+        broadcastRoster()
+    }
+
+    /// Clients only show themselves as connected once they see their own name come back
+    /// in a `Peers` message, so this has to reach every transport.
+    private func broadcastRoster() {
+        guard let payload = peersPayload() else { return }
+        for gate in httpSessions.values { gate.enqueue(payload) }
+        for session in sessions.values { session.send(text: payload) }
+    }
+
+    private func peersPayload() -> String? {
+        let peers = httpPeers.values.map { peer -> [String: String] in
+            [
+                "deviceId": peer["deviceId"] ?? "",
+                "deviceKind": peer["deviceKind"] ?? "client",
+                "deviceName": peer["deviceName"] ?? ""
+            ]
         }
+        guard let data = try? JSONSerialization.data(withJSONObject: ["type": "Peers", "peers": peers]),
+              let text = String(data: data, encoding: .utf8)
+        else { return nil }
+        return text
     }
 
     static func lanIPv4() -> String? {
@@ -176,33 +240,57 @@ final class StageSyncHub {
 }
 
 final class HttpSyncGate {
+    /// A backed-up client must not grow this without bound — the show clock pushes a
+    /// message several times a second, and a sleeping tablet stops collecting them.
+    private static let maxQueued = 64
     private var outgoing: [String] = []
     private var waiter: (([String]) -> Void)?
+    private var waitToken = 0
+    /// Long-polling clients touch this every few seconds; the hub reaps gates that go quiet.
+    var lastSeen = Date()
 
     func enqueue(_ text: String) {
         if let waiter {
             self.waiter = nil
             waiter([text])
-        } else {
-            outgoing.append(text)
+            return
+        }
+        outgoing.append(text)
+        if outgoing.count > Self.maxQueued {
+            outgoing.removeFirst(outgoing.count - Self.maxQueued)
         }
     }
 
-    func wait(done: @escaping ([String]) -> Void) {
+    func takeOutgoing() -> [String] {
+        let batch = outgoing
+        outgoing.removeAll()
+        return batch
+    }
+
+    /// Returns a token identifying this wait, or 0 when it was answered immediately, so a
+    /// timer armed for an earlier poll cannot cut a later one short.
+    func wait(done: @escaping ([String]) -> Void) -> Int {
+        lastSeen = Date()
         if !outgoing.isEmpty {
             let batch = outgoing
             outgoing.removeAll()
             done(batch)
-        } else {
-            waiter = done
+            return 0
         }
+        waitToken += 1
+        waiter = done
+        return waitToken
     }
 
-    func timeoutIfWaiting() {
-        guard waiter != nil else { return }
-        let done = waiter
+    func finish() {
+        guard let done = waiter else { return }
         waiter = nil
-        done?([])
+        done([])
+    }
+
+    func timeoutIfWaiting(token: Int) {
+        guard token == waitToken else { return }
+        finish()
     }
 }
 

@@ -6,7 +6,6 @@ import { findSongByRef } from "../../../store/song-library";
 import { listedSongForColor } from "../../shared/key-color";
 import { PrinterIcon } from "../../shared/icons";
 import { loadNotaLayout } from "../nota-sections";
-import { buildSongPdf } from "./build-pdf";
 import { exportPdfFileName, PDF_EXPORT_LABELS, PDF_EXPORT_TARGETS, type PdfExportTarget } from "./pdf-names";
 
 function notaFile(files: string[] | undefined): string | undefined {
@@ -67,6 +66,9 @@ export function PdfExportButton() {
     setError(null);
     setDone(null);
     try {
+      // pdf-lib, fontkit and the embedded fonts are over a megabyte and exporting is a
+      // rare, off-stage action, so they are fetched here instead of at startup.
+      const { buildSongPdf } = await import("./build-pdf");
       const needsScore = selected.includes("chords");
       const notaPath = notaFile(files);
       const notaBytes = needsScore && notaPath ? await libraryApi.readBytes(song.id, notaPath) : undefined;

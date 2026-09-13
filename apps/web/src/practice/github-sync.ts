@@ -16,7 +16,7 @@ import {
   writePublishedGigs
 } from "./store";
 
-export function clientLibraryUrl(relPath = ""): string {
+function clientLibraryUrl(relPath = ""): string {
   const base = import.meta.env.BASE_URL || "/";
   const root = base.endsWith("/") ? `${base}client-library` : `${base}/client-library`;
   if (!relPath) return root;
@@ -44,7 +44,7 @@ async function practiceChartLooksValid(folder: string, path: string): Promise<bo
   return Boolean(raw && bufferLooksLikeSongJson(raw));
 }
 
-export async function fetchClientLibraryIndex(): Promise<ClientLibraryIndex | null> {
+async function fetchClientLibraryIndex(): Promise<ClientLibraryIndex | null> {
   const response = await fetch(`${clientLibraryUrl("index.json")}?t=${Date.now()}`, { cache: "no-store" });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Library ${response.status}`);

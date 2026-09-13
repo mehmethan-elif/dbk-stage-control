@@ -20,6 +20,7 @@ import {
   hasPlaybackAudio,
   isSongEntry,
   isStopMarker,
+  type SongSetlistEntry,
   metronomeTempoMap,
   parseSongInfo,
   normalizeSong,
@@ -56,6 +57,7 @@ import {
   FinishMode,
   applyRemoteSetlist,
   elifPlacementValid,
+  isMasterBandName,
   isVocalBandName,
   MASTER_BAND_NAME,
   type Gig,
@@ -133,6 +135,7 @@ export { stageConnectOn };
 import {
   MASTER_HOST_KEY,
   STAGE_NAME_KEY,
+  announceSyncHello,
   clientDeviceName,
   connectSyncTransport,
   disconnectSyncTransport,
@@ -150,20 +153,37 @@ const AUDIO_DEVICE_KEY = "dbk-audio-device";
 const AUDIO_ROUTING_KEY = "dbk-audio-routing";
 const ACTIVE_GIG_KEY = "dbk-active-gig";
 
+/**
+ * Safari throws from localStorage in private browsing and when the quota is full, and the
+ * master reads these while booting — an unguarded throw there takes down the whole app.
+ */
+function readStored(key: string): string | null {
+  try {
+    return typeof localStorage === "undefined" ? null : localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStored(key: string, value: string): void {
+  try {
+    localStorage?.setItem(key, value);
+  } catch {
+    // the show continues without a remembered choice
+  }
+}
+
 function storedAudioDevice(): string {
-  return typeof localStorage === "undefined" ? "default" : localStorage.getItem(AUDIO_DEVICE_KEY) || "default";
+  return readStored(AUDIO_DEVICE_KEY) || "default";
 }
 
 function storedRoutingMode(): AudioRoutingMode {
-  if (typeof localStorage === "undefined") return 1;
-  const value = Number(localStorage.getItem(AUDIO_ROUTING_KEY));
+  const value = Number(readStored(AUDIO_ROUTING_KEY));
   return value === 2 || value === 3 ? value : 1;
 }
 
 function storedStageName(): string | null {
-  if (typeof localStorage === "undefined") return null;
-  const value = localStorage.getItem(STAGE_NAME_KEY)?.trim();
-  return value || null;
+  return readStored(STAGE_NAME_KEY)?.trim() || null;
 }
 
 export const STAGE_ZOOM_MIN = 0.6;
@@ -238,10 +258,6 @@ const metronome = new Metronome(
 
 export function readBusLevels() {
   return engine.getBusLevels();
-}
-
-export function audioContextTime(): number {
-  return engine.getContextTime();
 }
 
 export function onMetronomeBeat(listener: (beat: MetronomeBeat) => void): () => void {
@@ -446,7 +462,6 @@ interface MasterState {
   previewTime: number;
   playbackPaused: boolean;
   panicActive: boolean;
-  panicRestoreMode: PlayMode | null;
   panicTargetTime: number;
   panicResumeAt: number | null;
   playback: PlaybackSnapshot;
@@ -454,8 +469,6 @@ interface MasterState {
   deviceKind: DeviceKind;
   syncHost: string | null;
   syncConnected: boolean;
-  syncHosting: boolean;
-  syncPeerCount: number;
   syncPeers: SyncPeer[];
   joinAddress: string | null;
   stageName: string | null;
@@ -480,7 +493,6 @@ interface MasterState {
   audioError: string | null;
   audioHint: string | null;
   load: (kind?: DeviceKind, options?: { syncHost?: string }) => Promise<void>;
-  reconnectSync: () => void;
   joinStage: (host: string) => void;
   leaveStage: () => void;
   joinRemote: (host: string) => void;
@@ -1001,8 +1013,6 @@ function connectSync(get: () => MasterState, set: (patch: Partial<MasterState>) 
         clientStageLive(previous) && previous.syncConnected && !link.connected;
       set({
         syncConnected: link.connected,
-        syncHosting: link.hosting,
-        syncPeerCount: link.peerCount,
         syncPeers: link.peers,
         ...(link.endpoint ? { joinAddress: link.endpoint } : {})
       });
@@ -1306,8 +1316,10 @@ function applyClientLibrary(
   const keep =
     keepSongId && songs.some((song) => song.id === keepSongId)
       ? keepSongId
-      : gig.setlist.find((entry) => isSongEntry(entry) && songs.some((song) => song.id === entry.songId))
-          ?.songId ?? songs[0]?.id;
+      : gig.setlist.find(
+          (entry): entry is SongSetlistEntry =>
+            isSongEntry(entry) && songs.some((song) => song.id === entry.songId)
+        )?.songId ?? songs[0]?.id;
   const selected =
     gig.setlist.find((entry) => isSongEntry(entry) && entry.songId === keep)?.entryId ?? firstSongEntryId(gig);
   return {
@@ -1616,6 +1628,7 @@ function scheduleSongMixSave(songId: string, get: () => MasterState) {
 
 const LIBRARY_LOAD_MS = 8_000;
 let loadInFlight: Promise<void> | null = null;
+let loadInFlightKey: string | null = null;
 
 function raceTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -1818,7 +1831,7 @@ async function loadLibraryNow(
   }
   const allGigs = listedGigs(savedGigs, songs);
   const libraryGig = allGigs[0] ?? songLibraryGig(songs);
-  const storedGigId = localStorage.getItem(ACTIVE_GIG_KEY);
+  const storedGigId = readStored(ACTIVE_GIG_KEY);
   const gigId =
     (storedGigId && allGigs.some((item) => item.id === storedGigId)
       ? storedGigId
@@ -1828,7 +1841,7 @@ async function loadLibraryNow(
     gigId === SONG_LIBRARY_GIG_ID
       ? pickLibraryEntryId(songs, null, null)
       : firstSongEntryId(gig);
-  localStorage.setItem(ACTIVE_GIG_KEY, gigId);
+  writeStored(ACTIVE_GIG_KEY, gigId);
   if (gig) await controller.setShow(gig, playbackSongs(songs, fileIndex, gig));
   const showMix = gigMixerState(gig);
   engine.replaceBusMix(showMix.busMix);
@@ -1947,7 +1960,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
     const wasClick = panicClickOnly(get());
     set({
       panicActive: false,
-      panicRestoreMode: null,
       panicResumeAt: null
     });
     if (restoreMix && wasClick) controller.replaceSongs(engineSongs());
@@ -1958,7 +1970,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
     const target = Math.max(0, panicTargetTime);
     set({
       panicActive: false,
-      panicRestoreMode: null,
       panicResumeAt: null,
       previewTime: target
     });
@@ -2046,7 +2057,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
     previewTime: 0,
     playbackPaused: false,
     panicActive: false,
-    panicRestoreMode: null,
     panicTargetTime: 0,
     panicResumeAt: null,
     playback: controller.getSnapshot(),
@@ -2054,8 +2064,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
     deviceKind: "master",
     syncHost: null,
     syncConnected: false,
-    syncHosting: false,
-    syncPeerCount: 0,
     syncPeers: [],
     joinAddress: null,
     stageName: storedStageName(),
@@ -2085,21 +2093,19 @@ export const useMasterStore = create<MasterState>((set, get) => {
     metronomeVolume: 0.7,
 
     load: async (kind = "master", options) => {
-      if (loadInFlight) return loadInFlight;
-      loadInFlight = runLibraryLoad(kind, options, get, set).finally(() => {
-        loadInFlight = null;
+      // Coalescing by identity only: an in-flight load for a *different* role must not
+      // satisfy this call, or the app initialises as the wrong device.
+      const key = `${kind}|${options?.syncHost?.trim() ?? ""}`;
+      if (loadInFlight && loadInFlightKey === key) return loadInFlight;
+      loadInFlightKey = key;
+      const run = runLibraryLoad(kind, options, get, set).finally(() => {
+        if (loadInFlightKey === key) {
+          loadInFlight = null;
+          loadInFlightKey = null;
+        }
       });
-      return loadInFlight;
-    },
-
-    reconnectSync: () => {
-      if (
-        (get().deviceKind === "client" || get().deviceKind === "remote") &&
-        get().clientSession !== "stage"
-      ) {
-        return;
-      }
-      connectSync(get, set);
+      loadInFlight = run;
+      return run;
     },
 
     joinRemote: (host) => {
@@ -2167,8 +2173,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
         typeof window !== "undefined" && window.location.port === String(PRACTICE_SHARE_PORT);
       const value =
         parseSyncHostname(host) || (served ? window.location.hostname : "");
-      const stageName = get().stageName?.trim() || clientDeviceName();
-      if (!value) return;
+      const stageName = get().stageName?.trim();
+      if (!value || !stageName || isMasterBandName(stageName)) return;
       stopPracticeAudio();
       localStorage.setItem(MASTER_HOST_KEY, value);
       set({
@@ -2199,6 +2205,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
         justJoinedStage: false
       });
       void readPublishedGigs().then((published) => {
+        // Rejoining the stage before this resolves would otherwise let the practice
+        // library overwrite the live show.
+        if (get().clientSession === "stage") return;
         const next = applyClientLibrary(get().songs, get().fileIndex, published, keep);
         set(next);
         queuePracticeAudio({ ...get(), ...next }, keep ? findSongByRef(get().songs, keep) : undefined);
@@ -2469,6 +2478,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
       if (trimmed) localStorage.setItem(STAGE_NAME_KEY, trimmed);
       else localStorage.removeItem(STAGE_NAME_KEY);
       set({ stageName: trimmed });
+      if (trimmed && get().clientSession === "stage" && get().syncConnected) {
+        announceSyncHello(get().deviceKind, trimmed);
+      }
     },
 
     refreshJoinAddress: async () => {
@@ -2648,7 +2660,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         selectedEntryId,
         previewTime: startAtOf(gig, selectedEntryId, state.songs)
       });
-      localStorage.setItem(ACTIVE_GIG_KEY, id);
+      writeStored(ACTIVE_GIG_KEY, id);
       broadcastShow();
       broadcastSelection();
       shareLocalClientPack(get);
@@ -2741,7 +2753,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         selectedEntryId: firstSongEntryId(gig),
         previewTime: startAtOf(gig, firstSongEntryId(gig), songs)
       });
-      localStorage.setItem(ACTIVE_GIG_KEY, gig.id);
+      writeStored(ACTIVE_GIG_KEY, gig.id);
       broadcastShow();
       broadcastSelection();
       shareLocalClientPack(get);
@@ -2789,7 +2801,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
           selectedEntryId,
           previewTime: startAtOf(next, selectedEntryId, songs)
         });
-        localStorage.setItem(ACTIVE_GIG_KEY, next.id);
+        writeStored(ACTIVE_GIG_KEY, next.id);
         broadcastShow();
         broadcastSelection();
         shareLocalClientPack(get);
@@ -2804,7 +2816,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         selectedEntryId: pickLibraryEntryId(songs, get().librarySongId, null),
         previewTime: 0
       });
-      localStorage.setItem(ACTIVE_GIG_KEY, library.id);
+      writeStored(ACTIVE_GIG_KEY, library.id);
       broadcastShow();
       shareLocalClientPack(get);
     },
@@ -2872,7 +2884,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
         metronomePlaying: false,
         playbackPaused: false,
         panicActive: false,
-        panicRestoreMode: null,
         panicResumeAt: null
       });
       controller.replaceSongs(engineSongs());
@@ -3047,7 +3058,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
         metronomePlaying: false,
         playbackPaused: false,
         panicActive: false,
-        panicRestoreMode: null,
         panicResumeAt: null
       });
       controller.replaceSongs(engineSongs());
@@ -3074,7 +3084,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
           metronomePlaying: false,
           playbackPaused: false,
           panicActive: false,
-          panicRestoreMode: null,
           panicResumeAt: null
         });
         controller.replaceSongs(engineSongs());
@@ -3129,7 +3138,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
                   playback: {
                     ...get().playback,
                     state: PlaybackState.Idle,
-                    clock: undefined
+                    clock: null
                   }
                 }
               : {})
@@ -3351,7 +3360,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
         const target = panicDefaultTarget(song.sections, starts, time);
         set({
           panicActive: true,
-          panicRestoreMode: mode,
           panicTargetTime: target,
           panicResumeAt: null
         });

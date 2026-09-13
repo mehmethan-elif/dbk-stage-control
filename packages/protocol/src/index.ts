@@ -4,10 +4,6 @@ export type DeviceKind = "master" | "client" | "remote";
 
 export const REMOTE_DEVICE_NAME = "REMOTE";
 
-export function isRemoteKind(kind: string | undefined): boolean {
-  return kind === "remote";
-}
-
 export function isRemotePeer(peer: { deviceKind?: string; deviceName?: string }): boolean {
   return peer.deviceKind === "remote";
 }

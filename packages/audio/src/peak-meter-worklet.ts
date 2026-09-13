@@ -7,6 +7,7 @@ class DbkPeakMeterProcessor extends AudioWorkletProcessor {
     super();
     this.peaks = new Float32Array(12);
     this.holdUntil = new Float32Array(12);
+    this.postAt = 0;
   }
 
   process(inputs, outputs) {
@@ -38,7 +39,13 @@ class DbkPeakMeterProcessor extends AudioWorkletProcessor {
         if (output[i]) output[i].fill(0);
       }
     }
-    this.port.postMessage(Array.from(this.peaks));
+    // process() runs every 128 frames — about 344 times a second. Posting each block
+    // floods the main thread and allocates every time. 25ms stays inside the 40ms peak
+    // hold above, so no transient is lost, and the meters only repaint per frame anyway.
+    if (now - this.postAt >= 0.025) {
+      this.postAt = now;
+      this.port.postMessage(Array.from(this.peaks));
+    }
     return true;
   }
 }

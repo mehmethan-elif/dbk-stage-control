@@ -11,10 +11,6 @@ export function parseSyncHostname(host: string): string {
     .replace(/:\d+$/, "");
 }
 
-export function syncSocketUrl(host: string): string | null {
-  return syncSocketUrls(host)[0] ?? null;
-}
-
 export function practiceSharePageOrigin(): string | null {
   if (typeof window === "undefined") return null;
   if (window.location.port !== String(PRACTICE_SHARE_PORT)) return null;
@@ -33,9 +29,5 @@ export function httpSyncOrigin(host: string): string | null {
 export function syncSocketUrls(host: string): string[] {
   const hostname = parseSyncHostname(host);
   if (!hostname) return [];
-  return [
-    `ws://${hostname}:${PRACTICE_SHARE_PORT}/sync`,
-    `ws://${hostname}:${SYNC_PORT}/sync`,
-    `ws://${hostname}:${SYNC_PORT}/`
-  ];
+  return [`ws://${hostname}:${PRACTICE_SHARE_PORT}/sync`, `ws://${hostname}:${SYNC_PORT}/sync`];
 }

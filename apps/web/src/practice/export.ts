@@ -25,7 +25,7 @@ export async function exportPracticeZip(
       }
     }
   }
-  return { name: practiceZipName(), bytes: buildPracticeZip(files) };
+  return { name: practiceZipName(), bytes: await buildPracticeZip(files) };
 }
 
 export function downloadBytes(name: string, bytes: Uint8Array): void {

@@ -1,4 +1,3 @@
-import { unzipSync, zipSync, strToU8, strFromU8 } from "fflate";
 import {
   filterPracticeFiles,
   isPracticeFile,
@@ -29,7 +28,12 @@ function folderFromSongJson(data: Uint8Array, fallback: string): string {
   }
 }
 
-export function entriesFromZip(bytes: Uint8Array): PracticeZipEntry[] {
+/**
+ * fflate is only needed when someone imports or exports a practice package, so it is
+ * pulled in here rather than at module scope — the store imports this file on every boot.
+ */
+export async function entriesFromZip(bytes: Uint8Array): Promise<PracticeZipEntry[]> {
+  const { unzipSync } = await import("fflate");
   const unzipped = unzipSync(bytes);
   const entries: PracticeZipEntry[] = [];
   for (const [rawPath, data] of Object.entries(unzipped)) {
@@ -70,7 +74,7 @@ export async function importPracticeEntries(entries: PracticeZipEntry[]): Promis
 
 export async function importPracticeZip(file: Blob): Promise<number> {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  return importPracticeEntries(entriesFromZip(bytes));
+  return importPracticeEntries(await entriesFromZip(bytes));
 }
 
 export async function importPracticeFileList(files: Iterable<File>): Promise<number> {
@@ -92,12 +96,13 @@ export async function importPracticeFileList(files: Iterable<File>): Promise<num
   return importPracticeEntries(entries);
 }
 
-export function buildPracticeZip(files: { path: string; data: Uint8Array }[]): Uint8Array {
+export async function buildPracticeZip(files: { path: string; data: Uint8Array }[]): Promise<Uint8Array> {
   const payload: Record<string, Uint8Array> = {};
   for (const file of files) {
     if (!isPracticeFile(file.path.split("/").pop() ?? file.path)) continue;
     payload[file.path] = file.data;
   }
+  const { zipSync } = await import("fflate");
   return zipSync(payload);
 }
 
@@ -105,5 +110,3 @@ export function practiceZipName(): string {
   const stamp = new Date().toISOString().slice(0, 10);
   return `dbk-practice-${stamp}.zip`;
 }
-
-export { filterPracticeFiles, strToU8, strFromU8 };

@@ -42,17 +42,6 @@ export interface PlaybackSnapshot {
 export type PlaybackListener = (snapshot: PlaybackSnapshot) => void;
 export type BufferLoader = (song: Song) => Promise<LoadedBuffers>;
 
-const EMPTY_SNAPSHOT: PlaybackSnapshot = {
-  state: PlaybackState.Idle,
-  clock: null,
-  currentIndex: -1,
-  errorMessage: null,
-  primaryDeck: DeckId.A,
-  outgoingDeck: null,
-  preloadedSongId: null,
-  endedToEntryId: null
-};
-
 function otherDeck(id: DeckIdType): DeckIdType {
   return id === DeckId.A ? DeckId.B : DeckId.A;
 }
@@ -71,6 +60,8 @@ export class PlaybackController {
   private primary: DeckIdType = DeckId.A;
   private outgoing: DeckIdType | null = null;
   private playNextScheduled = false;
+  private preloadRun: Promise<void> | null = null;
+  private preloadSongId: string | null = null;
   private playNextInFlight = false;
   private chainEnabled = true;
   private pendingSeek: number | null = null;
@@ -182,7 +173,9 @@ export class PlaybackController {
     if (
       already &&
       this.currentIndex === setlistIndex &&
-      this.decks[DeckId.A].loadedSongId === already.id &&
+      // After a play-next handoff the live song sits on the other deck, so checking deck A
+      // would miss it and force a needless reload of the song already playing.
+      this.decks[this.primary].loadedSongId === already.id &&
       (this.state === PlaybackState.Ready ||
         this.state === PlaybackState.Playing ||
         this.state === PlaybackState.Transitioning)
@@ -207,10 +200,15 @@ export class PlaybackController {
     }
 
     try {
+      // Decoded audio is uncompressed, so one song of stems is several hundred megabytes.
+      // Both decks are about to be replaced, so they are released *before* decoding rather
+      // than after: holding the outgoing songs while the new one decodes put the peak at
+      // three songs at once, which is what iOS was killing the web view for.
+      this.decks[DeckId.A].unload();
+      this.decks[DeckId.B].unload();
       const buffers = await this.loadBuffers(song);
       this.currentIndex = setlistIndex;
       this.primary = DeckId.A;
-      this.decks[DeckId.B].unload();
       await this.decks[DeckId.A].load(song, buffers);
       this.state = PlaybackState.Ready;
       this.logger.playback("song_loaded", { songId: song.id, title: song.title });
@@ -224,6 +222,18 @@ export class PlaybackController {
       this.currentIndex = -1;
       this.decks[DeckId.A].unload();
       this.fail(this.userError(err));
+    }
+  }
+
+  /** Re-decodes and loads `song` onto the primary deck. Reports failure through `fail`. */
+  private async reloadPrimary(song: Song): Promise<boolean> {
+    try {
+      const buffers = await this.loadBuffers(song);
+      await this.decks[this.primary].load(song, buffers);
+      return true;
+    } catch (err) {
+      this.fail(this.userError(err));
+      return false;
     }
   }
 
@@ -245,6 +255,13 @@ export class PlaybackController {
     if (chain && finish === FinishMode.PlayNext && !click) {
       this.fail("Song cannot play: Click track missing.");
       return;
+    }
+
+    // Switching audio device rebuilds the AudioContext and empties both decks while the
+    // index stays put, so without this the transport would report Playing over silence.
+    if (this.decks[this.primary].loadedSongId !== song.id) {
+      const restored = await this.reloadPrimary(song);
+      if (!restored) return;
     }
 
     this.errorMessage = null;
@@ -549,9 +566,26 @@ export class PlaybackController {
 
     const song = this.songs.get(entry.songId);
     if (!song || songPlaysAsMetronome(song, entry)) return;
-    const buffers = await this.loadBuffers(song);
-    await secondary.load(song, buffers);
-    this.logger.playback("preloaded", { songId: song.id, deck: secondary.id });
+
+    // `selectIndex` and `play` both kick off a preload without awaiting it, so selecting
+    // a song and then starting it ran two loads of the same next song at once — the
+    // checks above cannot see a load that is still in flight. That briefly held three
+    // songs of decoded audio, which is enough to get the web view killed for memory.
+    // Join the running load instead of starting a second one.
+    if (this.preloadRun && this.preloadSongId === song.id) return this.preloadRun;
+    this.preloadSongId = song.id;
+    this.preloadRun = (async () => {
+      // Drop whatever this deck was holding first, for the same reason as above.
+      secondary.unload();
+      const buffers = await this.loadBuffers(song);
+      await secondary.load(song, buffers);
+      this.logger.playback("preloaded", { songId: song.id, deck: secondary.id });
+    })().finally(() => {
+      if (this.preloadSongId !== song.id) return;
+      this.preloadRun = null;
+      this.preloadSongId = null;
+    });
+    return this.preloadRun;
   }
 
   private schedulePlayNextIfNeeded(): void {
@@ -634,5 +668,3 @@ export class PlaybackController {
     for (const listener of this.listeners) listener(snapshot);
   }
 }
-
-export { EMPTY_SNAPSHOT };

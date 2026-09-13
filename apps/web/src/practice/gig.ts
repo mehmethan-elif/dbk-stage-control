@@ -1,6 +1,6 @@
 import { FinishMode, type Gig, type Song } from "@dbk/core";
 
-export const PRACTICE_GIG_ID = "practice";
+const PRACTICE_GIG_ID = "practice";
 
 export function practiceEntryId(songId: string): string {
   return `practice_${songId}`;

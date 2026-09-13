@@ -1,6 +1,5 @@
 export {
   WebAudioEngine,
-  WebAudioDeck,
   decodeSongBuffers,
   outputRoutingPlan,
   looksLikeMultiOutInterface,
@@ -10,6 +9,5 @@ export {
 export {
   Metronome,
   type MetronomeBeat,
-  type MetronomeStartOpts,
   type MetroIntroLoader
 } from "./metronome.js";

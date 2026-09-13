@@ -29,6 +29,16 @@ final class LocalNetworkGate: NSObject, NetServiceDelegate, NetServiceBrowserDel
     func netService(_ sender: NetService, didNotPublish errorDict: [String: NSNumber]) {}
 }
 
+/// Capacitor only registers plugins named in `packageClassList`, and `cap sync` rebuilds
+/// that list from npm packages. `SyncSocketPlugin` lives in this app target, so the bridge
+/// never sees it unless it is handed over here — every JS call would otherwise fall through
+/// to the no-op web implementation without raising an error.
+class StageBridgeViewController: CAPBridgeViewController {
+    override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(SyncSocketPlugin())
+    }
+}
+
 @objc(SyncSocketPlugin)
 public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "SyncSocketPlugin"
@@ -41,6 +51,7 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "advertise", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startHost", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "hostSend", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "drainHost", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "lanAddress", returnType: CAPPluginReturnPromise)
     ]
 
@@ -48,17 +59,6 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
 
     public override func load() {
         StageSyncHub.shared.listen()
-        StageSyncHub.shared.bind(
-            onOpen: { [weak self] uuid in
-                self?.notifyListeners("hostOpen", data: ["uuid": uuid])
-            },
-            onClose: { [weak self] uuid in
-                self?.notifyListeners("hostClose", data: ["uuid": uuid])
-            },
-            onMessage: { [weak self] uuid, message in
-                self?.notifyListeners("hostMessage", data: ["uuid": uuid, "message": message])
-            }
-        )
     }
 
     @objc func wakeLocalNetwork(_ call: CAPPluginCall) {
@@ -73,18 +73,14 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func startHost(_ call: CAPPluginCall) {
         StageSyncHub.shared.listen(port: UInt16(call.getInt("port") ?? 8787))
-        StageSyncHub.shared.bind(
-            onOpen: { [weak self] uuid in
-                self?.notifyListeners("hostOpen", data: ["uuid": uuid])
-            },
-            onClose: { [weak self] uuid in
-                self?.notifyListeners("hostClose", data: ["uuid": uuid])
-            },
-            onMessage: { [weak self] uuid, message in
-                self?.notifyListeners("hostMessage", data: ["uuid": uuid, "message": message])
-            }
-        )
         call.resolve(["address": StageSyncHub.lanIPv4() ?? ""])
+    }
+
+    @objc func drainHost(_ call: CAPPluginCall) {
+        call.resolve([
+            "events": StageSyncHub.shared.takeEvents(),
+            "peers": StageSyncHub.shared.knownPeers()
+        ])
     }
 
     @objc func hostSend(_ call: CAPPluginCall) {

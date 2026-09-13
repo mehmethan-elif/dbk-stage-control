@@ -1,12 +1,3 @@
-export function NotesIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M6.2 3.4h8.1L19 8.1v12.5H6.2zm1.8 1.8v13.6h9.2V9.2h-3.7V5.2z" />
-      <path d="M8.8 12.1h6.4v1.6H8.8zm0 3.1h6.4v1.6H8.8z" />
-    </svg>
-  );
-}
-
 export function LyricsIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -56,16 +47,6 @@ export function DrumsIcon() {
       <ellipse cx="12" cy="11.1" rx="7.6" ry="3" />
       <path d="M4.4 11.1v6.9c0 1.55 3.4 2.8 7.6 2.8s7.6-1.25 7.6-2.8v-6.9" />
       <path d="M4.5 3.5 11.1 12.1M19.5 3.5 12.9 12.1" />
-    </svg>
-  );
-}
-
-export function InfoIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3.2a8.8 8.8 0 1 1 0 17.6 8.8 8.8 0 0 1 0-17.6zm0 1.8a7 7 0 1 0 0 14 7 7 0 0 0 0-14z" />
-      <circle cx="12" cy="8" r="1.25" />
-      <path d="M11.1 10.5h1.8V17h-1.8z" />
     </svg>
   );
 }
@@ -129,25 +110,6 @@ export function DeleteIcon() {
   );
 }
 
-export function PlayNextIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 5.5v13l9.5-6.5L4 5.5z" />
-      <rect x="15.5" y="5.5" width="3.2" height="13" rx="0.6" />
-    </svg>
-  );
-}
-
-export function SkipIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3.4 5.6v12.8L13.2 12z" />
-      <rect x="16.8" y="5.8" width="2.3" height="12.4" rx="0.5" transform="rotate(45 18 12)" />
-      <rect x="16.8" y="5.8" width="2.3" height="12.4" rx="0.5" transform="rotate(-45 18 12)" />
-    </svg>
-  );
-}
-
 export function ViewIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -189,16 +151,6 @@ export function PreparationIcon() {
       <rect x="5.5" y="6.4" width="13" height="14.1" rx="1.4" />
       <rect x="8.4" y="3.4" width="7.2" height="4.2" rx="1.1" />
       <path d="M8.4 11.6h7.2M8.4 14.6h7.2M8.4 17.6h5" />
-    </svg>
-  );
-}
-
-export function PdfIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7 3.4h7.1L18.6 8v12.6H7z" />
-      <path d="M14.1 3.4V8h4.5" />
-      <path d="M9.2 12.2h6.4M9.2 15h6.4M9.2 17.8h4.1" />
     </svg>
   );
 }
@@ -249,16 +201,6 @@ export function FreeIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M8.2 10.6V7.6a3.8 3.8 0 0 1 7.5-0.8" />
       <rect x="6.2" y="10.6" width="11.6" height="9.2" rx="1.5" />
-    </svg>
-  );
-}
-
-export function PracticeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3.2 19.4 20.6H4.6z" />
-      <path d="M12 3.2 8.2 16.2" />
-      <circle cx="8.2" cy="16.2" r="1.15" />
     </svg>
   );
 }

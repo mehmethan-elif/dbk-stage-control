@@ -1,4 +1,4 @@
-export const METRO_INTRO_FILES = ["1.flac", "2.flac"] as const;
+const METRO_INTRO_FILES = ["1.flac", "2.flac"] as const;
 
 const FLAC_MAGIC = [0x66, 0x4c, 0x61, 0x43];
 

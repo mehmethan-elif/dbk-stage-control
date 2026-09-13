@@ -41,17 +41,12 @@ export function ClientLibrary() {
   const roster = clientBandRoster(gig);
   const onStage = clientSession === "stage";
   const connected = onStage && syncConnected;
-  const canConnect = Boolean(host.trim()) || servedHere;
+  const canConnect = (Boolean(host.trim()) || servedHere) && Boolean(stageName?.trim());
   const [waited, setWaited] = useState(false);
 
   useEffect(() => {
     if (stageName && isMasterBandName(stageName)) setStageName(null);
   }, [stageName, setStageName]);
-
-  useEffect(() => {
-    if (!servedHere || onStage) return;
-    joinStage(window.location.hostname);
-  }, [servedHere, onStage, joinStage]);
 
   useEffect(() => {
     if (!onStage || connected) {
@@ -72,16 +67,23 @@ export function ClientLibrary() {
             names={roster}
             peers={syncPeers}
             selected={stageName}
-            disabled={connected}
             onSelect={setStageName}
           />
         </div>
 
         <form
           className="lan-block"
-          onSubmit={(event) => {
+            onSubmit={(event) => {
             event.preventDefault();
-            if (onStage || !canConnect) return;
+            if (connected) {
+              leaveStage();
+              return;
+            }
+            if (onStage) {
+              leaveStage();
+              return;
+            }
+            if (!canConnect) return;
             joinStage(host);
           }}
         >
@@ -117,19 +119,19 @@ export function ClientLibrary() {
                 })
               }
             >
-              {onStage ? "Disconnect" : "Connect"}
+              {connected ? "Disconnect" : onStage ? "Cancel" : "Connect"}
             </button>
           </div>
           <p className="meta">
             {connected
-              ? "Connected to master."
+              ? `Connected as ${stageName}.`
               : onStage
                 ? waited
-                  ? "No master at that address. Same Wi-Fi? Allow Local Network for this app."
+                  ? "No master at that address. Same Wi-Fi?"
                   : `Connecting to ${syncHost ?? host}…`
-                : servedHere
-                  ? "This page is on the master. Connecting…"
-                  : "Type the master address, then Connect. Or open the Client page URL in Safari."}
+                : !stageName?.trim()
+                  ? "Select Elif or Serkan, then Connect."
+                  : "Connect when Elif or Serkan is selected."}
           </p>
         </form>
       </div>

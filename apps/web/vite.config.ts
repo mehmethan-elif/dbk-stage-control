@@ -113,6 +113,19 @@ export default defineConfig({
       "@dbk/protocol": path.resolve(__dirname, "../../packages/protocol/src/index.ts")
     }
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Only React is grouped by hand. The score viewer, PDF export and zip code are
+        // reached through dynamic imports, so Rollup already gives them their own chunks —
+        // naming them here instead drags shared transitive dependencies into the group,
+        // which makes the whole thing a static import of the entry again.
+        manualChunks: {
+          react: ["react", "react-dom"]
+        }
+      }
+    }
+  },
   optimizeDeps: {
     exclude: ["pdfjs-dist"]
   },

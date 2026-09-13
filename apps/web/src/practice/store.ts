@@ -11,7 +11,7 @@ import {
 import { registerSongFolder, resetSongFolders, type LibraryIndex } from "../library/api";
 
 const DB_NAME = "dbk-practice";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const GIGS_KEY = "published-gigs";
 
 interface PracticeFileRow {
@@ -23,10 +23,22 @@ interface PracticeFileRow {
   data: ArrayBuffer;
 }
 
+/**
+ * The same rows as `files` minus the payload. Reading a manifest used to mean `getAll` on
+ * `files`, which pulls every stem and score into memory just to list paths and sizes — and
+ * that runs on every library load and twice per sync.
+ */
+type PracticeMetaRow = Omit<PracticeFileRow, "data">;
+
 interface PracticeDB extends DBSchema {
   files: {
     key: string;
     value: PracticeFileRow;
+    indexes: { folder: string };
+  };
+  manifest: {
+    key: string;
+    value: PracticeMetaRow;
     indexes: { folder: string };
   };
   meta: {
@@ -40,7 +52,7 @@ let dbPromise: Promise<IDBPDatabase<PracticeDB>> | null = null;
 function db() {
   if (!dbPromise) {
     dbPromise = openDB<PracticeDB>(DB_NAME, DB_VERSION, {
-      upgrade(database) {
+      async upgrade(database, _from, _to, tx) {
         if (!database.objectStoreNames.contains("files")) {
           const store = database.createObjectStore("files", { keyPath: "key" });
           store.createIndex("folder", "folder");
@@ -48,6 +60,21 @@ function db() {
         if (!database.objectStoreNames.contains("meta")) {
           database.createObjectStore("meta");
         }
+        if (!database.objectStoreNames.contains("manifest")) {
+          const store = database.createObjectStore("manifest", { keyPath: "key" });
+          store.createIndex("folder", "folder");
+          // Backfill from any library stored before this store existed. Walked with a
+          // cursor so only one file's bytes are resident at a time.
+          let cursor = await tx.objectStore("files").openCursor();
+          while (cursor) {
+            const { key, folder, path, size, hash } = cursor.value;
+            await tx.objectStore("manifest").put({ key, folder, path, size, hash });
+            cursor = await cursor.continue();
+          }
+        }
+      },
+      blocked() {
+        // another tab holds the old version; it will retry on next open
       }
     });
   }
@@ -67,14 +94,15 @@ export async function writePracticeFile(
   const keyFolder = folder.normalize("NFC");
   const keyPath = path.normalize("NFC");
   const database = await db();
-  await database.put("files", {
+  const meta: PracticeMetaRow = {
     key: practiceFileKey(keyFolder, keyPath),
     folder: keyFolder,
     path: keyPath,
     size: data.byteLength,
-    hash,
-    data
-  });
+    hash
+  };
+  await database.put("files", { ...meta, data });
+  await database.put("manifest", meta);
 }
 
 export async function readPracticeFileBuffer(folder: string, path: string): Promise<ArrayBuffer | null> {
@@ -86,25 +114,47 @@ export async function readPracticeFileBuffer(folder: string, path: string): Prom
     const nfc = await database.get("files", nfcKey);
     if (nfc) return nfc.data;
   }
+  // Last resort: find the key through the metadata store so this scan does not have to
+  // deserialize every stored file, then fetch only the one that matched.
   const wantPath = fileNameOf(path).toLowerCase();
-  const rows = await database.getAll("files");
-  for (const row of rows) {
+  for (const row of await database.getAll("manifest")) {
     if (samePracticeFolder(row.folder, folder) && fileNameOf(row.path).toLowerCase() === wantPath) {
-      return row.data;
+      return (await database.get("files", row.key))?.data ?? null;
     }
   }
   return null;
 }
 
-export async function listPracticeFiles(folder: string): Promise<string[]> {
-  const rows = await (await db()).getAllFromIndex("files", "folder", folder);
-  return rows.map((row) => row.path);
+/**
+ * Rebuilds the metadata store if it does not describe every stored file. It is filled in as
+ * files are written and backfilled when the database version changes, but a version change
+ * transaction is allowed to commit before a long backfill has walked every row — and a
+ * manifest missing entries would report songs as having no audio. Walked with a cursor, so
+ * only one file's bytes are resident at a time.
+ */
+async function repairManifest(database: IDBPDatabase<PracticeDB>): Promise<void> {
+  const [files, manifest] = await Promise.all([
+    database.count("files"),
+    database.count("manifest")
+  ]);
+  if (files === manifest) return;
+  const tx = database.transaction(["files", "manifest"], "readwrite");
+  await tx.objectStore("manifest").clear();
+  let cursor = await tx.objectStore("files").openCursor();
+  while (cursor) {
+    const { key, folder, path, size, hash } = cursor.value;
+    await tx.objectStore("manifest").put({ key, folder, path, size, hash });
+    cursor = await cursor.continue();
+  }
+  await tx.done;
 }
 
 export async function listPracticeManifest(): Promise<
   Record<string, { path: string; size: number; hash?: string }[]>
 > {
-  const rows = await (await db()).getAll("files");
+  const database = await db();
+  await repairManifest(database);
+  const rows = await database.getAll("manifest");
   const out: Record<string, { path: string; size: number; hash?: string }[]> = {};
   for (const row of rows) {
     const list = out[row.folder] ?? [];
@@ -118,22 +168,26 @@ export async function deletePracticeFile(folder: string, path: string): Promise<
   const database = await db();
   const wantFolder = folder.normalize("NFC");
   const wantPath = path.normalize("NFC");
-  await database.delete("files", practiceFileKey(wantFolder, wantPath));
-  const rows = await database.getAll("files");
-  for (const row of rows) {
-    if (samePracticeFolder(row.folder, folder) && fileNameOf(row.path).toLowerCase() === fileNameOf(path).toLowerCase()) {
-      await database.delete("files", row.key);
+  await dropFile(database, practiceFileKey(wantFolder, wantPath));
+  const wantName = fileNameOf(path).toLowerCase();
+  for (const row of await database.getAll("manifest")) {
+    if (samePracticeFolder(row.folder, folder) && fileNameOf(row.path).toLowerCase() === wantName) {
+      await dropFile(database, row.key);
     }
   }
+}
+
+async function dropFile(database: IDBPDatabase<PracticeDB>, key: string): Promise<void> {
+  await database.delete("files", key);
+  await database.delete("manifest", key);
 }
 
 export async function deletePracticeFolder(folder: string): Promise<void> {
   const database = await db();
   const want = folder.normalize("NFC");
-  const rows = await database.getAll("files");
-  for (const row of rows) {
+  for (const row of await database.getAll("manifest")) {
     if (row.folder === folder || row.folder.normalize("NFC") === want) {
-      await database.delete("files", row.key);
+      await dropFile(database, row.key);
     }
   }
 }
@@ -235,12 +289,12 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
     const existing = songs.find((item) => item.id === song.id);
     const merged = [...new Set([...(fileIndex[song.id] ?? []), ...files])];
     if (!practiceMasterAudio(merged)) {
-      const master =
-        (await readPracticeFileBuffer(folder, "Master.mp3")) ??
-        (await readPracticeFileBuffer(song.id, "Master.mp3")) ??
-        (await readPracticeFileBuffer(folder, "Master.flac")) ??
-        (await readPracticeFileBuffer(song.id, "Master.flac"));
-      if (master) merged.push("Master.mp3");
+      // The manifest already knows what is stored, so this no longer reads up to four
+      // whole audio files into memory per song just to decide whether a master mix exists.
+      // It also records the name that is actually there instead of always claiming .mp3.
+      const stored = [...(manifest[folder] ?? []), ...(manifest[song.id] ?? [])].map((item) => item.path);
+      const master = practiceMasterAudio(stored);
+      if (master) merged.push(master);
     }
     fileIndex[song.id] = merged;
     if (existing) {
@@ -253,7 +307,3 @@ export async function loadPracticeLibrary(): Promise<LibraryIndex> {
   return { songs, fileIndex };
 }
 
-export async function clearPracticeLibrary(): Promise<void> {
-  const database = await db();
-  await database.clear("files");
-}

@@ -209,6 +209,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
         ? (selectedEntryId ?? playback.clock?.setlistEntryId)
         : undefined;
   const followTime = useMasterStore(stagePlayheadTime);
+  const lastScrollKey = useRef("");
   const playingSong = findSongByRef(
     songs,
     detached
@@ -246,6 +247,11 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
     scrollStageToSongTitle(stageRef.current, `[data-nota-song="${selectedSongId}"]`);
   }, [autoScroll, sectionEditing, playingEntryId, selectedSongId, zoom]);
 
+  // A new song must always re-scroll, even if it opens on the same measure ids.
+  useEffect(() => {
+    lastScrollKey.current = "";
+  }, [playingEntryId]);
+
   useEffect(() => {
     if (!autoScroll || sectionEditing || !playingEntryId) return;
     const stage = stageRef.current;
@@ -259,6 +265,18 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
     const rects = rectsBySong[playingSong.id] ?? [];
     const broken = brokenBySong[playingSong.id] ?? [];
     const targets = notaSectionScrollTargets(playingSong, followTime, rects, broken);
+    // The playhead moves ~12 times a second but the measure under it changes far less
+    // often, and the scroll below measures every page and box. Only scroll when the
+    // target measures actually change (or the layout does).
+    const key = [
+      zoom,
+      pagesTick,
+      targets.current.map((box) => box.id).join(","),
+      targets.next.map((box) => box.id).join(","),
+      targets.focus.map((box) => box.id).join(",")
+    ].join("|");
+    if (lastScrollKey.current === key) return;
+    lastScrollKey.current = key;
     const leadIn = stageLeadInNode(stage, "data-nota-song", upcoming?.entryId);
     scrollStageToNotaSectionMeasures(
       stage,

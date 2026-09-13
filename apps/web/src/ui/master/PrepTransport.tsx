@@ -299,7 +299,8 @@ export function PrepTransport() {
       : liveClient || clockMatches || detached
         ? (playback.clock?.time ?? previewTime)
         : previewTime;
-  const selectedTime = useFollowPlayheadTime(storePlayhead);
+  // Only the idle SERBEST check reads this, so there is no reason to animate it mid-song.
+  const selectedTime = useFollowPlayheadTime(storePlayhead, !playing);
   const serbestHold =
     !metronomeMode &&
     !playing &&

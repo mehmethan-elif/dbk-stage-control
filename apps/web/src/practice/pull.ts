@@ -32,7 +32,7 @@ export function practiceHostFromInput(value: string): string {
   return `http://${raw}:${PRACTICE_SHARE_PORT}`;
 }
 
-export async function fetchPracticeIndex(base: string): Promise<PracticeRemoteIndex> {
+async function fetchPracticeIndex(base: string): Promise<PracticeRemoteIndex> {
   const response = await fetch(joinUrl(base, "/practice/index.json"));
   if (!response.ok) throw new Error(`Practice index ${response.status}`);
   return (await response.json()) as PracticeRemoteIndex;

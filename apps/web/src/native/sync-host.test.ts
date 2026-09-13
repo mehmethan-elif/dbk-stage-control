@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { httpSyncOrigin, parseSyncHostname, syncSocketUrl, syncSocketUrls } from "./sync-host";
+import { httpSyncOrigin, parseSyncHostname, syncSocketUrls } from "./sync-host";
 
 describe("parseSyncHostname", () => {
   it("accepts the master address as shown on LAN", () => {
@@ -12,14 +12,12 @@ describe("parseSyncHostname", () => {
   });
 });
 
-describe("syncSocketUrl", () => {
-  it("tries the show clock and the client HTTP port", () => {
+describe("syncSocketUrls", () => {
+  it("tries the client HTTP port before the show clock port", () => {
     expect(syncSocketUrls("192.168.1.184:8787")).toEqual([
       "ws://192.168.1.184:8788/sync",
-      "ws://192.168.1.184:8787/sync",
-      "ws://192.168.1.184:8787/"
+      "ws://192.168.1.184:8787/sync"
     ]);
-    expect(syncSocketUrl("http://192.168.1.184:8788/client")).toBe("ws://192.168.1.184:8788/sync");
   });
 
   it("uses the client HTTP port for same-page sync", () => {

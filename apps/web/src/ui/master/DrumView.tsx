@@ -120,7 +120,12 @@ function isLastNamedChartRow(
   chart: readonly { section: Section }[],
   row: { section: Section }
 ): boolean {
-  return chart.findLast((item) => item.section.name === row.section.name) === row;
+  // Hand-rolled rather than findLast, which needs a newer Safari than some tablets run.
+  for (let i = chart.length - 1; i >= 0; i -= 1) {
+    const item = chart[i];
+    if (item?.section.name === row.section.name) return item === row;
+  }
+  return false;
 }
 
 function sectionFollowsPlayhead(

@@ -192,7 +192,3 @@ export function performanceAudioSong(song: Song): Song {
     )
   };
 }
-
-export function requireLogger(logger: Logger): Logger {
-  return logger;
-}
