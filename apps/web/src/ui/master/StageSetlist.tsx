@@ -27,6 +27,7 @@ import {
   stageConnectOn,
   useMasterStore
 } from "../../store/master-store";
+import { frozenElifs, withFrozenElifs, type FrozenElif } from "./drag-elifs";
 import { PlayModeMark } from "./play-mode-mark";
 import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
 import { practiceEntryId } from "../../practice/gig";
@@ -127,6 +128,7 @@ export function StageSetlist(props: {
     startY: number;
     active: boolean;
     order: string[];
+    elifs: FrozenElif[];
   } | null>(null);
   const [liveOrder, setLiveOrder] = useState<string[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -136,7 +138,15 @@ export function StageSetlist(props: {
   const moved = (liveOrder ?? idsOf(movable))
     .map((id) => byId.get(id))
     .filter((entry): entry is SetlistEntry => Boolean(entry));
-  const displayed = draggingId ? moved : withKeyChangeElifs(moved, props.songs);
+  // A drag keeps the key change ELIF KONUSMA rows it started with — dropping them made the
+  // list jump the moment a drag began, and recomputing them mid-drag makes rows appear under
+  // the finger. Whether the new order needs a different set is settled on the render after
+  // mouse up, once `dragRef` is cleared. They are locked rows and `indexFromPointerY` skips
+  // those, so carrying them along does not shift the drop index.
+  const heldElifs = draggingId ? dragRef.current?.elifs : undefined;
+  const displayed = heldElifs
+    ? withFrozenElifs(moved, heldElifs)
+    : withKeyChangeElifs(moved, props.songs);
   const entryBySongId = new Map(
     moved.filter(isSongEntry).map((entry) => [entry.songId, entry] as const)
   );
@@ -192,7 +202,8 @@ export function StageSetlist(props: {
       pointerId: event.pointerId,
       startY: event.clientY,
       active: false,
-      order: idsOf(moved)
+      order: idsOf(moved),
+      elifs: frozenElifs(displayed)
     };
   };
 

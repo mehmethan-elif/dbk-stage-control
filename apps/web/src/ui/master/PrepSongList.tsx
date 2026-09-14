@@ -29,6 +29,7 @@ import {
   songLibraryEntryId
 } from "../../store/song-library";
 import { AddIcon, LockIcon, StopIcon } from "../shared/icons";
+import { frozenElifs, withFrozenElifs, type FrozenElif } from "./drag-elifs";
 import { PlayModeMark } from "./play-mode-mark";
 import {
   compareFacet,
@@ -126,6 +127,7 @@ export function PrepSongList(props: {
     startY: number;
     active: boolean;
     order: string[];
+    elifs: FrozenElif[];
   } | null>(null);
   const [liveOrder, setLiveOrder] = useState<string[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -159,7 +161,12 @@ export function PrepSongList(props: {
     const entry = byId.get(id);
     if (entry) added.push(entry);
   }
-  const displayed = draggingId ? added : withKeyChangeElifs(added, songMap);
+  // Frozen through a drag for the same reason as the stage setlist: the rows stay as they
+  // were rather than disappearing, and mouse up decides whether the order needs a new set.
+  const heldElifs = draggingId ? dragRef.current?.elifs : undefined;
+  const displayed = heldElifs
+    ? withFrozenElifs(added, heldElifs)
+    : withKeyChangeElifs(added, songMap);
   const addedSongIds = new Set(added.filter(isSongEntry).map((entry) => entry.songId));
   const canAddElif = Boolean(
     gig && !songLibrary && canInsertElifAfter(gig.setlist, selectedEntryId)
@@ -207,7 +214,8 @@ export function PrepSongList(props: {
       pointerId: event.pointerId,
       startY: event.clientY,
       active: false,
-      order: idsOf(added)
+      order: idsOf(added),
+      elifs: frozenElifs(displayed)
     };
   };
 
