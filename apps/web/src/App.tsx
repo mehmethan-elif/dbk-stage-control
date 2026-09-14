@@ -1,11 +1,10 @@
-import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import type { DeviceKind } from "@dbk/protocol";
 import { isNativeApp } from "./native/platform";
 import { ClientApp } from "./ui/client/ClientApp";
 import { MasterApp } from "./ui/master/MasterApp";
 import { RemoteApp } from "./ui/remote/RemoteApp";
-import { RoleGate } from "./ui/native/RoleGate";
 import { useMasterStore } from "./store/master-store";
 
 function kindFromPath(pathname: string, publicClient: boolean): DeviceKind {
@@ -17,30 +16,15 @@ function kindFromPath(pathname: string, publicClient: boolean): DeviceKind {
 export function App() {
   const load = useMasterStore((s) => s.load);
   const location = useLocation();
-  const navigate = useNavigate();
-  const native = isNativeApp();
   const publicClient = import.meta.env.VITE_PUBLIC_CLIENT === "1";
   const pathKind = kindFromPath(location.pathname, publicClient);
-  const [nativeKind, setNativeKind] = useState<DeviceKind | null>(native ? null : pathKind);
-  const [syncHost, setSyncHost] = useState<string | undefined>();
-  const kind = native ? nativeKind : pathKind;
+  // The installed app is the desk and nothing else: it is the copy that carries the stems. Band
+  // members run the published page off their home screen, so there is nothing to choose between.
+  const kind = isNativeApp() ? "master" : pathKind;
 
   useEffect(() => {
-    if (!kind) return;
-    void load(kind, { syncHost });
-  }, [load, kind, syncHost]);
-
-  if (native && !kind) {
-    return (
-      <RoleGate
-        onChoose={(nextKind, host) => {
-          setSyncHost(host);
-          setNativeKind(nextKind);
-          navigate(nextKind === "client" ? "/client" : "/master", { replace: true });
-        }}
-      />
-    );
-  }
+    void load(kind);
+  }, [load, kind]);
 
   return (
     <Routes>

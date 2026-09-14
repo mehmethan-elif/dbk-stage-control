@@ -24,7 +24,7 @@ import { PdfExportButton } from "./pdf-export/PdfExportButton";
 import { FadeButton, PanicButton, PrepTransport, StageSetlistButton, StageViewTools } from "./PrepTransport";
 import { PrepView } from "./PrepView";
 import { isNativeApp } from "../../native/platform";
-import { LibraryMissing } from "../native/RoleGate";
+import { LibraryMissing } from "../native/LibraryMissing";
 import { holdLibraryLoading, LibraryLoading } from "../shared/LibraryLoading";
 
 function pad2(value: number): string {
