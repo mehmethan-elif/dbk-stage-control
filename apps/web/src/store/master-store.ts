@@ -1480,6 +1480,24 @@ export function showEntryId(
   return state.masterEntryId ?? state.selectedEntryId;
 }
 
+/**
+ * The row the red mark goes on: where the show is sounding. Only a track keeps a clock, so a
+ * click sounding on its own leaves the last track's clock standing, and reading the row off it
+ * would hold the mark on the song that played before. With nothing sounding the mark stays on the
+ * show's row too, since the show has a place between numbers — see `showEntryId`.
+ */
+export function playingMarkEntryId(state: MasterState): string | null {
+  const playing =
+    state.playback.state === PlaybackState.Playing ||
+    state.playback.state === PlaybackState.Transitioning;
+  if (!playing) return showEntryId(state);
+  const live =
+    followsSharedPlayhead(state) || clientStageLive(state)
+      ? state.playback.clock?.setlistEntryId
+      : state.selectedEntryId;
+  return live ?? showEntryId(state);
+}
+
 /** Looking a song up out of the library rather than watching the show. */
 export function readingOffShow(state: Pick<MasterState, "readingEntryId">): boolean {
   return Boolean(state.readingEntryId);

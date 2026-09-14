@@ -19,13 +19,12 @@ import {
 } from "@dbk/core";
 import {
   clientPracticeMode,
-  clientStageLive,
   currentGig,
-  selectAddedSetlistEntry,
-  setlistLocked,
   followsSharedPlayhead,
   pageEntryId,
-  showEntryId,
+  playingMarkEntryId,
+  selectAddedSetlistEntry,
+  setlistLocked,
   stageConnectOn,
   useMasterStore
 } from "../../store/master-store";
@@ -106,7 +105,6 @@ export function StageSetlist(props: {
   const practice = useMasterStore(clientPracticeMode);
   const detached = useMasterStore(stageConnectOn);
   const followPlayhead = useMasterStore(followsSharedPlayhead);
-  const liveClient = useMasterStore(clientStageLive);
   const readOnly = Boolean(props.readOnly || songLibrary);
   // Offered on every page the setlist appears on, the same as the preparation list. It used to
   // wait for the stage to be connected, which hid it from the desk right up until show time.
@@ -119,17 +117,10 @@ export function StageSetlist(props: {
     metronomePlaying ||
     playback.state === PlaybackState.Playing ||
     playback.state === PlaybackState.Transitioning;
-  // The red mark says where the show is, and the show has a place between numbers too: an
-  // ELIF KONUSMA the set has stopped on, or the song the master has lined up next. So it falls
-  // back to the master's row rather than going out whenever nothing is sounding.
-  const showEntry = useMasterStore(showEntryId);
   // Where this device is looking, which is the show's row unless something is being read out of
   // the library. That marks the row being read without moving the red mark off the show.
   const pageEntry = useMasterStore(pageEntryId);
-  const liveEntryId = followPlayhead || liveClient
-    ? playback.clock?.setlistEntryId
-    : props.selectedEntryId;
-  const playingEntryId = (songPlaying ? liveEntryId : null) ?? showEntry ?? undefined;
+  const playingEntryId = useMasterStore(playingMarkEntryId) ?? undefined;
   const listRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{
     id: string;

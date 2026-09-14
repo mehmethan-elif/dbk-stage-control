@@ -4,6 +4,7 @@ import {
   elifCanEditSetlist,
   followsSharedPlayhead,
   nextMasterEntryId,
+  playingMarkEntryId,
   setlistLocked,
   showEntryId,
   showIsRunning,
@@ -102,6 +103,34 @@ describe("showEntryId", () => {
     expect(
       showEntryId(stageState({ masterEntryId: null, selectedEntryId: "entry_other" }))
     ).toBe("entry_other");
+  });
+});
+
+describe("playingMarkEntryId", () => {
+  const clock = { setlistEntryId: "entry_playing", songId: "biz", time: 12 };
+
+  it("marks the row the master has picked out when the click is what is sounding", () => {
+    // A track played and stopped leaves its clock behind, and the metronome has none of its own.
+    const state = stageState({
+      metronomePlaying: true,
+      masterEntryId: "entry_other",
+      selectedEntryId: "entry_other",
+      playback: { state: PlaybackState.Ready, clock }
+    } as Partial<StageState>);
+    expect(playingMarkEntryId(state)).toBe("entry_other");
+  });
+
+  it("marks the clock's row while a track is running", () => {
+    const state = stageState({
+      masterEntryId: "entry_other",
+      selectedEntryId: "entry_other",
+      playback: { state: PlaybackState.Playing, clock }
+    } as Partial<StageState>);
+    expect(playingMarkEntryId(state)).toBe("entry_playing");
+  });
+
+  it("falls back to the show's row with nothing sounding at all", () => {
+    expect(playingMarkEntryId(stageState({ masterEntryId: "stop_1" }))).toBe("stop_1");
   });
 });
 
