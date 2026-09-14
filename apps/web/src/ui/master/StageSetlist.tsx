@@ -31,7 +31,7 @@ import {
 } from "../../store/master-store";
 import { frozenElifs, withFrozenElifs, type FrozenElif } from "./drag-elifs";
 import { PlayModeMark } from "./play-mode-mark";
-import { findSongByRef, SONG_LIBRARY_GIG_ID, songOnSetlist } from "../../store/song-library";
+import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
 import { practiceEntryId } from "../../practice/gig";
 import { listedSongForColor, songRowStyle } from "../shared/key-color";
 import { AddIcon } from "../shared/icons";
@@ -389,18 +389,13 @@ export function StageSetlist(props: {
         <div key={group.id} className="lyrics-library-group">
           <div className="lyrics-library-group-title">{group.title}</div>
           {group.songs.map((item) => {
-            // Band members see the whole library, the songs in tonight's set among them. Opening
-            // one of those lands on its own row rather than on a second copy of the song, and it
-            // has no add button because it is already on the list.
-            const listed = moved.find((entry) => songOnSetlist(item, [entry]))?.entryId;
-            const rowEntryId = listed ?? practiceEntryId(item.id);
             const pickLibrary = () => {
               if (lockRows) return;
               props.onSelectLibrary?.(item.id);
               if (!props.stageRef?.current || !props.songAttr) return;
               scrollStageToSongTitle(
                 props.stageRef.current,
-                `[${props.songAttr}="${rowEntryId}"]`
+                `[${props.songAttr}="${practiceEntryId(item.id)}"]`
               );
             };
             return (
@@ -415,9 +410,9 @@ export function StageSetlist(props: {
                   playMode={playModes[item.id] ?? PlayMode.View}
                   title={songDisplayName(item)}
                   added={false}
-                  selected={pageEntry === rowEntryId}
+                  selected={pageEntry === practiceEntryId(item.id)}
                   onName={props.onSelectLibrary && !lockRows ? pickLibrary : undefined}
-                  onAdd={readOnly || listed ? undefined : () => props.onAdd(item.id)}
+                  onAdd={readOnly ? undefined : () => props.onAdd(item.id)}
                 />
               </div>
             );

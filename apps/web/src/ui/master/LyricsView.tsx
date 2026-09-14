@@ -117,8 +117,7 @@ export function LyricsView() {
       : withKeyChangeElifs(gig.setlist, songs)
     : [];
   const entries = listEntries.filter(isSongEntry);
-  // Band members browse the whole library, the master only the songs it can still add.
-  const library = readOnly ? songs : librarySongsNotOnSetlist(songs, listEntries);
+  const library = librarySongsNotOnSetlist(songs, listEntries);
   const bodySource = isSongLibraryGig(gig)
     ? selectedLibraryEntries(listEntries, selectedEntryId)
     : readOnly
