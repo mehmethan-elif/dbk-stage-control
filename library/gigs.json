@@ -8,6 +8,11 @@
       "setlist": [
         {
           "type": "song",
+          "entryId": "entry_753edfd1-1c54-458a-9fc4-0638d5bb0671",
+          "songId": "biz"
+        },
+        {
+          "type": "song",
           "entryId": "entry_a4f07c84-7498-4092-9e50-cb763349f686",
           "songId": "karahisar_kalesi"
         },
@@ -23,18 +28,8 @@
         },
         {
           "type": "song",
-          "entryId": "entry_753edfd1-1c54-458a-9fc4-0638d5bb0671",
-          "songId": "biz"
-        },
-        {
-          "type": "song",
           "entryId": "entry_9cfd81c9-ea8e-4b42-9334-5c64bc83ab1b",
           "songId": "Mihriban"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_20a35df2-6bda-485c-92ed-7119c517167a",
-          "songId": "Candan İleri"
         }
       ],
       "busMix": {
