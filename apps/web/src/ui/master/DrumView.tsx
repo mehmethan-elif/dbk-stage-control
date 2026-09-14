@@ -29,10 +29,10 @@ import {
 } from "@dbk/core";
 import { followClockPlaying, followClockTime } from "../../store/follow-clock";
 import {
-  clientPracticeMode,
+  readingOffShow,
   currentGig,
   elifCanEditSetlist,
-  showSongEntryId,
+  pageEntrySongId,
   followsSharedPlayhead,
   panicBlocksFollow,
   selectAddedSetlistEntry,
@@ -464,11 +464,14 @@ export function DrumView() {
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
   const zoom = useMasterStore((s) => s.stageZooms.drums);
   const autoScroll = useMasterStore(stageAutoScroll);
-  const panicFollow = useMasterStore(panicBlocksFollow);
+  // Someone reading a song out of the library is not watching the show, so nothing follows a
+  // playhead until the master moves on and puts them back on it.
+  const reading = useMasterStore(readingOffShow);
+  const panicFollow = useMasterStore(panicBlocksFollow) && !reading;
   const detached = useMasterStore(followsSharedPlayhead);
   // The page opens where the master has the show, not where this device's selection is. They are
   // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
-  const showEntry = useMasterStore(showSongEntryId);
+  const showEntry = useMasterStore(pageEntrySongId);
   const metroFollow = useMasterStore((s) => s.metronomePlaying);
   const stageRef = useRef<HTMLElement>(null);
   const [leadInId, setLeadInId] = useState<string>();
@@ -479,22 +482,23 @@ export function DrumView() {
       : withKeyChangeElifs(gig.setlist, songs)
     : [];
   const entries = listEntries.filter(isSongEntry);
-  const library = librarySongsNotOnSetlist(songs, listEntries);
-  const practice = useMasterStore(clientPracticeMode);
+  // Band members browse the whole library, the master only the songs it can still add.
+  const library = readOnly ? songs : librarySongsNotOnSetlist(songs, listEntries);
   const bodySource = isSongLibraryGig(gig)
     ? selectedLibraryEntries(listEntries, selectedEntryId)
-    : practice
-      ? withSelectedLibrarySong(listEntries, songs, selectedEntryId)
+    : readOnly
+      ? withSelectedLibrarySong(listEntries, songs, showEntry)
       : listEntries;
   const playing =
-    playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
-  const following = playing || panicFollow || metroFollow;
+    !reading &&
+    (playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning);
+  const following = playing || panicFollow || (metroFollow && !reading);
   const playingEntryId = detached && (playing || panicFollow)
     ? (playback.clock?.setlistEntryId ?? undefined)
     : !detached && following
       ? (showEntry ?? playback.clock?.setlistEntryId ?? undefined)
       : undefined;
-  const visible = (practice || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries).filter(
+  const visible = (readOnly || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries).filter(
     (entry) => !entry.skipped
   );
   const bodyEntries = stageBodyEntries(bodySource);
@@ -546,7 +550,7 @@ export function DrumView() {
             onSelect={selectSetlistEntry}
             onRemove={removeSong}
             onAdd={addSong}
-            onSelectLibrary={practice ? selectPracticeSong : undefined}
+            onSelectLibrary={readOnly ? selectPracticeSong : undefined}
             stageRef={stageRef}
             songAttr="data-drum-song"
           />

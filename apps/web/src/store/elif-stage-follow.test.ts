@@ -6,7 +6,7 @@ import {
   nextMasterEntryId,
   showEntryId,
   showIsRunning,
-  showSongEntryId
+  pageEntrySongId
 } from "./master-store";
 
 type StageState = Parameters<typeof followsSharedPlayhead>[0];
@@ -104,14 +104,14 @@ describe("showEntryId", () => {
   });
 });
 
-describe("showSongEntryId", () => {
+describe("pageEntrySongId", () => {
   it("opens the song the master has selected", () => {
-    expect(showSongEntryId(stageState({ selectedEntryId: "entry_other" }))).toBe("entry_playing");
+    expect(pageEntrySongId(stageState({ selectedEntryId: "entry_other" }))).toBe("entry_playing");
   });
 
   it("opens the song an ELIF KONUSMA leads into", () => {
     const state = stageState({ masterEntryId: "elif_key_entry_playing_entry_other" });
-    expect(showSongEntryId(state)).toBe("entry_other");
+    expect(pageEntrySongId(state)).toBe("entry_other");
   });
 
   it("opens the song a STOP leads into", () => {
@@ -129,7 +129,7 @@ describe("showSongEntryId", () => {
       gigs: [gig],
       masterEntryId: "stop_1"
     } as unknown as Partial<StageState>);
-    expect(showSongEntryId(state)).toBe("entry_other");
+    expect(pageEntrySongId(state)).toBe("entry_other");
   });
 });
 

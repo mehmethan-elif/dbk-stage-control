@@ -23,7 +23,7 @@ import {
   type Song
 } from "@dbk/core";
 import { useFollowPlayheadTime } from "../../store/follow-clock";
-import { clientPracticeMode, currentGig, elifCanEditSetlist, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, showSongEntryId, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
+import { currentGig, elifCanEditSetlist, followsSharedPlayhead, panicBlocksFollow, readingOffShow, selectAddedSetlistEntry, pageEntrySongId, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
 import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
 import { libraryApi } from "../../library/api";
 import { ChainIcon, DeleteIcon } from "../shared/icons";
@@ -171,11 +171,14 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   const sectionEditing = Boolean(!readOnly && editOpen);
   const zoom = useMasterStore((s) => s.stageZooms[layer === "chord" ? "chords" : "nota"]);
   const autoScroll = useMasterStore(stageAutoScroll);
-  const panicFollow = useMasterStore(panicBlocksFollow);
+  // Someone reading a song out of the library is not watching the show, so nothing follows a
+  // playhead until the master moves on and puts them back on it.
+  const reading = useMasterStore(readingOffShow);
+  const panicFollow = useMasterStore(panicBlocksFollow) && !reading;
   const detached = useMasterStore(followsSharedPlayhead);
   // The page opens where the master has the show, not where this device's selection is. They are
   // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
-  const showEntry = useMasterStore(showSongEntryId);
+  const showEntry = useMasterStore(pageEntrySongId);
   const stageRef = useRef<HTMLElement>(null);
   const [editSlot, setEditSlot] = useState<HTMLDivElement | null>(null);
   const [pagesTick, setPagesTick] = useState(0);
@@ -194,15 +197,16 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
       : withKeyChangeElifs(gig.setlist, songs)
     : [];
   const entries = listEntries.filter(isSongEntry);
-  const library = librarySongsNotOnSetlist(songs, listEntries);
-  const practice = useMasterStore(clientPracticeMode);
+  // Band members browse the whole library, the master only the songs it can still add.
+  const library = readOnly ? songs : librarySongsNotOnSetlist(songs, listEntries);
   const bodySource = isSongLibraryGig(gig)
     ? selectedLibraryEntries(listEntries, selectedEntryId)
-    : practice
-      ? withSelectedLibrarySong(listEntries, songs, selectedEntryId)
+    : readOnly
+      ? withSelectedLibrarySong(listEntries, songs, showEntry)
       : listEntries;
   const playing =
-    playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
+    !reading &&
+    (playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning);
   const playingEntryId = playing && detached
     ? playback.clock?.setlistEntryId
     : playing && !detached
@@ -220,7 +224,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   const upcoming = playingEntryId
     ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, followTime)
     : undefined;
-  const visible = (practice || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries).filter(
+  const visible = (readOnly || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries).filter(
     (entry) => !entry.skipped
   );
   const bodyEntries = stageBodyEntries(bodySource);
@@ -409,7 +413,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
             onSelect={selectSetlistEntry}
             onRemove={removeSong}
             onAdd={addSong}
-            onSelectLibrary={practice ? selectPracticeSong : undefined}
+            onSelectLibrary={readOnly ? selectPracticeSong : undefined}
             stageRef={stageRef}
             songAttr="data-nota-song"
           />
@@ -898,7 +902,7 @@ function NotaProgressBar(props: { entryId: string; song: Song }) {
   const storeTime = useMasterStore(stagePlayheadTime);
   const followTime = useFollowPlayheadTime(storeTime);
   const panicFollow = useMasterStore(panicBlocksFollow);
-  const selectedEntryId = useMasterStore(showSongEntryId);
+  const selectedEntryId = useMasterStore(pageEntrySongId);
   if (!count) return null;
 
   const playing =
@@ -1022,12 +1026,12 @@ function ScoreLyrics(props: {
   const storeTime = useMasterStore((s) => {
     const live =
       s.playback.clock?.setlistEntryId === props.entryId ||
-      (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId);
+      (panicBlocksFollow(s) && pageEntrySongId(s) === props.entryId);
     const idlePreview =
       s.playback.state !== PlaybackState.Playing &&
       s.playback.state !== PlaybackState.Transitioning &&
       !panicBlocksFollow(s) &&
-      showSongEntryId(s) === props.entryId;
+      pageEntrySongId(s) === props.entryId;
     return live || idlePreview ? stagePlayheadTime(s) : undefined;
   });
   const line = activeScoreLyric(
@@ -1064,12 +1068,12 @@ function RallMarks(props: {
     if (isMetronomeSetlistMode(currentGig(s)?.performanceMode)) return undefined;
     const live =
       s.playback.clock?.setlistEntryId === props.entryId ||
-      (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId);
+      (panicBlocksFollow(s) && pageEntrySongId(s) === props.entryId);
     const idlePreview =
       s.playback.state !== PlaybackState.Playing &&
       s.playback.state !== PlaybackState.Transitioning &&
       !panicBlocksFollow(s) &&
-      showSongEntryId(s) === props.entryId;
+      pageEntrySongId(s) === props.entryId;
     return live || idlePreview ? stagePlayheadTime(s) : undefined;
   });
   return (
@@ -1107,7 +1111,7 @@ function PlayRects(props: {
   const hidePlayRects = useMasterStore((s) =>
     hidesLeftoverNotaRects(props.song, currentGig(s)?.performanceMode)
   );
-  const selectedEntryId = useMasterStore(showSongEntryId);
+  const selectedEntryId = useMasterStore(pageEntrySongId);
   const anyPlaying = useMasterStore(
     (s) =>
       s.playback.state === PlaybackState.Playing ||
@@ -1120,19 +1124,19 @@ function PlayRects(props: {
         s.playback.state === PlaybackState.Transitioning) ||
         panicBlocksFollow(s)) &&
       (s.playback.clock?.setlistEntryId === props.entryId ||
-        (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId))
+        (panicBlocksFollow(s) && pageEntrySongId(s) === props.entryId))
   );
   const preview = !anyPlaying && selectedEntryId === props.entryId;
   const active = playing || Boolean(props.leadIn) || preview;
   const storeTime = useMasterStore((s) => {
     const live =
       s.playback.clock?.setlistEntryId === props.entryId ||
-      (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId);
+      (panicBlocksFollow(s) && pageEntrySongId(s) === props.entryId);
     const idlePreview =
       s.playback.state !== PlaybackState.Playing &&
       s.playback.state !== PlaybackState.Transitioning &&
       !panicBlocksFollow(s) &&
-      showSongEntryId(s) === props.entryId;
+      pageEntrySongId(s) === props.entryId;
     return live || idlePreview ? stagePlayheadTime(s) : 0;
   });
   const time = useFollowPlayheadTime(storeTime);

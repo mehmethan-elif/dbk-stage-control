@@ -24,13 +24,14 @@ import {
   selectAddedSetlistEntry,
   setlistLocked,
   followsSharedPlayhead,
+  pageEntryId,
   showEntryId,
   stageConnectOn,
   useMasterStore
 } from "../../store/master-store";
 import { frozenElifs, withFrozenElifs, type FrozenElif } from "./drag-elifs";
 import { PlayModeMark } from "./play-mode-mark";
-import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
+import { findSongByRef, SONG_LIBRARY_GIG_ID, songOnSetlist } from "../../store/song-library";
 import { practiceEntryId } from "../../practice/gig";
 import { listedSongForColor, songRowStyle } from "../shared/key-color";
 import { AddIcon } from "../shared/icons";
@@ -121,6 +122,9 @@ export function StageSetlist(props: {
   // ELIF KONUSMA the set has stopped on, or the song the master has lined up next. So it falls
   // back to the master's row rather than going out whenever nothing is sounding.
   const showEntry = useMasterStore(showEntryId);
+  // Where this device is looking, which is the show's row unless something is being read out of
+  // the library. That marks the row being read without moving the red mark off the show.
+  const pageEntry = useMasterStore(pageEntryId);
   const liveEntryId = followPlayhead || liveClient
     ? playback.clock?.setlistEntryId
     : props.selectedEntryId;
@@ -137,7 +141,9 @@ export function StageSetlist(props: {
   const [liveOrder, setLiveOrder] = useState<string[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
-  const movable = props.entries.filter((entry) => !isLockedElif(entry));
+  // Annotated because dropping the locked ELIF KONUSMA rows leaves the spoken ones, and an
+  // inferred predicate reads the filter as keeping songs only.
+  const movable: SetlistEntry[] = props.entries.filter((entry) => !isLockedElif(entry));
   const byId = new Map(movable.map((entry) => [entry.entryId, entry]));
   const moved = (liveOrder ?? idsOf(movable))
     .map((id) => byId.get(id))
@@ -383,13 +389,18 @@ export function StageSetlist(props: {
         <div key={group.id} className="lyrics-library-group">
           <div className="lyrics-library-group-title">{group.title}</div>
           {group.songs.map((item) => {
+            // Band members see the whole library, the songs in tonight's set among them. Opening
+            // one of those lands on its own row rather than on a second copy of the song, and it
+            // has no add button because it is already on the list.
+            const listed = moved.find((entry) => songOnSetlist(item, [entry]))?.entryId;
+            const rowEntryId = listed ?? practiceEntryId(item.id);
             const pickLibrary = () => {
               if (lockRows) return;
               props.onSelectLibrary?.(item.id);
               if (!props.stageRef?.current || !props.songAttr) return;
               scrollStageToSongTitle(
                 props.stageRef.current,
-                `[${props.songAttr}="${practiceEntryId(item.id)}"]`
+                `[${props.songAttr}="${rowEntryId}"]`
               );
             };
             return (
@@ -404,16 +415,16 @@ export function StageSetlist(props: {
                   playMode={playModes[item.id] ?? PlayMode.View}
                   title={songDisplayName(item)}
                   added={false}
-                  selected={props.selectedEntryId === practiceEntryId(item.id)}
+                  selected={pageEntry === rowEntryId}
                   onName={props.onSelectLibrary && !lockRows ? pickLibrary : undefined}
-                  onAdd={readOnly ? undefined : () => props.onAdd(item.id)}
+                  onAdd={readOnly || listed ? undefined : () => props.onAdd(item.id)}
                 />
               </div>
             );
           })}
         </div>
       ))}
-      {props.entries.length === 0 && (readOnly || props.library.length === 0) ? (
+      {props.entries.length === 0 && props.library.length === 0 ? (
         <div className="lyrics-empty meta">No songs</div>
       ) : null}
     </aside>

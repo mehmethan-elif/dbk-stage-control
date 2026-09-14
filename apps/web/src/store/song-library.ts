@@ -119,17 +119,19 @@ export function findSongByRef(songs: readonly Song[], songId: string | undefined
   return resolved ? songs.find((song) => song.id === resolved) : undefined;
 }
 
-export function librarySongsNotOnSetlist(songs: Song[], entries: SetlistEntry[]): Song[] {
-  const onSetlist = entries.filter(isSongEntry);
-  return songs.filter(
-    (song) =>
-      !onSetlist.some(
-        (entry) =>
-          entry.songId === song.id ||
-          entry.songId === song.folder ||
-          resolvePublishedSongId(entry.songId, [song]) === song.id
-      )
+/** A setlist entry names a song by id, by folder or by a published id, so try all three. */
+export function songOnSetlist(song: Song, entries: readonly SetlistEntry[]): boolean {
+  return entries.some(
+    (entry) =>
+      isSongEntry(entry) &&
+      (entry.songId === song.id ||
+        entry.songId === song.folder ||
+        resolvePublishedSongId(entry.songId, [song]) === song.id)
   );
+}
+
+export function librarySongsNotOnSetlist(songs: Song[], entries: SetlistEntry[]): Song[] {
+  return songs.filter((song) => !songOnSetlist(song, entries));
 }
 
 export function withSelectedLibrarySong(
