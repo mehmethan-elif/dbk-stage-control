@@ -8,6 +8,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   statSync,
   writeFileSync
 } from "node:fs";
@@ -60,10 +61,18 @@ function copyMetroIntroClicks(dist: string): void {
 function stampBuiltServiceWorker(dist: string): void {
   const sw = path.join(dist, "sw.js");
   if (existsSync(sw)) {
-    const text = readFileSync(sw, "utf8").replace(
-      /const BUILD = ["'][^"']*["'];/,
-      `const BUILD = ${JSON.stringify(BUILD_STAMP)};`
-    );
+    // The worker has to be handed the hashed filenames, because it cannot work them out and it
+    // never sees them asked for: a first visit fetches the page's own scripts before the worker
+    // is in charge of anything, so nothing needed to boot would land in the cache by itself.
+    const assetDir = path.join(dist, "assets");
+    const shell = existsSync(assetDir)
+      ? readdirSync(assetDir)
+          .sort()
+          .map((name) => `./assets/${name}`)
+      : [];
+    const text = readFileSync(sw, "utf8")
+      .replace(/const BUILD = ["'][^"']*["'];/, `const BUILD = ${JSON.stringify(BUILD_STAMP)};`)
+      .replace(/const SHELL = \[\];/, `const SHELL = ${JSON.stringify(shell)};`);
     writeFileSync(sw, text);
   }
   writeFileSync(path.join(dist, "version.json"), `${JSON.stringify({ build: BUILD_STAMP })}\n`);
