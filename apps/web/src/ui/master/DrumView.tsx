@@ -545,7 +545,6 @@ export function DrumView() {
             songs={songs}
             selectedEntryId={selectedEntryId}
             readOnly={readOnly && !elifEdits}
-            hideTalkAdd
             onSelect={selectSetlistEntry}
             onRemove={removeSong}
             onAdd={addSong}

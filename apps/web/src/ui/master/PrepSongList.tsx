@@ -169,7 +169,7 @@ export function PrepSongList(props: {
     : withKeyChangeElifs(added, songMap);
   const addedSongIds = new Set(added.filter(isSongEntry).map((entry) => entry.songId));
   const canAddElif = Boolean(
-    gig && !songLibrary && canInsertElifAfter(gig.setlist, selectedEntryId)
+    gig && !songLibrary && !frozen && canInsertElifAfter(gig.setlist, selectedEntryId)
   );
   const unadded = songs.filter((song) => {
     if (addedSongIds.has(song.id)) return false;

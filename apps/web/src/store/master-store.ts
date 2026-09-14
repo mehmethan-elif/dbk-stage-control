@@ -393,7 +393,10 @@ export function showIsRunning(
 }
 
 export function setlistLocked(state: MasterState): boolean {
-  if (stageConnectOn(state)) return false;
+  // Mid-number the desk holds still: picking another row there would take the show off the track
+  // or the click that is sounding, and that is the one place it must not happen. Elif keeps her
+  // hands free on the stage, since reordering the set live is the reason she is connected.
+  if (state.deviceKind !== "master" && stageConnectOn(state)) return false;
   return showIsRunning(state);
 }
 

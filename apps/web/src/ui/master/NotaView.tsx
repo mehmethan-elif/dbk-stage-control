@@ -408,7 +408,6 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
             songs={songs}
             selectedEntryId={selectedEntryId}
             readOnly={readOnly && !elifEdits}
-            hideTalkAdd
             onSelect={selectSetlistEntry}
             onRemove={removeSong}
             onAdd={addSong}

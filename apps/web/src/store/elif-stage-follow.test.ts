@@ -4,6 +4,7 @@ import {
   elifCanEditSetlist,
   followsSharedPlayhead,
   nextMasterEntryId,
+  setlistLocked,
   showEntryId,
   showIsRunning,
   pageEntrySongId
@@ -144,6 +145,23 @@ describe("nextMasterEntryId", () => {
 
   it("keeps what it has when a packet carries no row", () => {
     expect(nextMasterEntryId("a", undefined)).toBe("a");
+  });
+});
+
+describe("setlistLocked", () => {
+  const desk = { deviceKind: "master", syncPeers: [{ deviceKind: "client", deviceName: "Elif" }] };
+
+  it("holds the master's list while a track or the click is sounding, stage or no stage", () => {
+    expect(setlistLocked(stageState({ ...desk, ...playing } as Partial<StageState>))).toBe(true);
+    expect(
+      setlistLocked(stageState({ ...desk, metronomePlaying: true } as Partial<StageState>))
+    ).toBe(true);
+    expect(setlistLocked(stageState(desk as Partial<StageState>))).toBe(false);
+  });
+
+  it("leaves Elif free to reorder the set mid-number", () => {
+    expect(setlistLocked(stageState(playing))).toBe(false);
+    expect(setlistLocked(stageState({ metronomePlaying: true }))).toBe(false);
   });
 });
 

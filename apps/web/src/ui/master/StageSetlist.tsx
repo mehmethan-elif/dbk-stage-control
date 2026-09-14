@@ -35,7 +35,7 @@ import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
 import { practiceEntryId } from "../../practice/gig";
 import { listedSongForColor, songRowStyle } from "../shared/key-color";
 import { AddIcon } from "../shared/icons";
-import { ConcertFinalBlock, ElifNote, TalkLabel, TalkLeadIcon, setlistHasSongs } from "./setlist-marker";
+import { ConcertFinalBlock, ElifNote, StopLabel, TalkLabel, TalkLeadIcon, setlistHasSongs } from "./setlist-marker";
 import { groupLibrarySongs } from "./library-groups";
 import { scrollStageToSongTitle } from "./stage-scroll";
 
@@ -89,7 +89,6 @@ export function StageSetlist(props: {
   songs: Song[];
   selectedEntryId: string | null;
   readOnly?: boolean;
-  hideTalkAdd?: boolean;
   stageRef?: RefObject<HTMLElement | null>;
   songAttr?: "data-lyric-song" | "data-chord-song" | "data-drum-song" | "data-nota-song";
   onSelect: (entryId: string) => void;
@@ -109,9 +108,11 @@ export function StageSetlist(props: {
   const followPlayhead = useMasterStore(followsSharedPlayhead);
   const liveClient = useMasterStore(clientStageLive);
   const readOnly = Boolean(props.readOnly || songLibrary);
-  const showAddElif = Boolean(detached && !songLibrary && !readOnly && !props.hideTalkAdd);
+  // Offered on every page the setlist appears on, the same as the preparation list. It used to
+  // wait for the stage to be connected, which hid it from the desk right up until show time.
+  const showAddElif = Boolean(!songLibrary && !readOnly);
   const canAddElif = Boolean(
-    showAddElif && gig && canInsertElifAfter(gig.setlist, props.selectedEntryId)
+    showAddElif && !frozen && gig && canInsertElifAfter(gig.setlist, props.selectedEntryId)
   );
   const lockRows = frozen && (!readOnly || practice);
   const songPlaying =
@@ -368,14 +369,15 @@ export function StageSetlist(props: {
       {showAddElif ? (
         <div className="lyrics-set-block is-elif-add">
           <div className="lyrics-elif-item lyrics-elif-add-item">
+            <TalkLeadIcon stop />
             <span className="elif-copy">
-              <span className="elif-label">ELIF KONUSMA EKLE</span>
+              <StopLabel />
             </span>
             <button
               type="button"
               className="lyrics-skip"
               title="Add"
-              aria-label="Add ELIF KONUSMA"
+              aria-label="Add STOP"
               disabled={!canAddElif}
               onPointerDown={(event) => onSetlistAction(event, canAddElif ? addElif : undefined)}
               onClick={(event) => onSetlistAction(event, canAddElif ? addElif : undefined)}
