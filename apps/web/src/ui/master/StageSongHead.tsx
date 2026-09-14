@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { parseSongInfo, withKeyChangeElifs } from "@dbk/core";
 import {
   currentGig,
   followsFreeMasterClicks,
   nextUnskippedSongEntryId,
   panicBlocksFollow,
+  setlistLocked,
   showsTitlePositionSlider,
   songPlaying,
   songShowsPositionSlider,
@@ -16,6 +17,7 @@ import { nextTransportSongEntry } from "./next-song-section";
 import { type StageNotesPage } from "./stage-page-notes";
 import { freePageMetroTone, MetroPulse } from "./song-metro-beats";
 import { SongPositionTrack } from "./SongPositionTrack";
+import { scrollStageToNode } from "./stage-scroll";
 
 const PAGE_LABELS: Record<StageNotesPage, string> = {
   lyrics: "Lyrics",
@@ -31,6 +33,8 @@ export function StageSongHead(props: {
   children: ReactNode;
 }) {
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
+  const selectSetlistEntry = useMasterStore((s) => s.selectSetlistEntry);
+  const frozen = useMasterStore(setlistLocked);
   const freeMode = useMasterStore(usesFreeMetroTransport);
   const followSound = useMasterStore(followsFreeMasterClicks);
   const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
@@ -101,6 +105,20 @@ export function StageSongHead(props: {
     };
   }, [songId, props.page, readOnly]);
 
+  /**
+   * The name doubles as the way back to the top of its own song: tap it and the song heads the
+   * page, and the setlist follows. Mid-number the setlist is held, and selecting there would take
+   * the show off what is sounding, so then the tap only scrolls.
+   */
+  const openSong = (event: MouseEvent<HTMLButtonElement>) => {
+    const title = event.currentTarget.closest(".lyrics-song-title");
+    if (title instanceof HTMLElement) {
+      scrollStageToNode(title.closest(".lyrics-stage"), title);
+    }
+    if (!props.entryId || frozen) return;
+    void selectSetlistEntry(props.entryId);
+  };
+
   return (
     <div className="lyrics-song-head">
       <h3 className="lyrics-song-title">
@@ -129,7 +147,9 @@ export function StageSongHead(props: {
             className="lyrics-song-mode"
           />
         ) : null}
-        {props.children}
+        <button type="button" className="stage-song-title-btn" onClick={openSong}>
+          {props.children}
+        </button>
       </h3>
       {showTitleSlider ? <SongPositionTrack song={song} className="stage-title-track" /> : null}
       {songId ? (

@@ -289,16 +289,21 @@ export function scrollStageToFullSectionsCentered(
   );
 }
 
+/** Puts `target` at the top of the stage, clear of the stage's own top padding. */
+export function scrollStageToNode(stage: HTMLElement | null, target: HTMLElement | null) {
+  if (!stage || !target) return;
+  const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
+  const top =
+    target.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop - pad;
+  scrollStageTo(stage, top, 280);
+}
+
 export function scrollStageToSongTitle(stage: HTMLElement | null, entrySelector: string) {
   if (!stage) return;
   const article = stage.querySelector(entrySelector);
   if (!(article instanceof HTMLElement)) return;
   const title = article.querySelector(".lyrics-song-title");
-  const target = title instanceof HTMLElement ? title : article;
-  const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
-  const top =
-    target.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop - pad;
-  scrollStageTo(stage, top, 280);
+  scrollStageToNode(stage, title instanceof HTMLElement ? title : article);
 }
 
 export function scrollStageToSongTitleWhenReady(

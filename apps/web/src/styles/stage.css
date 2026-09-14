@@ -4325,6 +4325,36 @@ button {
   height: 1.05em;
 }
 
+/*
+ * The name is a button that brings its song to the top of the page, so it has to sit in the title
+ * bar as if it were still plain text: same box, same flex row the title itself lays out.
+ */
+.stage-song-title-btn {
+  flex: 1 1 auto;
+  /* Fills the bar so the whole height takes a finger, not just the line of text. */
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Momentary: it dips while held and leaves no mark, because it is a jump and not a mode. */
+.stage-song-title-btn:active {
+  opacity: 0.5;
+}
+
 .nota-song-name {
   min-width: 0;
   overflow: hidden;
