@@ -379,13 +379,20 @@ export function stageAutoScroll(state: MasterState): boolean {
   return state.autoScroll && !panicBlocksFollow(state);
 }
 
+/** A song or the metronome is running, so the band is mid-number. */
+export function showIsRunning(
+  state: Pick<MasterState, "metronomePlaying" | "playback">
+): boolean {
+  return (
+    state.metronomePlaying ||
+    state.playback.state === PlaybackState.Playing ||
+    state.playback.state === PlaybackState.Transitioning
+  );
+}
+
 export function setlistLocked(state: MasterState): boolean {
   if (stageConnectOn(state)) return false;
-  if (state.metronomePlaying) return true;
-  const playbackState = state.playback.state;
-  return (
-    playbackState === PlaybackState.Playing || playbackState === PlaybackState.Transitioning
-  );
+  return showIsRunning(state);
 }
 
 export function elifCanEditSetlist(
@@ -1414,9 +1421,11 @@ function selectedSongIsFree(state: MasterState): boolean {
   return songEntryIsFree(state);
 }
 
+/** Reading a song other than the live one. Only between numbers — see `followsSharedPlayhead`. */
 export function elifLookingAhead(state: MasterState): boolean {
   return (
     elifCanEditSetlist(state) &&
+    !showIsRunning(state) &&
     Boolean(state.selectedEntryId) &&
     state.selectedEntryId !== (state.playback.clock?.setlistEntryId ?? null)
   );
@@ -1424,12 +1433,14 @@ export function elifLookingAhead(state: MasterState): boolean {
 
 export function followsSharedPlayhead(state: MasterState): boolean {
   if (state.deviceKind === "client" && !clientStageLive(state)) return false;
-  if (elifCanEditSetlist(state)) return false;
-  return (
-    stageConnectOn(state) &&
-    !isFreeSetlistMode(currentGig(state)?.performanceMode) &&
-    !selectedSongIsFree(state)
-  );
+  if (!stageConnectOn(state)) return false;
+  if (isFreeSetlistMode(currentGig(state)?.performanceMode)) return false;
+  // Elif reorders the setlist by selecting a row and adding, deleting or dragging around it,
+  // so mid-number her selection is an edit cursor rather than a request to read that song:
+  // the stage stays on whatever is playing. Her selection deliberately does not decide this,
+  // or picking a free song would detach her again. Between numbers selecting still opens it.
+  if (elifCanEditSetlist(state)) return showIsRunning(state);
+  return !selectedSongIsFree(state);
 }
 
 export function usesFreeMetroTransport(state: MasterState): boolean {
