@@ -115,7 +115,12 @@ export function listedSongKey(song: Song | undefined, entry: SongSetlistEntry): 
 }
 
 function songMapOf(songs: Map<string, Song> | readonly Song[]): Map<string, Song> {
-  return songs instanceof Map ? songs : new Map(songs.map((song) => [song.id, song]));
+  if (songs instanceof Map) return songs;
+  // A setlist entry names a song by id or by folder, so resolve both. Ids win where they clash.
+  const map = new Map<string, Song>();
+  for (const song of songs) if (song.folder) map.set(song.folder, song);
+  for (const song of songs) map.set(song.id, song);
+  return map;
 }
 
 export function songsHaveDifferentKeys(
@@ -125,7 +130,10 @@ export function songsHaveDifferentKeys(
 ): boolean {
   const a = listedSongKey(songs.get(left.songId), left);
   const b = listedSongKey(songs.get(right.songId), right);
-  if (!a && !b) return false;
+  // A song with no key written down is not a key change either way round. Reading a blank as
+  // "different" put an ELIF KONUSMA above and below it, which is what a song looks like the
+  // moment it is added to the setlist and before anyone has filled its key in.
+  if (!a || !b) return false;
   return a !== b;
 }
 

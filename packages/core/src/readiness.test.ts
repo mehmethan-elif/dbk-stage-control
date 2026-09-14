@@ -281,6 +281,37 @@ describe("setlist helpers", () => {
     expect(songFollowedByElif([a, skipped, c], 0, otherKey)).toBe(true);
   });
 
+  it("leaves a song with no key alone instead of ringing it with ELIF KONUSMA", () => {
+    const a = { type: "song" as const, entryId: "1", songId: "a" };
+    const fresh = { type: "song" as const, entryId: "2", songId: "fresh" };
+    const c = { type: "song" as const, entryId: "3", songId: "c" };
+    const info = { bpm: 120, numerator: 4, denominator: 4, key: "B" };
+    const songs = new Map<string, Song>([
+      ["a", song({ id: "a", title: "A", info })],
+      ["fresh", song({ id: "fresh", title: "Fresh" })],
+      ["c", song({ id: "c", title: "C", info })]
+    ]);
+    expect(withKeyChangeElifs([a, fresh, c], songs).map((entry) => entry.entryId)).toEqual([
+      "1",
+      "2",
+      "3"
+    ]);
+  });
+
+  it("resolves a setlist entry that names a song by its folder", () => {
+    const a = { type: "song" as const, entryId: "1", songId: "Biz" };
+    const b = { type: "song" as const, entryId: "2", songId: "kale" };
+    const songs = [
+      song({ id: "biz", folder: "Biz", info: { bpm: 120, numerator: 4, denominator: 4, key: "D" } }),
+      song({ id: "kale", folder: "Kale", info: { bpm: 120, numerator: 4, denominator: 4, key: "B" } })
+    ];
+    expect(withKeyChangeElifs([a, b], songs).map((entry) => entry.entryId)).toEqual([
+      "1",
+      "elif_key_1_2",
+      "2"
+    ]);
+  });
+
   it("inserts a song after the selected setlist entry", () => {
     const a = { type: "song" as const, entryId: "1", songId: "a", finishMode: FinishMode.Stop };
     const b = { type: "song" as const, entryId: "2", songId: "b", finishMode: FinishMode.Stop };
