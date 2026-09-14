@@ -106,12 +106,18 @@ describe("showEntryId", () => {
 });
 
 describe("pageEntrySongId", () => {
-  it("opens the song the master has selected", () => {
-    expect(pageEntrySongId(stageState({ selectedEntryId: "entry_other" }))).toBe("entry_playing");
+  it("holds Elif's page on the playing song while her selection is elsewhere", () => {
+    expect(pageEntrySongId(stageState({ ...playing, selectedEntryId: "entry_other" }))).toBe(
+      "entry_playing"
+    );
   });
 
+  // The master's row is the selection too: `clientRowPatch` puts both on it when the master moves.
   it("opens the song an ELIF KONUSMA leads into", () => {
-    const state = stageState({ masterEntryId: "elif_key_entry_playing_entry_other" });
+    const state = stageState({
+      masterEntryId: "elif_key_entry_playing_entry_other",
+      selectedEntryId: "elif_key_entry_playing_entry_other"
+    });
     expect(pageEntrySongId(state)).toBe("entry_other");
   });
 
@@ -128,7 +134,8 @@ describe("pageEntrySongId", () => {
     };
     const state = stageState({
       gigs: [gig],
-      masterEntryId: "stop_1"
+      masterEntryId: "stop_1",
+      selectedEntryId: "stop_1"
     } as unknown as Partial<StageState>);
     expect(pageEntrySongId(state)).toBe("entry_other");
   });

@@ -1,53 +1,74 @@
 import { describe, expect, it } from "vitest";
-import { followSyncSelection, nextJustJoinedStage } from "./master-store";
+import { clientRowPatch, nextJustJoinedStage, nextMasterEntryId } from "./master-store";
 
-function client(name: string, selectedEntryId: string | null, justJoinedStage = false) {
-  return {
-    deviceKind: "client" as const,
-    clientSession: "stage" as const,
-    syncConnected: true,
-    stageName: name,
-    selectedEntryId,
-    justJoinedStage
-  };
+function client(masterEntryId: string | null, selectedEntryId: string | null) {
+  return { masterEntryId, selectedEntryId, readingEntryId: null };
 }
 
-describe("followSyncSelection", () => {
-  it("keeps Elif on her own song while she is live on stage", () => {
-    expect(followSyncSelection(client("Elif", "elif-song"), "master-song", true)).toBe("elif-song");
-    expect(followSyncSelection(client("Elif", "elif-song"), "master-song", false)).toBe("elif-song");
+describe("clientRowPatch", () => {
+  it("puts every device on the song the master has just moved to", () => {
+    expect(clientRowPatch(client("master-song", "local-song"), "next-song")).toEqual({
+      masterEntryId: "next-song",
+      selectedEntryId: "next-song",
+      readingEntryId: null
+    });
   });
 
-  it("snaps other live clients to the song that just started", () => {
-    expect(followSyncSelection(client("Serkan", "local-song"), "master-song", true)).toBe("master-song");
-    expect(followSyncSelection(client("Ada", "local-song"), "master-song", true)).toBe("master-song");
+  it("leaves a local selection alone while the master stays on the same row", () => {
+    expect(clientRowPatch(client("master-song", "local-song"), "master-song")).toEqual({
+      masterEntryId: "master-song",
+      selectedEntryId: "local-song",
+      readingEntryId: null
+    });
   });
 
-  it("keeps the master's LoadSong selection when a later idle Position arrives", () => {
-    expect(followSyncSelection(client("Serkan", "master-song"), "stale-clock-song", false)).toBe(
-      "master-song"
-    );
+  it("keeps the master's row when a later idle Position trails the last song", () => {
+    expect(
+      clientRowPatch(client("master-song", "local-song"), "stale-clock-song", false)
+    ).toEqual({
+      masterEntryId: "master-song",
+      selectedEntryId: "local-song",
+      readingEntryId: null
+    });
   });
 
-  it("takes the incoming song when the client has no selection yet", () => {
-    expect(followSyncSelection(client("Serkan", null), "master-song", false)).toBe("master-song");
+  it("snaps a device that has just joined, its master row still empty", () => {
+    expect(clientRowPatch(client(null, "practice-song"), "master-song")).toEqual({
+      masterEntryId: "master-song",
+      selectedEntryId: "master-song",
+      readingEntryId: null
+    });
   });
 
-  it("snaps every client to the master song on join, including Elif", () => {
-    expect(followSyncSelection(client("Elif", "elif-song", true), "master-song", true)).toBe(
-      "master-song"
-    );
-    expect(followSyncSelection(client("Serkan", "local-song", true), "master-song", false)).toBe(
-      "master-song"
-    );
+  it("closes a song opened out of the library when the master moves, not before", () => {
+    const reading = { masterEntryId: "master-song", selectedEntryId: "master-song", readingEntryId: "practice_kale" };
+    expect(clientRowPatch(reading, "master-song").readingEntryId).toBe("practice_kale");
+    expect(clientRowPatch(reading, "next-song").readingEntryId).toBe(null);
   });
 
-  it("keeps the join snap open through idle Position so Elif can still take LoadSong", () => {
+  it("holds what it has when a packet carries no row at all", () => {
+    expect(clientRowPatch(client("master-song", "local-song"), undefined)).toEqual({
+      masterEntryId: "master-song",
+      selectedEntryId: "local-song",
+      readingEntryId: null
+    });
+  });
+});
+
+describe("nextMasterEntryId", () => {
+  it("takes the row the master reports while it is playing", () => {
+    expect(nextMasterEntryId("a", "b", true)).toBe("b");
+  });
+
+  it("leaves an ELIF KONUSMA in place when an idle packet trails the last song", () => {
+    expect(nextMasterEntryId("elif_key_a_b", "a", false)).toBe("elif_key_a_b");
+  });
+});
+
+describe("nextJustJoinedStage", () => {
+  it("keeps the join snap open through idle Position and closes it on LoadSong", () => {
     expect(nextJustJoinedStage(true, false)).toBe(true);
     expect(nextJustJoinedStage(true, true)).toBe(false);
     expect(nextJustJoinedStage(false, true)).toBe(false);
-    expect(followSyncSelection(client("Elif", "practice-song", true), "master-song", false)).toBe(
-      "master-song"
-    );
   });
 });

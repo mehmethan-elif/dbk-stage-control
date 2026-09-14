@@ -33,6 +33,7 @@ import {
   currentGig,
   elifCanEditSetlist,
   pageEntrySongId,
+  pageScrollEntryId,
   followsSharedPlayhead,
   panicBlocksFollow,
   selectAddedSetlistEntry,
@@ -472,6 +473,9 @@ export function DrumView() {
   // The page opens where the master has the show, not where this device's selection is. They are
   // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
   const showEntry = useMasterStore(pageEntrySongId);
+  // The row to scroll to, which on the desk is the ELIF KONUSMA or STOP itself rather than the
+  // song it leads into. See `pageScrollEntryId`.
+  const scrollEntry = useMasterStore(pageScrollEntryId);
   const metroFollow = useMasterStore((s) => s.metronomePlaying);
   const stageRef = useRef<HTMLElement>(null);
   const [leadInId, setLeadInId] = useState<string>();
@@ -509,9 +513,9 @@ export function DrumView() {
   useEffect(() => {
     if (panicFollow) return;
     if (autoScroll && playingEntryId) return;
-    if (!showEntry) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-drum-song="${showEntry}"]`);
-  }, [showEntry, autoScroll, playingEntryId, panicFollow]);
+    if (!scrollEntry) return;
+    scrollStageToSongTitleWhenReady(stageRef.current, `[data-drum-song="${scrollEntry}"]`);
+  }, [scrollEntry, autoScroll, playingEntryId, panicFollow]);
 
   const addSong = (songId: string) => {
     if (!gig) return;

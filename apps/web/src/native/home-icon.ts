@@ -1,4 +1,4 @@
-import { practiceSharePageOrigin } from "./sync-host";
+import { stageHomeScreenRole } from "./sync-host";
 
 /**
  * Band members keep two home screen icons: the published page they practise from at home, and
@@ -9,7 +9,7 @@ import { practiceSharePageOrigin } from "./sync-host";
  */
 export function markHomeScreenRole(): void {
   if (typeof document === "undefined" || typeof window === "undefined") return;
-  const stage = practiceSharePageOrigin() !== null;
+  const stage = stageHomeScreenRole();
   const name = stage ? "DBK Stage" : "DBK Practice";
 
   document.title = stage ? "DBK Stage" : "DBK Stage Control";

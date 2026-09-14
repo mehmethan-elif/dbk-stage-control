@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { PlaybackState, type Song } from "@dbk/core";
 import {
   followsSharedPlayhead,
-  masterRowPatch,
   readingOffShow,
   pageEntryId,
   pageEntrySongId,
+  pageScrollEntryId,
   showEntryId
 } from "./master-store";
 import { librarySongsNotOnSetlist, songOnSetlist } from "./song-library";
@@ -83,26 +83,50 @@ describe("reading a song out of the library", () => {
   });
 });
 
-describe("masterRowPatch", () => {
-  it("hands the page back to the show when the master moves", () => {
+describe("pageEntryId on a stage client", () => {
+  const idle = { playback: { state: PlaybackState.Ready, clock: null } } as Partial<StageState>;
+
+  it("holds the page on the master's row mid-number, wherever Elif's selection is", () => {
+    expect(pageEntryId(stageState({ selectedEntryId: "entry_other" }))).toBe("entry_playing");
     expect(
-      masterRowPatch({ masterEntryId: "entry_playing", readingEntryId: "practice_kale" }, "entry_two")
-    ).toEqual({ masterEntryId: "entry_two", readingEntryId: null });
+      pageEntryId(stageState({ ...idle, metronomePlaying: true, selectedEntryId: "entry_other" }))
+    ).toBe("entry_playing");
   });
 
-  it("keeps the read song while the master stays put", () => {
-    expect(
-      masterRowPatch(
-        { masterEntryId: "entry_playing", readingEntryId: "practice_kale" },
-        "entry_playing"
-      )
-    ).toEqual({ masterEntryId: "entry_playing", readingEntryId: "practice_kale" });
+  it("goes where the selection goes once the set is stopped", () => {
+    expect(pageEntryId(stageState({ ...idle, selectedEntryId: "entry_other" }))).toBe("entry_other");
+  });
+});
+
+describe("pageScrollEntryId", () => {
+  const stopped = {
+    playback: { state: PlaybackState.Ready, clock: null },
+    gigs: [
+      {
+        id: "gig_1",
+        name: "Show",
+        setlist: [
+          { type: "song", entryId: "entry_playing", songId: "biz" },
+          { type: "talk", entryId: "stop_1", label: "STOP" },
+          { type: "song", entryId: "entry_other", songId: "kale" }
+        ],
+        performanceMode: "FOLLOW_SONG_INFO"
+      }
+    ]
+  } as unknown as Partial<StageState>;
+
+  it("lands the desk on the STOP itself", () => {
+    const state = stageState({
+      ...stopped,
+      deviceKind: "master",
+      selectedEntryId: "stop_1"
+    } as Partial<StageState>);
+    expect(pageScrollEntryId(state)).toBe("stop_1");
   });
 
-  it("keeps the read song when an idle packet trails the last song", () => {
-    expect(
-      masterRowPatch({ masterEntryId: "elif_1", readingEntryId: "practice_kale" }, "entry_playing", false)
-    ).toEqual({ masterEntryId: "elif_1", readingEntryId: "practice_kale" });
+  it("lands a band member on the song the STOP leads into", () => {
+    const state = stageState({ ...stopped, masterEntryId: "stop_1", selectedEntryId: "stop_1" });
+    expect(pageScrollEntryId(state)).toBe("entry_other");
   });
 });
 

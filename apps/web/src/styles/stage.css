@@ -152,6 +152,16 @@ button {
   font-size: 0.82rem;
 }
 
+/* Which of the two home screen icons this is, so nobody takes the practice one on stage. */
+.topbar-role {
+  margin-left: 8px;
+  font-weight: 750;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .chrono-btn {
   width: var(--btn-size);
   min-width: var(--btn-size);

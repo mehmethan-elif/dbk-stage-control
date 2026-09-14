@@ -411,21 +411,6 @@ export function elifCanEditSetlist(
   );
 }
 
-/** Elif can look ahead. Other live clients take the master's song; idle Position must not undo LoadSong. */
-export function followSyncSelection(
-  state: Pick<
-    MasterState,
-    "deviceKind" | "clientSession" | "syncConnected" | "stageName" | "selectedEntryId" | "justJoinedStage"
-  >,
-  incomingEntryId: string,
-  playing = true
-): string {
-  if (state.justJoinedStage) return incomingEntryId;
-  if (elifCanEditSetlist(state) && state.selectedEntryId) return state.selectedEntryId;
-  if (!playing && state.selectedEntryId) return state.selectedEntryId;
-  return incomingEntryId;
-}
-
 /**
  * Follows the master's own row, which is not the same thing as this device's selection: Elif's
  * selection is an edit cursor for reordering the setlist. An idle Position trails the last song
@@ -442,18 +427,29 @@ export function nextMasterEntryId(
 }
 
 /**
- * The master moving the show puts every device back on it: whatever a band member had opened off
- * the setlist to read, the next number is what they need in front of them.
+ * Where a client stands after a packet from the master. The master's row wins every time it
+ * moves: selecting a song or starting one puts every device on it, which is the whole point of
+ * the stage being connected, and it ends whatever was open out of the library too. Between moves
+ * the selection belongs to the device, so anyone can look down the list while the set is stopped.
+ * An idle Position trails the last song played and is not a move.
  */
-export function masterRowPatch(
-  state: Pick<MasterState, "masterEntryId" | "readingEntryId">,
+export function clientRowPatch(
+  state: Pick<MasterState, "masterEntryId" | "readingEntryId" | "selectedEntryId">,
   incoming: string | undefined,
   playing = true
-): Pick<MasterState, "masterEntryId" | "readingEntryId"> {
+): Pick<MasterState, "masterEntryId" | "readingEntryId" | "selectedEntryId"> {
   const masterEntryId = nextMasterEntryId(state.masterEntryId, incoming, playing);
+  if (masterEntryId === state.masterEntryId) {
+    return {
+      masterEntryId,
+      readingEntryId: state.readingEntryId,
+      selectedEntryId: state.selectedEntryId
+    };
+  }
   return {
     masterEntryId,
-    readingEntryId: masterEntryId === state.masterEntryId ? state.readingEntryId : null
+    readingEntryId: null,
+    selectedEntryId: masterEntryId ?? state.selectedEntryId
   };
 }
 
@@ -881,12 +877,10 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     set({
       gigs: [gig],
       gigId: gig.id,
-      selectedEntryId: incomingSelected
-        ? followSyncSelection(previous, incomingSelected, true)
-        : stillThere
-          ? currentId
-          : firstSongEntryId(gig),
-      ...masterRowPatch(previous, incomingSelected),
+      ...clientRowPatch(previous, incomingSelected),
+      ...(incomingSelected
+        ? {}
+        : { selectedEntryId: stillThere ? currentId : firstSongEntryId(gig) }),
       justJoinedStage: nextJustJoinedStage(previous.justJoinedStage, Boolean(incomingSelected)),
       ...(remoteSongs ? { songs: remoteSongs } : {}),
       playback: free || !sameShow
@@ -904,8 +898,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
   if (message.type === "LoadSong") {
     if (isFreeSetlistMode(currentGig(get())?.performanceMode)) return;
     set({
-      selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
-      ...masterRowPatch(get(), message.setlistEntryId),
+      ...clientRowPatch(get(), message.setlistEntryId),
       justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true)
     });
     if (liveSongIsBackingTracks(get())) {
@@ -975,7 +968,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     if (isFreeSetlistMode(currentGig(get())?.performanceMode) || selectedSongIsFree(get())) {
       if (get().justJoinedStage && message.setlistEntryId) {
         set({
-          selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
+          ...clientRowPatch(get(), message.setlistEntryId),
           justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true)
         });
       }
@@ -985,8 +978,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     const at = followPacketTime(message.at, message.sent);
     setFollowClock(at, true);
     set({
-      selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
-      ...masterRowPatch(get(), message.setlistEntryId),
+      ...clientRowPatch(get(), message.setlistEntryId),
       justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true),
       previewTime: at,
       playback: {
@@ -1015,7 +1007,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
   if (isFreeSetlistMode(currentGig(get())?.performanceMode) || selectedSongIsFree(get())) {
     if (get().justJoinedStage && message.setlistEntryId) {
       set({
-        selectedEntryId: followSyncSelection(get(), message.setlistEntryId, false),
+        ...clientRowPatch(get(), message.setlistEntryId, message.playing),
         justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing)
       });
     }
@@ -1028,8 +1020,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     stopFollowClock(followTime);
   }
   set({
-    selectedEntryId: followSyncSelection(get(), message.setlistEntryId, false),
-    ...masterRowPatch(get(), message.setlistEntryId, message.playing),
+    ...clientRowPatch(get(), message.setlistEntryId, message.playing),
     justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing),
     previewTime: followTime,
     playback: {
@@ -1489,18 +1480,28 @@ export function readingOffShow(state: Pick<MasterState, "readingEntryId">): bool
 }
 
 /**
- * The row this device's pages are open at. That is the show's row, except while someone has a song
- * up out of the library: reading wins until the master moves the show on, which is how anyone
- * checks something mid-set without losing their place. Where the show is stays `showEntryId`.
+ * The row this device's pages are open at. A song up out of the library wins first: reading holds
+ * until the master moves the show on, which is how anyone checks something mid-set without losing
+ * their place. Mid-number the page then belongs to the show, so Elif can move her selection to
+ * work on the running order while a song plays and her page will not follow her there. With the
+ * set stopped the selection is the device's own and the page goes where it goes. Where the show
+ * is stays `showEntryId`.
  */
 export function pageEntryId(
   state: Pick<
     MasterState,
-    "deviceKind" | "masterEntryId" | "readingEntryId" | "selectedEntryId"
+    | "deviceKind"
+    | "masterEntryId"
+    | "readingEntryId"
+    | "selectedEntryId"
+    | "metronomePlaying"
+    | "playback"
   >
 ): string | null {
-  if (state.deviceKind === "client" && state.readingEntryId) return state.readingEntryId;
-  return showEntryId(state);
+  if (state.deviceKind !== "client") return state.selectedEntryId;
+  if (state.readingEntryId) return state.readingEntryId;
+  if (showIsRunning(state)) return state.masterEntryId ?? state.selectedEntryId;
+  return state.selectedEntryId ?? state.masterEntryId;
 }
 
 /** `pageEntryId` as a song: an ELIF KONUSMA or STOP opens the song it leads into. */
@@ -1511,6 +1512,16 @@ export function pageEntrySongId(state: MasterState): string | null {
   const direct = gig.setlist.find((entry) => entry.entryId === entryId);
   if (direct && isSongEntry(direct)) return entryId;
   return pageSongEntryId(withKeyChangeElifs(gig.setlist, state.songs), entryId);
+}
+
+/**
+ * The row a page scrolls to. The desk lands on the ELIF KONUSMA or the STOP itself, because that
+ * is where the show is and the operator needs to see it. A band member gets the song the marker
+ * leads into instead: what they need in front of them is the number they are about to play.
+ */
+export function pageScrollEntryId(state: MasterState): string | null {
+  if (state.deviceKind === "master") return pageEntryId(state);
+  return pageEntrySongId(state);
 }
 
 export function followsSharedPlayhead(state: MasterState): boolean {
@@ -2938,9 +2949,15 @@ export const useMasterStore = create<MasterState>((set, get) => {
         !isFreeSetlistMode(currentGig(get())?.performanceMode) &&
         !songEntryIsFree(get(), entryId)
       ) {
-        // Touching the setlist is how a band member puts the library down and comes back to the
-        // show, so it ends any reading even for the ones who cannot edit the list.
-        if (get().deviceKind === "client" && !elifCanEditSetlist(get())) {
+        // With the set stopped anyone may look down the list, and their page goes with them.
+        // Mid-number the show owns the page, so only Elif may move her selection then, to work on
+        // the running order; for the rest the tap just puts the library down. Either way it ends
+        // the reading, which is how a band member comes back to the show.
+        if (
+          get().deviceKind === "client" &&
+          showIsRunning(get()) &&
+          !elifCanEditSetlist(get())
+        ) {
           set({ readingEntryId: null });
           return;
         }

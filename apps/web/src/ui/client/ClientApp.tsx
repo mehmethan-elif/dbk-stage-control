@@ -4,6 +4,7 @@ import {
   clientStageLive,
   useMasterStore
 } from "../../store/master-store";
+import { stageHomeScreenRole } from "../../native/sync-host";
 import {
   ChordIcon,
   ChronometerIcon,
@@ -56,7 +57,10 @@ export function ClientApp() {
   const clientSession = useMasterStore((s) => s.clientSession);
   const stageLive = useMasterStore(clientStageLive);
   const connected = clientSession === "stage";
-  const page =
+  // Only the stage icon joins a show, so the practice one carries no connect button, no concert
+  // clock, and nothing that could leave it parked on the connect page. See `stageHomeScreenRole`.
+  const stageRole = stageHomeScreenRole();
+  const requested =
     masterPage === "nota"
       ? "nota"
       : masterPage === "chords"
@@ -66,6 +70,7 @@ export function ClientApp() {
           : masterPage === "lan"
             ? "lan"
             : "lyrics";
+  const page = requested === "lan" && !stageRole ? "lyrics" : requested;
   const practice = useMasterStore(clientPracticeMode);
   const libraryStatus = useMasterStore((s) => s.libraryStatus);
   const practiceBusy = useMasterStore((s) => s.practiceBusy);
@@ -136,41 +141,46 @@ export function ClientApp() {
         >
           <DrumsIcon />
         </button>
+        <span className="topbar-role">{stageRole ? "STAGE" : "PRACTICE"}</span>
         <div className="grow" />
         <StageViewTools />
-        <div className="topbar-time-cluster">
-          <button
-            type="button"
-            className={`chrono-btn${concertOn ? " on" : ""}`}
-            title={concertOn ? "Reset concert time" : "Start concert time"}
-            aria-label={concertOn ? "Reset concert time" : "Start concert time"}
-            aria-pressed={concertOn}
-            onClick={() => {
-              if (concertOn) {
-                concertStarted.current = null;
-                setConcertOn(false);
-                setConcertMs(0);
-                return;
-              }
-              concertStarted.current = Date.now();
-              setConcertOn(true);
-              setConcertMs(0);
-            }}
-          >
-            <ChronometerIcon />
-          </button>
-          <span className="concert-time-value">{formatElapsed(concertMs)}</span>
-        </div>
-        <button
-          type="button"
-          className={`lyrics-btn page-icon topbar-connect${page === "lan" ? " on" : stageLive ? " lan-ok" : ""}`}
-          title="Stage connect"
-          aria-label="Stage connect"
-          aria-pressed={page === "lan" || connected}
-          onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
-        >
-          <StageConnectIcon />
-        </button>
+        {stageRole ? (
+          <>
+            <div className="topbar-time-cluster">
+              <button
+                type="button"
+                className={`chrono-btn${concertOn ? " on" : ""}`}
+                title={concertOn ? "Reset concert time" : "Start concert time"}
+                aria-label={concertOn ? "Reset concert time" : "Start concert time"}
+                aria-pressed={concertOn}
+                onClick={() => {
+                  if (concertOn) {
+                    concertStarted.current = null;
+                    setConcertOn(false);
+                    setConcertMs(0);
+                    return;
+                  }
+                  concertStarted.current = Date.now();
+                  setConcertOn(true);
+                  setConcertMs(0);
+                }}
+              >
+                <ChronometerIcon />
+              </button>
+              <span className="concert-time-value">{formatElapsed(concertMs)}</span>
+            </div>
+            <button
+              type="button"
+              className={`lyrics-btn page-icon topbar-connect${page === "lan" ? " on" : stageLive ? " lan-ok" : ""}`}
+              title="Stage connect"
+              aria-label="Stage connect"
+              aria-pressed={page === "lan" || connected}
+              onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
+            >
+              <StageConnectIcon />
+            </button>
+          </>
+        ) : null}
       </header>
       {page !== "lan" && ((practice && !empty) || stageLive) ? (
         <div className="app-transport">

@@ -17,6 +17,15 @@ export function practiceSharePageOrigin(): string | null {
   return window.location.origin;
 }
 
+/**
+ * True for the DBK STAGE icon, which is added from the master's own page and is the one used to
+ * join a show. The DBK PRACTICE icon comes off the published site instead, and is for playing
+ * along at home: no master to join, so it shows no way to join one.
+ */
+export function stageHomeScreenRole(): boolean {
+  return practiceSharePageOrigin() !== null;
+}
+
 export function httpSyncOrigin(host: string): string | null {
   const page = practiceSharePageOrigin();
   if (page) return page;

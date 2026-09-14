@@ -28,6 +28,7 @@ import {
   currentGig,
   elifCanEditSetlist,
   pageEntrySongId,
+  pageScrollEntryId,
   panicBlocksFollow,
   selectAddedSetlistEntry,
   stageAutoScroll,
@@ -110,6 +111,9 @@ export function LyricsView() {
   // The page opens where the master has the show, not where this device's selection is. They are
   // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
   const showEntry = useMasterStore(pageEntrySongId);
+  // The row to scroll to, which on the desk is the ELIF KONUSMA or STOP itself rather than the
+  // song it leads into. See `pageScrollEntryId`.
+  const scrollEntry = useMasterStore(pageScrollEntryId);
   const stageRef = useRef<HTMLElement>(null);
   const listEntries = gig
     ? isSongLibraryGig(gig)
@@ -173,9 +177,9 @@ export function LyricsView() {
   useEffect(() => {
     if (panicFollow) return;
     if (autoScroll && currentIdx >= 0) return;
-    if (!showEntry) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-lyric-song="${showEntry}"]`);
-  }, [showEntry, autoScroll, currentIdx, panicFollow]);
+    if (!scrollEntry) return;
+    scrollStageToSongTitleWhenReady(stageRef.current, `[data-lyric-song="${scrollEntry}"]`);
+  }, [scrollEntry, autoScroll, currentIdx, panicFollow]);
 
   useEffect(() => {
     if (!autoScroll || currentIdx < 0) return;
