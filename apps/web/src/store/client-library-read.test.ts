@@ -5,7 +5,6 @@ import {
   readingOffShow,
   pageEntryId,
   pageEntrySongId,
-  pageScrollEntryId,
   showEntryId
 } from "./master-store";
 import { librarySongsNotOnSetlist, songOnSetlist } from "./song-library";
@@ -98,7 +97,7 @@ describe("pageEntryId on a stage client", () => {
   });
 });
 
-describe("pageScrollEntryId", () => {
+describe("a STOP the show has landed on", () => {
   const stopped = {
     playback: { state: PlaybackState.Ready, clock: null },
     gigs: [
@@ -115,18 +114,20 @@ describe("pageScrollEntryId", () => {
     ]
   } as unknown as Partial<StageState>;
 
-  it("lands the desk on the STOP itself", () => {
+  it("scrolls the desk to the STOP itself and opens the song under it", () => {
     const state = stageState({
       ...stopped,
       deviceKind: "master",
       selectedEntryId: "stop_1"
     } as Partial<StageState>);
-    expect(pageScrollEntryId(state)).toBe("stop_1");
+    expect(pageEntryId(state)).toBe("stop_1");
+    expect(pageEntrySongId(state)).toBe("entry_other");
   });
 
-  it("lands a band member on the song the STOP leads into", () => {
+  it("scrolls a band member to the STOP the same way", () => {
     const state = stageState({ ...stopped, masterEntryId: "stop_1", selectedEntryId: "stop_1" });
-    expect(pageScrollEntryId(state)).toBe("entry_other");
+    expect(pageEntryId(state)).toBe("stop_1");
+    expect(pageEntrySongId(state)).toBe("entry_other");
   });
 });
 

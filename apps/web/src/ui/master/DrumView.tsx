@@ -33,7 +33,7 @@ import {
   currentGig,
   elifCanEditSetlist,
   pageEntrySongId,
-  pageScrollEntryId,
+  pageEntryId,
   followsSharedPlayhead,
   panicBlocksFollow,
   selectAddedSetlistEntry,
@@ -473,9 +473,9 @@ export function DrumView() {
   // The page opens where the master has the show, not where this device's selection is. They are
   // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
   const showEntry = useMasterStore(pageEntrySongId);
-  // The row to scroll to, which on the desk is the ELIF KONUSMA or STOP itself rather than the
-  // song it leads into. See `pageScrollEntryId`.
-  const scrollEntry = useMasterStore(pageScrollEntryId);
+  // The row to scroll to, which is the ELIF KONUSMA or STOP itself rather than the song it leads
+  // into. See `pageEntryId`.
+  const scrollEntry = useMasterStore(pageEntryId);
   const metroFollow = useMasterStore((s) => s.metronomePlaying);
   const stageRef = useRef<HTMLElement>(null);
   const [leadInId, setLeadInId] = useState<string>();

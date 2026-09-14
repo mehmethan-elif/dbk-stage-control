@@ -23,7 +23,7 @@ import {
   type Song
 } from "@dbk/core";
 import { useFollowPlayheadTime } from "../../store/follow-clock";
-import { currentGig, elifCanEditSetlist, followsSharedPlayhead, panicBlocksFollow, readingOffShow, selectAddedSetlistEntry, pageEntrySongId, pageScrollEntryId, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
+import { currentGig, elifCanEditSetlist, followsSharedPlayhead, panicBlocksFollow, readingOffShow, selectAddedSetlistEntry, pageEntryId, pageEntrySongId, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
 import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
 import { libraryApi } from "../../library/api";
 import { ChainIcon, DeleteIcon } from "../shared/icons";
@@ -179,7 +179,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   // The page opens where the master has the show, not where this device's selection is. They are
   // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
   const showEntry = useMasterStore(pageEntrySongId);
-  const scrollEntry = useMasterStore(pageScrollEntryId);
+  const scrollEntry = useMasterStore(pageEntryId);
   const stageRef = useRef<HTMLElement>(null);
   const [editSlot, setEditSlot] = useState<HTMLDivElement | null>(null);
   const [pagesTick, setPagesTick] = useState(0);
@@ -234,8 +234,8 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
 
   const pinToSelected = !panicFollow && (!detached || !autoScroll || !playingEntryId);
   const selectedSongId = selected?.entryId ?? null;
-  // On the desk this is the ELIF KONUSMA or STOP itself rather than the song it leads into, so
-  // the scroll lands on the marker the show has stopped at. See `pageScrollEntryId`.
+  // The ELIF KONUSMA or STOP itself rather than the song it leads into, so the scroll lands on
+  // the marker the show has stopped at. See `pageEntryId`.
   const scrollTarget = scrollEntry ?? selectedSongId;
 
   useEffect(() => {

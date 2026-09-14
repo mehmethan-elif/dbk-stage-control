@@ -965,8 +965,12 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     return;
   }
   if (message.type === "Play") {
-    if (isFreeSetlistMode(currentGig(get())?.performanceMode) || selectedSongIsFree(get())) {
-      if (get().justJoinedStage && message.setlistEntryId) {
+    const freeSetlist = isFreeSetlistMode(currentGig(get())?.performanceMode);
+    if (freeSetlist || songEntryIsFree(get(), message.setlistEntryId ?? get().selectedEntryId)) {
+      // A song on its own click has no shared clock to follow, but the row is still the master's:
+      // starting one has to take every device to it. Free setlist mode is the one place the row
+      // is not shared, so there only the join snap lands.
+      if (message.setlistEntryId && (!freeSetlist || get().justJoinedStage)) {
         set({
           ...clientRowPatch(get(), message.setlistEntryId),
           justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true)
@@ -1004,8 +1008,10 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     return;
   }
   if (message.type !== "Position") return;
-  if (isFreeSetlistMode(currentGig(get())?.performanceMode) || selectedSongIsFree(get())) {
-    if (get().justJoinedStage && message.setlistEntryId) {
+  const freeSetlist = isFreeSetlistMode(currentGig(get())?.performanceMode);
+  if (freeSetlist || songEntryIsFree(get(), message.setlistEntryId ?? get().selectedEntryId)) {
+    // See the Play handler: no shared clock on a free song, but the row is still the master's.
+    if (message.setlistEntryId && (!freeSetlist || get().justJoinedStage)) {
       set({
         ...clientRowPatch(get(), message.setlistEntryId, message.playing),
         justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing)
@@ -1486,6 +1492,9 @@ export function readingOffShow(state: Pick<MasterState, "readingEntryId">): bool
  * work on the running order while a song plays and her page will not follow her there. With the
  * set stopped the selection is the device's own and the page goes where it goes. Where the show
  * is stays `showEntryId`.
+ *
+ * This is what every device scrolls to, an ELIF KONUSMA or a STOP included: the marker is where
+ * the show has stopped, and the song it leads into sits right below it anyway.
  */
 export function pageEntryId(
   state: Pick<
@@ -1504,7 +1513,10 @@ export function pageEntryId(
   return state.selectedEntryId ?? state.masterEntryId;
 }
 
-/** `pageEntryId` as a song: an ELIF KONUSMA or STOP opens the song it leads into. */
+/**
+ * `pageEntryId` as a song: an ELIF KONUSMA or STOP opens the song it leads into, since a marker
+ * has no page of its own. The scroll still lands on the marker itself — see `pageEntryId`.
+ */
 export function pageEntrySongId(state: MasterState): string | null {
   const entryId = pageEntryId(state);
   const gig = currentGig(state);
@@ -1512,16 +1524,6 @@ export function pageEntrySongId(state: MasterState): string | null {
   const direct = gig.setlist.find((entry) => entry.entryId === entryId);
   if (direct && isSongEntry(direct)) return entryId;
   return pageSongEntryId(withKeyChangeElifs(gig.setlist, state.songs), entryId);
-}
-
-/**
- * The row a page scrolls to. The desk lands on the ELIF KONUSMA or the STOP itself, because that
- * is where the show is and the operator needs to see it. A band member gets the song the marker
- * leads into instead: what they need in front of them is the number they are about to play.
- */
-export function pageScrollEntryId(state: MasterState): string | null {
-  if (state.deviceKind === "master") return pageEntryId(state);
-  return pageEntrySongId(state);
 }
 
 export function followsSharedPlayhead(state: MasterState): boolean {
