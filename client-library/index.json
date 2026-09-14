@@ -171,13 +171,13 @@
         },
         {
           "path": "settings.json",
-          "size": 3,
-          "hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+          "size": 951,
+          "hash": "9d085946aaf07720ea70c43122a7ff927b8b2f2be2c276320c2afa7df35c022a"
         },
         {
           "path": "song.json",
-          "size": 297,
-          "hash": "cd0c230ec77a92ce78dfafc4b8a0876f544ce5b699d22659df91e60a7bbb776d"
+          "size": 1205,
+          "hash": "f2407ef0b05b604a1643402e5cf333b1ee565236270fdeb832d51433b20616b3"
         }
       ]
     },

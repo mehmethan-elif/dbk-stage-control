@@ -427,19 +427,25 @@ export function nextMasterEntryId(
 }
 
 /**
- * Where a client stands after a packet from the master. The master's row wins every time it
- * moves: selecting a song or starting one puts every device on it, which is the whole point of
- * the stage being connected, and it ends whatever was open out of the library too. Between moves
- * the selection belongs to the device, so anyone can look down the list while the set is stopped.
- * An idle Position trails the last song played and is not a move.
+ * Where a client stands after a packet from the master. The master putting the show on a row
+ * takes every device there: selecting a song or pressing play ends both a local selection and
+ * anything opened out of the library, which is the whole point of the stage being connected. It
+ * counts even when the row has not changed, because someone may have wandered off it since — the
+ * press of play is the move, not the change of row.
+ *
+ * A Position packet only reports where the show already is, so there it takes a changed row (an
+ * auto-advance mid-set) and leaves a device that is looking elsewhere alone. An idle Position
+ * trails the last song played and is no move at all.
  */
 export function clientRowPatch(
   state: Pick<MasterState, "masterEntryId" | "readingEntryId" | "selectedEntryId">,
   incoming: string | undefined,
-  playing = true
+  options: { playing?: boolean; reporting?: boolean } = {}
 ): Pick<MasterState, "masterEntryId" | "readingEntryId" | "selectedEntryId"> {
+  const { playing = true, reporting = false } = options;
   const masterEntryId = nextMasterEntryId(state.masterEntryId, incoming, playing);
-  if (masterEntryId === state.masterEntryId) {
+  const moved = masterEntryId !== state.masterEntryId || (!reporting && Boolean(incoming));
+  if (!moved) {
     return {
       masterEntryId,
       readingEntryId: state.readingEntryId,
@@ -721,12 +727,17 @@ function broadcastSelection() {
 
 function broadcastPlay() {
   const state = useMasterStore.getState();
-  if (isFreeSetlistMode(currentGig(state)?.performanceMode) || selectedSongIsFree(state)) return;
   const gig = state.gigs.find((item) => item.id === state.gigId);
   const clock = controller.getClock();
   const entryId = clock?.setlistEntryId ?? state.selectedEntryId;
   const entry = entryId ? gig?.setlist.find((item) => item.entryId === entryId) : undefined;
   if (!entry || !isSongEntry(entry)) return;
+  // A song on its own click has no clock to share, so there is no Play packet to send for it. The
+  // band still has to be taken to it, and the selection says the row on its own.
+  if (isFreeSetlistMode(currentGig(state)?.performanceMode) || selectedSongIsFree(state)) {
+    broadcastSelection();
+    return;
+  }
   sendSync({
     type: "Play",
     songId: clock?.songId ?? entry.songId,
@@ -877,7 +888,10 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     set({
       gigs: [gig],
       gigId: gig.id,
-      ...clientRowPatch(previous, incomingSelected),
+      // Reporting: a gig packet carries the running order, and every edit to the setlist sends
+      // one. Taking the row off those would drag a band member back off a song they had opened
+      // whenever anyone touched the list.
+      ...clientRowPatch(previous, incomingSelected, { reporting: true }),
       ...(incomingSelected
         ? {}
         : { selectedEntryId: stillThere ? currentId : firstSongEntryId(gig) }),
@@ -1013,7 +1027,10 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     // See the Play handler: no shared clock on a free song, but the row is still the master's.
     if (message.setlistEntryId && (!freeSetlist || get().justJoinedStage)) {
       set({
-        ...clientRowPatch(get(), message.setlistEntryId, message.playing),
+        ...clientRowPatch(get(), message.setlistEntryId, {
+          playing: message.playing,
+          reporting: true
+        }),
         justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing)
       });
     }
@@ -1026,7 +1043,10 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     stopFollowClock(followTime);
   }
   set({
-    ...clientRowPatch(get(), message.setlistEntryId, message.playing),
+    ...clientRowPatch(get(), message.setlistEntryId, {
+      playing: message.playing,
+      reporting: true
+    }),
     justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing),
     previewTime: followTime,
     playback: {
@@ -3303,6 +3323,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
           metronome.start(metronomeTempoMap(parsed), time, { silent, intro: !silent });
           setFollowClockSource(() => audibleMetronomeTime());
           startMetronomeTick();
+          // The ticks say nothing about which song they are counting. Sending the row is what
+          // takes the band to the song the click has started, the same as pressing play on a track.
+          if (get().deviceKind === "master") broadcastSelection();
         };
         if (silent || metronome.introPrepared(ctx)) {
           begin();

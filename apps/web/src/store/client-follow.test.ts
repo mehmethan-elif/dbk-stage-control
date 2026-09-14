@@ -14,8 +14,19 @@ describe("clientRowPatch", () => {
     });
   });
 
-  it("leaves a local selection alone while the master stays on the same row", () => {
+  it("takes a browsing device back when the master presses play on the row it was already on", () => {
+    // Play is the move, not the change of row: nothing else would tell the band the song has begun.
     expect(clientRowPatch(client("master-song", "local-song"), "master-song")).toEqual({
+      masterEntryId: "master-song",
+      selectedEntryId: "master-song",
+      readingEntryId: null
+    });
+  });
+
+  it("leaves a local selection alone when a packet only reports the row it is already on", () => {
+    expect(
+      clientRowPatch(client("master-song", "local-song"), "master-song", { reporting: true })
+    ).toEqual({
       masterEntryId: "master-song",
       selectedEntryId: "local-song",
       readingEntryId: null
@@ -24,10 +35,23 @@ describe("clientRowPatch", () => {
 
   it("keeps the master's row when a later idle Position trails the last song", () => {
     expect(
-      clientRowPatch(client("master-song", "local-song"), "stale-clock-song", false)
+      clientRowPatch(client("master-song", "local-song"), "stale-clock-song", {
+        playing: false,
+        reporting: true
+      })
     ).toEqual({
       masterEntryId: "master-song",
       selectedEntryId: "local-song",
+      readingEntryId: null
+    });
+  });
+
+  it("takes a changed row off a Position packet, which is the set advancing by itself", () => {
+    expect(
+      clientRowPatch(client("master-song", "local-song"), "next-song", { reporting: true })
+    ).toEqual({
+      masterEntryId: "next-song",
+      selectedEntryId: "next-song",
       readingEntryId: null
     });
   });
@@ -40,10 +64,13 @@ describe("clientRowPatch", () => {
     });
   });
 
-  it("closes a song opened out of the library when the master moves, not before", () => {
+  it("closes a song opened out of the library when the master moves, not on a report", () => {
     const reading = { masterEntryId: "master-song", selectedEntryId: "master-song", readingEntryId: "practice_kale" };
-    expect(clientRowPatch(reading, "master-song").readingEntryId).toBe("practice_kale");
-    expect(clientRowPatch(reading, "next-song").readingEntryId).toBe(null);
+    expect(clientRowPatch(reading, "master-song", { reporting: true }).readingEntryId).toBe(
+      "practice_kale"
+    );
+    expect(clientRowPatch(reading, "master-song").readingEntryId).toBe(null);
+    expect(clientRowPatch(reading, "next-song", { reporting: true }).readingEntryId).toBe(null);
   });
 
   it("holds what it has when a packet carries no row at all", () => {
