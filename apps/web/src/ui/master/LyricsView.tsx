@@ -27,7 +27,7 @@ import {
   clientPracticeMode,
   currentGig,
   elifCanEditSetlist,
-  elifLookingAhead,
+  showSongEntryId,
   panicBlocksFollow,
   selectAddedSetlistEntry,
   stageAutoScroll,
@@ -104,7 +104,9 @@ export function LyricsView() {
   const autoScroll = useMasterStore(stageAutoScroll);
   const panicFollow = useMasterStore(panicBlocksFollow);
   const detached = useMasterStore(followsSharedPlayhead);
-  const lookingAhead = useMasterStore(elifLookingAhead);
+  // The page opens where the master has the show, not where this device's selection is. They are
+  // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
+  const showEntry = useMasterStore(showSongEntryId);
   const stageRef = useRef<HTMLElement>(null);
   const listEntries = gig
     ? isSongLibraryGig(gig)
@@ -119,18 +121,16 @@ export function LyricsView() {
     : practice
       ? withSelectedLibrarySong(listEntries, songs, selectedEntryId)
       : listEntries;
-  const selected = selectedEntryId
-    ? entries.find((entry) => entry.entryId === selectedEntryId)
+  const selected = showEntry
+    ? entries.find((entry) => entry.entryId === showEntry)
     : undefined;
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
-  const playingEntryId = lookingAhead
-    ? undefined
-    : detached && (playing || panicFollow)
-      ? (playback.clock?.setlistEntryId ?? undefined)
-      : !detached && (playing || panicFollow)
-        ? (selectedEntryId ?? playback.clock?.setlistEntryId ?? undefined)
-        : undefined;
+  const playingEntryId = detached && (playing || panicFollow)
+    ? (playback.clock?.setlistEntryId ?? undefined)
+    : !detached && (playing || panicFollow)
+      ? (showEntry ?? playback.clock?.setlistEntryId ?? undefined)
+      : undefined;
   const liveSong = findSongByRef(
     songs,
     detached ? (playback.clock?.songId ?? selected?.songId) : selected?.songId
@@ -170,9 +170,9 @@ export function LyricsView() {
   useEffect(() => {
     if (panicFollow) return;
     if (autoScroll && currentIdx >= 0) return;
-    if (!selectedEntryId) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-lyric-song="${selectedEntryId}"]`);
-  }, [selectedEntryId, autoScroll, currentIdx, panicFollow]);
+    if (!showEntry) return;
+    scrollStageToSongTitleWhenReady(stageRef.current, `[data-lyric-song="${showEntry}"]`);
+  }, [showEntry, autoScroll, currentIdx, panicFollow]);
 
   useEffect(() => {
     if (!autoScroll || currentIdx < 0) return;
@@ -185,7 +185,7 @@ export function LyricsView() {
       return;
     }
     const next = leadIn ?? stage.querySelector(".lyrics-cue.next");
-    const fallbackId = playingEntryId ?? selectedEntryId;
+    const fallbackId = playingEntryId ?? showEntry;
     const fallback = fallbackId ? stage.querySelector(`[data-lyric-song="${fallbackId}"]`) : null;
     const node = current ?? fallback;
     if (!(node instanceof HTMLElement)) return;
@@ -200,7 +200,7 @@ export function LyricsView() {
     currentIdx,
     followMeasure,
     playingEntryId,
-    selectedEntryId,
+    showEntry,
     zoom,
     upcoming?.entryId
   ]);
@@ -286,7 +286,7 @@ export function LyricsView() {
                         : undefined
                     }
                     live={live}
-                    followRall={live || (!playing && selectedEntryId === entry.entryId)}
+                    followRall={live || (!playing && showEntry === entry.entryId)}
                     time={liveTime}
                     smooth={readOnly && playing && live}
                     leadIn={upcoming?.entryId === entry.entryId}

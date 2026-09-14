@@ -13,6 +13,7 @@ import {
   insertElifAfterSelected,
   moveEntry,
   nextEndedSelectionId,
+  pageSongEntryId,
   songFollowedByElif,
   withKeyChangeElifs
 } from "./setlist.js";
@@ -161,7 +162,7 @@ describe("setlist helpers", () => {
     expect(nextEndedSelectionId([a, { type: "talk", entryId: "stop", label: "STOP" }, b], 0)).toBe(
       "stop"
     );
-    expect(nextEndedSelectionId([a, talk, b], 0)).toBe("2");
+    expect(nextEndedSelectionId([a, talk, b], 0)).toBe("3");
     expect(nextEndedSelectionId([a, b], 0)).toBe("2");
     expect(effectiveFinishMode(a, false, [a, { ...b, skipped: true }], 0)).toBe(FinishMode.Stop);
     expect(
@@ -241,6 +242,14 @@ describe("setlist helpers", () => {
     expect(withKeyChangeElifs([a, talk, b], songs).map((entry) => entry.entryId)).toEqual(["1", "3", "2"]);
     expect(songFollowedByElif([a, b], 0, songs)).toBe(true);
     expect(songFollowedByElif([a, talk, b], 0, songs)).toBe(true);
+    // The set stops on the row Elif speaks over, and that row is the one on screen even though
+    // the setlist itself only holds the two songs.
+    expect(nextEndedSelectionId([a, b], 0, songs)).toBe("elif_key_1_2");
+    expect(nextEndedSelectionId([a, b], 0)).toBe("2");
+    expect(pageSongEntryId(inserted, "elif_key_1_2")).toBe("2");
+    expect(pageSongEntryId([a, talk], "3")).toBe("1");
+    expect(pageSongEntryId(inserted, "2")).toBe("2");
+    expect(pageSongEntryId(inserted, "not_on_the_list")).toBe("not_on_the_list");
   });
 
   it("places locked ELIF KONUSMA from the next unskipped song", () => {

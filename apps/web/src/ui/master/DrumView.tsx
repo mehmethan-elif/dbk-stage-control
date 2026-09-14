@@ -32,7 +32,7 @@ import {
   clientPracticeMode,
   currentGig,
   elifCanEditSetlist,
-  elifLookingAhead,
+  showSongEntryId,
   followsSharedPlayhead,
   panicBlocksFollow,
   selectAddedSetlistEntry,
@@ -466,7 +466,9 @@ export function DrumView() {
   const autoScroll = useMasterStore(stageAutoScroll);
   const panicFollow = useMasterStore(panicBlocksFollow);
   const detached = useMasterStore(followsSharedPlayhead);
-  const lookingAhead = useMasterStore(elifLookingAhead);
+  // The page opens where the master has the show, not where this device's selection is. They are
+  // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
+  const showEntry = useMasterStore(showSongEntryId);
   const metroFollow = useMasterStore((s) => s.metronomePlaying);
   const stageRef = useRef<HTMLElement>(null);
   const [leadInId, setLeadInId] = useState<string>();
@@ -487,13 +489,11 @@ export function DrumView() {
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
   const following = playing || panicFollow || metroFollow;
-  const playingEntryId = lookingAhead
-    ? undefined
-    : detached && (playing || panicFollow)
-      ? (playback.clock?.setlistEntryId ?? undefined)
-      : !detached && following
-        ? (selectedEntryId ?? playback.clock?.setlistEntryId ?? undefined)
-        : undefined;
+  const playingEntryId = detached && (playing || panicFollow)
+    ? (playback.clock?.setlistEntryId ?? undefined)
+    : !detached && following
+      ? (showEntry ?? playback.clock?.setlistEntryId ?? undefined)
+      : undefined;
   const visible = (practice || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries).filter(
     (entry) => !entry.skipped
   );
@@ -506,9 +506,9 @@ export function DrumView() {
   useEffect(() => {
     if (panicFollow) return;
     if (autoScroll && playingEntryId) return;
-    if (!selectedEntryId) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-drum-song="${selectedEntryId}"]`);
-  }, [selectedEntryId, autoScroll, playingEntryId, panicFollow]);
+    if (!showEntry) return;
+    scrollStageToSongTitleWhenReady(stageRef.current, `[data-drum-song="${showEntry}"]`);
+  }, [showEntry, autoScroll, playingEntryId, panicFollow]);
 
   const addSong = (songId: string) => {
     if (!gig) return;
@@ -580,7 +580,7 @@ export function DrumView() {
                     entryId={entry.entryId}
                     song={item}
                     live={playingEntryId === entry.entryId}
-                    preview={selectedEntryId === entry.entryId && !lookingAhead}
+                    preview={showEntry === entry.entryId}
                     leadIn={leadInId === entry.entryId}
                     chainNext={chainNext && playingEntryId === entry.entryId}
                   />
@@ -592,7 +592,7 @@ export function DrumView() {
                 songs={songs}
                 bodySource={bodySource}
                 playingEntryId={playingEntryId}
-                selectedEntryId={selectedEntryId ?? undefined}
+                selectedEntryId={showEntry ?? undefined}
                 detached={detached}
                 autoScroll={autoScroll}
                 zoom={zoom}

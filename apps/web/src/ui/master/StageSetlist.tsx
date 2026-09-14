@@ -24,6 +24,7 @@ import {
   selectAddedSetlistEntry,
   setlistLocked,
   followsSharedPlayhead,
+  showEntryId,
   stageConnectOn,
   useMasterStore
 } from "../../store/master-store";
@@ -116,11 +117,14 @@ export function StageSetlist(props: {
     metronomePlaying ||
     playback.state === PlaybackState.Playing ||
     playback.state === PlaybackState.Transitioning;
-  const playingEntryId = songPlaying
-    ? followPlayhead || liveClient
-      ? playback.clock?.setlistEntryId
-      : props.selectedEntryId
-    : undefined;
+  // The red mark says where the show is, and the show has a place between numbers too: an
+  // ELIF KONUSMA the set has stopped on, or the song the master has lined up next. So it falls
+  // back to the master's row rather than going out whenever nothing is sounding.
+  const showEntry = useMasterStore(showEntryId);
+  const liveEntryId = followPlayhead || liveClient
+    ? playback.clock?.setlistEntryId
+    : props.selectedEntryId;
+  const playingEntryId = (songPlaying ? liveEntryId : null) ?? showEntry ?? undefined;
   const listRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{
     id: string;
@@ -322,7 +326,11 @@ export function StageSetlist(props: {
               }${locked ? " is-locked" : ""}${lockRows ? " is-frozen" : ""}`}
               onPointerDown={(event) => onPointerDown(entry.entryId, event)}
             >
-              <div className={`lyrics-elif-item${on ? " on" : ""}${locked ? " is-locked" : ""}`}>
+              <div
+                className={`lyrics-elif-item${on ? " on" : ""}${locked ? " is-locked" : ""}${
+                  playingEntryId === entry.entryId ? " is-playing" : ""
+                }`}
+              >
                 <TalkLeadIcon locked={locked} stop={isStopMarker(entry)} />
                 <span className="elif-copy">
                   <TalkLabel entry={entry} />

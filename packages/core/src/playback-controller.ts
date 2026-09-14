@@ -410,7 +410,7 @@ export class PlaybackController {
     this.decks[fromDeck].stop();
     this.state = PlaybackState.Ready;
     this.endedToEntryId = this.gig
-      ? nextEndedSelectionId(this.gig.setlist, this.currentIndex)
+      ? nextEndedSelectionId(this.gig.setlist, this.currentIndex, this.songs)
       : null;
     this.logger.playback("song_ended", { songId });
     this.emit();

@@ -23,7 +23,7 @@ import {
   type Song
 } from "@dbk/core";
 import { useFollowPlayheadTime } from "../../store/follow-clock";
-import { clientPracticeMode, currentGig, elifCanEditSetlist, elifLookingAhead, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
+import { clientPracticeMode, currentGig, elifCanEditSetlist, followsSharedPlayhead, panicBlocksFollow, selectAddedSetlistEntry, showSongEntryId, stageAutoScroll, stagePlayheadTime, useMasterStore } from "../../store/master-store";
 import { findSongByRef, isSongLibraryGig, librarySongsNotOnSetlist, selectedLibraryEntries, withSelectedLibrarySong } from "../../store/song-library";
 import { libraryApi } from "../../library/api";
 import { ChainIcon, DeleteIcon } from "../shared/icons";
@@ -173,7 +173,9 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   const autoScroll = useMasterStore(stageAutoScroll);
   const panicFollow = useMasterStore(panicBlocksFollow);
   const detached = useMasterStore(followsSharedPlayhead);
-  const lookingAhead = useMasterStore(elifLookingAhead);
+  // The page opens where the master has the show, not where this device's selection is. They are
+  // the same row everywhere except on Elif's, where selecting is how she reorders the setlist.
+  const showEntry = useMasterStore(showSongEntryId);
   const stageRef = useRef<HTMLElement>(null);
   const [editSlot, setEditSlot] = useState<HTMLDivElement | null>(null);
   const [pagesTick, setPagesTick] = useState(0);
@@ -201,20 +203,18 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
       : listEntries;
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
-  const playingEntryId = lookingAhead
-    ? undefined
-    : playing && detached
-      ? playback.clock?.setlistEntryId
-      : playing && !detached
-        ? (selectedEntryId ?? playback.clock?.setlistEntryId)
-        : undefined;
+  const playingEntryId = playing && detached
+    ? playback.clock?.setlistEntryId
+    : playing && !detached
+      ? (showEntry ?? playback.clock?.setlistEntryId)
+      : undefined;
   const followTime = useMasterStore(stagePlayheadTime);
   const lastScrollKey = useRef("");
   const playingSong = findSongByRef(
     songs,
     detached
       ? playback.clock?.songId
-      : (entries.find((entry) => entry.entryId === selectedEntryId)?.songId ??
+      : (entries.find((entry) => entry.entryId === showEntry)?.songId ??
         playback.clock?.songId)
   );
   const upcoming = playingEntryId
@@ -225,7 +225,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   );
   const bodyEntries = stageBodyEntries(bodySource);
   const selected =
-    visible.find((entry) => entry.entryId === selectedEntryId) ?? visible[0];
+    visible.find((entry) => entry.entryId === showEntry) ?? visible[0];
   const selectedSong = findSongByRef(songs, selected?.songId);
 
   const pinToSelected = !panicFollow && (!detached || !autoScroll || !playingEntryId);
@@ -898,7 +898,7 @@ function NotaProgressBar(props: { entryId: string; song: Song }) {
   const storeTime = useMasterStore(stagePlayheadTime);
   const followTime = useFollowPlayheadTime(storeTime);
   const panicFollow = useMasterStore(panicBlocksFollow);
-  const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
+  const selectedEntryId = useMasterStore(showSongEntryId);
   if (!count) return null;
 
   const playing =
@@ -1022,12 +1022,12 @@ function ScoreLyrics(props: {
   const storeTime = useMasterStore((s) => {
     const live =
       s.playback.clock?.setlistEntryId === props.entryId ||
-      (panicBlocksFollow(s) && s.selectedEntryId === props.entryId);
+      (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId);
     const idlePreview =
       s.playback.state !== PlaybackState.Playing &&
       s.playback.state !== PlaybackState.Transitioning &&
       !panicBlocksFollow(s) &&
-      s.selectedEntryId === props.entryId;
+      showSongEntryId(s) === props.entryId;
     return live || idlePreview ? stagePlayheadTime(s) : undefined;
   });
   const line = activeScoreLyric(
@@ -1064,12 +1064,12 @@ function RallMarks(props: {
     if (isMetronomeSetlistMode(currentGig(s)?.performanceMode)) return undefined;
     const live =
       s.playback.clock?.setlistEntryId === props.entryId ||
-      (panicBlocksFollow(s) && s.selectedEntryId === props.entryId);
+      (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId);
     const idlePreview =
       s.playback.state !== PlaybackState.Playing &&
       s.playback.state !== PlaybackState.Transitioning &&
       !panicBlocksFollow(s) &&
-      s.selectedEntryId === props.entryId;
+      showSongEntryId(s) === props.entryId;
     return live || idlePreview ? stagePlayheadTime(s) : undefined;
   });
   return (
@@ -1107,7 +1107,7 @@ function PlayRects(props: {
   const hidePlayRects = useMasterStore((s) =>
     hidesLeftoverNotaRects(props.song, currentGig(s)?.performanceMode)
   );
-  const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
+  const selectedEntryId = useMasterStore(showSongEntryId);
   const anyPlaying = useMasterStore(
     (s) =>
       s.playback.state === PlaybackState.Playing ||
@@ -1120,19 +1120,19 @@ function PlayRects(props: {
         s.playback.state === PlaybackState.Transitioning) ||
         panicBlocksFollow(s)) &&
       (s.playback.clock?.setlistEntryId === props.entryId ||
-        (panicBlocksFollow(s) && s.selectedEntryId === props.entryId))
+        (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId))
   );
   const preview = !anyPlaying && selectedEntryId === props.entryId;
   const active = playing || Boolean(props.leadIn) || preview;
   const storeTime = useMasterStore((s) => {
     const live =
       s.playback.clock?.setlistEntryId === props.entryId ||
-      (panicBlocksFollow(s) && s.selectedEntryId === props.entryId);
+      (panicBlocksFollow(s) && showSongEntryId(s) === props.entryId);
     const idlePreview =
       s.playback.state !== PlaybackState.Playing &&
       s.playback.state !== PlaybackState.Transitioning &&
       !panicBlocksFollow(s) &&
-      s.selectedEntryId === props.entryId;
+      showSongEntryId(s) === props.entryId;
     return live || idlePreview ? stagePlayheadTime(s) : 0;
   });
   const time = useFollowPlayheadTime(storeTime);

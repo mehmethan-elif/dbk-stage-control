@@ -2853,6 +2853,11 @@ button {
   border-color: var(--accent);
 }
 
+/* The row is already red, so the mark that says the show is here has to be the other way round. */
+.lyrics-elif-item.is-playing {
+  box-shadow: inset 0 0 0 2px #fff;
+}
+
 .lyrics-elif-item .lyrics-skip {
   background: rgba(0, 0, 0, 0.28);
   border-color: rgba(255, 255, 255, 0.35);

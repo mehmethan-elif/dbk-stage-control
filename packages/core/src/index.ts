@@ -102,6 +102,7 @@ export {
   lockedElifEntry,
   nextEndedSelectionId,
   nextUnskippedSongIndex,
+  pageSongEntryId,
   previousSongIndex,
   songFollowedByElif,
   trimElifAfterLastSong,

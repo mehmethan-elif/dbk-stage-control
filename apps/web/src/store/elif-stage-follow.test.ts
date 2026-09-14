@@ -1,18 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { PlaybackState } from "@dbk/core";
+import { PlaybackState, type Song } from "@dbk/core";
 import {
   elifCanEditSetlist,
-  elifLookingAhead,
   followsSharedPlayhead,
-  showIsRunning
+  nextMasterEntryId,
+  showEntryId,
+  showIsRunning,
+  showSongEntryId
 } from "./master-store";
 
 type StageState = Parameters<typeof followsSharedPlayhead>[0];
 
+function song(id: string, key: string): Song {
+  return {
+    id,
+    version: 1,
+    title: id,
+    key,
+    info: { key, playMode: "PLAYBACK" },
+    duration: 60,
+    assets: [],
+    tempoMap: [],
+    sections: []
+  } as unknown as Song;
+}
+
 /**
- * Elif joins the stage to edit the setlist, which she does by selecting a row. These cover
- * that selecting mid-number leaves the stage on the playing song, while selecting between
- * numbers still opens the song she picked.
+ * Elif joins the stage to reorder the setlist, which she does by selecting a row. These cover
+ * that her selection stays an edit cursor while her pages keep showing the master's row, and
+ * that the master's row can be an ELIF KONUSMA the set has stopped on.
  */
 function stageState(over: Partial<StageState> = {}): StageState {
   return {
@@ -24,9 +40,20 @@ function stageState(over: Partial<StageState> = {}): StageState {
     metronomePlaying: false,
     autoScroll: true,
     selectedEntryId: "entry_playing",
+    masterEntryId: "entry_playing",
     gigId: "gig_1",
-    gigs: [{ id: "gig_1", name: "Show", setlist: [], performanceMode: "FOLLOW_SONG_INFO" }],
-    songs: [],
+    gigs: [
+      {
+        id: "gig_1",
+        name: "Show",
+        setlist: [
+          { type: "song", entryId: "entry_playing", songId: "biz" },
+          { type: "song", entryId: "entry_other", songId: "kale" }
+        ],
+        performanceMode: "FOLLOW_SONG_INFO"
+      }
+    ],
+    songs: [song("biz", "Am"), song("kale", "Em")],
     fileIndex: {},
     playback: {
       state: PlaybackState.Ready,
@@ -61,25 +88,77 @@ describe("showIsRunning", () => {
   });
 });
 
-describe("followsSharedPlayhead for Elif", () => {
-  it("keeps her on the playing song when she selects another row mid-number", () => {
-    const state = stageState({ ...playing, selectedEntryId: "entry_other" });
-    expect(followsSharedPlayhead(state)).toBe(true);
-    expect(elifLookingAhead(state)).toBe(false);
-  });
-
-  it("still follows while only the metronome runs", () => {
-    const state = stageState({ metronomePlaying: true, selectedEntryId: "entry_other" });
-    expect(followsSharedPlayhead(state)).toBe(true);
-  });
-
-  it("lets her read a song she picks between numbers", () => {
+describe("showEntryId", () => {
+  it("keeps a client on the master's row when its own selection has moved", () => {
     const state = stageState({ selectedEntryId: "entry_other" });
-    expect(followsSharedPlayhead(state)).toBe(false);
-    expect(elifLookingAhead(state)).toBe(true);
+    expect(showEntryId(state)).toBe("entry_playing");
   });
 
-  it("does not treat the playing row as looking ahead", () => {
-    expect(elifLookingAhead(stageState())).toBe(false);
+  it("uses this device's selection on the master and off the stage", () => {
+    expect(showEntryId(stageState({ deviceKind: "master", selectedEntryId: "entry_other" }))).toBe(
+      "entry_other"
+    );
+    expect(
+      showEntryId(stageState({ masterEntryId: null, selectedEntryId: "entry_other" }))
+    ).toBe("entry_other");
+  });
+});
+
+describe("showSongEntryId", () => {
+  it("opens the song the master has selected", () => {
+    expect(showSongEntryId(stageState({ selectedEntryId: "entry_other" }))).toBe("entry_playing");
+  });
+
+  it("opens the song an ELIF KONUSMA leads into", () => {
+    const state = stageState({ masterEntryId: "elif_key_entry_playing_entry_other" });
+    expect(showSongEntryId(state)).toBe("entry_other");
+  });
+
+  it("opens the song a STOP leads into", () => {
+    const gig = {
+      id: "gig_1",
+      name: "Show",
+      setlist: [
+        { type: "song", entryId: "entry_playing", songId: "biz" },
+        { type: "talk", entryId: "stop_1", label: "STOP" },
+        { type: "song", entryId: "entry_other", songId: "kale" }
+      ],
+      performanceMode: "FOLLOW_SONG_INFO"
+    };
+    const state = stageState({
+      gigs: [gig],
+      masterEntryId: "stop_1"
+    } as unknown as Partial<StageState>);
+    expect(showSongEntryId(state)).toBe("entry_other");
+  });
+});
+
+describe("nextMasterEntryId", () => {
+  it("takes the row the master reports while it is playing", () => {
+    expect(nextMasterEntryId("a", "b", true)).toBe("b");
+  });
+
+  it("leaves an ELIF KONUSMA in place when an idle packet trails the last song", () => {
+    expect(nextMasterEntryId("elif_key_a_b", "a", false)).toBe("elif_key_a_b");
+  });
+
+  it("keeps what it has when a packet carries no row", () => {
+    expect(nextMasterEntryId("a", undefined)).toBe("a");
+  });
+});
+
+describe("followsSharedPlayhead for Elif", () => {
+  it("stays on the master's row whether or not the band is playing", () => {
+    const idle = stageState({ selectedEntryId: "entry_other" });
+    expect(followsSharedPlayhead(idle)).toBe(true);
+    expect(followsSharedPlayhead(stageState({ ...playing, selectedEntryId: "entry_other" }))).toBe(
+      true
+    );
+  });
+
+  it("holds while only the metronome runs", () => {
+    expect(
+      followsSharedPlayhead(stageState({ metronomePlaying: true, selectedEntryId: "entry_other" }))
+    ).toBe(true);
   });
 });

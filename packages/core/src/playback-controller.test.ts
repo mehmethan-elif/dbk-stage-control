@@ -488,7 +488,7 @@ describe("PlaybackController", () => {
     expect(engine.getDeck("B")?.isPlaying).toBe(true);
   });
 
-  it("selects the next song without playing when the next song key changes", async () => {
+  it("stops on the key change ELIF KONUSMA instead of playing on", async () => {
     const inD = { ...songA, info: { bpm: 120, numerator: 4, denominator: 4, key: "D" } };
     const inB = { ...songB, info: { bpm: 120, numerator: 4, denominator: 4, key: "B" } };
     const gig = makeGig([
@@ -505,7 +505,7 @@ describe("PlaybackController", () => {
     engine.advance(12.02);
     expect(controller.getSnapshot().state).toBe(PlaybackState.Ready);
     expect(controller.getSnapshot().clock?.playing).toBe(false);
-    expect(endedTo).toBe("e2");
+    expect(endedTo).toBe("elif_key_e1_e2");
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 
@@ -633,7 +633,7 @@ describe("PlaybackController", () => {
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 
-  it("selects the next song without playing when ELIF KONUSMA follows", async () => {
+  it("stops on an ELIF KONUSMA instead of playing on", async () => {
     const gig = makeGig([
       { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
       { type: "talk", entryId: "elif1", label: ELIF_KONUSMA_LABEL },
@@ -651,7 +651,7 @@ describe("PlaybackController", () => {
     expect(snap.state).toBe(PlaybackState.Ready);
     expect(snap.clock?.songId).toBe("song_a");
     expect(snap.clock?.playing).toBe(false);
-    expect(endedTo).toBe("e2");
+    expect(endedTo).toBe("elif1");
     expect(engine.getDeck("B")?.isPlaying).toBe(false);
   });
 

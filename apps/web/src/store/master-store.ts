@@ -52,7 +52,9 @@ import {
   parseSetlistPerformanceMode,
   practiceMasterAudio,
   nextEndedSelectionId,
+  pageSongEntryId,
   songFollowedByElif,
+  withKeyChangeElifs,
   SetlistPerformanceMode,
   FinishMode,
   applyRemoteSetlist,
@@ -421,6 +423,21 @@ export function followSyncSelection(
   return incomingEntryId;
 }
 
+/**
+ * Follows the master's own row, which is not the same thing as this device's selection: Elif's
+ * selection is an edit cursor for reordering the setlist. An idle Position trails the last song
+ * played, so it must not drag the row back off an ELIF KONUSMA the master has just landed on.
+ */
+export function nextMasterEntryId(
+  current: string | null,
+  incoming: string | undefined,
+  playing = true
+): string | null {
+  if (!incoming) return current;
+  if (!playing && current) return current;
+  return incoming;
+}
+
 /** Idle Position must not consume the join snap. LoadGig / LoadSong / Play do. */
 export function nextJustJoinedStage(
   justJoinedStage: boolean,
@@ -465,6 +482,8 @@ interface MasterState {
   gigId: string | null;
   librarySongId: string | null;
   selectedEntryId: string | null;
+  /** The row the master has the show on, as broadcast. Null off the stage. See `showEntryId`. */
+  masterEntryId: string | null;
   justJoinedStage: boolean;
   previewTime: number;
   playbackPaused: boolean;
@@ -664,9 +683,14 @@ function broadcastSelection() {
   const state = useMasterStore.getState();
   if (isFreeSetlistMode(currentGig(state)?.performanceMode)) return;
   const gig = state.gigs.find((item) => item.id === state.gigId);
-  const entry = state.selectedEntryId
-    ? gig?.setlist.find((item) => item.entryId === state.selectedEntryId)
-    : undefined;
+  // Over the displayed list, so landing on the key change ELIF KONUSMA reaches the clients too.
+  // It is not in the stored setlist, but every device works the same row out of the same songs.
+  const entry =
+    state.selectedEntryId && gig
+      ? withKeyChangeElifs(gig.setlist, state.songs).find(
+          (item) => item.entryId === state.selectedEntryId
+        )
+      : undefined;
   if (!entry) return;
   const song = isSongEntry(entry) ? state.songs.find((item) => item.id === entry.songId) : undefined;
   sendSync({
@@ -841,6 +865,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
         : stillThere
           ? currentId
           : firstSongEntryId(gig),
+      masterEntryId: nextMasterEntryId(previous.masterEntryId, incomingSelected),
       justJoinedStage: nextJustJoinedStage(previous.justJoinedStage, Boolean(incomingSelected)),
       ...(remoteSongs ? { songs: remoteSongs } : {}),
       playback: free || !sameShow
@@ -859,6 +884,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     if (isFreeSetlistMode(currentGig(get())?.performanceMode)) return;
     set({
       selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
+      masterEntryId: message.setlistEntryId,
       justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true)
     });
     if (liveSongIsBackingTracks(get())) {
@@ -939,6 +965,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
     setFollowClock(at, true);
     set({
       selectedEntryId: followSyncSelection(get(), message.setlistEntryId, true),
+      masterEntryId: message.setlistEntryId,
       justJoinedStage: nextJustJoinedStage(get().justJoinedStage, true),
       previewTime: at,
       playback: {
@@ -981,6 +1008,7 @@ function applyClientSync(message: SyncMessage, get: () => MasterState, set: (pat
   }
   set({
     selectedEntryId: followSyncSelection(get(), message.setlistEntryId, false),
+    masterEntryId: nextMasterEntryId(get().masterEntryId, message.setlistEntryId, message.playing),
     justJoinedStage: nextJustJoinedStage(get().justJoinedStage, message.playing),
     previewTime: followTime,
     playback: {
@@ -1421,26 +1449,34 @@ function selectedSongIsFree(state: MasterState): boolean {
   return songEntryIsFree(state);
 }
 
-/** Reading a song other than the live one. Only between numbers — see `followsSharedPlayhead`. */
-export function elifLookingAhead(state: MasterState): boolean {
-  return (
-    elifCanEditSetlist(state) &&
-    !showIsRunning(state) &&
-    Boolean(state.selectedEntryId) &&
-    state.selectedEntryId !== (state.playback.clock?.setlistEntryId ?? null)
-  );
+/**
+ * The row the show is on: what every device marks and opens its pages at. That is the master's
+ * row, not this device's selection, because Elif reorders the setlist from the stage by selecting
+ * a row and adding, deleting or dragging around it — her selection is an edit cursor, and the
+ * stage stays where the master put it whether or not anything is playing.
+ */
+export function showEntryId(
+  state: Pick<MasterState, "deviceKind" | "masterEntryId" | "selectedEntryId">
+): string | null {
+  if (state.deviceKind !== "client") return state.selectedEntryId;
+  return state.masterEntryId ?? state.selectedEntryId;
+}
+
+/** `showEntryId` as a song: an ELIF KONUSMA or STOP opens the song it leads into. */
+export function showSongEntryId(state: MasterState): string | null {
+  const entryId = showEntryId(state);
+  const gig = currentGig(state);
+  if (!entryId || !gig) return entryId;
+  const direct = gig.setlist.find((entry) => entry.entryId === entryId);
+  if (direct && isSongEntry(direct)) return entryId;
+  return pageSongEntryId(withKeyChangeElifs(gig.setlist, state.songs), entryId);
 }
 
 export function followsSharedPlayhead(state: MasterState): boolean {
   if (state.deviceKind === "client" && !clientStageLive(state)) return false;
   if (!stageConnectOn(state)) return false;
   if (isFreeSetlistMode(currentGig(state)?.performanceMode)) return false;
-  // Elif reorders the setlist by selecting a row and adding, deleting or dragging around it,
-  // so mid-number her selection is an edit cursor rather than a request to read that song:
-  // the stage stays on whatever is playing. Her selection deliberately does not decide this,
-  // or picking a free song would detach her again. Between numbers selecting still opens it.
-  if (elifCanEditSetlist(state)) return showIsRunning(state);
-  return !selectedSongIsFree(state);
+  return !songEntryIsFree(state, showSongEntryId(state));
 }
 
 export function usesFreeMetroTransport(state: MasterState): boolean {
@@ -2064,6 +2100,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     gigId: null,
     librarySongId: null,
     selectedEntryId: null,
+    masterEntryId: null,
     justJoinedStage: false,
     previewTime: 0,
     playbackPaused: false,
@@ -2193,6 +2230,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         stageName,
         clientSession: "stage",
         setlistOpen: true,
+        masterEntryId: null,
         justJoinedStage: true
       });
       connectSync(get, set);
@@ -2213,6 +2251,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         clientSession: "practice",
         setlistOpen: true,
         syncConnected: false,
+        masterEntryId: null,
         justJoinedStage: false
       });
       void readPublishedGigs().then((published) => {

@@ -8,7 +8,6 @@ import {
   entryPlayMode,
   isLockedElif,
   isSongEntry,
-  isStopMarker,
   isTalkEntry,
   parseSongInfo
 } from "./models.js";
@@ -50,17 +49,52 @@ export function nextUnskippedSongIndex(setlist: SetlistEntry[], currentIndex: nu
   return -1;
 }
 
-/** After a song ends: land on STOP, otherwise the next unskipped song (ELIF is skipped). */
+/**
+ * After a song ends: land on the ELIF KONUSMA or STOP that follows it, otherwise the next
+ * unskipped song. A talk row is where the show actually is while Elif speaks, and the band needs
+ * to see that, so landing there is what stops the set from running on by itself. Pass `songs` to
+ * catch the key change ELIF KONUSMA too — that one is worked out from the two songs around it
+ * rather than stored, so `setlist` alone does not show it.
+ */
 export function nextEndedSelectionId(
   setlist: SetlistEntry[],
-  currentIndex: number
+  currentIndex: number,
+  songs?: Map<string, Song>
 ): string | null {
+  const current = setlist[currentIndex];
   for (let i = currentIndex + 1; i < setlist.length; i++) {
     const entry = setlist[i];
     if (!entry) continue;
-    if (isStopMarker(entry)) return entry.entryId;
-    if (isTalkEntry(entry)) continue;
-    if (isSongEntry(entry) && !entry.skipped) return entry.entryId;
+    if (isTalkEntry(entry)) return entry.entryId;
+    if (!isSongEntry(entry) || entry.skipped) continue;
+    if (current && isSongEntry(current) && songs && songsHaveDifferentKeys(current, entry, songs)) {
+      return lockedElifEntry(current.entryId, entry.entryId).entryId;
+    }
+    return entry.entryId;
+  }
+  return null;
+}
+
+/**
+ * The song a page should open for `entryId`. Talk rows are not songs, so a show sitting on an
+ * ELIF KONUSMA or a STOP opens the song it leads into: that is the one the band picks up on.
+ * Expects the displayed list, key change rows and all.
+ */
+export function pageSongEntryId(
+  displayed: readonly SetlistEntry[],
+  entryId: string | null
+): string | null {
+  if (!entryId) return null;
+  const index = displayed.findIndex((entry) => entry.entryId === entryId);
+  const at = index >= 0 ? displayed[index] : undefined;
+  if (!at || isSongEntry(at)) return entryId;
+  for (let i = index + 1; i < displayed.length; i++) {
+    const entry = displayed[i];
+    if (entry && isSongEntry(entry) && !entry.skipped) return entry.entryId;
+  }
+  for (let i = index - 1; i >= 0; i--) {
+    const entry = displayed[i];
+    if (entry && isSongEntry(entry) && !entry.skipped) return entry.entryId;
   }
   return null;
 }
