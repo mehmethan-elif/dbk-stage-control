@@ -4,6 +4,9 @@
   "start_url": "./client",
   "scope": "./",
   "display": "standalone",
+  "icons": [
+    { "src": "./icon-practice.png", "sizes": "180x180", "type": "image/png" }
+  ],
   "background_color": "#111111",
   "theme_color": "#111111",
   "orientation": "landscape"
