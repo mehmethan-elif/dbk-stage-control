@@ -219,39 +219,42 @@ export function scrollStageToNotaSectionMeasures(
   scrollStageTo(stage, top);
 }
 
-export function scrollStageToFullSections(
-  stage: HTMLElement,
-  current: HTMLElement,
-  next: HTMLElement | null,
-  preferNext = false
-) {
-  const currentIn = stageNodeFullyInView(stage, current);
-  const currentVisible = stageNodeIntersectsView(stage, current);
-  const nextIn = !next || stageNodeFullyInView(stage, next);
-  const stageBox = stage.getBoundingClientRect();
-  const available = stageBox.height - VIEW_SLOP * 2;
-  const combinedHeight = next
-    ? Math.max(current.getBoundingClientRect().bottom, next.getBoundingClientRect().bottom) -
-      Math.min(current.getBoundingClientRect().top, next.getBoundingClientRect().top)
-    : 0;
-  const bothFit = !next || combinedHeight <= available;
-  if (preferNext && next && currentVisible) {
-    scrollStageToNextSongTitleInUpperHalf(stage, next);
-    return;
-  }
-  if (currentIn && (nextIn || !bothFit)) return;
+function spanForNode(node: Element | null | undefined): StageSpan | null {
+  if (!(node instanceof HTMLElement)) return null;
+  const box = node.getBoundingClientRect();
+  return box.height < 1 ? null : { top: box.top, bottom: box.bottom };
+}
 
-  const target = !currentIn ? current : next;
-  if (!target) return;
-  const box = target.getBoundingClientRect();
+/**
+ * The same decision the score page makes for measures, for pages whose targets are already
+ * elements. Following the played row together with the one after it is what keeps the score
+ * page moving in small steps instead of a section at a time.
+ */
+export function scrollStageToFollowedRows(
+  stage: HTMLElement,
+  current: Element | null | undefined,
+  next: Element | null | undefined,
+  leadIn: HTMLElement | null = null
+) {
+  const stageBox = stage.getBoundingClientRect();
   const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
-  if (box.height > available || box.top < stageBox.top + VIEW_SLOP) {
-    scrollStageTo(stage, box.top - stageBox.top + stage.scrollTop - pad);
+  const viewTop = stageBox.top + VIEW_SLOP + pad;
+  const viewBottom = stageBox.bottom - VIEW_SLOP_BOTTOM;
+  const span = spanForNode(current);
+  if (leadIn && preferNextSongTitle(span, viewTop, viewBottom)) {
+    scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
     return;
   }
-  if (box.bottom > stageBox.bottom - VIEW_SLOP) {
-    scrollStageTo(stage, box.bottom - stageBox.top + stage.scrollTop - stage.clientHeight + pad);
-  }
+  const top = stageScrollTopForSpans({
+    viewTop,
+    viewBottom,
+    scrollTop: stage.scrollTop,
+    current: span,
+    next: spanForNode(next),
+    focus: span
+  });
+  if (top == null) return;
+  scrollStageTo(stage, top);
 }
 
 export function scrollStageToFullSectionsCentered(

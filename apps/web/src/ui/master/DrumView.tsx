@@ -53,7 +53,7 @@ import { MetroDraftNotes } from "./metro-draft-notes";
 import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
 import {
-  scrollStageToFullSections,
+  scrollStageToFollowedRows,
   scrollStageToNextSongTitleInUpperHalf,
   scrollStageToSongTitleWhenReady,
   stageLeadInNode
@@ -299,6 +299,17 @@ export function writtenChart(song: Song | undefined, form: SongForm): WrittenRow
 
 export function drumFollowKey(form: SongForm, time: number): string {
   return formAt(form, time)?.block.id ?? "";
+}
+
+/**
+ * Which written row the playhead sits on. `paintDrumLive` already marks it every frame, so
+ * reading the marker back aims the scroll at the same row the drummer sees highlighted
+ * without repeating the run maths here.
+ */
+function drumRowKey(stage: HTMLElement | null): string {
+  const row = stage?.querySelector<HTMLElement>(".drum-run.current");
+  if (!row) return "";
+  return `${row.dataset.blockId ?? ""}@${row.dataset.runStart ?? ""}`;
 }
 
 function sectionFill(
@@ -642,7 +653,15 @@ function DrumFollow(props: {
         ? followClockTime()
         : stagePlayheadTime(useMasterStore.getState());
       const time = song && song.duration > 0 ? Math.min(song.duration, raw) : raw;
-      const key = current.playingEntryId && song ? drumFollowKey(formRef.current, time) : "";
+      const block = current.playingEntryId && song ? drumFollowKey(formRef.current, time) : "";
+      // A section lasts several bars, so keying the scroll on it alone let the playhead run
+      // off the bottom of the view before anything moved. The row is the scroll target, but
+      // the measure is what re-aims: a row of eight repeats holds one row key for eight bars,
+      // and until the key changes a hand scroll away from the playhead is never corrected.
+      // The score page re-aims every measure, so match that — the scroll policy returns
+      // "no move" when the target is already in view, so this costs one layout read a bar.
+      const row = block ? drumRowKey(current.stageRef.current) || block : "";
+      const key = row && song ? `${row}#${timeToMusical(song.tempoMap, time).measure}` : row;
       const upcoming = current.playingEntryId
         ? upcomingSongLeadIn(current.bodySource, current.songs, current.playingEntryId, song, time)
         : undefined;
@@ -666,23 +685,24 @@ function DrumFollow(props: {
     const stage = props.stageRef.current;
     if (!stage) return;
     const row = stage.querySelector(".drum-run.current");
-    const current = row?.closest(".drum-pack") ?? stage.querySelector(".drum-pack.current");
+    const pack = row?.closest(".drum-pack") ?? stage.querySelector(".drum-pack.current");
     const leadIn = stageLeadInNode(stage, "data-drum-song", leadInId);
-    if (leadIn instanceof HTMLElement && !(current instanceof HTMLElement)) {
+    if (leadIn instanceof HTMLElement && !(pack instanceof HTMLElement)) {
       scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
       return;
     }
-    const next = leadIn ?? stage.querySelector(".drum-pack.scroll-next");
     const fallbackId = props.playingEntryId ?? props.selectedEntryId;
     const fallback = fallbackId ? stage.querySelector(`[data-drum-song="${fallbackId}"]`) : null;
-    const node = current ?? fallback;
-    if (!(node instanceof HTMLElement)) return;
-    scrollStageToFullSections(
-      stage,
-      node,
-      next instanceof HTMLElement ? next : null,
-      Boolean(leadIn)
-    );
+    // Aim at the played row, like the score page aims at the played measure, and fall back
+    // to the whole section only when no row is marked. `.drum-run.next` already crosses into
+    // the following section, and repeats put it above the current row, which the shared
+    // policy handles.
+    const current = row ?? pack ?? fallback;
+    const next = row
+      ? stage.querySelector(".drum-run.next")
+      : stage.querySelector(".drum-pack.scroll-next");
+    if (!(current instanceof HTMLElement)) return;
+    scrollStageToFollowedRows(stage, current, next, leadIn);
   }, [props.autoScroll, scrollKey, props.playingEntryId, props.selectedEntryId, props.zoom, leadInId]);
 
   return null;

@@ -17,6 +17,7 @@ import {
   PlaybackState,
   PlayMode,
   songDisplayName,
+  timeToMusical,
   type Song,
   type TempoPoint,
   type SongSetlistEntry
@@ -161,6 +162,11 @@ export function LyricsView() {
   const upcoming = playingEntryId
     ? upcomingSongLeadIn(bodySource, songs, playingEntryId, playingSong, liveTime)
     : undefined;
+  // The scroll below re-aims when this changes. Keying it on the cue alone meant a long line
+  // or an instrumental gap held one value for many seconds, and a hand scroll away from the
+  // playhead stayed uncorrected that whole time. The score page re-aims every measure, so
+  // match it — the scroll leaves the view alone while the cue is already on screen.
+  const followMeasure = playingSong ? timeToMusical(playingSong.tempoMap, liveTime).measure : 0;
   useEffect(() => {
     if (panicFollow) return;
     if (autoScroll && currentIdx >= 0) return;
@@ -189,7 +195,15 @@ export function LyricsView() {
       next instanceof HTMLElement ? next : null,
       Boolean(leadIn)
     );
-  }, [autoScroll, currentIdx, playingEntryId, selectedEntryId, zoom, upcoming?.entryId]);
+  }, [
+    autoScroll,
+    currentIdx,
+    followMeasure,
+    playingEntryId,
+    selectedEntryId,
+    zoom,
+    upcoming?.entryId
+  ]);
 
   const addSong = (songId: string) => {
     if (!gig) return;
