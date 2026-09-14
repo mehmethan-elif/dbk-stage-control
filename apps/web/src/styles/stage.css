@@ -2974,6 +2974,19 @@ button {
   touch-action: none;
 }
 
+/* The setlist rail is a proportion of the window, which is fine in landscape but leaves a tablet
+   held upright with barely enough room for "Kerkük Zin". Give the rail a floor and let the names
+   run onto a second line rather than truncating the one thing the row is there to tell you. */
+@media (max-width: 820px) {
+  .lyrics-body {
+    grid-template-columns: minmax(168px, 1fr) 3fr;
+  }
+
+  .lyrics-set-name {
+    white-space: normal;
+  }
+}
+
 .lyrics-skip {
   touch-action: manipulation;
   flex: 0 0 auto;

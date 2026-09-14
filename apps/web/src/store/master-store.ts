@@ -188,6 +188,16 @@ function storedStageName(): string | null {
   return readStored(STAGE_NAME_KEY)?.trim() || null;
 }
 
+/**
+ * The setlist rail costs a fixed share of the window, which on a phone held upright is most of it
+ * and leaves the notation too narrow to read. Anything tablet sized opens with the rail showing;
+ * a phone opens on the page itself, and the toggle in the bar still pulls the rail in.
+ */
+function setlistStartsOpen(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.innerWidth >= 560;
+}
+
 export const STAGE_ZOOM_MIN = 0.6;
 export const STAGE_ZOOM_MAX = 2;
 export const STAGE_ZOOM_STEP = 0.1;
@@ -1852,7 +1862,7 @@ async function loadLibraryNow(
       hostOk: true,
       clientSession: "practice",
       stageName: REMOTE_DEVICE_NAME,
-      setlistOpen: true,
+      setlistOpen: setlistStartsOpen(),
       libraryStatus: null
     });
     return;
@@ -1935,7 +1945,7 @@ async function loadLibraryNow(
       masterPage: "lyrics",
       clientSession: "practice",
       syncHost: null,
-      setlistOpen: true,
+      setlistOpen: setlistStartsOpen(),
       songMix
     });
     const songId = next.gigs[0]?.setlist.find(isSongEntry)?.songId;
@@ -2215,7 +2225,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     practiceBusy: null,
     libraryStatus: null,
     masterPage: "prep",
-    setlistOpen: true,
+    setlistOpen: setlistStartsOpen(),
     autoScroll: true,
     editOpen: false,
     stageZooms: {
@@ -2261,7 +2271,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         syncHost: value,
         stageName: REMOTE_DEVICE_NAME,
         clientSession: "stage",
-        setlistOpen: true
+        setlistOpen: setlistStartsOpen()
       });
       connectSync(get, set);
     },
@@ -2325,7 +2335,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         syncHost: value,
         stageName,
         clientSession: "stage",
-        setlistOpen: true,
+        setlistOpen: setlistStartsOpen(),
         masterEntryId: null,
         readingEntryId: null,
         justJoinedStage: true
@@ -2346,7 +2356,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       set({
         syncHost: null,
         clientSession: "practice",
-        setlistOpen: true,
+        setlistOpen: setlistStartsOpen(),
         syncConnected: false,
         masterEntryId: null,
         readingEntryId: null,

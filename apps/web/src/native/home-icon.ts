@@ -6,6 +6,8 @@ import { stageHomeScreenRole } from "./sync-host";
  * this they would land on the home screen as two identical icons with the same name. Safari
  * reads the icon and the title when "Add to Home Screen" is tapped, so setting them at boot is
  * early enough, and an icon already on the home screen keeps whatever it was added with.
+ *
+ * Android ignores all of that and reads the manifest instead, so the manifest gets swapped too.
  */
 export function markHomeScreenRole(): void {
   if (typeof document === "undefined" || typeof window === "undefined") return;
@@ -16,11 +18,15 @@ export function markHomeScreenRole(): void {
   const title = document.querySelector('meta[name="apple-mobile-web-app-title"]');
   if (title instanceof HTMLMetaElement) title.content = name;
 
-  const icon = document.querySelector('link[rel="apple-touch-icon"]');
-  if (!(icon instanceof HTMLLinkElement)) return;
   // Relative to the page so it resolves under the Pages sub-path and the master alike.
-  icon.href = new URL(
-    stage ? "icon-stage.png" : "icon-practice.png",
-    new URL(import.meta.env.BASE_URL || "/", window.location.href)
-  ).href;
+  const asset = (file: string) =>
+    new URL(file, new URL(import.meta.env.BASE_URL || "/", window.location.href)).href;
+
+  const icon = document.querySelector('link[rel="apple-touch-icon"]');
+  if (icon instanceof HTMLLinkElement) icon.href = asset(stage ? "icon-stage.png" : "icon-practice.png");
+
+  const manifest = document.querySelector('link[rel="manifest"]');
+  if (manifest instanceof HTMLLinkElement) {
+    manifest.href = asset(stage ? "manifest-stage.webmanifest" : "manifest.webmanifest");
+  }
 }

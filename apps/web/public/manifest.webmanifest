@@ -1,13 +1,15 @@
 {
-  "name": "DBK Stage Control",
-  "short_name": "DBK",
+  "name": "DBK Practice",
+  "short_name": "DBK Practice",
   "start_url": "./client",
   "scope": "./",
   "display": "standalone",
   "icons": [
-    { "src": "./icon-practice.png", "sizes": "180x180", "type": "image/png" }
+    { "src": "./icon-practice.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "./icon-practice-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-practice-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-practice-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "background_color": "#111111",
-  "theme_color": "#111111",
-  "orientation": "landscape"
+  "theme_color": "#111111"
 }

@@ -22,6 +22,7 @@
     "ios": "npm run build:ios",
     "ios:open": "npx cap open ios",
     "fixtures": "node scripts/generate-fixtures.mjs",
+    "icons": "swift scripts/generate-icons.swift",
     "publish:library": "npx tsx scripts/publish-client-library.mjs"
   },
   "devDependencies": {
