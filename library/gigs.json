@@ -13,8 +13,23 @@
         },
         {
           "type": "song",
+          "entryId": "entry_3314b116-2039-4a9c-825a-61b9121f937a",
+          "songId": "kerku_k_zindan"
+        },
+        {
+          "type": "song",
           "entryId": "entry_a4f07c84-7498-4092-9e50-cb763349f686",
           "songId": "karahisar_kalesi"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_1e4c80ff-2e56-4af7-be51-2925732fdc96",
+          "songId": "Candan İleri"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_c610239a-54ca-4802-8627-ee8443488b7d",
+          "songId": "Mihriban"
         },
         {
           "type": "song",
