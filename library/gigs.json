@@ -23,6 +23,11 @@
         },
         {
           "type": "song",
+          "entryId": "entry_c2a1fd0f-5b16-46da-bb96-5895b87f457d",
+          "songId": "tuna_nehri"
+        },
+        {
+          "type": "song",
           "entryId": "entry_1e4c80ff-2e56-4af7-be51-2925732fdc96",
           "songId": "Candan İleri"
         },
@@ -30,11 +35,6 @@
           "type": "song",
           "entryId": "entry_c610239a-54ca-4802-8627-ee8443488b7d",
           "songId": "Mihriban"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_c2a1fd0f-5b16-46da-bb96-5895b87f457d",
-          "songId": "tuna_nehri"
         }
       ],
       "busMix": {
