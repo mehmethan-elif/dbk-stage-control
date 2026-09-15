@@ -19,7 +19,6 @@ import {
   hasClickFlac,
   hasPlaybackAudio,
   isSongEntry,
-  isStopMarker,
   type SongSetlistEntry,
   metronomeTempoMap,
   parseSongInfo,
@@ -1637,6 +1636,16 @@ export function practiceBlocksSongSelect(state: MasterState): boolean {
   );
 }
 
+/** Setlists name songs by id or by folder, so both have to reach the song. */
+function songRefMap(songs: readonly Song[]): Map<string, Song> {
+  const map = new Map<string, Song>();
+  for (const item of songs) {
+    map.set(item.id, item);
+    if (item.folder) map.set(item.folder, item);
+  }
+  return map;
+}
+
 /** PRACTICE auto-advances only when the setlist would Play Next into another Master mix. */
 export function practiceShouldPlayNext(state: MasterState): boolean {
   if (!practicePlaysMasterMix(state)) return false;
@@ -1644,17 +1653,29 @@ export function practiceShouldPlayNext(state: MasterState): boolean {
   if (!gig || !state.selectedEntryId) return false;
   const index = gig.setlist.findIndex((item) => item.entryId === state.selectedEntryId);
   if (index < 0) return false;
-  const songsByRef = new Map<string, Song>();
-  for (const item of state.songs) {
-    songsByRef.set(item.id, item);
-    if (item.folder) songsByRef.set(item.folder, item);
-  }
+  const songsByRef = songRefMap(state.songs);
   if (songFollowedByElif(gig.setlist, index, songsByRef)) return false;
   const nextId = nextUnskippedSongEntryId(gig, state.selectedEntryId);
   if (!nextId) return false;
   const nextEntry = gig.setlist.find((item) => item.entryId === nextId);
   if (!nextEntry || !isSongEntry(nextEntry)) return false;
   return practicePlaysMasterMix(state, findSongByRef(state.songs, nextEntry.songId));
+}
+
+/**
+ * Where PRACTICE lands once a song finishes: the ELIF KONUSMA or STOP that follows it, which is
+ * where the desk lands too. A plain next song is left alone — practice stopping on a song is a
+ * cue to play it again, not to move down the list. The songs are needed to see the key change
+ * ELIF KONUSMA, which is worked out from its neighbours rather than stored in the setlist.
+ */
+export function practiceEndedSelectionId(state: MasterState): string | null {
+  const gig = currentGig(state);
+  if (!gig || !state.selectedEntryId) return null;
+  const index = gig.setlist.findIndex((item) => item.entryId === state.selectedEntryId);
+  if (index < 0) return null;
+  const songsByRef = songRefMap(state.songs);
+  if (!songFollowedByElif(gig.setlist, index, songsByRef)) return null;
+  return nextEndedSelectionId(gig.setlist, index, songsByRef);
 }
 
 /** Song the live transport follows: playhead while a song is running, otherwise the selection. */
@@ -2573,14 +2594,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
           });
           return;
         }
-        const index = store.selectedEntryId
-          ? (gig?.setlist.findIndex((item) => item.entryId === store.selectedEntryId) ?? -1)
-          : -1;
-        const landOn = gig && index >= 0 ? nextEndedSelectionId(gig.setlist, index) : null;
-        const landEntry = landOn ? gig?.setlist.find((item) => item.entryId === landOn) : undefined;
-        if (landOn && landEntry && isStopMarker(landEntry)) {
-          store.selectSetlistEntry(landOn);
-        }
+        const landOn = practiceEndedSelectionId(store);
+        if (landOn) store.selectSetlistEntry(landOn);
       });
       const song = state.songs.find((item) => item.id === entry.songId);
       const files = [

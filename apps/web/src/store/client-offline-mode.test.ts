@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { PlaybackState, PlayMode, SetlistPerformanceMode, type Song } from "@dbk/core";
+import {
+  ELIF_KONUSMA_LABEL,
+  PlaybackState,
+  PlayMode,
+  STOP_LABEL,
+  SetlistPerformanceMode,
+  type SetlistEntry,
+  type Song
+} from "@dbk/core";
 import {
   clientPracticeMode,
   clientStageLive,
@@ -9,6 +17,7 @@ import {
   liveSongIsBackingTracks,
   practiceAudioKind,
   practiceBlocksSongSelect,
+  practiceEndedSelectionId,
   practicePlaysMasterMix,
   practiceShouldPlayNext,
   songShowsPositionSlider,
@@ -513,6 +522,70 @@ describe("practice setlist lock and play next", () => {
         })
       )
     ).toBe(false);
+  });
+});
+
+describe("practice landing after a song ends", () => {
+  function keyed(id: string, key: string): Song {
+    return { ...song(id, PlayMode.Playback), key };
+  }
+
+  function endedState(
+    setlist: SetlistEntry[],
+    songs: Song[],
+    selectedEntryId: string
+  ): Parameters<typeof practiceEndedSelectionId>[0] {
+    return {
+      deviceKind: "client",
+      clientSession: "practice",
+      syncConnected: false,
+      gigId: "gig",
+      selectedEntryId,
+      songs,
+      gigs: [
+        {
+          id: "gig",
+          name: "Show",
+          date: "",
+          musicians: [],
+          setlist,
+          performanceMode: SetlistPerformanceMode.FollowSongInfo
+        }
+      ]
+    } as unknown as Parameters<typeof practiceEndedSelectionId>[0];
+  }
+
+  const s1 = keyed("s1", "D MINOR");
+  const s2 = keyed("s2", "D MINOR");
+  const e1: SetlistEntry = { type: "song", entryId: "e1", songId: "s1" };
+  const e2: SetlistEntry = { type: "song", entryId: "e2", songId: "s2" };
+
+  it("lands on the ELIF KONUSMA that follows", () => {
+    const talk: SetlistEntry = { type: "talk", entryId: "t1", label: ELIF_KONUSMA_LABEL };
+    expect(practiceEndedSelectionId(endedState([e1, talk, e2], [s1, s2], "e1"))).toBe("t1");
+  });
+
+  it("lands on the STOP that follows", () => {
+    const stop: SetlistEntry = { type: "talk", entryId: "t1", label: STOP_LABEL };
+    expect(practiceEndedSelectionId(endedState([e1, stop, e2], [s1, s2], "e1"))).toBe("t1");
+  });
+
+  it("lands on the key change ELIF KONUSMA nobody wrote down", () => {
+    expect(
+      practiceEndedSelectionId(endedState([e1, e2], [s1, keyed("s2", "B KURDI")], "e1"))
+    ).toBe("elif_key_e1_e2");
+  });
+
+  it("resolves songs listed by folder", () => {
+    const byFolder: Song = { ...keyed("other", "B KURDI"), folder: "s2" };
+    expect(practiceEndedSelectionId(endedState([e1, e2], [s1, byFolder], "e1"))).toBe(
+      "elif_key_e1_e2"
+    );
+  });
+
+  it("stays put when the next song just follows on", () => {
+    expect(practiceEndedSelectionId(endedState([e1, e2], [s1, s2], "e1"))).toBeNull();
+    expect(practiceEndedSelectionId(endedState([e1], [s1], "e1"))).toBeNull();
   });
 });
 
