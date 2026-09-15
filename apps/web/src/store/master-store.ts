@@ -145,7 +145,7 @@ import {
   sendSyncMessage,
   subscribeSyncLink
 } from "../native/sync";
-import { parseSyncHostname, PRACTICE_SHARE_PORT } from "../native/sync-host";
+import { parseSyncHostname, PRACTICE_SHARE_PORT, stageHomeScreenRole } from "../native/sync-host";
 
 export type ClientSession = "practice" | "stage";
 
@@ -1888,8 +1888,13 @@ async function loadLibraryNow(
       if (!isNativeApp()) {
         const report = (message: string) => set({ libraryStatus: message, practiceBusy: message });
         report("Updating library…");
+        let tracks: Promise<number> | null = null;
         try {
-          await syncPublishedLibrary((progress) => report(progress.message));
+          const result = await syncPublishedLibrary((progress) => report(progress.message), {
+            tracks: !stageHomeScreenRole(),
+            onTracks: (progress) => set({ libraryStatus: progress.message })
+          });
+          tracks = result.tracks;
         } catch (error) {
           if (songs.length === 0) throw error;
         }
@@ -1900,6 +1905,14 @@ async function loadLibraryNow(
         }
         hostOk = songs.length > 0;
         set({ practiceBusy: null, libraryStatus: null });
+        if (tracks) {
+          // A song whose only audio is Master.mp3 reads as metronome-only while the file is
+          // absent, so pick the library up again once the tracks have finished arriving.
+          void tracks
+            .then(() => get().reloadPracticeLibrary())
+            .catch(() => undefined)
+            .finally(() => set({ libraryStatus: null }));
+        }
       }
     } else {
       const index = await libraryApi.loadIndex();
@@ -2458,11 +2471,14 @@ export const useMasterStore = create<MasterState>((set, get) => {
         const result = await syncPublishedLibrary((progress) =>
           set({ libraryStatus: progress.message, practiceBusy: progress.message })
         );
+        // Asked for by hand, so wait for the tracks as well and report the true count. Only the
+        // boot path has a reason to hand the app back before they have arrived.
+        const tracks = result.tracks ? await result.tracks : 0;
         await get().reloadPracticeLibrary();
         set({
           libraryStatus:
-            result.files > 0
-              ? `Updated ${result.files} files.`
+            result.files + tracks > 0
+              ? `Updated ${result.files + tracks} files.`
               : result.gigs === 0 && result.songs === 0
                 ? "No published library yet."
                 : "Library up to date."

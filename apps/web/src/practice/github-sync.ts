@@ -1,8 +1,10 @@
 import {
+  isMasterPracticeAudio,
   isPracticeFile,
   localFoldersNotOnRemote,
   publishedLibraryMissing,
   publishedSongTitle,
+  type ClientLibraryFile,
   type ClientLibraryIndex,
   type ClientLibrarySong,
   type Gig
@@ -55,6 +57,22 @@ export type LibrarySyncProgress = {
   message: string;
 };
 
+type QueuedFile = { folder: string; title: string; file: ClientLibraryFile };
+
+export type LibrarySyncResult = {
+  songs: number;
+  files: number;
+  gigs: number;
+  /** Backing tracks, still arriving after the readable files are in. Null when none are wanted. */
+  tracks: Promise<number> | null;
+};
+
+export type LibrarySyncOptions = {
+  /** STAGE is a viewer and never plays the tracks, so it does not carry them at all. */
+  tracks?: boolean;
+  onTracks?: (progress: LibrarySyncProgress) => void;
+};
+
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
@@ -80,27 +98,12 @@ async function fetchPublishedBuffer(url: string): Promise<ArrayBuffer> {
   throw new Error(lastError);
 }
 
-export async function syncPublishedLibrary(
+async function downloadQueue(
+  queue: readonly QueuedFile[],
+  changedFolders: Set<string>,
   onProgress?: (progress: LibrarySyncProgress) => void
-): Promise<{ songs: number; files: number; gigs: number }> {
-  onProgress?.({ message: "Checking library…" });
-  const index = await fetchClientLibraryIndex();
-  if (!index) return { songs: 0, files: 0, gigs: 0 };
-
-  const local = await listPracticeManifest();
-  const remoteFolders = new Set(index.songs.map((song) => song.folder));
-  const queue = publishedLibraryMissing(index, local);
-  for (const song of index.songs) {
-    const chart = song.files.find((file) => file.path.toLowerCase() === "song.json");
-    if (!chart) continue;
-    if (await practiceChartLooksValid(song.folder, chart.path)) continue;
-    if (queue.some((item) => item.folder === song.folder && item.file.path === chart.path)) continue;
-    queue.push({ folder: song.folder, title: publishedSongTitle(song), file: chart });
-  }
+): Promise<number> {
   let files = 0;
-  let songs = 0;
-  const changedFolders = new Set<string>();
-
   for (const [indexNum, item] of queue.entries()) {
     onProgress?.({
       message: `Downloading ${item.title} (${indexNum + 1}/${queue.length})…`
@@ -115,6 +118,37 @@ export async function syncPublishedLibrary(
     changedFolders.add(item.folder);
     files += 1;
   }
+  return files;
+}
+
+export async function syncPublishedLibrary(
+  onProgress?: (progress: LibrarySyncProgress) => void,
+  options: LibrarySyncOptions = {}
+): Promise<LibrarySyncResult> {
+  onProgress?.({ message: "Checking library…" });
+  const index = await fetchClientLibraryIndex();
+  if (!index) return { songs: 0, files: 0, gigs: 0, tracks: null };
+
+  const local = await listPracticeManifest();
+  const remoteFolders = new Set(index.songs.map((song) => song.folder));
+  const queue = publishedLibraryMissing(index, local);
+  for (const song of index.songs) {
+    const chart = song.files.find((file) => file.path.toLowerCase() === "song.json");
+    if (!chart) continue;
+    if (await practiceChartLooksValid(song.folder, chart.path)) continue;
+    if (queue.some((item) => item.folder === song.folder && item.file.path === chart.path)) continue;
+    queue.push({ folder: song.folder, title: publishedSongTitle(song), file: chart });
+  }
+
+  // Backing tracks are around seven eighths of the download, and nothing reads them off the
+  // screen. STAGE skips them outright; PRACTICE takes them, but only once the caller has been
+  // handed back control, so the charts are up in seconds instead of behind megabytes of audio.
+  const trackQueue = options.tracks === false ? [] : queue.filter((item) => isMasterPracticeAudio(item.file.path));
+  const readable = queue.filter((item) => !isMasterPracticeAudio(item.file.path));
+
+  let songs = 0;
+  const changedFolders = new Set<string>();
+  const files = await downloadQueue(readable, changedFolders, onProgress);
 
   for (const song of index.songs) {
     const remotePaths = new Set(
@@ -131,7 +165,10 @@ export async function syncPublishedLibrary(
     if (changedFolders.has(song.folder) || !local[song.folder]) songs += 1;
   }
 
-  const leftover = publishedLibraryMissing(index, await listPracticeManifest());
+  // Only what was promised for this phase: the tracks are deliberately still missing here.
+  const leftover = publishedLibraryMissing(index, await listPracticeManifest()).filter(
+    (item) => !isMasterPracticeAudio(item.file.path)
+  );
   if (leftover.length > 0) {
     const first = leftover[0];
     throw new Error(`Library incomplete: ${first?.title ?? "song"} (${leftover.length} files left).`);
@@ -151,7 +188,13 @@ export async function syncPublishedLibrary(
   }
   await writePublishedGigs(gigs);
   onProgress?.({ message: "Library ready." });
-  return { songs, files, gigs: gigs.length };
+
+  const tracks =
+    trackQueue.length > 0
+      ? downloadQueue(trackQueue, new Set<string>(), options.onTracks ?? onProgress)
+      : null;
+
+  return { songs, files, gigs: gigs.length, tracks };
 }
 
 async function applyPublishedSongTitle(song: ClientLibrarySong): Promise<void> {
