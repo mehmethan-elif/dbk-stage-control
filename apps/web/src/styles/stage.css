@@ -389,8 +389,12 @@ button {
   align-self: center;
 }
 
-.lan-address-row .lan-connect-action {
-  min-width: 8.5rem;
+/* Connect sits directly under the names and is read as part of that group, so it is cut to the
+   same width — including the narrow-screen limit, or they would stop matching on a phone. */
+.lan-connect-action {
+  width: 120px;
+  max-width: calc((100% - 16px) / 3);
+  box-sizing: border-box;
 }
 
 .lan-address-row .role-ip {
