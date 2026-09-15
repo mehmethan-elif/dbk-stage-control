@@ -1955,7 +1955,9 @@ async function loadLibraryNow(
       hostOk,
       libraryStatus: null,
       practiceBusy: null,
-      masterPage: "lyrics",
+      // The stage icon exists to join a show, so it opens on the way in. Practice has no show to
+      // join and goes straight to the songs.
+      masterPage: stageHomeScreenRole() ? "lan" : "lyrics",
       clientSession: "practice",
       syncHost: null,
       setlistOpen: setlistStartsOpen(),

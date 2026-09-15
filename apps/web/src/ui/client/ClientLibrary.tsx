@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
 import { clientBandRoster, isMasterBandName } from "@dbk/core";
-import { MASTER_HOST_KEY, PRACTICE_SHARE_PORT, SYNC_PORT } from "../../native/sync";
+import { MASTER_HOST_KEY, PRACTICE_SHARE_PORT } from "../../native/sync";
 import { currentGig, useMasterStore } from "../../store/master-store";
 import { BandRoster } from "../shared/BandRoster";
 
@@ -29,20 +29,33 @@ export function ClientLibrary() {
   const setStageName = useMasterStore((s) => s.setStageName);
   const joinStage = useMasterStore((s) => s.joinStage);
   const leaveStage = useMasterStore((s) => s.leaveStage);
+  // This page is served by the master itself, so its address is the address of the page. Nothing
+  // to type in and nothing to mistype.
   const servedHere =
     typeof window !== "undefined" && window.location.port === String(PRACTICE_SHARE_PORT);
-  const [host, setHost] = useState(
-    () =>
-      syncHost ??
-      (servedHere ? window.location.hostname : null) ??
-      (typeof localStorage !== "undefined" ? localStorage.getItem(MASTER_HOST_KEY) : "") ??
-      ""
-  );
+  const host =
+    syncHost ??
+    (servedHere ? window.location.hostname : null) ??
+    (typeof localStorage !== "undefined" ? localStorage.getItem(MASTER_HOST_KEY) : "") ??
+    "";
   const roster = clientBandRoster(gig);
   const onStage = clientSession === "stage";
   const connected = onStage && syncConnected;
-  const canConnect = (Boolean(host.trim()) || servedHere) && Boolean(stageName?.trim());
+  const canConnect = Boolean(host.trim()) && Boolean(stageName?.trim());
   const [waited, setWaited] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const attempting = onStage && !connected && !waited;
+  const stalled = onStage && !connected && waited;
+
+  const connect = () => {
+    if (connected || !canConnect) return;
+    setWaited(false);
+    setAttempt((count) => count + 1);
+    // An attempt that got no answer is stood back up rather than left in place, since the socket
+    // it was waiting on is already dead.
+    if (onStage) leaveStage();
+    joinStage(host);
+  };
 
   useEffect(() => {
     if (stageName && isMasterBandName(stageName)) setStageName(null);
@@ -55,7 +68,7 @@ export function ClientLibrary() {
     }
     const timer = window.setTimeout(() => setWaited(true), 4000);
     return () => window.clearTimeout(timer);
-  }, [onStage, connected, syncHost]);
+  }, [onStage, connected, syncHost, attempt]);
 
   return (
     <section className="panel lan-page">
@@ -73,65 +86,30 @@ export function ClientLibrary() {
 
         <form
           className="lan-block"
-            onSubmit={(event) => {
+          onSubmit={(event) => {
             event.preventDefault();
-            if (connected) {
-              leaveStage();
-              return;
-            }
-            if (onStage) {
-              leaveStage();
-              return;
-            }
-            if (!canConnect) return;
-            joinStage(host);
+            connect();
           }}
         >
-          <label className="lan-label" htmlFor="client-master-ip">
-            Master address
-          </label>
-          <div className="lan-address-row">
-            <input
-              id="client-master-ip"
-              className="role-ip"
-              value={host}
-              onChange={(event) => setHost(event.target.value)}
-              placeholder={`192.168.1.5 or 192.168.1.5:${SYNC_PORT}`}
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck={false}
-              disabled={onStage}
-            />
+          <div className="lan-actions">
             <button
               type="button"
-              className="lyrics-btn lan-connect-action"
-              disabled={!onStage && !canConnect}
-              onPointerDown={(event) =>
-                onStageAction(event, () => {
-                  if (onStage) leaveStage();
-                  else if (canConnect) joinStage(host);
-                })
-              }
-              onClick={(event) =>
-                onStageAction(event, () => {
-                  if (onStage) leaveStage();
-                  else if (canConnect) joinStage(host);
-                })
-              }
+              className={`lyrics-btn lan-connect-action${canConnect && !attempting ? " on" : ""}`}
+              disabled={!canConnect || attempting}
+              onPointerDown={(event) => onStageAction(event, connect)}
+              onClick={(event) => onStageAction(event, connect)}
             >
-              {connected ? "Disconnect" : onStage ? "Cancel" : "Connect"}
+              {attempting ? "Connecting…" : "Connect"}
             </button>
           </div>
           <p className="meta">
-            {connected
-              ? `Connected as ${stageName}.`
-              : onStage
-                ? waited
-                  ? "No master at that address. Same Wi-Fi?"
-                  : `Connecting to ${syncHost ?? host}…`
+            {attempting
+              ? `Connecting to ${syncHost ?? host}…`
+              : stalled
+                ? "No answer from the desk. Is it on this Wi-Fi with the app open?"
                 : !stageName?.trim()
-                  ? "Select Elif or Serkan, then Connect."
-                  : "Connect when Elif or Serkan is selected."}
+                  ? "Choose your name, then Connect."
+                  : "Ready — press Connect."}
           </p>
         </form>
       </div>

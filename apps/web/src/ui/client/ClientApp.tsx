@@ -54,9 +54,7 @@ export function ClientApp() {
   const masterPage = useMasterStore((s) => s.masterPage);
   const setMasterPage = useMasterStore((s) => s.setMasterPage);
   const songs = useMasterStore((s) => s.songs);
-  const clientSession = useMasterStore((s) => s.clientSession);
   const stageLive = useMasterStore(clientStageLive);
-  const connected = clientSession === "stage";
   // Only the stage icon joins a show, so the practice one carries no connect button, no concert
   // clock, and nothing that could leave it parked on the connect page. See `stageHomeScreenRole`.
   const stageRole = stageHomeScreenRole();
@@ -86,6 +84,23 @@ export function ClientApp() {
     }, 250);
     return () => window.clearInterval(id);
   }, []);
+
+  // Joining is the only reason the connect page exists, so it leaves of its own accord once the
+  // desk answers and comes back if the link ever goes. Nobody has to think about it mid-show. The
+  // page buttons still work while it is up, so losing the desk does not trap anyone here.
+  const wasLive = useRef(false);
+  useEffect(() => {
+    if (!stageRole) return;
+    if (stageLive) {
+      wasLive.current = true;
+      if (masterPage === "lan") setMasterPage("lyrics");
+      return;
+    }
+    if (wasLive.current) {
+      wasLive.current = false;
+      setMasterPage("lan");
+    }
+  }, [stageRole, stageLive, masterPage, setMasterPage]);
 
   if (!ready) {
     return <LibraryLoading status={libraryStatus ?? practiceBusy} />;
@@ -169,16 +184,14 @@ export function ClientApp() {
               </button>
               <span className="concert-time-value">{formatElapsed(concertMs)}</span>
             </div>
-            <button
-              type="button"
-              className={`lyrics-btn page-icon topbar-connect${page === "lan" ? " on" : stageLive ? " lan-ok" : ""}`}
-              title="Stage connect"
-              aria-label="Stage connect"
-              aria-pressed={page === "lan" || connected}
-              onClick={() => setMasterPage(page === "lan" ? "lyrics" : "lan")}
+            <span
+              className={`lyrics-btn page-icon topbar-connect${stageLive ? " lan-ok" : ""}`}
+              title={stageLive ? "Connected to the desk" : "Not connected"}
+              role="status"
+              aria-label={stageLive ? "Connected to the desk" : "Not connected"}
             >
               <StageConnectIcon />
-            </button>
+            </span>
           </>
         ) : null}
       </header>
