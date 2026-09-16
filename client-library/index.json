@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 2527,
-    "hash": "f5b294b12516a31c02e178292a1bf567d83907a275acbc3b9ae3d12fffe9794b"
+    "size": 2688,
+    "hash": "b722ad2778eb6775e5a570d5f820f6e1bd19bf88ca708c27f53b24aea1d2ac93"
   },
   "songs": [
     {
@@ -34,7 +34,7 @@
         {
           "path": "Master.mp3",
           "size": 2895620,
-          "hash": "d2e9805531c1bf8ea46aa3ec2792e51bea3b34f38b55a98e398f45f3c94da914"
+          "hash": "ee795233fdf8e88b5d25104bb1f9edbf73704af875ca0c8b4dee2505016df469"
         },
         {
           "path": "Nota.pdf",
@@ -49,44 +49,7 @@
         {
           "path": "song.json",
           "size": 201941,
-          "hash": "725f020c43b74d0ce9ebfc7a03e6e17414195910731c4253b3b725be10f47c85"
-        }
-      ]
-    },
-    {
-      "id": "Candan İleri",
-      "folder": "candan_ileri",
-      "title": "Candan İleri",
-      "files": [
-        {
-          "path": "Candan İleri - Chords.pdf",
-          "size": 49007,
-          "hash": "7595f0d91ed1e8ea7320063b3ab062f65d2f05e40f9dd3acd0bcaf1575b1051c"
-        },
-        {
-          "path": "Candan İleri - Drums.pdf",
-          "size": 16643,
-          "hash": "3f993f6dcf01918e28fdbdbe4da734d936cd47a105d759635c190224c1faa314"
-        },
-        {
-          "path": "Candan İleri - Lyrics.pdf",
-          "size": 14122,
-          "hash": "e4e2060d1d5152da687c37b5dd0354379ba03c7ac4505c011ba0fc17082b50d1"
-        },
-        {
-          "path": "Nota.pdf",
-          "size": 31636,
-          "hash": "e75f0c105bcd025c4f2c2fb5ee4a855e489c14b669a5b742ff95b1bf08c91883"
-        },
-        {
-          "path": "settings.json",
-          "size": 517,
-          "hash": "f9b8706f731967c95399811f8514e296bb8d77ae19a4a0fdb86d936e1b39973e"
-        },
-        {
-          "path": "song.json",
-          "size": 857,
-          "hash": "9936d84f9e178dbc5c985ed9e3354794afad940cd2299718bca457e1a307e529"
+          "hash": "b420dd172e233eff85234e7e642cc73b85eb43909acfc61db86896b3de83c44b"
         }
       ]
     },
@@ -112,8 +75,8 @@
         },
         {
           "path": "Master.mp3",
-          "size": 3083701,
-          "hash": "697bb1f6c06e2cadcdcdb89a9697dc24666b3cafc0020e21bfc049bd0aa323d9"
+          "size": 3122572,
+          "hash": "622b7d1c0d84288898d889a4f12d614be8f30c76edc80e4cee5a934ebbf575cf"
         },
         {
           "path": "Nota.pdf",
@@ -128,7 +91,34 @@
         {
           "path": "song.json",
           "size": 85250,
-          "hash": "ab2d667a96509ff7b5add542ed893bb50ba96fa1e29d520436b478d867153868"
+          "hash": "97725f0220a40b2cdd51033ca22ce7bd2e7abd19fb88e8e2a33f146335cdcc2a"
+        }
+      ]
+    },
+    {
+      "id": "kendim_ettim_kendim_buldum",
+      "folder": "kendim_ettim_kendim_buldum",
+      "title": "Kendim Ettim Kendim Buldum",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3337821,
+          "hash": "21a7cadc448e552f0ce53bb67722549e9c362a556d997507422624432c65dee2"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 42113,
+          "hash": "74878c92ba78e2eab6482faef9873a4adb6fd7af21aa6faa22a1f5788a373e42"
+        },
+        {
+          "path": "settings.json",
+          "size": 12829,
+          "hash": "d82e881111dab3b77a1afa71d1e15f8d0b1d5d8966a97419245b18243ca56609"
+        },
+        {
+          "path": "song.json",
+          "size": 121658,
+          "hash": "f4aefc69baf03eff2029f6320a4739124feb1f5c78770178a9f412b1354bc1cb"
         }
       ]
     },
@@ -140,7 +130,7 @@
         {
           "path": "Master.mp3",
           "size": 3149321,
-          "hash": "7f705d7006d635511bdc006a74ab1e9615c1de466d2a2d91b624e84ee60d238f"
+          "hash": "55859a1b0bf7bac1cd283a361cfa6eba92c380b56e85abebba13f897ccbe2114"
         },
         {
           "path": "Nota.pdf",
@@ -154,30 +144,35 @@
         },
         {
           "path": "song.json",
-          "size": 133007,
-          "hash": "56f79ba9a85b071906e094eb02982fc63edab92dc8a9d9d23ae05e94fe142195"
+          "size": 133038,
+          "hash": "cf44c13f631dec8493bb0b85b12142115f57c7337ee7420dfbc4843361ba2db5"
         }
       ]
     },
     {
-      "id": "Mihriban",
-      "folder": "Mihriban",
-      "title": "Mihriban",
+      "id": "telli_turnam",
+      "folder": "telli_turnam",
+      "title": "Telli Turnam",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 4480939,
+          "hash": "b0c4fba23f259147b4b0b6ac5e4eba01ef1b7d230cbdf396388d23563a2390c1"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 34032,
-          "hash": "9b6ea5300f64d83b670bc0b7396091300e783a860e3a6fdecb9e3651b53db545"
+          "size": 38319,
+          "hash": "fc435e49cf29fe89c0336885f471a5d51cf75c61bab06474a339408f7d4d68ec"
         },
         {
           "path": "settings.json",
-          "size": 951,
-          "hash": "9d085946aaf07720ea70c43122a7ff927b8b2f2be2c276320c2afa7df35c022a"
+          "size": 17498,
+          "hash": "2815fe11176b43af0851a44f8ea35ca0d39747f89dcd044cfe70d4d7ade2c69a"
         },
         {
           "path": "song.json",
-          "size": 1205,
-          "hash": "f2407ef0b05b604a1643402e5cf333b1ee565236270fdeb832d51433b20616b3"
+          "size": 134158,
+          "hash": "5c9b21d5269ac1ade3ae8b458a392948c4057218e97a4d84c017f619832f6a96"
         }
       ]
     },
@@ -189,7 +184,7 @@
         {
           "path": "Master.mp3",
           "size": 2841703,
-          "hash": "7f3acb5603667a6ac426c9694a0345c42777859aaea5e688f6d38227bf271057"
+          "hash": "bb63c7acaa7d548e83aab334aa6bda2d8ccf7a9ff8caf854ad25edf4ee1a0bd2"
         },
         {
           "path": "Nota.pdf",
@@ -204,7 +199,7 @@
         {
           "path": "song.json",
           "size": 77143,
-          "hash": "45dbba11c5bebb17412b4f68088143989b2ce4cbf38360354231b10fb47b8f0a"
+          "hash": "cc799cf16d1dedc02ea09b2fc83e8670f47e8aedb8f60f23bee38df47577b617"
         }
       ]
     }

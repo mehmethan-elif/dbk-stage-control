@@ -2,8 +2,8 @@
   "id": "karahisar_kalesi",
   "version": 1,
   "title": "Karahisar Kalesi",
-  "duration": 192.673613,
-  "clickDuration": 192.673613,
+  "duration": 195.097855,
+  "clickDuration": 195.097855,
   "nextSongAt": 187.825128,
   "key": "B",
   "scale": "KURDI",
@@ -333,7 +333,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 4,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -453,7 +453,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 7,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -653,7 +653,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 13,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -1053,7 +1053,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 29,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -3222,7 +3222,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 16,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }

@@ -287,7 +287,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 7,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -309,7 +309,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 8,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -521,7 +521,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 12,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -2559,7 +2559,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 36,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -2614,7 +2614,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 37,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }

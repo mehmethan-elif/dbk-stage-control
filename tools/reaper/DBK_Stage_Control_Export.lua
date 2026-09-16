@@ -1,5 +1,5 @@
 -- @description DBK Stage Control Export
--- @version 0.3.11
+-- @version 0.3.12
 -- @about
 --   Collects duration, tempo map, sections, lyrics, chords, and selected stems
 --   from the current REAPER project and writes song.json plus audio for DBK.
@@ -12,7 +12,7 @@
 --       selected; they are mixed through that folder and the master bus.
 --     NOTA     muted for Master.mp3 (guide / score audio; not part of the mix)
 --     NEXT     project marker → nextSongAt (when PLAY_NEXT starts the following song)
---     MASTER   always available → Master.mp3 (full mix, 128 kbps CBR; CLICK and NOTA muted)
+--     MASTER   always available → Master.mp3 (full mix, 128 kbps CBR; NOTA muted)
 --     CLICK    if present → Click.flac through master bus (44.1 kHz 16-bit)
 --     KICK, DRUMS, ... → one Kick.flac, Drums.flac, ... through master bus
 --
@@ -1725,11 +1725,8 @@ local function render_stem_flac(stem, out_dir)
   })
 end
 
-local function render_master_mp3(out_dir, click_tracks)
+local function render_master_mp3(out_dir)
   local mute = {}
-  for _, track in ipairs(click_tracks or {}) do
-    mute[#mute + 1] = track
-  end
   for _, track in ipairs(find_named_tracks("NOTA")) do
     mute[#mute + 1] = track
   end
@@ -1858,7 +1855,7 @@ local function export_json(data, out_dir, opts)
   local extras = {}
   local master_file
   if include.MASTER then
-    local rendered, dest = render_master_mp3(out_dir, data.click and data.click.tracks or {})
+    local rendered, dest = render_master_mp3(out_dir)
     if rendered then
       master_file = "Master.mp3"
     else
