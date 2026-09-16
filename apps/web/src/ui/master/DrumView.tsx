@@ -56,9 +56,9 @@ import { SongTitleMeta } from "./stage-title-meta";
 import {
   scrollStageToFollowedRows,
   scrollStageToNextSongTitleInUpperHalf,
-  scrollStageToSongTitleWhenReady,
   stageLeadInNode
 } from "./stage-scroll";
+import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { ChordRepeatMark, FormSectionBar } from "./form-marks";
 import { isCountSection } from "./count-section";
@@ -496,6 +496,7 @@ export function DrumView() {
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
   const zoom = useMasterStore((s) => s.stageZooms.drums);
+  const masterPage = useMasterStore((s) => s.masterPage);
   const autoScroll = useMasterStore(stageAutoScroll);
   // Someone reading a song out of the library is not watching the show, so nothing follows a
   // playhead until the master moves on and puts them back on it.
@@ -542,12 +543,11 @@ export function DrumView() {
     setChainNext((current) => (current === chain ? current : chain));
   }, []);
 
-  useEffect(() => {
-    if (panicFollow) return;
-    if (autoScroll && playingEntryId) return;
-    if (!scrollEntry) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-drum-song="${scrollEntry}"]`);
-  }, [scrollEntry, autoScroll, playingEntryId, panicFollow]);
+  usePinSelectedSong(stageRef, "data-drum-song", {
+    page: masterPage,
+    scrollEntry,
+    skip: panicFollow || Boolean(autoScroll && playingEntryId)
+  });
 
   const addSong = (songId: string) => {
     if (!gig) return;

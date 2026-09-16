@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { nextSongTitleScrollTop, preferNextSongTitle, stageScrollTopForSpans } from "./stage-scroll";
+import {
+  nextSongTitleScrollTop,
+  preferNextSongTitle,
+  songTitlePinReady,
+  stageScrollTopForSpans
+} from "./stage-scroll";
 
 describe("stageScrollTopForSpans", () => {
   const view = { viewTop: 100, viewBottom: 500, scrollTop: 0 };
@@ -108,5 +113,29 @@ describe("preferNextSongTitle", () => {
 
   it("hands off when there is no current span", () => {
     expect(preferNextSongTitle(null, 100, 500)).toBe(true);
+  });
+});
+
+describe("songTitlePinReady", () => {
+  it("waits until the song has a real height", () => {
+    expect(songTitlePinReady({ height: 0, top: 40, lastTop: 40, stable: 2 })).toEqual({
+      ready: false,
+      nextStable: 0
+    });
+  });
+
+  it("waits until songs above stop growing", () => {
+    expect(songTitlePinReady({ height: 80, top: 400, lastTop: 120, stable: 1 })).toEqual({
+      ready: false,
+      nextStable: 0
+    });
+    expect(songTitlePinReady({ height: 80, top: 400, lastTop: 400, stable: 0 })).toEqual({
+      ready: false,
+      nextStable: 1
+    });
+    expect(songTitlePinReady({ height: 80, top: 400, lastTop: 400, stable: 1 })).toEqual({
+      ready: true,
+      nextStable: 2
+    });
   });
 });

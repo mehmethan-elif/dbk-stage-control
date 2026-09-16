@@ -58,9 +58,9 @@ import { SongTitleMeta } from "./stage-title-meta";
 import {
   scrollStageToFollowedRows,
   scrollStageToNextSongTitleInUpperHalf,
-  scrollStageToSongTitleWhenReady,
   stageLeadInNode
 } from "./stage-scroll";
+import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { ChordRepeatMark, FormSectionBar } from "./form-marks";
 import { isCountSection } from "./count-section";
@@ -267,12 +267,11 @@ export function ChordView() {
     setChainNext((current) => (current === chain ? current : chain));
   }, []);
 
-  useEffect(() => {
-    if (panicFollow) return;
-    if (autoScroll && playingEntryId) return;
-    if (!scrollEntry) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-chord-song="${scrollEntry}"]`);
-  }, [scrollEntry, autoScroll, playingEntryId, panicFollow]);
+  usePinSelectedSong(stageRef, "data-chord-song", {
+    page: masterPage,
+    scrollEntry,
+    skip: panicFollow || Boolean(autoScroll && playingEntryId)
+  });
 
   const addSong = (songId: string) => {
     if (!gig) return;

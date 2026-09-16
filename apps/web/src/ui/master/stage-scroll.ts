@@ -6,13 +6,24 @@ let frame = 0;
 let pendingTo = Number.NaN;
 let pendingStage: HTMLElement | null = null;
 
+export function stopStageScroll() {
+  cancelAnimationFrame(frame);
+  frame = 0;
+  pendingTo = Number.NaN;
+  pendingStage = null;
+}
+
 export function scrollStageTo(stage: HTMLElement, top: number, ms = AUTO_SCROLL_MS) {
   const from = stage.scrollTop;
   const to = Math.max(0, top);
   const delta = to - from;
   if (Math.abs(delta) < 2) return;
   if (pendingStage === stage && Number.isFinite(pendingTo) && Math.abs(pendingTo - to) < 2) return;
-  cancelAnimationFrame(frame);
+  stopStageScroll();
+  if (ms <= 0) {
+    stage.scrollTop = to;
+    return;
+  }
   pendingStage = stage;
   pendingTo = to;
   const started = performance.now();
@@ -24,8 +35,7 @@ export function scrollStageTo(stage: HTMLElement, top: number, ms = AUTO_SCROLL_
       frame = requestAnimationFrame(tick);
       return;
     }
-    pendingTo = Number.NaN;
-    pendingStage = null;
+    stopStageScroll();
     stage.dispatchEvent(new Event("stagescrollend"));
   };
   frame = requestAnimationFrame(tick);
@@ -290,20 +300,80 @@ export function scrollStageToFullSectionsCentered(
 }
 
 /** Puts `target` at the top of the stage, clear of the stage's own top padding. */
-export function scrollStageToNode(stage: HTMLElement | null, target: HTMLElement | null) {
+export function scrollStageToNode(
+  stage: HTMLElement | null,
+  target: HTMLElement | null,
+  ms = 280
+) {
   if (!stage || !target) return;
   const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
   const top =
     target.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop - pad;
-  scrollStageTo(stage, top, 280);
+  scrollStageTo(stage, top, ms);
 }
 
-export function scrollStageToSongTitle(stage: HTMLElement | null, entrySelector: string) {
+export function scrollStageToSongTitle(
+  stage: HTMLElement | null,
+  entrySelector: string,
+  ms = 280
+) {
   if (!stage) return;
   const article = stage.querySelector(entrySelector);
   if (!(article instanceof HTMLElement)) return;
   const title = article.querySelector(".lyrics-song-title");
-  scrollStageToNode(stage, title instanceof HTMLElement ? title : article);
+  scrollStageToNode(stage, title instanceof HTMLElement ? title : article, ms);
+}
+
+/** Wait until the selected song has a real height and songs above it have stopped growing. */
+export function songTitlePinReady(opts: {
+  height: number;
+  top: number;
+  lastTop: number;
+  stable: number;
+}): { ready: boolean; nextStable: number } {
+  if (opts.height < 16 || !Number.isFinite(opts.top)) return { ready: false, nextStable: 0 };
+  const same = Number.isFinite(opts.lastTop) && Math.abs(opts.top - opts.lastTop) < 1;
+  const nextStable = same ? opts.stable + 1 : 0;
+  return { ready: nextStable >= 2, nextStable };
+}
+
+export function pinStageSongWhenReady(
+  stageRef: { current: HTMLElement | null },
+  entrySelector: string,
+  tries = 36
+): () => void {
+  let cancelled = false;
+  let lastTop = Number.NaN;
+  let stable = 0;
+  let left = tries;
+  const run = () => {
+    if (cancelled) return;
+    const stage = stageRef.current;
+    const article = stage?.querySelector(entrySelector);
+    const title =
+      article instanceof HTMLElement
+        ? (article.querySelector(".lyrics-song-title") ?? article)
+        : null;
+    if (!(stage instanceof HTMLElement) || !(title instanceof HTMLElement)) {
+      if (left-- > 0) requestAnimationFrame(run);
+      return;
+    }
+    const height = article instanceof HTMLElement ? article.getBoundingClientRect().height : 0;
+    const top =
+      title.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop;
+    const next = songTitlePinReady({ height, top, lastTop, stable });
+    lastTop = top;
+    stable = next.nextStable;
+    if (!next.ready) {
+      if (left-- > 0) requestAnimationFrame(run);
+      return;
+    }
+    scrollStageToNode(stage, title, 0);
+  };
+  requestAnimationFrame(run);
+  return () => {
+    cancelled = true;
+  };
 }
 
 export function scrollStageToSongTitleWhenReady(
@@ -312,10 +382,6 @@ export function scrollStageToSongTitleWhenReady(
   tries = 12
 ) {
   if (!stage) return;
-  if (stage.querySelector(entrySelector) instanceof HTMLElement) {
-    scrollStageToSongTitle(stage, entrySelector);
-    return;
-  }
-  if (tries <= 0) return;
-  requestAnimationFrame(() => scrollStageToSongTitleWhenReady(stage, entrySelector, tries - 1));
+  const ref = { current: stage };
+  pinStageSongWhenReady(ref, entrySelector, tries);
 }

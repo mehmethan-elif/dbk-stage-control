@@ -236,7 +236,7 @@ export function MasterApp() {
       ) : masterPage === "lyrics" ? (
         <LyricsView />
       ) : masterPage === "chords" || masterPage === "bass" ? (
-        <ChordView />
+        <ChordView key={masterPage} />
       ) : masterPage === "nota" ? (
         <NotaViewAsync layer="score" />
       ) : masterPage === "drums" ? (

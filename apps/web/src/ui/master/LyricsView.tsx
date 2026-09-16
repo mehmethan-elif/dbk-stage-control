@@ -45,9 +45,9 @@ import { SongTitleMeta } from "./stage-title-meta";
 import {
   scrollStageToFullSectionsCentered,
   scrollStageToNextSongTitleInUpperHalf,
-  scrollStageToSongTitleWhenReady,
   stageLeadInNode
 } from "./stage-scroll";
+import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { lyricLineShowsRall } from "./rall-alert";
 import { sectionBarClass } from "./section-color";
@@ -102,6 +102,7 @@ export function LyricsView() {
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
   const setlistOpen = useMasterStore((s) => s.setlistOpen);
   const zoom = useMasterStore((s) => s.stageZooms.lyrics);
+  const masterPage = useMasterStore((s) => s.masterPage);
   const autoScroll = useMasterStore(stageAutoScroll);
   // Someone reading a song out of the library is not watching the show, so nothing follows a
   // playhead until the master moves on and puts them back on it.
@@ -174,12 +175,11 @@ export function LyricsView() {
   // playhead stayed uncorrected that whole time. The score page re-aims every measure, so
   // match it — the scroll leaves the view alone while the cue is already on screen.
   const followMeasure = playingSong ? timeToMusical(playingSong.tempoMap, liveTime).measure : 0;
-  useEffect(() => {
-    if (panicFollow) return;
-    if (autoScroll && currentIdx >= 0) return;
-    if (!scrollEntry) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-lyric-song="${scrollEntry}"]`);
-  }, [scrollEntry, autoScroll, currentIdx, panicFollow]);
+  usePinSelectedSong(stageRef, "data-lyric-song", {
+    page: masterPage,
+    scrollEntry,
+    skip: panicFollow || Boolean(autoScroll && currentIdx >= 0)
+  });
 
   useEffect(() => {
     if (!autoScroll || currentIdx < 0) return;

@@ -34,9 +34,9 @@ import { SongTitleMeta } from "./stage-title-meta";
 import {
   scrollStageToNotaSectionMeasures,
   scrollStageToSongTitle,
-  scrollStageToSongTitleWhenReady,
   stageLeadInNode
 } from "./stage-scroll";
+import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { countLabel, countSection, isCountSection } from "./count-section";
 import { sectionBarClass } from "./section-color";
@@ -171,6 +171,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   const sectionEditing = Boolean(!readOnly && editOpen);
   const zoom = useMasterStore((s) => s.stageZooms[layer === "chord" ? "chords" : "nota"]);
   const autoScroll = useMasterStore(stageAutoScroll);
+  const masterPage = useMasterStore((s) => s.masterPage);
   // Someone reading a song out of the library is not watching the show, so nothing follows a
   // playhead until the master moves on and puts them back on it.
   const reading = useMasterStore(readingOffShow);
@@ -238,10 +239,11 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   // the marker the show has stopped at. See `pageEntryId`.
   const scrollTarget = scrollEntry ?? selectedSongId;
 
-  useEffect(() => {
-    if (!pinToSelected || !scrollTarget) return;
-    scrollStageToSongTitleWhenReady(stageRef.current, `[data-nota-song="${scrollTarget}"]`);
-  }, [scrollTarget, pinToSelected, sectionEditing]);
+  usePinSelectedSong(stageRef, "data-nota-song", {
+    page: masterPage,
+    scrollEntry: scrollTarget,
+    skip: !pinToSelected || sectionEditing
+  });
 
   const onPagesLayout = () => {
     setPagesTick((tick) => tick + 1);

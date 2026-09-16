@@ -223,7 +223,7 @@ export function ClientApp() {
           <div className="client-stage">
             <StageCrashGuard>
               {page === "chords" || page === "bass" ? (
-                <ChordView />
+                <ChordView key={page} />
               ) : page === "nota" ? (
                 <NotaViewAsync layer="score" />
               ) : page === "drums" ? (

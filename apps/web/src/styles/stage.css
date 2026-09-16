@@ -3234,6 +3234,7 @@ button {
 
 .chord-measure {
   position: relative;
+  contain: layout paint;
   overflow: hidden;
   min-width: 0;
   min-height: calc(var(--lyrics-size) * 0.8);
@@ -3265,19 +3266,42 @@ button {
   height: calc(var(--drum-lane-h) * 4);
   display: flex;
   flex-direction: column;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.45) 0 1px,
+      transparent 1px calc(100% * 4 / var(--drum-steps, 16))
+    ),
+    repeating-linear-gradient(
+      90deg,
+      #4a4a4a 0 1px,
+      transparent 1px calc(100% / var(--drum-steps, 16))
+    );
 }
 
 .chord-drum-lanes .chord-note-lane {
   flex: 1 1 0;
   height: var(--drum-lane-h);
   min-height: 0;
+  background-image: none;
 }
 
-.chord-note-lane {
+.chord-note-lane.drum-lane {
   height: 100%;
   min-width: 0;
   overflow: hidden;
   border-top: 0;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.45) 0 1px,
+      transparent 1px calc(100% * 4 / var(--drum-steps, 16))
+    ),
+    repeating-linear-gradient(
+      90deg,
+      #4a4a4a 0 1px,
+      transparent 1px calc(100% / var(--drum-steps, 16))
+    );
 }
 
 .chord-note-lane .drum-hit {
