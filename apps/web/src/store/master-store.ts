@@ -600,7 +600,7 @@ interface MasterState {
   saveSetlist: (name: string, initialSongId: string) => Promise<boolean>;
   renameSetlist: (name: string) => Promise<boolean>;
   deleteCurrentSetlist: () => Promise<void>;
-  selectSetlistEntry: (entryId: string, options?: { playNext?: boolean }) => void;
+  selectSetlistEntry: (entryId: string, options?: { playNext?: boolean; land?: boolean }) => void;
   seek: (time: number) => void;
   play: () => Promise<void>;
   playSelected: () => Promise<void>;
@@ -1686,10 +1686,10 @@ export function practiceShouldPlayNext(state: MasterState): boolean {
 }
 
 /**
- * Where PRACTICE lands once a song finishes: the ELIF KONUSMA or STOP that follows it, which is
- * where the desk lands too. A plain next song is left alone — practice stopping on a song is a
- * cue to play it again, not to move down the list. The songs are needed to see the key change
- * ELIF KONUSMA, which is worked out from its neighbours rather than stored in the setlist.
+ * Where PRACTICE lands once the mix has finished, the same as Master after the longest track:
+ * the ELIF KONUSMA or STOP that follows. A plain next song is left alone — stopping on a song
+ * is a cue to play it again, not to move down the list. The songs are needed to see the key
+ * change ELIF KONUSMA, which is worked out from its neighbours rather than stored in the setlist.
  */
 export function practiceEndedSelectionId(state: MasterState): string | null {
   const gig = currentGig(state);
@@ -2610,7 +2610,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
           time,
           cue,
           shouldPlayNext: stillThisEntry && practiceShouldPlayNext(current),
-          stopAtCue: stillThisEntry && Boolean(practiceEndedSelectionId(current)),
           already: practiceHandoffEntryId === entry.entryId
         });
         if (action) {
@@ -2628,9 +2627,12 @@ export const useMasterStore = create<MasterState>((set, get) => {
             }
             return;
           }
-          pausePracticeAudio();
+          // Same as Master: the mix plays out, then the setlist sits on ELIF/STOP. Idle first
+          // or the practice lock treats this as a tap and leaves the song selected.
+          const store = useMasterStore.getState();
+          store.pausePractice();
           const landOn = practiceEndedSelectionId(useMasterStore.getState());
-          if (landOn) useMasterStore.getState().selectSetlistEntry(landOn);
+          if (landOn) useMasterStore.getState().selectSetlistEntry(landOn, { land: true });
           return;
         }
         const now = performance.now();
@@ -3104,7 +3106,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         return;
       }
       if (get().deviceKind === "client") {
-        if (practiceBlocksSongSelect(get()) && !options?.playNext) return;
+        if (practiceBlocksSongSelect(get()) && !options?.playNext && !options?.land) return;
         if (get().metronomePlaying) endMetronome();
         if (
           clientPracticeMode(get()) &&

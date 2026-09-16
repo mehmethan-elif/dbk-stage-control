@@ -562,7 +562,9 @@ describe("practice landing after a song ends", () => {
 
   it("lands on the ELIF KONUSMA that follows", () => {
     const talk: SetlistEntry = { type: "talk", entryId: "t1", label: ELIF_KONUSMA_LABEL };
-    expect(practiceEndedSelectionId(endedState([e1, talk, e2], [s1, s2], "e1"))).toBe("t1");
+    const idle = endedState([e1, talk, e2], [s1, s2], "e1");
+    expect(practiceEndedSelectionId(idle)).toBe("t1");
+    expect(practiceBlocksSongSelect(idle)).toBe(false);
   });
 
   it("lands on the STOP that follows", () => {

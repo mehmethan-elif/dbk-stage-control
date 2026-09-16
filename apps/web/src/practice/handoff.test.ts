@@ -67,37 +67,13 @@ describe("practicePlayNextDue", () => {
 });
 
 describe("practiceHandoff", () => {
-  it("lands on ELIF at the PLAY_NEXT cue instead of waiting for the file tail", () => {
+  it("plays the tail past the PLAY_NEXT cue when the setlist stops or talks", () => {
     expect(
       practiceHandoff({
         ended: false,
         time: 178.18,
         cue: 178.18,
         shouldPlayNext: false,
-        stopAtCue: true,
-        already: false
-      })
-    ).toBe("land");
-    expect(
-      practiceHandoff({
-        ended: false,
-        time: 170,
-        cue: 178.18,
-        shouldPlayNext: false,
-        stopAtCue: true,
-        already: false
-      })
-    ).toBeNull();
-  });
-
-  it("lets the last song play through the tail", () => {
-    expect(
-      practiceHandoff({
-        ended: false,
-        time: 178.18,
-        cue: 178.18,
-        shouldPlayNext: false,
-        stopAtCue: false,
         already: false
       })
     ).toBeNull();
@@ -107,7 +83,6 @@ describe("practiceHandoff", () => {
         time: 180.9,
         cue: 178.18,
         shouldPlayNext: false,
-        stopAtCue: false,
         already: false
       })
     ).toBe("land");
