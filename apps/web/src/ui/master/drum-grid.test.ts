@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { songForm, type PatternEvent, type Song, type TempoPoint } from "@dbk/core";
-import { buildHits, drumBarSteps, drumFollowKey } from "./DrumView";
+import { buildHits, drumBarSteps, drumFollowKey, writtenChart } from "./DrumView";
 
 const waltz: TempoPoint[] = [{ time: 0, measure: 1, bpm: 75, numerator: 3, denominator: 4 }];
 const common: TempoPoint[] = [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }];
@@ -69,6 +69,52 @@ function song(sections: { name: string; start: number; end: number }[]): Song {
     sections
   };
 }
+
+describe("writtenChart", () => {
+  it("counts the repeated bars of a rallentando as one run", () => {
+    // Every bar of a rall sits at its own tempo, so the same bar arrives written out again.
+    const rall: TempoPoint[] = [
+      { time: 0, measure: 1, bpm: 115, numerator: 4, denominator: 4 },
+      { time: 2.086957, measure: 2, bpm: 110, numerator: 4, denominator: 4 },
+      { time: 4.268775, measure: 3, bpm: 105, numerator: 4, denominator: 4 }
+    ];
+    const tus = (start: number, end: number, measure: number, offsets: [number, number][]): PatternEvent => ({
+      text: "TUS",
+      time: start,
+      end,
+      length: end - start,
+      measure,
+      beat: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: offsets.map(([offset, pitch]) => ({
+        time: start + offset,
+        pitch,
+        numerator: 4,
+        denominator: 4
+      }))
+    });
+    const full: [number, number][] = [
+      [0, 48],
+      [0, 53]
+    ];
+    const target: Song = {
+      ...song([{ name: "NAK", start: 0, end: 6.554489 }]),
+      tempoMap: rall,
+      patterns: [
+        tus(0, 2.086957, 1, [...full, [0.782609, 48], [1.043478, 48], [1.043478, 53]]),
+        tus(2.086957, 4.268775, 2, [...full, [0.818182, 48], [1.090909, 48], [1.090909, 53]]),
+        // The last bar of the rall thins out to the downbeat, so it is not the same bar.
+        tus(4.268775, 6.554489, 3, full)
+      ]
+    };
+    const rows = writtenChart(target, songForm(target, { identity: "drums" }));
+    expect(rows[0]?.runs.map((run) => [run.name, run.repeats])).toEqual([
+      ["TUS", 2],
+      ["TUS", 1]
+    ]);
+  });
+});
 
 describe("drumFollowKey", () => {
   it("stays on the same written block between clock ticks", () => {

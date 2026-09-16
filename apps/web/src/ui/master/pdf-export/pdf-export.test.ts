@@ -36,7 +36,7 @@ describe("isExportPdfName", () => {
 });
 
 describe("pdf header infos", () => {
-  it("includes kita before time signature, same as page titles", () => {
+  it("prints everything about the song, kita before time signature", () => {
     const song = {
       id: "biz",
       version: 1,

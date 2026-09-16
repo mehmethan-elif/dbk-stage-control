@@ -1164,7 +1164,9 @@ function startTick() {
       const time = snap.clock?.time ?? 0;
       if (!playing || time + 0.02 >= resumeAt) applyPanicResume?.();
     }
-    broadcastClock(snap);
+    // The last tick of a song is the one the clients need most, and the throttle would drop it
+    // for arriving too soon after the frame before it, leaving their playheads running.
+    broadcastClock(snap, !playing);
     if (playing) {
       tickHandle = requestAnimationFrame(loop);
     }
@@ -2178,6 +2180,11 @@ export const useMasterStore = create<MasterState>((set, get) => {
       playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
     if (playing) {
       setFollowClockSource(() => audibleEngineTime());
+    } else if (!get().metronomePlaying) {
+      // A song that finishes into a STOP leaves the engine standing still, and a follow clock
+      // nobody parked carries on guessing the time from the wall clock: the playhead walks off
+      // the end of the page while the band is already stopped. Park it on the last bar played.
+      stopFollowClock(playback.clock?.time ?? 0);
     }
     if (!playbackStoreNeedsWrite(get().playback, playback, playing)) {
       if (playing) startTick();

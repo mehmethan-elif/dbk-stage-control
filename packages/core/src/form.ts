@@ -114,6 +114,27 @@ function runOffset(sections: Section[], index: number, key: string): number {
   return offset;
 }
 
+function sameNamedBlocks(blocks: FormBlock[], key: string): FormBlock[] {
+  return blocks.filter((block) => nameKey(block.name, block.originIndex) === key);
+}
+
+/**
+ * Whether this music is already on the page under this name. Later passes are matched by where
+ * they sit in the running order, which is right while a pass repeats what was written, but on its
+ * own it also swallows an ending nobody has seen: the last NAK of a song that finishes on a
+ * rallentando plays SLOW and TUS where the written NAK played ROCK, and the drummer would be
+ * reading the wrong bars. A groove written nowhere is new music and earns its own row. An empty
+ * groove means this view has nothing to compare, so it is not treated as a difference.
+ */
+function grooveAlreadyWritten(
+  same: FormBlock[],
+  grooves: Map<string, string>,
+  groove: string
+): boolean {
+  if (!groove) return true;
+  return same.some((block) => groovesMatch(grooves.get(block.id), groove));
+}
+
 function groovesMatch(written: string | undefined, current: string): boolean {
   if (written === current) return true;
   if (!written?.startsWith("c:") || !current.startsWith("c:")) return false;
@@ -129,8 +150,9 @@ function matchWrittenBlock(
   previousBlock: FormBlock | undefined,
   offset: number
 ): FormBlock | undefined {
-  const same = blocks.filter((block) => nameKey(block.name, block.originIndex) === key);
+  const same = sameNamedBlocks(blocks, key);
   if (previousKey === key) {
+    if (!grooveAlreadyWritten(same, grooves, groove)) return undefined;
     return offset < same.length ? same[offset] : undefined;
   }
   if (previousBlock) {
@@ -167,7 +189,7 @@ function matchAfterDs(
   key: string,
   previousBlock: FormBlock | undefined
 ): FormBlock | undefined {
-  const same = blocks.filter((block) => nameKey(block.name, block.originIndex) === key);
+  const same = sameNamedBlocks(blocks, key);
   if (same.length === 0) return undefined;
   if (previousBlock) {
     const byContext = same.find((block) => {
@@ -203,6 +225,9 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       ? blocks.find((item) => item.id === prev.blockId)
       : undefined;
     const groove = sectionGroove(song, section, options.identity);
+    const sameNamed = sameNamedBlocks(blocks, key);
+    const alreadyWritten = grooveAlreadyWritten(sameNamed, grooves, groove);
+    const returned = visits.some((visit) => visit.fromJump === "ds");
     let block = matchWrittenBlock(
       blocks,
       grooves,
@@ -212,14 +237,15 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       previousBlock,
       runOffset(sections, index, key)
     );
-    if (
-      !block &&
-      visits.some((visit) => visit.fromJump === "ds") &&
-      !isCodaName(section.name)
-    ) {
+    if (!block && returned && !isCodaName(section.name) && alreadyWritten) {
       block = matchAfterDs(blocks, key, previousBlock);
     }
     if (!block) {
+      // A later pass playing something written nowhere is an ending, even when it carries the
+      // same name as the bars it replaces: a song that finishes on a rallentando leaves the
+      // written NAK and lands on its own. Calling that a coda is what puts "to Coda" where the
+      // band jumps and the sign over the bars they land on, so the ending reads off the page.
+      const ending = returned && sameNamed.length > 0 && !alreadyWritten;
       block = {
         id: `form_${blocks.length}`,
         name: section.name,
@@ -227,7 +253,7 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
         originStart: section.start,
         originEnd: section.end,
         segno: false,
-        coda: isCodaName(section.name),
+        coda: isCodaName(section.name) || ending,
         toCoda: false,
         ds: false,
         repeatStart: false,

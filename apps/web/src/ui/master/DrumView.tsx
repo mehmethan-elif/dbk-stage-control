@@ -248,6 +248,38 @@ function patternRun(
   };
 }
 
+function sameGrid(left: PatternRun, right: PatternRun): boolean {
+  if (left.name !== right.name) return false;
+  if (left.steps !== right.steps || left.barSteps !== right.barSteps) return false;
+  if (left.hits.size !== right.hits.size) return false;
+  for (const [lane, steps] of left.hits) {
+    const other = right.hits.get(lane);
+    if (!other || other.size !== steps.size) return false;
+    for (const step of steps) if (!other.has(step)) return false;
+  }
+  return true;
+}
+
+/**
+ * The same bar written out again is one bar played twice. A rallentando arrives as a pattern per
+ * bar because every bar sits at its own tempo, and drawing those as TUS x1 TUS x1 asks the drummer
+ * to read two rows that say one thing. Runs are joined on the grid rather than the name, so the
+ * bar of the rall that thins out to the downbeat still gets its own row. A run carrying a text cue
+ * keeps it by staying separate, since the cue belongs to the bar it was written in.
+ */
+function joinRepeatedRuns(runs: PatternRun[]): PatternRun[] {
+  const joined: PatternRun[] = [];
+  for (const run of runs) {
+    const last = joined[joined.length - 1];
+    if (last && !last.cue && !run.cue && Math.abs(last.end - run.start) < TIME_EPS && sameGrid(last, run)) {
+      joined[joined.length - 1] = { ...last, end: run.end, repeats: last.repeats + run.repeats };
+      continue;
+    }
+    joined.push(run);
+  }
+  return joined;
+}
+
 function sectionChart(song: Song | undefined): SectionChart[] {
   if (!song) return [];
   const sections =
@@ -273,7 +305,7 @@ function sectionChart(song: Song | undefined): SectionChart[] {
         runs.push(patternRun(pattern, spanEnd, song.tempoMap, null));
       }
     }
-    return { section, index, runs };
+    return { section, index, runs: joinRepeatedRuns(runs) };
   });
 }
 
@@ -730,7 +762,7 @@ const SongPatterns = memo(function SongPatterns(props: {
     >
       <StageSongHead songId={props.song?.id} entryId={props.entryId} page="drums">
         <span className="nota-song-name">{songDisplayName(props.song)}</span>
-        <SongTitleMeta song={props.song} entryId={props.entryId} />
+        <SongTitleMeta song={props.song} entryId={props.entryId} page="drums" />
       </StageSongHead>
       <DrumChartBody
         song={props.song}

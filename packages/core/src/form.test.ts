@@ -143,6 +143,51 @@ describe("songForm", () => {
     expect(formAt(form, 150)?.block.originStart).toBe(60);
   });
 
+  it("writes the last of a same-name pair separately when it ends on a rallentando", () => {
+    const pattern = (text: string, time: number, end: number) => ({
+      text,
+      time,
+      end,
+      length: end - time,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: []
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "COUNT", start: 0, end: 2 },
+          { name: "ARA", start: 2, end: 16 },
+          { name: "NAK", start: 16, end: 30 },
+          { name: "NAK", start: 30, end: 44 },
+          { name: "ARA", start: 44, end: 58 },
+          { name: "NAK", start: 58, end: 72 },
+          { name: "NAK", start: 72, end: 90 }
+        ]),
+        patterns: [
+          pattern("ROCK", 2, 16),
+          pattern("ZILLER", 16, 30),
+          pattern("ROCK", 30, 44),
+          pattern("ROCK", 44, 58),
+          pattern("ZILLER", 58, 72),
+          // The song ends on a rallentando the earlier pass does not play.
+          pattern("ROCK", 72, 80),
+          pattern("SLOW", 80, 86),
+          pattern("TUS", 86, 90)
+        ]
+      },
+      { identity: "drums" }
+    );
+
+    const naks = form.blocks.filter((block) => block.name === "NAK");
+    expect(naks.map((block) => block.originStart)).toEqual([16, 30, 72]);
+    expect(formAt(form, 84)?.block.originStart).toBe(72);
+    // The band leaves the written NAK and lands on the ending, which is a coda.
+    expect(naks.map((block) => block.coda)).toEqual([false, false, true]);
+    expect(naks.map((block) => block.toCoda)).toEqual([true, false, false]);
+  });
+
   it("does not write new sections after D.S. when the return pass uses a different groove", () => {
     const pattern = (text: string, time: number, end: number) => ({
       text,

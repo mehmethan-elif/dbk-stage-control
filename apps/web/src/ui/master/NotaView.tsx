@@ -663,7 +663,11 @@ function SongNota(props: {
         >
           {title}
         </span>
-        <SongTitleMeta song={song} entryId={props.entryId} />
+        <SongTitleMeta
+          song={song}
+          entryId={props.entryId}
+          page={props.layer === "chord" ? "chord" : "score"}
+        />
       </StageSongHead>
   );
   const editDock = props.editing ? (

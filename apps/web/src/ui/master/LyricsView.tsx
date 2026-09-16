@@ -374,7 +374,7 @@ function SongLyrics(props: {
     >
       <StageSongHead songId={props.song?.id} entryId={props.entryId} page="lyrics">
         <span className="nota-song-name">{songDisplayName(props.song)}</span>
-        <SongTitleMeta song={props.song} entryId={props.entryId} />
+        <SongTitleMeta song={props.song} entryId={props.entryId} page="lyrics" />
       </StageSongHead>
       {rows.length === 0 ? (
         isRealMetronomeTrack(props.song, props.files) ? (
