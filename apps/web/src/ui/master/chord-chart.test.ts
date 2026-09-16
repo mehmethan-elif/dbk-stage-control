@@ -118,6 +118,33 @@ describe("chordChart", () => {
     ]);
   });
 
+  it("gives Am one beat and Bm the rest of a 3/4 bar", () => {
+    const waltz: Song = {
+      id: "tuna",
+      version: 1,
+      title: "Tuna",
+      duration: 16.8,
+      assets: [],
+      tempoMap: [{ time: 0, measure: 1, bpm: 75, numerator: 3, denominator: 4 }],
+      sections: [
+        { name: "COUNT", start: 0, end: 4.8 },
+        { name: "ARA 1", start: 4.8, end: 16.8 }
+      ],
+      chords: [
+        { time: 12, end: 12.8, measure: 6, beat: 1, text: "Am" },
+        { time: 12.8, end: 14.4, measure: 6, beat: 2, text: "Bm" }
+      ]
+    };
+    const bars = chart(waltz)
+      .rows.flatMap((row) => row.spans.flatMap((span) => span.lines.flat()))
+      .filter((bar) => bar.measure === 6);
+    expect(bars[0]?.beats).toBe(3);
+    expect(bars[0]?.slots.map((slot) => [slot.text, slot.from, slot.to])).toEqual([
+      ["Am", 0, 1 / 3],
+      ["Bm", 1 / 3, 1]
+    ]);
+  });
+
   it("draws the strum on every bar", () => {
     const target = song(
       [{ name: "ARA", start: 0, end: 6 }],

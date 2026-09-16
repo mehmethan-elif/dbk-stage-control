@@ -756,6 +756,11 @@ function ChordBarView(props: {
               className="chord-slot"
               data-slot-from={String(slot.from)}
               data-slot-to={String(slot.to)}
+              style={
+                {
+                  "--slot-span": String(Math.max(0.01, slot.to - slot.from))
+                } as CSSProperties
+              }
             >
               {displayChordText(slot.text)}
             </span>

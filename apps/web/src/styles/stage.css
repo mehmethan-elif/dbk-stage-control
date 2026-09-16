@@ -3347,7 +3347,7 @@ button {
 }
 
 .chord-slot {
-  flex: 1;
+  flex: var(--slot-span, 1) 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
