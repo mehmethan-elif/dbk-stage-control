@@ -55,11 +55,7 @@ import { StageSetlist } from "./StageSetlist";
 import { CONCERT_FINAL_LABEL, StageFinishRow, stageBodyEntries } from "./setlist-marker";
 import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
-import {
-  scrollStageToFollowedRows,
-  scrollStageToNextSongTitleInUpperHalf,
-  stageLeadInNode
-} from "./stage-scroll";
+import { scrollStageToFollowedRows, stageLeadInNode } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { ChordRepeatMark, FormSectionBar } from "./form-marks";
@@ -111,21 +107,18 @@ function chordLineKey(stage: HTMLElement | null): string {
 }
 
 /**
- * The same targets the drum page uses: the played row, or the section when a count (or any
- * stretch with no bars on the page) leaves no row, then the song. A whole-song fallback used to
- * yank the stage to the title for the whole COUNT.
+ * Played line (or the section when a count leaves no line), plus the whole next section —
+ * including the next song's first section when that is already marked.
  */
 export function chordFollowTargets(opts: {
   currentLine: Element | null;
   currentSection: Element | null;
-  nextLine: Element | null;
   nextSection: Element | null;
   song: Element | null;
 }): { current: Element | null; next: Element | null; pack: Element | null } {
   const pack = opts.currentLine?.closest(".chord-section") ?? opts.currentSection;
   const current = opts.currentLine ?? pack ?? opts.song;
-  const next = opts.currentLine ? opts.nextLine : opts.nextSection;
-  return { current, next, pack };
+  return { current, next: opts.nextSection, pack };
 }
 
 function paintChordLive(
@@ -200,15 +193,21 @@ function paintChordLive(
     el.classList.toggle("next", Boolean(el.querySelector(".chord-measure.next")));
   }
 
-  // Packs match the drum page: a count has no line, so the section itself is what follow aims at.
+  // Follow aims at the next form section (or the next song's first section), not the next bar.
   for (const el of root.querySelectorAll<HTMLElement>(".chord-section")) {
     const isCurrent = Boolean(
       el.querySelector("[data-chord-section].current, .chord-measure.current")
     );
     const isNext = Boolean(el.querySelector("[data-chord-section].next, .chord-measure.next"));
+    const isFollow = Boolean(
+      followingId && el.querySelector(`[data-chord-section="${followingId}"]`)
+    );
     el.classList.toggle("current", isCurrent);
     el.classList.toggle("next", !isCurrent && isNext);
-    el.classList.toggle("scroll-next", !isCurrent && isNext);
+    el.classList.toggle(
+      "scroll-next",
+      el.hasAttribute("data-lead-in") || (!isCurrent && isFollow)
+    );
   }
 }
 
@@ -447,19 +446,16 @@ function ChordFollow(props: {
     const section = stage.querySelector(".chord-section.current");
     const fallbackId = props.playingEntryId ?? props.selectedEntryId;
     const fallback = fallbackId ? stage.querySelector(`[data-chord-song="${fallbackId}"]`) : null;
-    const { current, next, pack } = chordFollowTargets({
+    const { current, next } = chordFollowTargets({
       currentLine: line,
       currentSection: section,
-      nextLine: stage.querySelector("[data-chord-line].next"),
       nextSection: stage.querySelector(".chord-section.scroll-next"),
       song: fallback
     });
     const leadIn = stageLeadInNode(stage, "data-chord-song", leadInId);
-    if (leadIn instanceof HTMLElement && !(pack instanceof HTMLElement)) {
-      scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
+    if (!(current instanceof HTMLElement) && !(leadIn instanceof HTMLElement) && !(next instanceof HTMLElement)) {
       return;
     }
-    if (!(current instanceof HTMLElement)) return;
     scrollStageToFollowedRows(stage, current, next, leadIn);
   }, [
     props.autoScroll,

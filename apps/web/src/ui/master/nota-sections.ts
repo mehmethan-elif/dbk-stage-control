@@ -294,6 +294,21 @@ export function measureRectsForSection(
   );
 }
 
+function boxesForSection(
+  rects: readonly NotaSectionBox[],
+  hit: NotaPlayHit | undefined,
+  broken: readonly BrokenMeasureChain[] = []
+): NotaSectionBox[] {
+  if (!hit) return [];
+  const scoped = rectsForSectionOccurrence(rects, hit.name, hit.sectionIndex, broken);
+  if (scoped.length > 0) return scoped;
+  return rects.filter(
+    (box) =>
+      box.name === hit.name && (box.sectionIndex == null || box.sectionIndex === hit.sectionIndex)
+  );
+}
+
+/** Whole next section, including its name label — not just the next measure. */
 export function notaSectionScrollTargets(
   song: Song | undefined,
   time: number,
@@ -306,14 +321,35 @@ export function notaSectionScrollTargets(
 } {
   const measureHit = notaHitAt(song, time);
   const sectionHit = notaSectionHitAt(song, time);
-  const nextMeasure = nextNotaHit(song, time);
-  const lookAhead = nowLooksAheadHit(song, time, broken);
   const measureBoxes = (hit: NotaPlayHit | undefined) =>
     rectsForHit(rects, hit, broken).filter((box) => !isSectionLabel(box));
   const current = measureBoxes(measureHit);
   const focused = current.length > 0 ? current : measureBoxes(sectionHit);
-  const next = lookAhead ? measureBoxes(lookAhead) : measureBoxes(nextMeasure);
-  return { current: focused, next, focus: focused };
+  return {
+    current: focused,
+    next: boxesForSection(rects, nextNotaSectionHit(song, time), broken),
+    focus: focused
+  };
+}
+
+/** First section of a lead-in song that actually has boxes on the page. */
+export function notaLeadInSectionBoxes(
+  song: Song | undefined,
+  rects: readonly NotaSectionBox[],
+  broken: readonly BrokenMeasureChain[] = []
+): NotaSectionBox[] {
+  if (!song) return [];
+  for (let index = 0; index < song.sections.length; index++) {
+    const section = song.sections[index];
+    if (!section) continue;
+    const boxes = boxesForSection(
+      rects,
+      { name: section.name, measure: 1, sectionIndex: index },
+      broken
+    );
+    if (boxes.length > 0) return boxes;
+  }
+  return [];
 }
 
 export function rectsForHit(

@@ -43,8 +43,8 @@ import { MetroDraftNotes } from "./metro-draft-notes";
 import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
 import {
+  scrollStageToFollowedRows,
   scrollStageToFullSectionsCentered,
-  scrollStageToNextSongTitleInUpperHalf,
   stageLeadInNode
 } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
@@ -187,20 +187,20 @@ export function LyricsView() {
     if (!stage) return;
     const current = stage.querySelector(".lyrics-cue.current");
     const leadIn = stageLeadInNode(stage, "data-lyric-song", upcoming?.entryId);
-    if (leadIn instanceof HTMLElement && !(current instanceof HTMLElement)) {
-      scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
-      return;
-    }
-    const next = leadIn ?? stage.querySelector(".lyrics-cue.next");
+    const nextSection = stage.querySelector(".lyrics-section.next");
+    const next = leadIn ?? nextSection ?? stage.querySelector(".lyrics-cue.next");
     const fallbackId = playingEntryId ?? showEntry;
     const fallback = fallbackId ? stage.querySelector(`[data-lyric-song="${fallbackId}"]`) : null;
     const node = current ?? fallback;
+    if (leadIn instanceof HTMLElement && !(node instanceof HTMLElement)) {
+      scrollStageToFollowedRows(stage, null, leadIn);
+      return;
+    }
     if (!(node instanceof HTMLElement)) return;
     scrollStageToFullSectionsCentered(
       stage,
       node,
-      next instanceof HTMLElement ? next : null,
-      Boolean(leadIn)
+      next instanceof HTMLElement ? next : null
     );
   }, [
     autoScroll,

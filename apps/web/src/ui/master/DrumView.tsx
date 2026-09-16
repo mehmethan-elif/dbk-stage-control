@@ -53,11 +53,7 @@ import { CONCERT_FINAL_LABEL, StageFinishRow, stageBodyEntries } from "./setlist
 import { MetroDraftNotes } from "./metro-draft-notes";
 import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
-import {
-  scrollStageToFollowedRows,
-  scrollStageToNextSongTitleInUpperHalf,
-  stageLeadInNode
-} from "./stage-scroll";
+import { scrollStageToFollowedRows, stageLeadInNode } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { ChordRepeatMark, FormSectionBar } from "./form-marks";
@@ -725,21 +721,13 @@ function DrumFollow(props: {
     const row = stage.querySelector(".drum-run.current");
     const pack = row?.closest(".drum-pack") ?? stage.querySelector(".drum-pack.current");
     const leadIn = stageLeadInNode(stage, "data-drum-song", leadInId);
-    if (leadIn instanceof HTMLElement && !(pack instanceof HTMLElement)) {
-      scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
-      return;
-    }
     const fallbackId = props.playingEntryId ?? props.selectedEntryId;
     const fallback = fallbackId ? stage.querySelector(`[data-drum-song="${fallbackId}"]`) : null;
-    // Aim at the played row, like the score page aims at the played measure, and fall back
-    // to the whole section only when no row is marked. `.drum-run.next` already crosses into
-    // the following section, and repeats put it above the current row, which the shared
-    // policy handles.
     const current = row ?? pack ?? fallback;
-    const next = row
-      ? stage.querySelector(".drum-run.next")
-      : stage.querySelector(".drum-pack.scroll-next");
-    if (!(current instanceof HTMLElement)) return;
+    const next = stage.querySelector(".drum-pack.scroll-next");
+    if (!(current instanceof HTMLElement) && !(leadIn instanceof HTMLElement) && !(next instanceof HTMLElement)) {
+      return;
+    }
     scrollStageToFollowedRows(stage, current, next, leadIn);
   }, [props.autoScroll, scrollKey, props.playingEntryId, props.selectedEntryId, props.zoom, leadInId]);
 

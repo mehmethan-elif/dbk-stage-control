@@ -50,7 +50,7 @@ describe("stageScrollTopForSpans", () => {
     ).toBe(40);
   });
 
-  it("scrolls up to the next section when it wraps to the first line", () => {
+  it("keeps current when a wrapped next section does not fit with it", () => {
     expect(
       stageScrollTopForSpans({
         viewTop: 100,
@@ -59,7 +59,19 @@ describe("stageScrollTopForSpans", () => {
         current: { top: 380, bottom: 470 },
         next: { top: -620, bottom: -520 }
       })
-    ).toBe(-20);
+    ).toBeNull();
+  });
+
+  it("shows a wrapped next section when it still fits with current", () => {
+    expect(
+      stageScrollTopForSpans({
+        viewTop: 100,
+        viewBottom: 500,
+        scrollTop: 700,
+        current: { top: 380, bottom: 470 },
+        next: { top: 80, bottom: 150 }
+      })
+    ).toBe(680);
   });
 
   it("stays when the wrapped next section is already in view", () => {
@@ -80,6 +92,18 @@ describe("stageScrollTopForSpans", () => {
         scrollTop: 240,
         current: { top: 420, bottom: 490 },
         next: { top: 800, bottom: 1180 }
+      })
+    ).toBeNull();
+  });
+
+  it("keeps current when the whole next section cannot fit", () => {
+    expect(
+      stageScrollTopForSpans({
+        viewTop: 100,
+        viewBottom: 500,
+        scrollTop: 0,
+        current: { top: 140, bottom: 220 },
+        next: { top: 230, bottom: 780 }
       })
     ).toBeNull();
   });

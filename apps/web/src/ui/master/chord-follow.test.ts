@@ -11,20 +11,18 @@ function node(id: string, pack?: { id: string }) {
 describe("chordFollowTargets", () => {
   const line = node("line", { id: "pack" });
   const section = node("section");
-  const nextLine = node("next-line");
   const nextSection = node("next-section");
   const song = node("song");
 
-  it("aims at the played line and the line after it, like drums aim at a run", () => {
+  it("aims at the played line and the whole next section", () => {
     expect(
       chordFollowTargets({
         currentLine: line,
         currentSection: section,
-        nextLine,
         nextSection,
         song
       })
-    ).toEqual({ current: line, next: nextLine, pack: { id: "pack" } });
+    ).toEqual({ current: line, next: nextSection, pack: { id: "pack" } });
   });
 
   it("falls back to the section when a count leaves no line, not the whole song", () => {
@@ -32,7 +30,6 @@ describe("chordFollowTargets", () => {
       chordFollowTargets({
         currentLine: null,
         currentSection: section,
-        nextLine,
         nextSection,
         song
       })
@@ -44,7 +41,6 @@ describe("chordFollowTargets", () => {
       chordFollowTargets({
         currentLine: null,
         currentSection: null,
-        nextLine: null,
         nextSection: null,
         song
       })

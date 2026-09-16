@@ -35,6 +35,7 @@ import {
   nextNotaSectionHit,
   notaHitAt,
   notaSectionHitAt,
+  notaLeadInSectionBoxes,
   notaSectionScrollTargets,
   nowLooksAheadHit,
   parseBrokenChains,
@@ -476,22 +477,45 @@ describe("notaSectionScrollTargets", () => {
     { id: "a2", name: "ARA 1", measure: 2, page: 0, x: 0.28, y: 0.07, w: 0.15, h: 0.08 }
   ];
 
-  it("keeps the next target on the same line before the last NAK 2 measure", () => {
+  it("aims at the whole next section, not only the next measure", () => {
     const targets = notaSectionScrollTargets(tuna, 8.1, rects);
     expect(targets.current.map((box) => box.id)).toEqual(["n4"]);
-    expect(targets.next.map((box) => box.id)).toEqual(["n5"]);
+    expect(targets.next.map((box) => box.id)).toEqual(["a1", "a2"]);
   });
 
-  it("points at ARA 1 on the last NAK 2 measure so auto-scroll can wrap to the top", () => {
+  it("still aims at the whole next section on the last NAK 2 measure", () => {
     const targets = notaSectionScrollTargets(tuna, 10.1, rects);
     expect(targets.current.map((box) => box.id)).toEqual(["n5"]);
-    expect(targets.next.map((box) => box.id)).toEqual(["a1"]);
+    expect(targets.next.map((box) => box.id)).toEqual(["a1", "a2"]);
   });
 
-  it("keeps an unchained next measure on that rect instead of the next section", () => {
+  it("keeps next on the following section even when a later measure is unchained", () => {
     const targets = notaSectionScrollTargets(tuna, 8.1, rects, [{ name: "NAK 2", measure: 5 }]);
     expect(targets.current.map((box) => box.id)).toEqual(["n4"]);
-    expect(targets.next.map((box) => box.id)).toEqual(["n5"]);
+    expect(targets.next.map((box) => box.id)).toEqual(["a1", "a2"]);
+  });
+});
+
+describe("notaLeadInSectionBoxes", () => {
+  it("takes the first section that has boxes on the next song", () => {
+    const song: Song = {
+      id: "next",
+      version: 1,
+      title: "Next",
+      duration: 8,
+      assets: [],
+      tempoMap: [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }],
+      sections: [
+        { name: "COUNT", start: 0, end: 2 },
+        { name: "ARA", start: 2, end: 8 }
+      ]
+    };
+    expect(
+      notaLeadInSectionBoxes(song, [
+        { id: "a1", name: "ARA", measure: 1, page: 0, x: 0.1, y: 0.1, w: 0.2, h: 0.1 },
+        { id: "a2", name: "ARA", measure: 2, page: 0, x: 0.3, y: 0.1, w: 0.2, h: 0.1 }
+      ]).map((box) => box.id)
+    ).toEqual(["a1", "a2"]);
   });
 });
 

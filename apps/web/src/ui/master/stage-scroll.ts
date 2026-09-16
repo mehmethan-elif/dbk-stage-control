@@ -100,29 +100,16 @@ export function stageScrollTopForSpans(opts: {
   const toTop = (span: StageSpan) => scrollTop + (span.top - viewTop);
   const toBottom = (span: StageSpan) => scrollTop + (span.bottom - viewBottom);
   const stay = focus ?? current;
-  const from = stay ?? current;
-  const nextAbove = Boolean(from && next && next.top + 1 < from.top);
+  const unionFits = union.bottom - union.top <= available;
 
-  if (nextAbove && next) {
-    if (inView(next)) return null;
-    return toTop(next);
-  }
-
-  if (union.bottom - union.top <= available) {
+  // Prefer the whole next section on screen together with the playhead.
+  if (unionFits) {
     if (inView(union)) return null;
     if (union.top < viewTop) return toTop(union);
     return toBottom(union);
   }
-  if (next && next.bottom > viewBottom + 1) {
-    const delta = next.bottom - viewBottom;
-    if (!stay || stay.top - delta >= viewTop - 1) return scrollTop + delta;
-  }
-  if (current && current.bottom - current.top <= available) {
-    if (inView(current) && (!next || inView(next))) return null;
-    if (current.top < viewTop - 1) return toTop(current);
-    if (current.bottom > viewBottom + 1) return toBottom(current);
-    return null;
-  }
+
+  // They do not both fit. Keep the played row on screen.
   const pin = stay && stay.bottom - stay.top <= available ? stay : current ?? union;
   if (inView(pin)) return null;
   if (pin.top < viewTop) return toTop(pin);
@@ -205,25 +192,20 @@ export function scrollStageToNotaSectionMeasures(
   currentBoxes: ReadonlyArray<{ page: number; y: number; h: number }>,
   nextBoxes: ReadonlyArray<{ page: number; y: number; h: number }>,
   focusBoxes: ReadonlyArray<{ page: number; y: number; h: number }> = [],
-  leadIn: HTMLElement | null = null
+  leadIn: HTMLElement | null = null,
+  nextRoot: HTMLElement | null = null
 ) {
   const stageBox = stage.getBoundingClientRect();
   const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
-  const viewTop = stageBox.top + VIEW_SLOP + pad;
-  const viewBottom = stageBox.bottom - VIEW_SLOP_BOTTOM;
   const current = spanForNotaBoxes(songRoot, currentBoxes);
-  if (leadIn && preferNextSongTitle(current, viewTop, viewBottom)) {
-    scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
-    return;
-  }
-  const next = spanForNotaBoxes(songRoot, nextBoxes);
+  const next = spanForNotaBoxes(nextRoot ?? songRoot, nextBoxes) ?? spanForNode(leadIn);
   const top = stageScrollTopForSpans({
-    viewTop,
-    viewBottom,
+    viewTop: stageBox.top + VIEW_SLOP + pad,
+    viewBottom: stageBox.bottom - VIEW_SLOP_BOTTOM,
     scrollTop: stage.scrollTop,
     current,
     next,
-    focus: spanForNotaBoxes(songRoot, focusBoxes)
+    focus: spanForNotaBoxes(songRoot, focusBoxes) ?? current
   });
   if (top == null) return;
   scrollStageTo(stage, top);
@@ -236,9 +218,8 @@ function spanForNode(node: Element | null | undefined): StageSpan | null {
 }
 
 /**
- * The same decision the score page makes for measures, for pages whose targets are already
- * elements. Following the played row together with the one after it is what keeps the score
- * page moving in small steps instead of a section at a time.
+ * The same decision the score page makes: keep the played row, and try to hold the whole
+ * next section (or the next song's first section) in view with it.
  */
 export function scrollStageToFollowedRows(
   stage: HTMLElement,
@@ -248,19 +229,13 @@ export function scrollStageToFollowedRows(
 ) {
   const stageBox = stage.getBoundingClientRect();
   const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
-  const viewTop = stageBox.top + VIEW_SLOP + pad;
-  const viewBottom = stageBox.bottom - VIEW_SLOP_BOTTOM;
   const span = spanForNode(current);
-  if (leadIn && preferNextSongTitle(span, viewTop, viewBottom)) {
-    scrollStageToNextSongTitleInUpperHalf(stage, leadIn);
-    return;
-  }
   const top = stageScrollTopForSpans({
-    viewTop,
-    viewBottom,
+    viewTop: stageBox.top + VIEW_SLOP + pad,
+    viewBottom: stageBox.bottom - VIEW_SLOP_BOTTOM,
     scrollTop: stage.scrollTop,
     current: span,
-    next: spanForNode(next),
+    next: spanForNode(next) ?? spanForNode(leadIn),
     focus: span
   });
   if (top == null) return;
@@ -270,26 +245,15 @@ export function scrollStageToFollowedRows(
 export function scrollStageToFullSectionsCentered(
   stage: HTMLElement,
   current: HTMLElement,
-  next: HTMLElement | null,
-  preferNext = false
+  next: HTMLElement | null
 ) {
-  const currentIn = stageNodeFullyInView(stage, current);
-  const currentVisible = stageNodeIntersectsView(stage, current);
-  const nextIn = !next || stageNodeFullyInView(stage, next);
-  const stageBox = stage.getBoundingClientRect();
-  const available = stageBox.height - VIEW_SLOP * 2;
-  const currentBox = current.getBoundingClientRect();
-  const combinedHeight = next
-    ? Math.max(currentBox.bottom, next.getBoundingClientRect().bottom) -
-      Math.min(currentBox.top, next.getBoundingClientRect().top)
-    : 0;
-  const bothFit = !next || combinedHeight <= available;
-  if (preferNext && next && currentVisible) {
-    scrollStageToNextSongTitleInUpperHalf(stage, next);
+  if (next) {
+    scrollStageToFollowedRows(stage, current, next);
     return;
   }
-  if (currentIn && (nextIn || !bothFit)) return;
-
+  if (stageNodeFullyInView(stage, current)) return;
+  const stageBox = stage.getBoundingClientRect();
+  const currentBox = current.getBoundingClientRect();
   scrollStageTo(
     stage,
     currentBox.top -
