@@ -52,6 +52,7 @@ import {
   practiceMasterAudio,
   nextEndedSelectionId,
   pageSongEntryId,
+  playNextCueSeconds,
   songFollowedByElif,
   withKeyChangeElifs,
   SetlistPerformanceMode,
@@ -97,6 +98,7 @@ import { libraryApi, setLibraryFileOverride } from "../library/api";
 import { practiceEntryId, practiceGig } from "../practice/gig";
 import { downloadBytes, exportPracticeZip } from "../practice/export";
 import {
+  attachPracticeContext,
   isPracticeAudioLoaded,
   loadPracticeAudio,
   type PracticeAudioKind,
@@ -109,6 +111,7 @@ import {
   seekPracticeAudio,
   stopPracticeAudio
 } from "../practice/playback";
+import { practiceHandoff } from "../practice/handoff";
 import { syncPublishedLibrary } from "../practice/github-sync";
 import { practiceHostFromInput, pullPracticeFromHost } from "../practice/pull";
 import { loadPracticeLibrary, readPracticeFileBuffer, readPublishedGigs } from "../practice/store";
@@ -302,7 +305,7 @@ function preloadMetroIntro() {
 }
 
 export function unlockAudio(): void {
-  engine.prime();
+  attachPracticeContext(engine.prime());
   preloadMetroIntro();
 }
 
@@ -310,7 +313,7 @@ let gestureUnlockInstalled = false;
 if (typeof window !== "undefined" && !gestureUnlockInstalled) {
   gestureUnlockInstalled = true;
   const kick = () => {
-    engine.prime();
+    attachPracticeContext(engine.prime());
     preloadMetroIntro();
   };
   window.addEventListener("pointerdown", kick, true);
@@ -624,6 +627,7 @@ let freeVisualSongId: string | null = null;
 let lastBroadcast = 0;
 let lastPlaybackStoreAt = 0;
 let lastPracticeStoreAt = 0;
+let practiceHandoffEntryId: string | null = null;
 let applyPanicResume: (() => void) | null = null;
 
 const PLAYBACK_UI_MS = 80;
@@ -1637,6 +1641,11 @@ function queuePracticeAudio(state: MasterState, song?: Song) {
   if (!target) return;
   const kind = practiceAudioKind(state, target);
   if (!kind) return;
+  try {
+    attachPracticeContext(engine.prime());
+  } catch {
+    // decode waits until play if the shared context is not ready
+  }
   void loadPracticeAudio(target.id, filesForSong(target, state.fileIndex), kind);
 }
 
@@ -2578,12 +2587,50 @@ export const useMasterStore = create<MasterState>((set, get) => {
         ? currentGig(state)?.setlist.find((item) => item.entryId === state.selectedEntryId)
         : undefined;
       if (!entry || !isSongEntry(entry)) return;
+      practiceHandoffEntryId = null;
+      try {
+        attachPracticeContext(engine.prime());
+      } catch {
+        // HTMLAudio still plays if the shared context cannot start
+      }
       onPracticeTime((time, ended) => {
         const current = useMasterStore.getState();
         const duration = practiceAudioDuration();
         const playing = !ended && practiceAudioPlaying();
         if (playing) setFollowClockSource(() => practiceAudioTime());
         else stopFollowClock(time);
+        const cue = playNextCueSeconds(
+          current.songs.find((item) => item.id === entry.songId),
+          duration
+        );
+        const stillThisEntry = current.selectedEntryId === entry.entryId;
+        const action = practiceHandoff({
+          ended,
+          time,
+          cue,
+          shouldPlayNext: stillThisEntry && practiceShouldPlayNext(current),
+          stopAtCue: stillThisEntry && Boolean(practiceEndedSelectionId(current)),
+          already: practiceHandoffEntryId === entry.entryId
+        });
+        if (action) {
+          practiceHandoffEntryId = entry.entryId;
+          pausePracticeAudio();
+          const store = useMasterStore.getState();
+          if (action === "play-next") {
+            const gig = currentGig(store);
+            const nextId = nextUnskippedSongEntryId(gig, store.selectedEntryId);
+            if (nextId) {
+              store.selectSetlistEntry(nextId, { playNext: true });
+              queueMicrotask(() => {
+                void useMasterStore.getState().playPractice();
+              });
+            }
+            return;
+          }
+          const landOn = practiceEndedSelectionId(store);
+          if (landOn) store.selectSetlistEntry(landOn);
+          return;
+        }
         const now = performance.now();
         if (playing && !ended && now - lastPracticeStoreAt < PLAYBACK_UI_MS) return;
         lastPracticeStoreAt = now;
@@ -2601,20 +2648,6 @@ export const useMasterStore = create<MasterState>((set, get) => {
             clock: practiceClock(entry, time, playing)
           }
         });
-        if (!ended) return;
-        const store = useMasterStore.getState();
-        const gig = currentGig(store);
-        if (practiceShouldPlayNext(store)) {
-          const nextId = nextUnskippedSongEntryId(gig, store.selectedEntryId);
-          if (!nextId) return;
-          store.selectSetlistEntry(nextId, { playNext: true });
-          queueMicrotask(() => {
-            void useMasterStore.getState().playPractice();
-          });
-          return;
-        }
-        const landOn = practiceEndedSelectionId(store);
-        if (landOn) store.selectSetlistEntry(landOn);
       });
       const song = state.songs.find((item) => item.id === entry.songId);
       const files = [
@@ -2627,20 +2660,20 @@ export const useMasterStore = create<MasterState>((set, get) => {
         const ok = await loadPracticeAudio(entry.songId, files, kind);
         if (!ok) return;
       }
-      seekPracticeAudio(state.previewTime);
+      const startAt = get().previewTime;
       try {
-        await playPracticeAudio();
+        await playPracticeAudio(startAt);
       } catch {
         const ok = await loadPracticeAudio(entry.songId, files, kind);
         if (!ok) return;
         try {
-          await playPracticeAudio();
+          await playPracticeAudio(get().previewTime);
         } catch {
           return;
         }
       }
       const duration = practiceAudioDuration();
-      const startAt = practiceAudioTime();
+      const playhead = practiceAudioTime();
       setFollowClockSource(() => practiceAudioTime());
       set({
         songs:
@@ -2652,7 +2685,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         playback: {
           ...get().playback,
           state: PlaybackState.Playing,
-          clock: practiceClock(entry, startAt, true)
+          clock: practiceClock(entry, playhead, true)
         }
       });
     },
