@@ -3319,11 +3319,9 @@ button {
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(var(--drum-steps, 16), minmax(0, 1fr));
   align-items: stretch;
-  justify-content: stretch;
   width: 100%;
   font-size: calc(var(--lyrics-size) * 0.6);
   font-weight: 700;
@@ -3347,18 +3345,25 @@ button {
 }
 
 .chord-slot {
-  flex: var(--slot-span, 1) 0 0;
+  grid-column: var(--slot-col, 1) / span var(--slot-span-steps, var(--drum-steps, 16));
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   min-width: 0;
-  padding: 4px 6px;
+  padding: 4px 2px;
   white-space: nowrap;
 }
 
-.chord-slot:not(:first-child) {
-  border-left: 1px solid #fff;
+.chord-slot-rule {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--slot-step) * 100% / var(--drum-steps, 16));
+  width: 1px;
+  background: #fff;
+  pointer-events: none;
+  z-index: 3;
 }
 
 .chord-slot.current {

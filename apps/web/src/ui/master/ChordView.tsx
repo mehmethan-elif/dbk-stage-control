@@ -67,6 +67,7 @@ import {
   chordChart,
   chordPlayhead,
   hasChordData,
+  slotGridPlacement,
   type ChordBar,
   type ChordChart,
   type ChordHead,
@@ -733,38 +734,53 @@ function ChordBarView(props: {
   const { grid, song } = useContext(ChordGridContext);
   const notes =
     grid === "drums" && song ? drumNotesForMeasure(song, props.bar.measure) : props.bar.notes;
+  const steps = Math.max(1, Math.round(props.bar.steps));
   return (
     <div
       className={`chord-measure${props.closesRepeat ? " repeat-end" : ""}`}
       data-chord-bar={`${props.blockId}#${props.bar.measure}`}
       data-block-id={props.blockId}
       data-measure={String(props.bar.measure)}
+      style={{ "--drum-steps": steps } as CSSProperties}
     >
+      {props.bar.slots
+        .filter((slot) => slot.step > 0)
+        .map((slot) => (
+          <span
+            key={`rule-${slot.step}-${slot.text}`}
+            className="chord-slot-rule"
+            style={{ "--slot-step": slot.step } as CSSProperties}
+          />
+        ))}
       {grid === "drums" ? (
-        <ChordDrumLanes notes={notes} steps={props.bar.steps} />
+        <ChordDrumLanes notes={notes} steps={steps} />
       ) : (
-        <ChordNoteLane notes={notes} steps={props.bar.steps} />
+        <ChordNoteLane notes={notes} steps={steps} />
       )}
       <div className="chord-measure-body">
         {props.ending ? <span className="chord-ending">{`${props.ending}.`}</span> : null}
         {props.bar.slots.length === 0 ? (
-          <span className="chord-slot" />
+          <span className="chord-slot" style={{ "--slot-col": 1, "--slot-span-steps": steps } as CSSProperties} />
         ) : (
-          props.bar.slots.map((slot) => (
-            <span
-              key={`${slot.step}-${slot.text}`}
-              className="chord-slot"
-              data-slot-from={String(slot.from)}
-              data-slot-to={String(slot.to)}
-              style={
-                {
-                  "--slot-span": String(Math.max(0.01, slot.to - slot.from))
-                } as CSSProperties
-              }
-            >
-              {displayChordText(slot.text)}
-            </span>
-          ))
+          props.bar.slots.map((slot) => {
+            const place = slotGridPlacement(slot, steps);
+            return (
+              <span
+                key={`${slot.step}-${slot.text}`}
+                className="chord-slot"
+                data-slot-from={String(slot.from)}
+                data-slot-to={String(slot.to)}
+                style={
+                  {
+                    "--slot-col": place.column,
+                    "--slot-span-steps": place.span
+                  } as CSSProperties
+                }
+              >
+                {displayChordText(slot.text)}
+              </span>
+            );
+          })
         )}
       </div>
     </div>

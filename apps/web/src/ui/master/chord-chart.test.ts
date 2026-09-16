@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { songForm, type ChordEvent, type PatternNote, type Song, type SongForm } from "@dbk/core";
-import { chordChart, chordPlayhead, hasChordData } from "./chord-chart";
+import { chordChart, chordPlayhead, hasChordData, slotGridPlacement } from "./chord-chart";
 
 const BAR = 2;
 
@@ -142,6 +142,10 @@ describe("chordChart", () => {
     expect(bars[0]?.slots.map((slot) => [slot.text, slot.from, slot.to])).toEqual([
       ["Am", 0, 1 / 3],
       ["Bm", 1 / 3, 1]
+    ]);
+    expect(bars[0]?.slots.map((slot) => slotGridPlacement(slot, 12))).toEqual([
+      { column: 1, span: 4 },
+      { column: 5, span: 8 }
     ]);
   });
 

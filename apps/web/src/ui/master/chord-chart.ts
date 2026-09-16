@@ -41,6 +41,17 @@ export interface ChordSlot {
   to: number;
 }
 
+/** Same columns as the note and drum grids, so Am|Bm sits on a beat line. */
+export function slotGridPlacement(
+  slot: Pick<ChordSlot, "step" | "from" | "to">,
+  steps: number
+): { column: number; span: number } {
+  const n = Math.max(1, Math.round(steps));
+  const column = Math.min(n, Math.max(1, slot.step + 1));
+  const span = Math.min(n - column + 1, Math.max(1, Math.round((slot.to - slot.from) * n)));
+  return { column, span };
+}
+
 export interface ChordBar {
   measure: number;
   start: number;
