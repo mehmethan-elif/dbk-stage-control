@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { practiceHandoff, practicePlayNextDue, shouldRewindHtmlAudioStart } from "./handoff";
 
 describe("practicePlayNextDue", () => {
-  it("starts the next song at the PLAY_NEXT cue, not only when the file ends", () => {
+  it("starts the next song at the PLAY_NEXT cue so the current tail can keep ringing", () => {
     expect(
       practicePlayNextDue({
         ended: false,

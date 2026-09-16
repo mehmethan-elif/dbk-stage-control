@@ -1,6 +1,9 @@
 export type PracticeHandoff = "play-next" | "land";
 
-/** What PRACTICE should do at this tick: start the next mix, land on ELIF/STOP, or keep playing. */
+/**
+ * What PRACTICE should do at this tick: start the next mix, land on ELIF/STOP, or keep playing.
+ * play-next starts the following song; the current Master.mp3 keeps its tail underneath.
+ */
 export function practiceHandoff(opts: {
   ended: boolean;
   time: number;

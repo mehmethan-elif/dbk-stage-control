@@ -103,6 +103,7 @@ import {
   loadPracticeAudio,
   type PracticeAudioKind,
   onPracticeTime,
+  parkPracticeTail,
   pausePracticeAudio,
   playPracticeAudio,
   practiceAudioDuration,
@@ -2614,9 +2615,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
         });
         if (action) {
           practiceHandoffEntryId = entry.entryId;
-          pausePracticeAudio();
-          const store = useMasterStore.getState();
           if (action === "play-next") {
+            parkPracticeTail();
+            const store = useMasterStore.getState();
             const gig = currentGig(store);
             const nextId = nextUnskippedSongEntryId(gig, store.selectedEntryId);
             if (nextId) {
@@ -2627,8 +2628,9 @@ export const useMasterStore = create<MasterState>((set, get) => {
             }
             return;
           }
-          const landOn = practiceEndedSelectionId(store);
-          if (landOn) store.selectSetlistEntry(landOn);
+          pausePracticeAudio();
+          const landOn = practiceEndedSelectionId(useMasterStore.getState());
+          if (landOn) useMasterStore.getState().selectSetlistEntry(landOn);
           return;
         }
         const now = performance.now();
@@ -3104,7 +3106,11 @@ export const useMasterStore = create<MasterState>((set, get) => {
       if (get().deviceKind === "client") {
         if (practiceBlocksSongSelect(get()) && !options?.playNext) return;
         if (get().metronomePlaying) endMetronome();
-        if (clientPracticeMode(get()) && get().playback.state === PlaybackState.Playing) {
+        if (
+          clientPracticeMode(get()) &&
+          get().playback.state === PlaybackState.Playing &&
+          !options?.playNext
+        ) {
           get().pausePractice();
         }
         const gig = currentGig(get());

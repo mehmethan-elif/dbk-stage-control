@@ -19,6 +19,9 @@ let practiceCtx: AudioContext | null = null;
 let bytes: ArrayBuffer | null = null;
 let pcm: AudioBuffer | null = null;
 let source: AudioBufferSourceNode | null = null;
+let tail: AudioBufferSourceNode | null = null;
+let tailAudio: HTMLAudioElement | null = null;
+let tailUrl: string | null = null;
 let decodePromise: Promise<AudioBuffer | null> | null = null;
 let webPlaying = false;
 let startOffset = 0;
@@ -95,6 +98,69 @@ function stopSource(): void {
   }
   webPlaying = false;
   startedAt = null;
+}
+
+function stopTail(): void {
+  if (tail) {
+    tail.onended = null;
+    try {
+      tail.stop();
+    } catch {
+      // already stopped
+    }
+    tail.disconnect();
+    tail = null;
+  }
+  if (tailAudio) {
+    tailAudio.pause();
+    tailAudio.removeAttribute("src");
+    tailAudio = null;
+  }
+  if (tailUrl) {
+    URL.revokeObjectURL(tailUrl);
+    tailUrl = null;
+  }
+}
+
+/** Leave the current mix running so PLAY NEXT can start the next song over its tail. */
+export function parkPracticeTail(): void {
+  stopTick();
+  stopTail();
+  if (source) {
+    const node = source;
+    node.onended = () => {
+      if (tail !== node) return;
+      try {
+        node.disconnect();
+      } catch {
+        // already disconnected
+      }
+      tail = null;
+    };
+    tail = node;
+    source = null;
+    webPlaying = false;
+    startedAt = null;
+    return;
+  }
+  if (audio && !audio.paused) {
+    const parked = audio;
+    tailAudio = parked;
+    tailUrl = objectUrl;
+    objectUrl = null;
+    audio = null;
+    parked.addEventListener(
+      "ended",
+      () => {
+        if (tailAudio !== parked) return;
+        parked.removeAttribute("src");
+        if (tailUrl) URL.revokeObjectURL(tailUrl);
+        tailUrl = null;
+        tailAudio = null;
+      },
+      { once: true }
+    );
+  }
 }
 
 function element(): HTMLAudioElement {
@@ -219,6 +285,7 @@ export function onPracticeTime(listener: ((time: number, ended: boolean) => void
 
 export function stopPracticeAudio(): void {
   stopTick();
+  stopTail();
   stopSource();
   startOffset = 0;
   pcm = null;
@@ -308,6 +375,7 @@ export async function playPracticeAudio(startAt?: number): Promise<void> {
 
 export function pausePracticeAudio(): void {
   stopTick();
+  stopTail();
   if (webPlaying) {
     stopSource();
     return;
