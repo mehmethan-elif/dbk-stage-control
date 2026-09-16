@@ -83,6 +83,18 @@ export function unionStageSpan(spans: readonly StageSpan[]): StageSpan | null {
   return { top, bottom };
 }
 
+/** Played measure sits this far down the view, when the next section can stay on screen. */
+export const CURRENT_VIEW_ANCHOR = 0.4;
+
+function clampScroll(value: number, min: number, max: number): number {
+  if (min > max) return value;
+  return Math.min(max, Math.max(min, value));
+}
+
+function nearScroll(from: number, to: number): boolean {
+  return Math.abs(to - from) < 2;
+}
+
 export function stageScrollTopForSpans(opts: {
   viewTop: number;
   viewBottom: number;
@@ -101,15 +113,24 @@ export function stageScrollTopForSpans(opts: {
   const toBottom = (span: StageSpan) => scrollTop + (span.bottom - viewBottom);
   const stay = focus ?? current;
   const unionFits = union.bottom - union.top <= available;
+  const pick = (value: number) => (nearScroll(scrollTop, value) ? null : value);
 
-  // Prefer the whole next section on screen together with the playhead.
+  // Put the played measure at 40% from the top, then back off only as much as needed
+  // so the next section (when it still fits) or the measure itself stays on screen.
+  if (stay) {
+    const preferred = scrollTop + (stay.top - (viewTop + available * CURRENT_VIEW_ANCHOR));
+    if (unionFits) return pick(clampScroll(preferred, toBottom(union), toTop(union)));
+    if (stay.bottom - stay.top <= available) {
+      return pick(clampScroll(preferred, toBottom(stay), toTop(stay)));
+    }
+  }
+
   if (unionFits) {
     if (inView(union)) return null;
     if (union.top < viewTop) return toTop(union);
     return toBottom(union);
   }
 
-  // They do not both fit. Keep the played row on screen.
   const pin = stay && stay.bottom - stay.top <= available ? stay : current ?? union;
   if (inView(pin)) return null;
   if (pin.top < viewTop) return toTop(pin);
@@ -247,20 +268,7 @@ export function scrollStageToFullSectionsCentered(
   current: HTMLElement,
   next: HTMLElement | null
 ) {
-  if (next) {
-    scrollStageToFollowedRows(stage, current, next);
-    return;
-  }
-  if (stageNodeFullyInView(stage, current)) return;
-  const stageBox = stage.getBoundingClientRect();
-  const currentBox = current.getBoundingClientRect();
-  scrollStageTo(
-    stage,
-    currentBox.top -
-      stageBox.top +
-      stage.scrollTop -
-      (stage.clientHeight * 0.4 - currentBox.height / 2)
-  );
+  scrollStageToFollowedRows(stage, current, next);
 }
 
 /** Puts `target` at the top of the stage, clear of the stage's own top padding. */
