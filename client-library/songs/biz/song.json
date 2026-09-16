@@ -3,7 +3,6 @@
   "version": 1,
   "title": "Biz",
   "duration": 180.909091,
-  "clickDuration": 180.909091,
   "nextSongAt": 178.181818,
   "key": "D",
   "scale": "MINOR",
@@ -215,8 +214,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 4,
-          "beat": 1,
+          "measure": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -235,8 +234,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 5,
-          "beat": 1,
+          "measure": 4,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -255,8 +254,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 6,
-          "beat": 1,
+          "measure": 5,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -340,7 +339,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 9,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -350,8 +349,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 10,
-          "beat": 1,
+          "measure": 9,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -362,7 +361,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 10,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -381,8 +380,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 10,
-          "beat": 1,
+          "measure": 9,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -404,7 +403,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 10,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -425,8 +424,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 11,
-          "beat": 1,
+          "measure": 10,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -437,7 +436,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 11,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -479,7 +478,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 11,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -521,7 +520,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 12,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -563,7 +562,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 13,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -819,7 +818,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 17,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -874,7 +873,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 18,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -916,7 +915,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 18,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -949,7 +948,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 19,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -991,7 +990,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 19,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -1098,8 +1097,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 21,
-          "beat": 1,
+          "measure": 20,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -1195,8 +1194,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 22,
-          "beat": 1,
+          "measure": 21,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -1337,7 +1336,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 23,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -1379,7 +1378,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 23,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -1434,7 +1433,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 24,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -1476,7 +1475,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 24,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -1583,8 +1582,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 26,
-          "beat": 1,
+          "measure": 25,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -1680,8 +1679,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 27,
-          "beat": 1,
+          "measure": 26,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -1777,8 +1776,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 28,
-          "beat": 1,
+          "measure": 27,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -1822,7 +1821,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 28,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -1864,7 +1863,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 28,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -1919,7 +1918,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 29,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -1961,7 +1960,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 29,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -2016,7 +2015,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 30,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -2058,7 +2057,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 30,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -2165,8 +2164,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 32,
-          "beat": 1,
+          "measure": 31,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -2252,7 +2251,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 32,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -2262,8 +2261,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 33,
-          "beat": 1,
+          "measure": 32,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -2326,8 +2325,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 33,
-          "beat": 1,
+          "measure": 32,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -2347,7 +2346,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 33,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -2462,7 +2461,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 35,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -2569,8 +2568,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 37,
-          "beat": 1,
+          "measure": 36,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -2666,8 +2665,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 38,
-          "beat": 1,
+          "measure": 37,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -2763,8 +2762,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 39,
-          "beat": 1,
+          "measure": 38,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -2808,7 +2807,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 39,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -2850,7 +2849,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 39,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -2905,7 +2904,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 40,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -2947,7 +2946,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 40,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -3002,7 +3001,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 41,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -3044,7 +3043,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 41,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -3141,7 +3140,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 42,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3151,8 +3150,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 43,
-          "beat": 1,
+          "measure": 42,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3196,7 +3195,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 43,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -3248,8 +3247,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 44,
-          "beat": 1,
+          "measure": 43,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3390,7 +3389,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 45,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -3432,7 +3431,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 45,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -3487,7 +3486,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 46,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -3529,7 +3528,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 46,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -3636,8 +3635,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 48,
-          "beat": 1,
+          "measure": 47,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3723,7 +3722,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 48,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3733,8 +3732,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 49,
-          "beat": 1,
+          "measure": 48,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3778,7 +3777,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 49,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -3797,8 +3796,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 49,
-          "beat": 1,
+          "measure": 48,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -3818,7 +3817,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 49,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -3837,8 +3836,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 50,
-          "beat": 1,
+          "measure": 49,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3970,8 +3969,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 54,
-          "beat": 1,
+          "measure": 53,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -3990,8 +3989,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 55,
-          "beat": 1,
+          "measure": 54,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -4002,7 +4001,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 55,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -4108,7 +4107,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 58,
-          "beat": 2,
+          "beat": 1,
           "numerator": 4,
           "denominator": 4
         },
@@ -4140,8 +4139,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 59,
-          "beat": 1,
+          "measure": 58,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -4152,7 +4151,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 59,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -4278,7 +4277,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 61,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -4333,7 +4332,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 62,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -4375,7 +4374,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 62,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -4408,7 +4407,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 63,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -4450,7 +4449,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 63,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -4544,8 +4543,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 66,
-          "beat": 1,
+          "measure": 65,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -4664,7 +4663,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 67,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -4706,7 +4705,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 67,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -4761,7 +4760,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 68,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -4803,7 +4802,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 68,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -4910,8 +4909,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 70,
-          "beat": 1,
+          "measure": 69,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -5007,8 +5006,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 71,
-          "beat": 1,
+          "measure": 70,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -5104,8 +5103,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 72,
-          "beat": 1,
+          "measure": 71,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -5149,7 +5148,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 72,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -5191,7 +5190,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 72,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -5246,7 +5245,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 73,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -5288,7 +5287,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 73,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -5343,7 +5342,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 74,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -5385,7 +5384,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 74,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -5492,8 +5491,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 76,
-          "beat": 1,
+          "measure": 75,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -5589,8 +5588,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 77,
-          "beat": 1,
+          "measure": 76,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -5731,7 +5730,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 78,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -5773,7 +5772,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 78,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -5828,7 +5827,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 79,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -5870,7 +5869,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 79,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -5977,8 +5976,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 81,
-          "beat": 1,
+          "measure": 80,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -6041,8 +6040,8 @@
           "pitch": 50,
           "channel": 0,
           "velocity": 96,
-          "measure": 81,
-          "beat": 1,
+          "measure": 80,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -6062,7 +6061,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 81,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -6081,8 +6080,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 82,
-          "beat": 1,
+          "measure": 81,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -6124,7 +6123,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 82,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -6177,7 +6176,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 83,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -6232,7 +6231,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 84,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -6274,7 +6273,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 84,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -6329,7 +6328,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 85,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -6371,7 +6370,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 85,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -6478,8 +6477,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 87,
-          "beat": 1,
+          "measure": 86,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -6575,8 +6574,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 88,
-          "beat": 1,
+          "measure": 87,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -6717,7 +6716,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 89,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -6759,7 +6758,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 89,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -6814,7 +6813,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 90,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -6856,7 +6855,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 90,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -6963,8 +6962,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 92,
-          "beat": 1,
+          "measure": 91,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -7060,8 +7059,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 93,
-          "beat": 1,
+          "measure": 92,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -7157,8 +7156,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 94,
-          "beat": 1,
+          "measure": 93,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -7202,7 +7201,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 94,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -7244,7 +7243,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 94,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -7299,7 +7298,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 95,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -7341,7 +7340,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 95,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -7396,7 +7395,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 96,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         }
@@ -7438,7 +7437,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 96,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -7533,7 +7532,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 97,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -7552,8 +7551,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 98,
-          "beat": 1,
+          "measure": 97,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -7595,7 +7594,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 98,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -7742,7 +7741,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 7,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -7786,8 +7785,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 11,
-          "beat": 1,
+          "measure": 10,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -7798,7 +7797,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 11,
-          "beat": 1,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -7831,7 +7830,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 11,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -7842,7 +7841,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 11,
-          "beat": 3,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -7875,8 +7874,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 18,
-          "beat": 4,
+          "measure": 19,
+          "beat": 1,
           "numerator": 4,
           "denominator": 4
         },
@@ -7909,7 +7908,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 19,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -7964,8 +7963,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 33,
-          "beat": 1,
+          "measure": 32,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -7998,7 +7997,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 33,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8131,8 +8130,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 34,
-          "beat": 4,
+          "measure": 35,
+          "beat": 1,
           "numerator": 4,
           "denominator": 4
         },
@@ -8165,7 +8164,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 35,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -8220,8 +8219,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 49,
-          "beat": 1,
+          "measure": 48,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -8254,7 +8253,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 49,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8298,8 +8297,8 @@
           "pitch": 52,
           "channel": 0,
           "velocity": 96,
-          "measure": 50,
-          "beat": 1,
+          "measure": 49,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -8410,7 +8409,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 51,
-          "beat": 4,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -8443,8 +8442,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 55,
-          "beat": 1,
+          "measure": 54,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -8477,7 +8476,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 55,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8532,8 +8531,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 59,
-          "beat": 1,
+          "measure": 58,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -8566,7 +8565,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 59,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8621,8 +8620,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 66,
-          "beat": 4,
+          "measure": 67,
+          "beat": 1,
           "numerator": 4,
           "denominator": 4
         },
@@ -8655,7 +8654,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 67,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -8710,8 +8709,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 81,
-          "beat": 1,
+          "measure": 80,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -8744,7 +8743,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 81,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8788,8 +8787,8 @@
           "pitch": 52,
           "channel": 0,
           "velocity": 96,
-          "measure": 82,
-          "beat": 1,
+          "measure": 81,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -8822,7 +8821,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 82,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8833,7 +8832,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 82,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8889,7 +8888,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 83,
-          "beat": 1,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -8911,7 +8910,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 83,
-          "beat": 2,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -9000,7 +8999,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 97,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -9044,8 +9043,8 @@
           "pitch": 52,
           "channel": 0,
           "velocity": 96,
-          "measure": 98,
-          "beat": 1,
+          "measure": 97,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -9078,7 +9077,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 98,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -9089,7 +9088,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 98,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -9125,105 +9124,6 @@
       "path": "Master.mp3",
       "hash": "sha256:pending",
       "label": "Master"
-    },
-    {
-      "id": "click",
-      "kind": "audio",
-      "path": "Click.flac",
-      "hash": "sha256:pending",
-      "audioRole": "click",
-      "bus": "CUE",
-      "label": "Click"
-    },
-    {
-      "id": "kick",
-      "kind": "audio",
-      "path": "Kick.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Kick"
-    },
-    {
-      "id": "drums",
-      "kind": "audio",
-      "path": "Drums.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Drums"
-    },
-    {
-      "id": "perc",
-      "kind": "audio",
-      "path": "Perc.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Perc"
-    },
-    {
-      "id": "bass",
-      "kind": "audio",
-      "path": "Bass.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Bass"
-    },
-    {
-      "id": "keys",
-      "kind": "audio",
-      "path": "Keys.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Keys"
-    },
-    {
-      "id": "pluck",
-      "kind": "audio",
-      "path": "Pluck.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Pluck"
-    },
-    {
-      "id": "string",
-      "kind": "audio",
-      "path": "String.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "String"
-    },
-    {
-      "id": "melody",
-      "kind": "audio",
-      "path": "Melody.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Melody"
-    },
-    {
-      "id": "choir",
-      "kind": "audio",
-      "path": "Choir.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Choir"
-    },
-    {
-      "id": "guitar",
-      "kind": "audio",
-      "path": "Guitar.flac",
-      "hash": "sha256:pending",
-      "audioRole": "stem",
-      "bus": "MAIN",
-      "label": "Guitar"
     }
   ],
   "info": {

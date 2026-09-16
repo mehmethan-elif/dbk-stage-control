@@ -148,8 +148,17 @@ import { parseSyncHostname, PRACTICE_SHARE_PORT, stageHomeScreenRole } from "../
 
 export type ClientSession = "practice" | "stage";
 
-export type MasterPage = "prep" | "mixer" | "audio" | "lyrics" | "nota" | "chords" | "drums" | "lan";
-export type StageContentPage = Extract<MasterPage, "lyrics" | "nota" | "chords" | "drums">;
+export type MasterPage =
+  | "prep"
+  | "mixer"
+  | "audio"
+  | "lyrics"
+  | "nota"
+  | "chords"
+  | "bass"
+  | "drums"
+  | "lan";
+export type StageContentPage = Extract<MasterPage, "lyrics" | "nota" | "chords" | "bass" | "drums">;
 const AUDIO_DEVICE_KEY = "dbk-audio-device";
 const AUDIO_ROUTING_KEY = "dbk-audio-routing";
 const ACTIVE_GIG_KEY = "dbk-active-gig";
@@ -202,7 +211,9 @@ export const STAGE_ZOOM_MAX = 2;
 export const STAGE_ZOOM_STEP = 0.1;
 
 export function isStageContentPage(page: MasterPage): page is StageContentPage {
-  return page === "lyrics" || page === "nota" || page === "chords" || page === "drums";
+  return (
+    page === "lyrics" || page === "nota" || page === "chords" || page === "bass" || page === "drums"
+  );
 }
 
 function clampStageZoom(value: number): number {
@@ -2275,6 +2286,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       lyrics: 1,
       nota: 1,
       chords: 1,
+      bass: 1,
       drums: 1
     },
     songMix: {},

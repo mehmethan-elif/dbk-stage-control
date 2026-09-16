@@ -3058,7 +3058,7 @@ button {
 }
 
 .chord-section {
-  margin-bottom: calc(20px * var(--lyrics-zoom, 1));
+  margin-bottom: calc(5px * var(--lyrics-zoom, 1));
 }
 
 .chord-section.current > .chord-section-name,
@@ -3102,12 +3102,28 @@ button {
   padding-right: 2px;
 }
 
+/* The chord page is one page of bars, read straight down, so its sections sit closer together
+   than the drum page's packs, which need air round their grids. */
+.drum-section-list.chord-section-list {
+  gap: calc(6px * var(--lyrics-zoom, 1));
+}
+
 .chord-row {
   display: grid;
   grid-template-columns: var(--chord-repeat-w) minmax(0, 1fr) var(--chord-repeat-w);
   align-items: stretch;
   margin-bottom: 6px;
   min-width: 0;
+}
+
+/* The rall sign belongs to the line under it. */
+.chord-rall-row {
+  margin-bottom: 2px;
+}
+
+/* A sign standing between the name and the first line does not make that line a second one. */
+.chord-section-head + .chord-rall-row + .chord-row .chord-measures {
+  border-top: 0;
 }
 
 .chord-repeat-col {
@@ -3162,6 +3178,47 @@ button {
   border-left: 0;
 }
 
+/* Chords side by side sit in one bar, chords above each other are two lines of the song. Without
+   a rule between the lines those two readings look the same on a four bar line. */
+.chord-row + .chord-row .chord-measures {
+  border-top: 1px solid #4a4a4a;
+}
+
+/* A repeat sign is as tall as the bars it gathers, but on a section name it matches the name. */
+.chord-section-head .chord-repeat-mark {
+  height: 100%;
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.chord-repeat-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  position: relative;
+}
+
+.chord-repeat-plays {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: calc(var(--lyrics-size) * 0.44);
+  font-weight: 800;
+  line-height: 1;
+  color: #00ffff;
+  white-space: nowrap;
+}
+
+.chord-row:has(.chord-repeat-plays) {
+  margin-bottom: calc(6px + var(--lyrics-size) * 0.5);
+}
+
+.chord-repeat-col {
+  position: relative;
+}
+
 .chord-repeat-after {
   position: absolute;
   top: 0;
@@ -3201,6 +3258,19 @@ button {
   overflow: hidden;
   background: #1c1c1c;
   border-bottom: 1px solid #4a4a4a;
+}
+
+.chord-measure-notes.chord-drum-lanes {
+  --drum-lane-h: max(8px, calc(var(--lyrics-size) * 0.28));
+  height: calc(var(--drum-lane-h) * 4);
+  display: flex;
+  flex-direction: column;
+}
+
+.chord-drum-lanes .chord-note-lane {
+  flex: 1 1 0;
+  height: var(--drum-lane-h);
+  min-height: 0;
 }
 
 .chord-note-lane {
@@ -3256,6 +3326,21 @@ button {
   font-weight: 700;
   line-height: 1.05;
   color: #fff;
+}
+
+/* Which pass a bar belongs to where two passes end differently, said in the corner of the bar the
+   ending starts on, the way a bracket over the stave would say it. */
+.chord-ending {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  z-index: 2;
+  font-size: calc(var(--lyrics-size) * 0.46);
+  font-weight: 800;
+  line-height: 1;
+  color: #00ffff;
+  pointer-events: none;
 }
 
 .chord-slot {
@@ -4446,9 +4531,15 @@ button {
   display: grid;
   grid-template-columns: var(--chord-repeat-w) minmax(0, 1fr) var(--chord-repeat-w);
   align-items: stretch;
-  margin-top: calc(8px * var(--lyrics-zoom, 1));
-  margin-bottom: 6px;
+  margin-top: calc(3px * var(--lyrics-zoom, 1));
+  margin-bottom: 4px;
   min-width: 0;
+}
+
+/* Names sharing one set of bars read as a stack, close enough to belong to each other. */
+.chord-section-head + .chord-section-head {
+  margin-top: 0;
+  margin-bottom: 4px;
 }
 
 .lyrics-section.chord-section-name {

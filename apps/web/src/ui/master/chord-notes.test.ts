@@ -20,7 +20,8 @@ import {
   sectionNoteGridCount,
   uniqueSectionNoteGrids,
   uniqueChordLabelBoxes,
-  songHasChordNotes
+  songHasChordNotes,
+  drumNotesForMeasure
 } from "./chord-notes";
 
 const tempoMap: TempoPoint[] = [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }];
@@ -64,6 +65,41 @@ describe("notesInMeasure", () => {
     );
     expect(notes.map((note) => note.lane)).toEqual(["D", "F"]);
     expect(notes[0]?.step).toBe(0);
+  });
+
+  it("draws a hit on a bar line in a rallentando, however the export counted it", () => {
+    const barAt = (bpm: number) => (4 * 60) / bpm;
+    const second = barAt(120);
+    const third = second + barAt(115);
+    const note = (time: number, measure: number, beat: number) => ({
+      time,
+      pitch: 48,
+      measure,
+      beat,
+      numerator: 4,
+      denominator: 4
+    });
+    const rall: Song = {
+      ...song(),
+      duration: third + barAt(110),
+      tempoMap: [
+        { time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 },
+        { time: second, measure: 2, bpm: 115, numerator: 4, denominator: 4 },
+        { time: third, measure: 3, bpm: 110, numerator: 4, denominator: 4 }
+      ],
+      chords: [
+        // Reaper counts this one as the last beat of bar 2, though it sounds on bar 3.
+        { time: third, measure: 3, text: "D", notes: [note(third, 2, 4)] },
+        {
+          time: third + barAt(110) / 2,
+          measure: 3,
+          beat: 3,
+          text: "Am",
+          notes: [note(third + barAt(110) / 2, 3, 2)]
+        }
+      ]
+    };
+    expect(notesForMeasure(rall, 3).map((hit) => hit.step)).toEqual([0, 8]);
   });
 
   it("reads the next measure from the playhead", () => {
@@ -369,5 +405,53 @@ describe("occurrenceNoteGridsForBox", () => {
     };
     const layers = occurrenceNoteGridsForBox(demo, { name: "ARA", measure: 1 });
     expect(layers.map((layer) => layer.map((note) => note.lane))).toEqual([["D"], ["G"]]);
+  });
+});
+
+describe("drumNotesForMeasure", () => {
+  const pattern = (
+    text: string,
+    time: number,
+    end: number,
+    notes: { time: number; pitch: number }[]
+  ) => ({
+    text,
+    time,
+    end,
+    length: end - time,
+    measure: 1,
+    numerator: 4,
+    denominator: 4,
+    notes: notes.map((note) => ({ ...note, numerator: 4, denominator: 4 }))
+  });
+
+  it("places groove hits on the bar they sound in", () => {
+    const demo = song();
+    demo.patterns = [pattern("SLOW", 2, 6, [{ time: 2, pitch: 48 }, { time: 3, pitch: 50 }])];
+    expect(drumNotesForMeasure(demo, 2).map((hit) => `${hit.step}:${hit.lane}`)).toEqual([
+      "0:C",
+      "8:D"
+    ]);
+  });
+
+  it("leaves FILL off the grid and keeps the groove going through it", () => {
+    const demo = song();
+    demo.duration = 8;
+    demo.patterns = [
+      pattern("SLOW", 2, 4, [{ time: 2, pitch: 48 }]),
+      pattern("FILL", 4, 6, [{ time: 4, pitch: 52 }])
+    ];
+    expect(drumNotesForMeasure(demo, 2).map((hit) => `${hit.step}:${hit.lane}`)).toEqual(["0:C"]);
+    expect(drumNotesForMeasure(demo, 3).map((hit) => `${hit.step}:${hit.lane}`)).toEqual(["0:C"]);
+  });
+
+  it("repeats the written cycle on later empty bars", () => {
+    const demo = song();
+    demo.duration = 10;
+    demo.patterns = [pattern("SLOW", 2, 4, [{ time: 2, pitch: 48 }, { time: 2.5, pitch: 52 }])];
+    expect(drumNotesForMeasure(demo, 3).map((hit) => `${hit.step}:${hit.lane}`)).toEqual([
+      "0:C",
+      "4:E"
+    ]);
   });
 });

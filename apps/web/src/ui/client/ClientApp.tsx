@@ -6,6 +6,7 @@ import {
 } from "../../store/master-store";
 import { stageHomeScreenRole } from "../../native/sync-host";
 import {
+  BassIcon,
   ChordIcon,
   ChronometerIcon,
   DrumsIcon,
@@ -13,6 +14,7 @@ import {
   ScoreIcon,
   StageConnectIcon
 } from "../shared/icons";
+import { ChordView } from "../master/ChordView";
 import { DrumView } from "../master/DrumView";
 import { LyricsView } from "../master/LyricsView";
 import { NotaViewAsync, usePdfWarmup } from "../master/lazy-pdf";
@@ -63,11 +65,13 @@ export function ClientApp() {
       ? "nota"
       : masterPage === "chords"
         ? "chords"
-        : masterPage === "drums"
-          ? "drums"
-          : masterPage === "lan"
-            ? "lan"
-            : "lyrics";
+        : masterPage === "bass"
+          ? "bass"
+          : masterPage === "drums"
+            ? "drums"
+            : masterPage === "lan"
+              ? "lan"
+              : "lyrics";
   const page = requested === "lan" && !stageRole ? "lyrics" : requested;
   const practice = useMasterStore(clientPracticeMode);
   const libraryStatus = useMasterStore((s) => s.libraryStatus);
@@ -148,6 +152,16 @@ export function ClientApp() {
         </button>
         <button
           type="button"
+          className={`lyrics-btn page-icon${page === "bass" ? " on" : ""}`}
+          title="Bass"
+          aria-label="Bass"
+          aria-pressed={page === "bass"}
+          onClick={() => setMasterPage("bass")}
+        >
+          <BassIcon />
+        </button>
+        <button
+          type="button"
           className={`lyrics-btn page-icon${page === "drums" ? " on" : ""}`}
           title="Drums"
           aria-label="Drums"
@@ -208,8 +222,10 @@ export function ClientApp() {
         <div className="client-main">
           <div className="client-stage">
             <StageCrashGuard>
-              {page === "nota" || page === "chords" ? (
-                <NotaViewAsync layer={page === "chords" ? "chord" : "score"} />
+              {page === "chords" || page === "bass" ? (
+                <ChordView />
+              ) : page === "nota" ? (
+                <NotaViewAsync layer="score" />
               ) : page === "drums" ? (
                 <DrumView />
               ) : (

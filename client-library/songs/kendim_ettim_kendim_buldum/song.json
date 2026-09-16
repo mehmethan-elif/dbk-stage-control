@@ -241,7 +241,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 4.000253,
+          "time": 4,
           "end": 4.125253,
           "pitch": 48,
           "channel": 0,
@@ -261,7 +261,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 6.000253,
+          "time": 6,
           "end": 6.125253,
           "pitch": 48,
           "channel": 0,
@@ -325,7 +325,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 8.000253,
+          "time": 8,
           "end": 8.125253,
           "pitch": 48,
           "channel": 0,
@@ -389,7 +389,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 10.000253,
+          "time": 10,
           "end": 10.125253,
           "pitch": 48,
           "channel": 0,
@@ -453,7 +453,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 12.000253,
+          "time": 12,
           "end": 12.125253,
           "pitch": 48,
           "channel": 0,
@@ -517,7 +517,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 14.000253,
+          "time": 14,
           "end": 14.125253,
           "pitch": 48,
           "channel": 0,
@@ -581,7 +581,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 16.000253,
+          "time": 16,
           "end": 16.125253,
           "pitch": 48,
           "channel": 0,
@@ -654,7 +654,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 18.000253,
+          "time": 18,
           "end": 18.125253,
           "pitch": 48,
           "channel": 0,
@@ -727,7 +727,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 20.000253,
+          "time": 20,
           "end": 20.125253,
           "pitch": 48,
           "channel": 0,
@@ -791,7 +791,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 22.000253,
+          "time": 22,
           "end": 22.125253,
           "pitch": 48,
           "channel": 0,
@@ -855,7 +855,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 24.000253,
+          "time": 24,
           "end": 24.125253,
           "pitch": 48,
           "channel": 0,
@@ -919,7 +919,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 26.000253,
+          "time": 26,
           "end": 26.125253,
           "pitch": 48,
           "channel": 0,
@@ -983,7 +983,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 28.000253,
+          "time": 28,
           "end": 28.125253,
           "pitch": 48,
           "channel": 0,
@@ -1047,7 +1047,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 30.000253,
+          "time": 30,
           "end": 30.125253,
           "pitch": 48,
           "channel": 0,
@@ -1111,7 +1111,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 32.000253,
+          "time": 32,
           "end": 32.125253,
           "pitch": 48,
           "channel": 0,
@@ -1175,7 +1175,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 34.000253,
+          "time": 34,
           "end": 34.125253,
           "pitch": 48,
           "channel": 0,
@@ -1248,7 +1248,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 36.000253,
+          "time": 36,
           "end": 36.125253,
           "pitch": 48,
           "channel": 0,
@@ -1321,7 +1321,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 38.000253,
+          "time": 38,
           "end": 38.125253,
           "pitch": 48,
           "channel": 0,
@@ -1734,7 +1734,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 68.000253,
+          "time": 68,
           "end": 68.125253,
           "pitch": 48,
           "channel": 0,
@@ -1754,7 +1754,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 70.000253,
+          "time": 70,
           "end": 70.125253,
           "pitch": 48,
           "channel": 0,
@@ -1774,7 +1774,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 72.000253,
+          "time": 72,
           "end": 72.125253,
           "pitch": 48,
           "channel": 0,
@@ -1794,7 +1794,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 74.000253,
+          "time": 74,
           "end": 74.125253,
           "pitch": 48,
           "channel": 0,
@@ -1814,7 +1814,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 76.000253,
+          "time": 76,
           "end": 76.125253,
           "pitch": 48,
           "channel": 0,
@@ -1834,7 +1834,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 78.000253,
+          "time": 78,
           "end": 78.125253,
           "pitch": 48,
           "channel": 0,
@@ -1854,7 +1854,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 80.000253,
+          "time": 80,
           "end": 80.125253,
           "pitch": 48,
           "channel": 0,
@@ -1894,7 +1894,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 82.000253,
+          "time": 82,
           "end": 82.125253,
           "pitch": 48,
           "channel": 0,
@@ -1934,7 +1934,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 84.000253,
+          "time": 84,
           "end": 84.125253,
           "pitch": 48,
           "channel": 0,
@@ -1954,7 +1954,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 86.000253,
+          "time": 86,
           "end": 86.125253,
           "pitch": 48,
           "channel": 0,
@@ -2018,7 +2018,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 88.000253,
+          "time": 88,
           "end": 88.125253,
           "pitch": 48,
           "channel": 0,
@@ -2082,7 +2082,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 90.000253,
+          "time": 90,
           "end": 90.125253,
           "pitch": 48,
           "channel": 0,
@@ -2146,7 +2146,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 92.000253,
+          "time": 92,
           "end": 92.125253,
           "pitch": 48,
           "channel": 0,
@@ -2210,7 +2210,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 94.000253,
+          "time": 94,
           "end": 94.125253,
           "pitch": 48,
           "channel": 0,
@@ -2274,7 +2274,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 96.000253,
+          "time": 96,
           "end": 96.125253,
           "pitch": 48,
           "channel": 0,
@@ -2338,7 +2338,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 98.000253,
+          "time": 98,
           "end": 98.125253,
           "pitch": 48,
           "channel": 0,
@@ -2411,7 +2411,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 100.000253,
+          "time": 100,
           "end": 100.125253,
           "pitch": 48,
           "channel": 0,
@@ -2484,7 +2484,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 102.000253,
+          "time": 102,
           "end": 102.125253,
           "pitch": 48,
           "channel": 0,
@@ -2548,7 +2548,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 104.000253,
+          "time": 104,
           "end": 104.125253,
           "pitch": 48,
           "channel": 0,
@@ -2568,7 +2568,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 106.000253,
+          "time": 106,
           "end": 106.125253,
           "pitch": 48,
           "channel": 0,
@@ -2632,7 +2632,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 108.000253,
+          "time": 108,
           "end": 108.125253,
           "pitch": 48,
           "channel": 0,
@@ -2696,7 +2696,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 110.000253,
+          "time": 110,
           "end": 110.125253,
           "pitch": 48,
           "channel": 0,
@@ -2760,7 +2760,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 112.000253,
+          "time": 112,
           "end": 112.125253,
           "pitch": 48,
           "channel": 0,
@@ -2824,7 +2824,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 114.000253,
+          "time": 114,
           "end": 114.125253,
           "pitch": 48,
           "channel": 0,
@@ -2888,7 +2888,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 116.000253,
+          "time": 116,
           "end": 116.125253,
           "pitch": 48,
           "channel": 0,
@@ -2961,7 +2961,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 118.000253,
+          "time": 118,
           "end": 118.125253,
           "pitch": 48,
           "channel": 0,
@@ -3034,7 +3034,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 120.000253,
+          "time": 120,
           "end": 120.125253,
           "pitch": 48,
           "channel": 0,
@@ -3098,7 +3098,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 122.000253,
+          "time": 122,
           "end": 122.125253,
           "pitch": 48,
           "channel": 0,
@@ -3162,7 +3162,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 124.000253,
+          "time": 124,
           "end": 124.125253,
           "pitch": 48,
           "channel": 0,
@@ -3226,7 +3226,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 126.000253,
+          "time": 126,
           "end": 126.125253,
           "pitch": 48,
           "channel": 0,
@@ -3290,7 +3290,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 128.000253,
+          "time": 128,
           "end": 128.125253,
           "pitch": 48,
           "channel": 0,
@@ -3354,7 +3354,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 130.000253,
+          "time": 130,
           "end": 130.125253,
           "pitch": 48,
           "channel": 0,
@@ -3418,7 +3418,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 132.000253,
+          "time": 132,
           "end": 132.125253,
           "pitch": 48,
           "channel": 0,
@@ -3482,7 +3482,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 134.000253,
+          "time": 134,
           "end": 134.125253,
           "pitch": 48,
           "channel": 0,
@@ -3555,7 +3555,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 136.000253,
+          "time": 136,
           "end": 136.125253,
           "pitch": 48,
           "channel": 0,
@@ -3628,7 +3628,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 138.000253,
+          "time": 138,
           "end": 138.125253,
           "pitch": 48,
           "channel": 0,
@@ -4041,7 +4041,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 168.000253,
+          "time": 168,
           "end": 168.125253,
           "pitch": 48,
           "channel": 0,
@@ -4061,7 +4061,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 170.000253,
+          "time": 170,
           "end": 170.125253,
           "pitch": 48,
           "channel": 0,
@@ -4081,7 +4081,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 172.000253,
+          "time": 172,
           "end": 172.125253,
           "pitch": 48,
           "channel": 0,
@@ -4101,7 +4101,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 174.000253,
+          "time": 174,
           "end": 174.125253,
           "pitch": 48,
           "channel": 0,
@@ -4121,7 +4121,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 176.000253,
+          "time": 176,
           "end": 176.125253,
           "pitch": 48,
           "channel": 0,
@@ -4141,7 +4141,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 178.000253,
+          "time": 178,
           "end": 178.125253,
           "pitch": 48,
           "channel": 0,
@@ -4161,7 +4161,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 180.000253,
+          "time": 180,
           "end": 180.125253,
           "pitch": 48,
           "channel": 0,
@@ -4201,7 +4201,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 182.000253,
+          "time": 182,
           "end": 182.125253,
           "pitch": 48,
           "channel": 0,
@@ -4241,7 +4241,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 184.000253,
+          "time": 184,
           "end": 184.125253,
           "pitch": 48,
           "channel": 0,
@@ -4261,7 +4261,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 186.000253,
+          "time": 186,
           "end": 186.125253,
           "pitch": 48,
           "channel": 0,
@@ -4325,7 +4325,7 @@
       "text": "Em",
       "notes": [
         {
-          "time": 188.000253,
+          "time": 188,
           "end": 188.125253,
           "pitch": 48,
           "channel": 0,
@@ -4389,7 +4389,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 190.000253,
+          "time": 190,
           "end": 190.125253,
           "pitch": 48,
           "channel": 0,
@@ -4453,7 +4453,7 @@
       "text": "Cmaj7",
       "notes": [
         {
-          "time": 192.000253,
+          "time": 192,
           "end": 192.125253,
           "pitch": 48,
           "channel": 0,
@@ -4517,7 +4517,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 194.000253,
+          "time": 194,
           "end": 194.125253,
           "pitch": 48,
           "channel": 0,
@@ -4581,7 +4581,7 @@
       "text": "Am",
       "notes": [
         {
-          "time": 196.000253,
+          "time": 196,
           "end": 196.125253,
           "pitch": 48,
           "channel": 0,
@@ -4645,7 +4645,7 @@
       "text": "D",
       "notes": [
         {
-          "time": 198.000264,
+          "time": 198,
           "end": 198.130699,
           "pitch": 48,
           "channel": 0,
@@ -4671,7 +4671,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 100,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -4685,13 +4685,13 @@
       "text": "D",
       "notes": [
         {
-          "time": 200.086689,
+          "time": 200.086957,
           "end": 200.22304,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 100,
-          "beat": 4,
+          "measure": 101,
+          "beat": 1,
           "numerator": 4,
           "denominator": 4
         }
@@ -4725,7 +4725,7 @@
       "text": "Bm",
       "notes": [
         {
-          "time": 202.269064,
+          "time": 202.268775,
           "end": 202.416087,
           "pitch": 48,
           "channel": 0,
@@ -5738,7 +5738,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 100,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -5749,7 +5749,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 100,
-          "beat": 3,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }

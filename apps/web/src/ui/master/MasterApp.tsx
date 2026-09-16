@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { bandRoster, lanRosterState } from "@dbk/core";
 import { currentGig, useMasterStore } from "../../store/master-store";
 import {
+  BassIcon,
   ChordIcon,
   ChronometerIcon,
   DrumsIcon,
@@ -14,6 +15,7 @@ import {
   StageConnectIcon
 } from "../shared/icons";
 import { AudioView } from "./AudioView";
+import { ChordView } from "./ChordView";
 import { DrumView } from "./DrumView";
 import { LanView } from "./LanView";
 import { useNavigatorOnline } from "../shared/BandRoster";
@@ -132,6 +134,16 @@ export function MasterApp() {
         </button>
         <button
           type="button"
+          className={`lyrics-btn page-icon${masterPage === "bass" ? " on" : ""}`}
+          title="Bass"
+          aria-label="Bass"
+          aria-pressed={masterPage === "bass"}
+          onClick={() => setMasterPage(masterPage === "bass" ? "prep" : "bass")}
+        >
+          <BassIcon />
+        </button>
+        <button
+          type="button"
           className={`lyrics-btn page-icon${masterPage === "drums" ? " on" : ""}`}
           title="Drums"
           aria-label="Drums"
@@ -143,13 +155,14 @@ export function MasterApp() {
         <div className="grow" />
         <div className="mode-toggle">
           <button
-            className={editOpen && (masterPage === "chords" || masterPage === "nota") ? "on" : ""}
+            className={editOpen && masterPage === "nota" ? "on" : ""}
             title="Edit sections"
             aria-label="Edit sections"
-            aria-pressed={editOpen && (masterPage === "chords" || masterPage === "nota")}
+            aria-pressed={editOpen && masterPage === "nota"}
             onClick={() => {
-              if (masterPage !== "chords" && masterPage !== "nota") {
-                setMasterPage("chords");
+              // The boxes are drawn on the score PDF, so this only has anything to edit there.
+              if (masterPage !== "nota") {
+                setMasterPage("nota");
                 if (!editOpen) toggleEditOpen();
                 return;
               }
@@ -222,8 +235,10 @@ export function MasterApp() {
         <AudioView />
       ) : masterPage === "lyrics" ? (
         <LyricsView />
-      ) : masterPage === "nota" || masterPage === "chords" ? (
-        <NotaViewAsync layer={masterPage === "chords" ? "chord" : "score"} />
+      ) : masterPage === "chords" || masterPage === "bass" ? (
+        <ChordView />
+      ) : masterPage === "nota" ? (
+        <NotaViewAsync layer="score" />
       ) : masterPage === "drums" ? (
         <DrumView />
       ) : masterPage === "lan" ? (

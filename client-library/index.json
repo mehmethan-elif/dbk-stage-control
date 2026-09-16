@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 2688,
-    "hash": "b722ad2778eb6775e5a570d5f820f6e1bd19bf88ca708c27f53b24aea1d2ac93"
+    "size": 2548,
+    "hash": "225c4e3fcc57c7c1752a6a22c145c1fae4b3438068f089a66b0d6e86e49d5cb2"
   },
   "songs": [
     {
@@ -34,7 +34,7 @@
         {
           "path": "Master.mp3",
           "size": 2895620,
-          "hash": "ee795233fdf8e88b5d25104bb1f9edbf73704af875ca0c8b4dee2505016df469"
+          "hash": "88c4da6806bcfe586fc41d9ed15ba784b9742e784c912ae28f38ad32b156120c"
         },
         {
           "path": "Nota.pdf",
@@ -48,8 +48,8 @@
         },
         {
           "path": "song.json",
-          "size": 201941,
-          "hash": "b420dd172e233eff85234e7e642cc73b85eb43909acfc61db86896b3de83c44b"
+          "size": 199843,
+          "hash": "c6a98c6d1016e6220c7a9701791a9cdaff5fbc12d603cec6a27b3a98ff01f992"
         }
       ]
     },
@@ -90,8 +90,8 @@
         },
         {
           "path": "song.json",
-          "size": 85250,
-          "hash": "97725f0220a40b2cdd51033ca22ce7bd2e7abd19fb88e8e2a33f146335cdcc2a"
+          "size": 85218,
+          "hash": "a4e9ec0e64a902a7a15e1e0e141e821c323bc92820e24a928f244407dac207ae"
         }
       ]
     },
@@ -117,8 +117,8 @@
         },
         {
           "path": "song.json",
-          "size": 121658,
-          "hash": "f4aefc69baf03eff2029f6320a4739124feb1f5c78770178a9f412b1354bc1cb"
+          "size": 121168,
+          "hash": "76705226b7a28fb416182a5212a19741a08e938e7b7848f0156b2fb24ce00b14"
         }
       ]
     },
@@ -144,8 +144,8 @@
         },
         {
           "path": "song.json",
-          "size": 133038,
-          "hash": "cf44c13f631dec8493bb0b85b12142115f57c7337ee7420dfbc4843361ba2db5"
+          "size": 132996,
+          "hash": "3fe4f38d49beb654a286fd28e6d4e707e3acfb253fd17402e811aeb139709f1d"
         }
       ]
     },
@@ -172,7 +172,7 @@
         {
           "path": "song.json",
           "size": 134158,
-          "hash": "5c9b21d5269ac1ade3ae8b458a392948c4057218e97a4d84c017f619832f6a96"
+          "hash": "9a5cb417c220453a4629ed8ed64290a391c4a0e4138ecbeb3e48f3d557a73391"
         }
       ]
     },
@@ -198,8 +198,8 @@
         },
         {
           "path": "song.json",
-          "size": 77143,
-          "hash": "cc799cf16d1dedc02ea09b2fc83e8670f47e8aedb8f60f23bee38df47577b617"
+          "size": 77112,
+          "hash": "c5abe4ea72aa680ec233243214d6a52a95ab6bf5424460c705487c7c3d794894"
         }
       ]
     }

@@ -4,6 +4,7 @@ import {
   tempoAt,
   timeToMusical,
   type ChordEvent,
+  type PatternEvent,
   type PatternNote,
   type Song,
   type TempoPoint
@@ -42,6 +43,9 @@ export const NOTE_LANES = [
   { name: "D", pc: 2 },
   { name: "C", pc: 0 }
 ] as const;
+
+/** The drum page reads these four lanes, top to bottom. The bass grid shows the same four. */
+export const DRUM_GRID_LANES = ["F", "E", "D", "C"] as const;
 
 export interface ChordNoteHit {
   step: number;
@@ -95,7 +99,10 @@ export function notesInMeasure(
     const cEnd = chordEnd(chords, i, duration);
     if (chord.time >= end - TIME_EPS || cEnd <= start + TIME_EPS) continue;
     for (const note of chord.notes ?? []) {
-      if (note.measure != null && note.measure !== measure) continue;
+      // When a hit lands on a bar line in a rallentando, the export can still count it as the
+      // last beat of the bar before. Its time is what draws it and what the playhead follows, so
+      // a bar takes every hit sounding inside it: the D of Kendim Ettim's last line is written on
+      // the downbeat it is played on, rather than falling between the two bars.
       if (note.time < start - TIME_EPS || note.time >= end - TIME_EPS) continue;
       const key = `${note.time.toFixed(5)}:${note.pitch}`;
       if (seen.has(key)) continue;
@@ -119,6 +126,75 @@ export function notesForMeasure(song: Song, measure: number): ChordNoteHit[] {
   const end = Math.min(span.end, song.duration);
   if (end - start <= TIME_EPS) return [];
   return notesInMeasure(song.chords ?? [], measure, start, end, song.duration, song.tempoMap);
+}
+
+function drumLaneName(pitch: number): (typeof DRUM_GRID_LANES)[number] | undefined {
+  const pc = ((pitch % 12) + 12) % 12;
+  if (pc === 5) return "F";
+  if (pc === 4) return "E";
+  if (pc === 2) return "D";
+  if (pc === 0) return "C";
+  return undefined;
+}
+
+function groovePatterns(song: Song): PatternEvent[] {
+  return [...(song.patterns ?? [])]
+    .filter((pattern) => {
+      const text = pattern.text.trim().toUpperCase();
+      return Boolean(text) && text !== "FILL" && (pattern.notes?.length ?? 0) > 0;
+    })
+    .sort((left, right) => left.time - right.time);
+}
+
+function measureCount(map: TempoPoint[], start: number, end: number): number {
+  if (end - start <= TIME_EPS) return 0;
+  const first = timeToMusical(map, start + TIME_EPS).measure;
+  const last = timeToMusical(map, end - TIME_EPS).measure;
+  return Math.max(0, last - first + 1);
+}
+
+/**
+ * The groove that still owns this bar: the last non-FILL pattern that started on or before it,
+ * held until the next groove, the way an empty bar on the drum page keeps playing the run.
+ */
+function coveringGroove(song: Song, measure: number): PatternEvent | undefined {
+  const start = measureSpan(song.tempoMap ?? [], measure).start;
+  const grooves = groovePatterns(song);
+  let owner: PatternEvent | undefined;
+  for (const pattern of grooves) {
+    if (pattern.time <= start + TIME_EPS) owner = pattern;
+    else break;
+  }
+  return owner;
+}
+
+/**
+ * Drum hits for this bar on the bass page. FILL is left off. A bar with no new MIDI still
+ * reads the written cycle of the groove that is still going, like the drum page.
+ */
+export function drumNotesForMeasure(song: Song, measure: number): ChordNoteHit[] {
+  const map = song.tempoMap ?? [];
+  const pattern = coveringGroove(song, measure);
+  if (!pattern) return [];
+  const barSteps = stepsFromTempoMap(map, timeToMusical(map, pattern.time + TIME_EPS).measure);
+  const written = Math.max(1, measureCount(map, pattern.time, pattern.end));
+  const originMeasure = timeToMusical(map, pattern.time + TIME_EPS).measure;
+  const barInCycle = ((measure - originMeasure) % written + written) % written;
+  const cycleSteps = written * barSteps;
+  const origin = timeToMusical(map, pattern.time);
+  const hits = new Map<string, ChordNoteHit>();
+  for (const note of pattern.notes ?? []) {
+    const lane = drumLaneName(note.pitch);
+    if (!lane) continue;
+    const at = timeToMusical(map, note.time);
+    const raw =
+      (at.measure - origin.measure) * barSteps + (at.beat - origin.beat) * STEPS_PER_BEAT;
+    const cycleStep = Math.max(0, Math.min(cycleSteps - 1, Math.round(raw)));
+    if (Math.floor(cycleStep / barSteps) !== barInCycle) continue;
+    const step = cycleStep % barSteps;
+    hits.set(`${step}:${lane}`, { step, lane });
+  }
+  return [...hits.values()].sort((a, b) => a.step - b.step || a.lane.localeCompare(b.lane));
 }
 
 export function playheadMeasure(song: Song, time: number): number {
@@ -484,6 +560,32 @@ export function ChordNoteLane(props: {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+export function ChordDrumLanes(props: { notes: ChordNoteHit[]; steps?: number }) {
+  const steps = Math.max(STEPS_PER_BEAT, Math.round(props.steps ?? STEPS_PER_MEASURE));
+  return (
+    <div
+      className="chord-measure-notes chord-drum-lanes"
+      style={{ "--drum-steps": steps } as CSSProperties}
+      data-drum-lanes="CDEF"
+    >
+      {DRUM_GRID_LANES.map((lane) => (
+        <div key={lane} className="drum-lane chord-note-lane" data-drum-lane={lane}>
+          {Array.from({ length: steps }, (_, step) => {
+            const hit = props.notes.some((note) => note.step === step && note.lane === lane);
+            return (
+              <span
+                key={step}
+                data-note={hit ? lane : undefined}
+                className={`drum-step${hit ? " hit" : ""}${stepTone(step, steps)}`}
+              />
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }

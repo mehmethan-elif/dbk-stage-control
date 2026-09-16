@@ -745,6 +745,10 @@ local function musical_at(time)
 end
 
 local EVENT_BARLINE_SNAP_SEC = 0.05
+-- PPQ→seconds can land a copied downbeat a tenth of a millisecond early
+-- (Kerkük m.56 C wrote 97.058680 and labeled measure 55). 2ms is rounding
+-- dust, not played feel: a 16th at 136 BPM is ~110ms.
+local NOTE_BARLINE_SNAP_SEC = 0.002
 
 local function nearest_barline(time)
   local _, measures = reaper.TimeMap2_timeToBeats(0, time)
@@ -762,6 +766,14 @@ end
 local function snap_to_barline(time, always)
   local bar = nearest_barline(time)
   if always or math.abs(bar - time) <= EVENT_BARLINE_SNAP_SEC then
+    return round(bar, 6)
+  end
+  return round(time, 6)
+end
+
+local function snap_note_time(time)
+  local bar = nearest_barline(time)
+  if math.abs(bar - time) <= NOTE_BARLINE_SNAP_SEC then
     return round(bar, 6)
   end
   return round(time, 6)
@@ -1134,13 +1146,13 @@ local function midi_notes_from_item(item)
         local ok, selected, muted, startppq, endppq, chan, pitch, vel = reaper.MIDI_GetNote(take, n)
         local skip = muted == true or muted == 1
         if ok ~= false and not skip and startppq then
-          local t0 = reaper.MIDI_GetProjTimeFromPPQPos(take, startppq)
-          local t1 = endppq and reaper.MIDI_GetProjTimeFromPPQPos(take, endppq) or t0
+          local t0 = snap_note_time(reaper.MIDI_GetProjTimeFromPPQPos(take, startppq))
+          local t1 = endppq and snap_note_time(reaper.MIDI_GetProjTimeFromPPQPos(take, endppq)) or t0
           local measure, beat = musical_at(t0)
           local num, den = timesig_at(t0)
           notes[#notes + 1] = {
-            time = round(t0, 6),
-            finish = round(t1, 6),
+            time = t0,
+            finish = t1,
             pitch = pitch or 0,
             channel = chan or 0,
             velocity = vel or 0,

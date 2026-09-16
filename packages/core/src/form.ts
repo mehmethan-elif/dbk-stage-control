@@ -70,6 +70,39 @@ function patternGridKey(pattern: { time: number; end: number; notes?: { time: nu
     .join(",");
 }
 
+/**
+ * Where a chord sits in its section, to the millisecond. Two passes of the same bars are the same
+ * music, but each pass counts its time from a different point of the tempo map, so the arithmetic
+ * leaves dust: the first CEV+ FINAL of Biz opens a hair before its own section and printed
+ * "-0.0000" where the last one printed "0.0000", which read as new music and hung a coda on the
+ * song. A millisecond is finer than anyone plays, and zero has no sign.
+ */
+function offsetKey(time: number, start: number): string {
+  const at = Math.round((time - start) * 1000) / 1000;
+  return (at === 0 ? 0 : at).toFixed(3);
+}
+
+/**
+ * Where a strum sits in its bar. Kerkük's second cycle is the same music as the first, but the
+ * export's note times drift by a few milliseconds, and a stamp in seconds still splits 3.74 from
+ * 3.76 and hides the D.S. The chord page already reads hits by their step in the bar; the form
+ * uses that same reading so two passes of the same bars stay one block.
+ */
+function noteStamp(
+  map: Song["tempoMap"],
+  note: { time: number; pitch: number },
+  origin: number
+): string {
+  // Count the hit from the chord's bar, not its own clock: a strum that lands on a bar line
+  // in the second pass of Kerkük's first ARA prints as step 15 in one cycle and step 0 in
+  // the other, which used to look like new music and put the segno on the ARA after it.
+  const measure = timeToMusical(map ?? [], origin + TIME_EPS).measure;
+  const span = measureSpan(map, measure);
+  const length = Math.max(TIME_EPS, span.end - span.start);
+  const step = Math.max(0, Math.min(15, Math.round(((note.time - span.start) / length) * 16)));
+  return `${step}:${note.pitch}`;
+}
+
 function sectionGroove(song: Song, section: Section, identity: SongFormOptions["identity"]): string {
   if (identity === "names") return "";
   if (identity !== "chords") {
@@ -93,9 +126,9 @@ function sectionGroove(song: Song, section: Section, identity: SongFormOptions["
     .map((chord) => {
       const text = chord.text.trim();
       if (!text || text === "-") return "";
-      const offset = (chord.time - section.start).toFixed(4);
+      const offset = offsetKey(chord.time, section.start);
       const notes = (chord.notes ?? [])
-        .map((note) => `${(note.time - section.start).toFixed(4)}:${note.pitch}`)
+        .map((note) => noteStamp(song.tempoMap, note, chord.time))
         .join(",");
       return `${offset}:${text}[${notes}]`;
     })
@@ -135,9 +168,39 @@ function grooveAlreadyWritten(
   return same.some((block) => groovesMatch(grooves.get(block.id), groove));
 }
 
+/**
+ * Chord letters and note pitches, without where they sit in the bar. A rall stretches the last
+ * NAK of Karahisar by a few tenths and would otherwise look like new music and hang a coda on
+ * bars the band is already reading.
+ */
+function chordShape(groove: string): string | undefined {
+  if (!groove.startsWith("c:")) return undefined;
+  return groove
+    .slice(2)
+    .split("|")
+    .map((part) =>
+      part
+        .replace(/^-?\d+\.\d+:/, "")
+        .replace(/\[(.*?)\]/, (_, notes: string) =>
+          `[${notes
+            .split(",")
+            .map((note) => note.replace(/^\d+:/, ""))
+            .join(",")}]`
+        )
+    )
+    .join("|");
+}
+
 function groovesMatch(written: string | undefined, current: string): boolean {
+  if (!written) return false;
   if (written === current) return true;
-  if (!written?.startsWith("c:") || !current.startsWith("c:")) return false;
+  const writtenShape = chordShape(written);
+  const currentShape = chordShape(current);
+  if (writtenShape != null && currentShape != null) {
+    if (writtenShape === currentShape) return true;
+    if (writtenShape.startsWith(`${currentShape}|`)) return true;
+  }
+  if (!written.startsWith("c:") || !current.startsWith("c:")) return false;
   return written.startsWith(`${current}|`);
 }
 

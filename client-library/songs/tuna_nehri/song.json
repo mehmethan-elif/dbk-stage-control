@@ -3,7 +3,6 @@
   "version": 1,
   "title": "Tuna Nehri",
   "duration": 177.540659,
-  "clickDuration": 177.540659,
   "nextSongAt": 173.940659,
   "key": "B",
   "scale": "KURDI",
@@ -2937,8 +2936,8 @@
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
-          "measure": 72,
-          "beat": 1,
+          "measure": 71,
+          "beat": 3,
           "numerator": 3,
           "denominator": 4
         }
@@ -2958,7 +2957,7 @@
           "channel": 0,
           "velocity": 96,
           "measure": 72,
-          "beat": 2,
+          "beat": 1,
           "numerator": 3,
           "denominator": 4
         }

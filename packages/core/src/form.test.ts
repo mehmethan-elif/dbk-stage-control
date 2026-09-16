@@ -55,6 +55,118 @@ describe("songForm", () => {
     expect(final?.coda).toBe(true);
   });
 
+  it("keeps the last pass on the written bars when its first chord lands a hair early", () => {
+    const chord = (time: number, text: string) => ({
+      time,
+      text,
+      measure: 1,
+      notes: [{ time, pitch: 50, numerator: 4, denominator: 4 }]
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "COUNT", start: 0, end: 2 },
+          { name: "ARA", start: 2, end: 16 },
+          { name: "SAN", start: 16, end: 30 },
+          { name: "CEV", start: 30, end: 34 },
+          { name: "ARA", start: 34, end: 48 },
+          { name: "SAN", start: 48, end: 62 },
+          { name: "CEV", start: 62, end: 66 }
+        ]),
+        chords: [chord(30 - 1e-13, "Dm"), chord(62, "Dm")]
+      },
+      { identity: "chords" }
+    );
+
+    expect(form.blocks.filter((block) => block.name === "CEV")).toHaveLength(1);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
+  });
+
+  it("reads a second cycle as D.S. when its notes land a millisecond later", () => {
+    const note = (time: number) => ({ time, pitch: 60, numerator: 4, denominator: 4 });
+    const chord = (time: number, text: string, drift = 0) => ({
+      time,
+      text,
+      measure: 1,
+      notes: [note(time + drift)]
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "COUNT", start: 0, end: 2 },
+          { name: "ARA", start: 2, end: 6 },
+          { name: "SAN A", start: 6, end: 10 },
+          { name: "SAN D", start: 10, end: 14 },
+          { name: "ARA", start: 14, end: 18 },
+          { name: "SAN A", start: 18, end: 22 },
+          { name: "SAN D", start: 22, end: 26 },
+          { name: "FINAL", start: 26, end: 30 }
+        ]),
+        chords: [
+          chord(2, "Em"),
+          chord(6, "G"),
+          chord(10, "Bm"),
+          chord(14, "Em", 0.019),
+          chord(18, "G", 0.019),
+          chord(22, "Bm", 0.019),
+          chord(26, "C")
+        ]
+      },
+      { identity: "chords" }
+    );
+
+    expect(form.blocks.map((block) => block.name)).toEqual([
+      "COUNT",
+      "ARA",
+      "SAN A",
+      "SAN D",
+      "FINAL"
+    ]);
+    expect(form.blocks.find((block) => block.name === "ARA")?.segno).toBe(true);
+    expect(form.blocks.find((block) => block.name === "SAN D")?.ds).toBe(true);
+    expect(form.blocks.find((block) => block.name === "SAN D")?.toCoda).toBe(true);
+    expect(form.blocks.find((block) => block.name === "FINAL")?.coda).toBe(true);
+  });
+
+  it("keeps a second-cycle ARA on the first when a hit sits on the bar line", () => {
+    const note = (time: number) => ({ time, pitch: 60, numerator: 4, denominator: 4 });
+    const form = songForm(
+      {
+        ...song([
+          { name: "COUNT", start: 0, end: 2 },
+          { name: "ARA", start: 2, end: 6 },
+          { name: "ARA", start: 6, end: 10 },
+          { name: "SAN D", start: 10, end: 14 },
+          { name: "ARA", start: 14, end: 18 },
+          { name: "ARA", start: 18, end: 22 },
+          { name: "SAN D", start: 22, end: 26 },
+          { name: "FINAL", start: 26, end: 28 }
+        ]),
+        chords: [
+          { time: 2, text: "Em", measure: 2, notes: [note(2)] },
+          { time: 3.765, text: "C", measure: 2, notes: [note(4)] },
+          { time: 6, text: "D", measure: 4, notes: [note(6)] },
+          { time: 10, text: "Bm", measure: 6, notes: [note(10)] },
+          { time: 14, text: "Em", measure: 8, notes: [note(14)] },
+          { time: 15.765, text: "C", measure: 8, notes: [note(16 - 0.01)] },
+          { time: 18, text: "D", measure: 10, notes: [note(18)] },
+          { time: 22, text: "Bm", measure: 12, notes: [note(22)] },
+          { time: 26, text: "C", measure: 14, notes: [note(26)] }
+        ]
+      },
+      { identity: "chords" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual([
+      "COUNT",
+      "ARA",
+      "ARA",
+      "SAN D",
+      "FINAL"
+    ]);
+    expect(form.blocks.find((block) => block.name === "ARA")?.segno).toBe(true);
+    expect(form.blocks.find((block) => block.name === "SAN D")?.ds).toBe(true);
+  });
+
   it("maps a later ARA pass onto the matching written ARA", () => {
     const form = songForm(biz);
     const first = formAt(form, 96);
@@ -186,6 +298,46 @@ describe("songForm", () => {
     // The band leaves the written NAK and lands on the ending, which is a coda.
     expect(naks.map((block) => block.coda)).toEqual([false, false, true]);
     expect(naks.map((block) => block.toCoda)).toEqual([true, false, false]);
+  });
+
+  it("keeps a last NAK on the written bars when only the rall stretches its chords", () => {
+    const chord = (time: number, text: string) => ({
+      time,
+      text,
+      measure: 1,
+      notes: [{ time, pitch: 48, numerator: 4, denominator: 4 }]
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "COUNT", start: 0, end: 2 },
+          { name: "ARA", start: 2, end: 6 },
+          { name: "SAN B", start: 6, end: 10 },
+          { name: "NAK", start: 10, end: 16 },
+          { name: "ARA", start: 16, end: 20 },
+          { name: "SAN B", start: 20, end: 24 },
+          { name: "NAK", start: 24, end: 31 }
+        ]),
+        chords: [
+          chord(2, "Em"),
+          chord(6, "G"),
+          chord(10, "E"),
+          chord(12, "Am"),
+          chord(14, "Bm"),
+          chord(16, "Em"),
+          chord(20, "G"),
+          chord(24, "E"),
+          chord(26.2, "Am"),
+          chord(28.8, "Bm")
+        ]
+      },
+      { identity: "chords" }
+    );
+
+    expect(form.blocks.map((block) => block.name)).toEqual(["COUNT", "ARA", "SAN B", "NAK"]);
+    expect(form.blocks.find((block) => block.name === "ARA")?.segno).toBe(true);
+    expect(form.blocks.find((block) => block.name === "NAK")?.ds).toBe(true);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
   });
 
   it("does not write new sections after D.S. when the return pass uses a different groove", () => {
