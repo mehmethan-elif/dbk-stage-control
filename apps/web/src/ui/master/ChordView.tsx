@@ -651,7 +651,7 @@ function ChordSpanView(props: { span: ChordSpan; blockId: string; rall: ChordRal
         return (
           <Fragment key={`${span.id}#${lineIndex}`}>
             {slows ? <ChordRallBar /> : null}
-            <div className="chord-row">
+            <div className={`chord-row${closes && plays >= 3 ? " has-plays" : ""}`}>
               <div className="chord-repeat-col">
                 {opens && lineIndex === 0 ? <ChordRepeatMark side="start" /> : null}
               </div>

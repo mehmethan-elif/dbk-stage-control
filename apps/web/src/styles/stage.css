@@ -3211,7 +3211,7 @@ button {
   white-space: nowrap;
 }
 
-.chord-row:has(.chord-repeat-plays) {
+.chord-row.has-plays {
   margin-bottom: calc(6px + var(--lyrics-size) * 0.5);
 }
 
@@ -3274,36 +3274,15 @@ button {
 }
 
 .chord-note-lane {
-  display: grid;
-  grid-template-columns: repeat(var(--drum-steps, 16), minmax(0, 1fr));
   height: 100%;
   min-width: 0;
   overflow: hidden;
   border-top: 0;
-  background-image: none;
 }
 
-.chord-note-lane .drum-step.measure,
-.chord-note-lane .drum-step:first-child {
-  box-shadow: none;
-}
-
-.chord-note-lane .drum-step.beat {
-  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.5);
-}
-
-.chord-note-lane .drum-step {
-  overflow: hidden;
-}
-
-.chord-note-lane .drum-step.hit::after {
-  inset: 12% 8%;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  transform: none;
-  box-sizing: border-box;
+.chord-note-lane .drum-hit {
+  top: 12%;
+  height: 76%;
   border-radius: 0;
 }
 
@@ -3915,17 +3894,13 @@ button {
   border-top: 0;
 }
 
-.nota-rect-notes .chord-note-lane .drum-step.beat {
-  box-shadow: inset 1px 0 0 #fff;
-}
-
-.nota-rect-notes.current .drum-step.hit::after,
-.nota-rect-notes.current .drum-step.hit[data-note]::after {
+.nota-rect-notes.current .drum-hit,
+.nota-rect-notes.current .drum-hit[data-note] {
   background: #3dba7a;
 }
 
-.nota-rect-notes.next .drum-step.hit::after,
-.nota-rect-notes.next .drum-step.hit[data-note]::after {
+.nota-rect-notes.next .drum-hit,
+.nota-rect-notes.next .drum-hit[data-note] {
   background: #e89130;
 }
 

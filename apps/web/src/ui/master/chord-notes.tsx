@@ -531,12 +531,6 @@ export function uniqueSectionNoteGrids(song: Song | undefined): SectionNoteGrids
   });
 }
 
-function stepTone(step: number, steps: number): string {
-  if (step % steps === 0) return " measure";
-  if (step % STEPS_PER_BEAT === 0) return " beat";
-  return "";
-}
-
 export function ChordNoteLane(props: {
   notes: ChordNoteHit[];
   steps?: number;
@@ -549,16 +543,14 @@ export function ChordNoteLane(props: {
       style={{ "--drum-steps": steps } as CSSProperties}
     >
       <div className="drum-lane chord-note-lane">
-        {Array.from({ length: steps }, (_, step) => {
-          const hit = props.notes.find((note) => note.step === step);
-          return (
-            <span
-              key={step}
-              data-note={hit?.lane}
-              className={`drum-step${hit ? " hit" : ""}${stepTone(step, steps)}`}
-            />
-          );
-        })}
+        {props.notes.map((hit) => (
+          <span
+            key={`${hit.step}:${hit.lane}`}
+            data-note={hit.lane}
+            className="drum-hit"
+            style={{ "--drum-hit": String(hit.step) } as CSSProperties}
+          />
+        ))}
       </div>
     </div>
   );
@@ -574,16 +566,16 @@ export function ChordDrumLanes(props: { notes: ChordNoteHit[]; steps?: number })
     >
       {DRUM_GRID_LANES.map((lane) => (
         <div key={lane} className="drum-lane chord-note-lane" data-drum-lane={lane}>
-          {Array.from({ length: steps }, (_, step) => {
-            const hit = props.notes.some((note) => note.step === step && note.lane === lane);
-            return (
+          {props.notes
+            .filter((note) => note.lane === lane)
+            .map((note) => (
               <span
-                key={step}
-                data-note={hit ? lane : undefined}
-                className={`drum-step${hit ? " hit" : ""}${stepTone(step, steps)}`}
+                key={`${note.step}:${note.lane}`}
+                data-note={lane}
+                className="drum-hit"
+                style={{ "--drum-hit": String(note.step) } as CSSProperties}
               />
-            );
-          })}
+            ))}
         </div>
       ))}
     </div>
