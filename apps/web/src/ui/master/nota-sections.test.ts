@@ -11,6 +11,9 @@ import {
   FIRST_NOTA_RECT_HEIGHT_PX,
   FIRST_NOTA_RECT_WIDTH_PX,
   applyChainedRectGeometry,
+  applyAdjoiningRectEdges,
+  applyLineRectGeometry,
+  applyStaffLineRectGeometry,
   ensureSectionLabels,
   shouldPersistNotaLayout,
   hasSectionLabel,
@@ -254,6 +257,76 @@ describe("measure chain", () => {
       { ...first, x: 0.25, w: 0.18 },
       { ...second, x: 0.25, w: 0.18 }
     ]);
+  });
+
+  it("copies height and y onto other measure boxes on the same staff line", () => {
+    const first = {
+      id: "a",
+      name: "ARA",
+      measure: 1,
+      page: 0,
+      x: 0.1,
+      y: 0.12,
+      w: 0.2,
+      h: 0.08
+    };
+    const second = { ...first, id: "b", measure: 2, x: 0.32 };
+    const third = { ...first, id: "c", measure: 3, x: 0.54, y: 0.28 };
+    const moved = applyLineRectGeometry(
+      [first, second, third],
+      { ...first, y: 0.15, h: 0.1 },
+      first
+    );
+    expect(moved.find((box) => box.id === "a")).toMatchObject({ y: 0.15, h: 0.1, x: 0.1, w: 0.2 });
+    expect(moved.find((box) => box.id === "b")).toMatchObject({ y: 0.15, h: 0.1, x: 0.32, w: 0.2 });
+    expect(moved.find((box) => box.id === "c")).toMatchObject({ y: 0.28, h: 0.08, x: 0.54 });
+  });
+
+  it("does not copy x or width when lining up a staff", () => {
+    const first = {
+      id: "a",
+      name: "ARA",
+      measure: 1,
+      page: 0,
+      x: 0.1,
+      y: 0.12,
+      w: 0.22,
+      h: 0.08
+    };
+    const second = { ...first, id: "b", measure: 2, x: 0.36, w: 0.3 };
+    const moved = applyLineRectGeometry([first, second], { ...first, x: 0.08, w: 0.25 }, first);
+    expect(moved.find((box) => box.id === "b")).toMatchObject({ x: 0.36, w: 0.3, y: 0.12, h: 0.08 });
+  });
+
+  it("snaps the next box's start to the selected box's end", () => {
+    const a = { id: "a", name: "ARA", measure: 1, page: 0, x: 0.1, y: 0.12, w: 0.2, h: 0.08 };
+    const b = { ...a, id: "b", measure: 2, x: 0.3 };
+    const c = { ...a, id: "c", measure: 3, x: 0.5 };
+    const d = { ...a, id: "d", measure: 4, x: 0.7 };
+    const moved = applyAdjoiningRectEdges([a, b, c, d], { ...a, w: 0.28 }, a);
+    expect(moved.find((box) => box.id === "a")).toMatchObject({ x: 0.1, w: 0.28 });
+    expect(moved.find((box) => box.id === "b")).toMatchObject({ x: 0.38, w: 0.12 });
+    expect(moved.find((box) => box.id === "c")).toMatchObject({ x: 0.5, w: 0.2 });
+    expect(moved.find((box) => box.id === "d")).toMatchObject({ x: 0.7, w: 0.2 });
+  });
+
+  it("snaps the previous box's end to the selected box's start", () => {
+    const a = { id: "a", name: "ARA", measure: 1, page: 0, x: 0.1, y: 0.12, w: 0.2, h: 0.08 };
+    const b = { ...a, id: "b", measure: 2, x: 0.3 };
+    const moved = applyAdjoiningRectEdges([a, b], { ...b, x: 0.26, w: 0.24 }, b);
+    expect(moved.find((box) => box.id === "a")).toMatchObject({ x: 0.1, w: 0.16 });
+    expect(moved.find((box) => box.id === "b")).toMatchObject({ x: 0.26, w: 0.24 });
+  });
+
+  it("closes a gap on the same line when an adjoining edge is dragged", () => {
+    const a = { id: "a", name: "ARA", measure: 1, page: 0, x: 0.1, y: 0.12, w: 0.2, h: 0.08 };
+    const b = { ...a, id: "b", measure: 2, x: 0.36, w: 0.24 };
+    const moved = applyStaffLineRectGeometry([a, b], { ...a, w: 0.22, y: 0.14, h: 0.09 }, a);
+    expect(moved.find((box) => box.id === "a")).toMatchObject({ y: 0.14, h: 0.09, w: 0.22 });
+    const neighbor = moved.find((box) => box.id === "b");
+    expect(neighbor?.x).toBeCloseTo(0.32);
+    expect(neighbor?.w).toBeCloseTo(0.28);
+    expect(neighbor).toMatchObject({ y: 0.14, h: 0.09 });
   });
 
   it("keeps the current occurrence rect when the chain is restored", () => {

@@ -1018,6 +1018,97 @@ export function breakMeasureChain(
   return dedupeNotaRects(next);
 }
 
+/** Staff-line slop: boxes whose tops sit this close are one row even if heights differ. */
+export const NOTA_LINE_Y_SLOP = 0.025;
+
+export function notaRectsShareStaffLine(
+  box: Pick<NotaSectionBox, "page" | "y" | "h" | "kind">,
+  origin: Pick<NotaSectionBox, "page" | "y" | "h">
+): boolean {
+  if (isSectionLabel(box)) return false;
+  if (box.page !== origin.page) return false;
+  if (Math.abs(box.y - origin.y) < NOTA_LINE_Y_SLOP) return true;
+  const overlap = Math.min(origin.y + origin.h, box.y + box.h) - Math.max(origin.y, box.y);
+  return overlap > Math.min(origin.h, box.h) * 0.4;
+}
+
+/** Copy height and y onto every measure box that sat on the same staff as `origin`. */
+export function applyLineRectGeometry(
+  rects: readonly NotaSectionBox[],
+  source: NotaSectionBox,
+  origin: Pick<NotaSectionBox, "page" | "y" | "h"> = source
+): NotaSectionBox[] {
+  const next = upsertNotaBox([...rects], source);
+  if (isSectionLabel(source)) return next;
+  return next.map((box) => {
+    if (box.id === source.id) return box;
+    if (!notaRectsShareStaffLine(box, origin)) return box;
+    return clampNotaBox({ ...box, y: source.y, h: source.h });
+  });
+}
+
+export function notaLineMeasureRects(
+  rects: readonly NotaSectionBox[],
+  origin: Pick<NotaSectionBox, "page" | "y" | "h">
+): NotaSectionBox[] {
+  return rects
+    .filter((box) => !isSectionLabel(box) && notaRectsShareStaffLine(box, origin))
+    .sort((a, b) => a.x - b.x || a.measure - b.measure);
+}
+
+/**
+ * Keep same-line neighbors flush: the right edge of one box is the left edge of the next.
+ * Growing or shrinking that shared edge moves both boxes.
+ */
+export function applyAdjoiningRectEdges(
+  rects: readonly NotaSectionBox[],
+  source: NotaSectionBox,
+  origin: Pick<NotaSectionBox, "page" | "y" | "h"> = source
+): NotaSectionBox[] {
+  if (isSectionLabel(source)) return upsertNotaBox([...rects], source);
+  const line = notaLineMeasureRects(rects, origin);
+  const index = line.findIndex((box) => box.id === source.id);
+  if (index < 0) return upsertNotaBox([...rects], source);
+  const prev = line[index - 1];
+  const next = line[index + 1];
+  let current = clampNotaBox(source);
+  if (next) {
+    const maxRight = next.x + next.w - MIN_W;
+    if (current.x + current.w > maxRight) {
+      current = clampNotaBox({ ...current, w: Math.max(MIN_W, maxRight - current.x) });
+    }
+  }
+  if (prev) {
+    const minX = prev.x + MIN_W;
+    if (current.x < minX) {
+      const right = current.x + current.w;
+      current = clampNotaBox({ ...current, x: minX, w: Math.max(MIN_W, right - minX) });
+    }
+  }
+  const byId = new Map(rects.map((box) => [box.id, box]));
+  byId.set(current.id, current);
+  if (prev) {
+    byId.set(prev.id, clampNotaBox({ ...prev, w: current.x - prev.x }));
+  }
+  if (next) {
+    const right = next.x + next.w;
+    const x = current.x + current.w;
+    byId.set(next.id, clampNotaBox({ ...next, x, w: Math.max(MIN_W, right - x) }));
+  }
+  return rects.map((box) => byId.get(box.id) ?? box);
+}
+
+/** Line up a staff: shared height and y, and snap adjoining left/right edges. */
+export function applyStaffLineRectGeometry(
+  rects: readonly NotaSectionBox[],
+  source: NotaSectionBox,
+  origin: Pick<NotaSectionBox, "page" | "y" | "h"> = source
+): NotaSectionBox[] {
+  const lined = applyLineRectGeometry(rects, source, origin);
+  const current = lined.find((box) => box.id === source.id) ?? source;
+  return applyAdjoiningRectEdges(lined, current, origin);
+}
+
 export function applyChainedRectGeometry(
   rects: readonly NotaSectionBox[],
   source: NotaSectionBox

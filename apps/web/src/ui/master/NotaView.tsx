@@ -61,6 +61,7 @@ import {
   isSectionLabel,
   sectionLabelText,
   applyChainedRectGeometry,
+  applyStaffLineRectGeometry,
   boxForOccurrence,
   breakMeasureChain,
   canChainMeasure,
@@ -872,11 +873,15 @@ function SongNota(props: {
                       key={activeRect.id}
                       box={activeRect}
                       selected
-                      onChange={(next, persist) =>
+                      onChange={(next, persist, origin) =>
                         props.onRects(
-                          chained
-                            ? applyChainedRectGeometry(liveRects, next)
-                            : upsertNotaBox(liveRects, next),
+                          applyStaffLineRectGeometry(
+                            chained
+                              ? applyChainedRectGeometry(liveRects, next)
+                              : upsertNotaBox(liveRects, next),
+                            next,
+                            origin ?? next
+                          ),
                           persist
                         )
                       }
@@ -1394,7 +1399,7 @@ function SectionRect(props: {
   play?: "current" | "next";
   leadIn?: boolean;
   onSelect?: (box: NotaSectionBox) => void;
-  onChange?: (box: NotaSectionBox, persist: boolean) => void;
+  onChange?: (box: NotaSectionBox, persist: boolean, origin?: NotaSectionBox) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -1448,13 +1453,14 @@ function SectionRect(props: {
     const ny = drag.handle === "move" ? pos.y - drag.grabY : pos.y;
     const next = applyRectHandle(drag.handle, drag.start, nx, ny);
     latestRef.current = next;
-    props.onChange(next, false);
+    props.onChange(next, false, drag.start);
   };
 
   const endDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (!dragRef.current || !props.onChange) return;
+    const drag = dragRef.current;
+    if (!drag || !props.onChange) return;
     dragRef.current = null;
-    props.onChange(latestRef.current, true);
+    props.onChange(latestRef.current, true, drag.start);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
