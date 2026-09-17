@@ -111,7 +111,7 @@ export function rallOverlayBoxes(
   if (!hit) return [];
   const abs = boxAbsoluteMeasure(song, hit);
   if (abs == null || !showsRallAlert(abs, rall)) return [];
-  const current = rectsForHit(rects, hit, broken).filter((box) => !isSectionLabel(box));
+  const current = rectsForHit(rects, hit, broken, song.sections).filter((box) => !isSectionLabel(box));
   if (current.length > 0) return current;
   const label = rects.find(
     (box) =>

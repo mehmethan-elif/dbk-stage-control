@@ -579,7 +579,13 @@ function SongNota(props: {
   const broken = effectiveBrokenChains(liveRects, props.brokenChains);
   const chained = measure > 0 && isMeasureChained(broken, name, measure);
   const canEdit = sectionIndex >= 0;
-  const sectionRects = rectsForSectionOccurrence(liveRects, name, sectionIndex, broken);
+  const sectionRects = rectsForSectionOccurrence(
+    liveRects,
+    name,
+    sectionIndex,
+    broken,
+    song?.sections
+  );
   const measureRects = sectionRects.filter((box) => !isSectionLabel(box));
   const sectionLabels = liveRects.filter(isSectionLabel);
   const selectedLabel =
@@ -587,12 +593,13 @@ function SongNota(props: {
       ? sectionLabels.find((box) => box.id === selectedLabelId)
       : undefined;
   const activeRect = canEdit
-    ? boxForOccurrence(liveRects, name, measure, sectionIndex, chained)
+    ? boxForOccurrence(liveRects, name, measure, sectionIndex, chained, song?.sections)
     : undefined;
   const emptyMeasure = canEdit
     ? nextEmptySectionMeasure(measures, liveRects, name, measure, {
         sectionIndex,
-        broken
+        broken,
+        sections: song?.sections
       })
     : undefined;
 
@@ -641,7 +648,8 @@ function SongNota(props: {
       Math.max(0, pages - 1),
       sectionIndex,
       broken,
-      visiblePageSize(articleRef.current)
+      visiblePageSize(articleRef.current),
+      song?.sections
     );
     if (!added) return;
     setSelectedLabelId(null);
@@ -1201,9 +1209,19 @@ function PlayRects(props: {
   const currentHit = notaHitAt(props.song, time);
   const followingHit = nowLooksAheadHit(props.song, time, props.brokenChains);
   const nextMeasureHit = nextNotaHit(props.song, time);
-  const currentBoxes = rectsForHit(props.rects, currentHit, props.brokenChains).filter(onPage);
+  const currentBoxes = rectsForHit(
+    props.rects,
+    currentHit,
+    props.brokenChains,
+    props.song.sections
+  ).filter(onPage);
   const currentIds = new Set(currentBoxes.map((box) => box.id));
-  const nextBoxes = rectsForHit(props.rects, followingHit, props.brokenChains)
+  const nextBoxes = rectsForHit(
+    props.rects,
+    followingHit,
+    props.brokenChains,
+    props.song.sections
+  )
     .filter(onPage)
     .filter((box) => !currentIds.has(box.id));
   const nowNotes = notesForBox(props.song, currentHit);
@@ -1211,7 +1229,7 @@ function PlayRects(props: {
   const nextNotes = nextNoteGridIfDifferent(nowNotes, notesForBox(props.song, previewHit));
   const nextGridBoxes =
     props.showNoteGrids && nextNotes
-      ? rectsForHit(props.rects, previewHit, props.brokenChains)
+      ? rectsForHit(props.rects, previewHit, props.brokenChains, props.song.sections)
           .filter(onPage)
           .filter((box) => !currentIds.has(box.id))
       : [];

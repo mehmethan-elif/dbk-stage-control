@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { songForm, type PatternEvent, type Song, type TempoPoint } from "@dbk/core";
-import { buildHits, drumBarSteps, drumFollowKey, writtenChart } from "./DrumView";
+import { formAt, formNextAt, songForm, type PatternEvent, type Song, type TempoPoint } from "@dbk/core";
+import { buildHits, drumBarSteps, drumFollowKey, nextDrumPatternRun, writtenChart } from "./DrumView";
 
 const waltz: TempoPoint[] = [{ time: 0, measure: 1, bpm: 75, numerator: 3, denominator: 4 }];
 const common: TempoPoint[] = [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }];
@@ -130,5 +130,36 @@ describe("drumFollowKey", () => {
     expect(drumFollowKey(form, 1.5)).toBe(first);
     expect(drumFollowKey(form, 7.9)).toBe(first);
     expect(drumFollowKey(form, 8.1)).not.toBe(first);
+  });
+});
+
+describe("nextDrumPatternRun", () => {
+  function groove(start: number, end: number, text: string): PatternEvent {
+    return {
+      text,
+      time: start,
+      end,
+      length: end - start,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: [{ time: start, pitch: 48, numerator: 4, denominator: 4 }]
+    };
+  }
+
+  it("takes the first groove of the next section when that pattern starts after the bar line", () => {
+    const target: Song = {
+      ...song([
+        { name: "ARA", start: 0, end: 8 },
+        { name: "SAN", start: 8, end: 16 }
+      ]),
+      patterns: [groove(0, 8, "SLOW"), groove(8.05, 16, "TUS")]
+    };
+    const form = songForm(target, { identity: "drums" });
+    const chart = writtenChart(target, form);
+    const pos = formAt(form, 7.5);
+    const nextPos = formNextAt(form, 7.5, 8);
+    expect(nextDrumPatternRun(chart, pos, nextPos)?.name).toBe("TUS");
   });
 });

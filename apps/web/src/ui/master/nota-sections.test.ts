@@ -47,7 +47,8 @@ import {
   sectionEditLabel,
   sectionMeasureNumbers,
   touchedNotaNames,
-  uniqueSectionNames
+  uniqueSectionNames,
+  voltaCanonicalIndex
 } from "./nota-sections";
 
 const tempoMap: TempoPoint[] = [
@@ -231,7 +232,8 @@ describe("measure chain", () => {
     expect(broken[0]?.id).toBe("a");
     expect(broken[1]?.id).not.toBe("a");
     expect(broken[0]).toMatchObject({ x: 0.1, y: 0.1, w: 0.2, h: 0.1 });
-    expect(broken[1]).toMatchObject({ x: 0.1, y: 0.1, w: 0.2, h: 0.1 });
+    expect(broken[1]?.x).toBeCloseTo(0.3);
+    expect(broken[1]).toMatchObject({ y: 0.1, w: 0.2, h: 0.1 });
   });
 
   it("moves every same-measure rect together while chained", () => {
@@ -321,6 +323,89 @@ describe("measure chain", () => {
         (box) => box.id
       )
     ).toEqual(["a2", "a3"]);
+  });
+});
+
+describe("volta endings on a later repeat", () => {
+  const kerkuk: Section[] = [
+    { name: "COUNT", start: 0, end: 2 },
+    { name: "ARA", start: 2, end: 6 },
+    { name: "ARA", start: 6, end: 10 },
+    { name: "SAN A", start: 10, end: 14 },
+    { name: "SAN A", start: 14, end: 18 },
+    { name: "ARA", start: 18, end: 22 },
+    { name: "ARA", start: 22, end: 26 }
+  ];
+  const first = {
+    id: "one",
+    name: "ARA",
+    measure: 6,
+    page: 0,
+    x: 0.12,
+    y: 0.2,
+    w: 0.4,
+    h: 0.08,
+    sectionIndex: 1
+  };
+  const second = {
+    ...first,
+    id: "two",
+    x: 0.58,
+    w: 0.35,
+    sectionIndex: 2
+  };
+  const leftover = {
+    ...second,
+    id: "late",
+    sectionIndex: 5
+  };
+
+  it("maps ARA 3 onto ARA 1 and ARA 4 onto ARA 2", () => {
+    expect(voltaCanonicalIndex(kerkuk, "ARA", 1)).toBe(1);
+    expect(voltaCanonicalIndex(kerkuk, "ARA", 2)).toBe(2);
+    expect(voltaCanonicalIndex(kerkuk, "ARA", 5)).toBe(1);
+    expect(voltaCanonicalIndex(kerkuk, "ARA", 6)).toBe(2);
+  });
+
+  it("plays the later pair from the first 1. and 2. boxes", () => {
+    const broken = [{ name: "ARA", measure: 6 }];
+    const rects = [first, second, leftover];
+    expect(
+      rectsForHit(rects, { name: "ARA", measure: 6, sectionIndex: 5 }, broken, kerkuk).map(
+        (box) => box.id
+      )
+    ).toEqual(["one"]);
+    expect(
+      rectsForHit(rects, { name: "ARA", measure: 6, sectionIndex: 6 }, broken, kerkuk).map(
+        (box) => box.id
+      )
+    ).toEqual(["two"]);
+  });
+
+  it("does not ask for another rect on ARA 3 after the 1. ending is placed", () => {
+    expect(
+      nextEmptySectionMeasure([6], [first, second], "ARA", 6, {
+        sectionIndex: 5,
+        broken: [{ name: "ARA", measure: 6 }],
+        sections: kerkuk
+      })
+    ).toBeUndefined();
+  });
+
+  it("splits a shared last measure into two boxes, not one per later repeat", () => {
+    const shared = {
+      id: "a",
+      name: "ARA",
+      measure: 6,
+      page: 0,
+      x: 0.12,
+      y: 0.2,
+      w: 0.4,
+      h: 0.08
+    };
+    const split = breakMeasureChain([shared], kerkuk, "ARA", 6);
+    expect(split.map((box) => box.sectionIndex)).toEqual([1, 2]);
+    expect(split[1]).toMatchObject({ x: 0.52, y: 0.2, w: 0.4, h: 0.08 });
   });
 });
 
@@ -665,7 +750,7 @@ describe("one rect per measure", () => {
     });
   });
 
-  it("uses a 180 by 70 pixel default the first time a section gets a rect", () => {
+  it("uses a 180 by 35 pixel default the first time a section gets a rect", () => {
     const page = { width: 900, height: 1000 };
     const added = addNotaBox([], "SAN 1", 1, 0, 0, 3, [], page);
     expect(added?.box).toMatchObject({

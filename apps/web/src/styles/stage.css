@@ -3006,8 +3006,16 @@ button {
   pointer-events: none;
 }
 
+.lyrics-song[data-chord-song] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
 .chord-section {
+  min-width: 0;
   margin-bottom: calc(5px * var(--lyrics-zoom, 1));
+  content-visibility: auto;
+  contain-intrinsic-size: auto 220px;
 }
 
 .chord-section.current > .chord-section-name,
@@ -3212,45 +3220,22 @@ button {
 
 .chord-measure-notes.chord-drum-lanes {
   --drum-lane-h: max(8px, calc(var(--lyrics-size) * 0.28));
+  --drum-bar-steps: var(--drum-steps, 16);
   height: calc(var(--drum-lane-h) * 4);
   display: flex;
   flex-direction: column;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.45) 0 1px,
-      transparent 1px calc(100% * 4 / var(--drum-steps, 16))
-    ),
-    repeating-linear-gradient(
-      90deg,
-      #4a4a4a 0 1px,
-      transparent 1px calc(100% / var(--drum-steps, 16))
-    );
 }
 
 .chord-drum-lanes .chord-note-lane {
   flex: 1 1 0;
   height: var(--drum-lane-h);
   min-height: 0;
-  background-image: none;
 }
 
 .chord-note-lane.drum-lane {
   height: 100%;
   min-width: 0;
   overflow: hidden;
-  border-top: 0;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.45) 0 1px,
-      transparent 1px calc(100% * 4 / var(--drum-steps, 16))
-    ),
-    repeating-linear-gradient(
-      90deg,
-      #4a4a4a 0 1px,
-      transparent 1px calc(100% / var(--drum-steps, 16))
-    );
 }
 
 .chord-note-lane .drum-hit {
@@ -3450,8 +3435,9 @@ button {
   color: #fff;
 }
 
-.drum-run.next .drum-measure-name {
-  background: rgba(234, 132, 0, 0.2);
+.drum-run.next .drum-measure-name,
+.drum-section-runs.next > .drum-run:first-child .drum-measure-name {
+  background: var(--accent);
 }
 
 .drum-measure-name {
@@ -4012,7 +3998,7 @@ button {
   position: absolute;
   left: 0;
   right: 0;
-  top: 22px;
+  top: 0;
   height: 5px;
   background: rgba(59, 130, 246, 0.5);
   pointer-events: none;
@@ -4543,10 +4529,13 @@ button {
   background: rgba(226, 74, 74, 0.35);
 }
 
-.lyrics-section.lyrics-section-name.next,
+.lyrics-section.lyrics-section-name.next {
+  background: rgba(234, 132, 0, 0.28);
+}
+
 .chord-section.next .lyrics-section.chord-section-name,
 .lyrics-section.drum-section-name.next {
-  background: rgba(234, 132, 0, 0.28);
+  background: var(--accent);
 }
 
 .drum-section-name > .lyrics-cue-body {

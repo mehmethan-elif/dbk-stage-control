@@ -40,7 +40,7 @@ const MIN_W = 0.04;
 const MIN_H = 0.03;
 const TIME_EPS = 0.02;
 export const FIRST_NOTA_RECT_WIDTH_PX = 180;
-export const FIRST_NOTA_RECT_HEIGHT_PX = 70;
+export const FIRST_NOTA_RECT_HEIGHT_PX = 35;
 const FIRST_NOTA_RECT_GAP_PX = 8;
 
 /** Exact song.json names only. SAN, SAN A, and SAN B are unrelated. */
@@ -114,6 +114,22 @@ export function isFirstNamedSection(sections: readonly Section[], index: number)
 
 export function namedSectionIndexes(sections: readonly Section[], name: string): number[] {
   return sections.flatMap((section, index) => (sameSectionName(section.name, name) ? [index] : []));
+}
+
+/**
+ * 1. and 2. endings are two boxes. A later repeat of the same name (ARA 3, ARA 4)
+ * reuses that pair: odd occurrences share the first ending, even share the second.
+ */
+export function voltaCanonicalIndex(
+  sections: readonly Section[] | undefined,
+  name: string,
+  sectionIndex: number
+): number {
+  if (!sections?.length) return sectionIndex;
+  const indexes = namedSectionIndexes(sections, name);
+  const order = indexes.indexOf(sectionIndex);
+  if (order < 0) return sectionIndex;
+  return indexes[order % 2] ?? sectionIndex;
 }
 
 export function canChainMeasure(sections: readonly Section[], name: string): boolean {
@@ -286,10 +302,11 @@ export function nextNotaSectionHit(song: Song | undefined, time: number): NotaPl
 export function measureRectsForSection(
   rects: readonly NotaSectionBox[],
   hit: NotaPlayHit | undefined,
-  broken: readonly BrokenMeasureChain[] = []
+  broken: readonly BrokenMeasureChain[] = [],
+  sections?: readonly Section[]
 ): NotaSectionBox[] {
   if (!hit) return [];
-  return rectsForSectionOccurrence(rects, hit.name, hit.sectionIndex, broken).filter(
+  return rectsForSectionOccurrence(rects, hit.name, hit.sectionIndex, broken, sections).filter(
     (box) => !isSectionLabel(box)
   );
 }
@@ -297,10 +314,11 @@ export function measureRectsForSection(
 function boxesForSection(
   rects: readonly NotaSectionBox[],
   hit: NotaPlayHit | undefined,
-  broken: readonly BrokenMeasureChain[] = []
+  broken: readonly BrokenMeasureChain[] = [],
+  sections?: readonly Section[]
 ): NotaSectionBox[] {
   if (!hit) return [];
-  const scoped = rectsForSectionOccurrence(rects, hit.name, hit.sectionIndex, broken);
+  const scoped = rectsForSectionOccurrence(rects, hit.name, hit.sectionIndex, broken, sections);
   if (scoped.length > 0) return scoped;
   return rects.filter(
     (box) =>
@@ -322,12 +340,12 @@ export function notaSectionScrollTargets(
   const measureHit = notaHitAt(song, time);
   const sectionHit = notaSectionHitAt(song, time);
   const measureBoxes = (hit: NotaPlayHit | undefined) =>
-    rectsForHit(rects, hit, broken).filter((box) => !isSectionLabel(box));
+    rectsForHit(rects, hit, broken, song?.sections).filter((box) => !isSectionLabel(box));
   const current = measureBoxes(measureHit);
   const focused = current.length > 0 ? current : measureBoxes(sectionHit);
   return {
     current: focused,
-    next: boxesForSection(rects, nextNotaSectionHit(song, time), broken),
+    next: boxesForSection(rects, nextNotaSectionHit(song, time), broken, song?.sections),
     focus: focused
   };
 }
@@ -345,7 +363,8 @@ export function notaLeadInSectionBoxes(
     const boxes = boxesForSection(
       rects,
       { name: section.name, measure: 1, sectionIndex: index },
-      broken
+      broken,
+      song.sections
     );
     if (boxes.length > 0) return boxes;
   }
@@ -355,20 +374,22 @@ export function notaLeadInSectionBoxes(
 export function rectsForHit(
   rects: readonly NotaSectionBox[],
   hit: NotaPlayHit | undefined,
-  broken: readonly BrokenMeasureChain[] = []
+  broken: readonly BrokenMeasureChain[] = [],
+  sections?: readonly Section[]
 ): NotaSectionBox[] {
   if (!hit) return [];
   const exact = rects.filter(
     (box) => !isSectionLabel(box) && box.name === hit.name && box.measure === hit.measure
   );
   const chained = isMeasureChained(broken, hit.name, hit.measure);
+  const wanted = chained ? undefined : voltaCanonicalIndex(sections, hit.name, hit.sectionIndex);
   const scoped = chained
     ? exact.filter((box) => box.sectionIndex == null)
-    : exact.filter((box) => box.sectionIndex === hit.sectionIndex);
+    : exact.filter((box) => box.sectionIndex === wanted);
   const found =
     scoped.length > 0 ? scoped : exact.filter((box) => box.sectionIndex == null);
   if (found.length > 0) return found;
-  if (exact.length > 0) return exact;
+  if (exact.length > 0 && (chained || !sections)) return exact;
   return rects.filter(
     (box) => !isSectionLabel(box) && box.name === hit.name && box.measure <= 0
   );
@@ -379,7 +400,8 @@ export function boxForOccurrence(
   name: string,
   measure: number,
   sectionIndex: number,
-  chained: boolean
+  chained: boolean,
+  sections?: readonly Section[]
 ): NotaSectionBox | undefined {
   const matches = rects.filter(
     (box) => !isSectionLabel(box) && box.name === name && box.measure === measure
@@ -387,8 +409,9 @@ export function boxForOccurrence(
   if (chained) {
     return matches.find((box) => box.sectionIndex == null) ?? matches[0];
   }
+  const wanted = voltaCanonicalIndex(sections, name, sectionIndex);
   return (
-    matches.find((box) => box.sectionIndex === sectionIndex) ??
+    matches.find((box) => box.sectionIndex === wanted) ??
     matches.find((box) => box.sectionIndex == null)
   );
 }
@@ -397,14 +420,19 @@ export function rectsForSectionOccurrence(
   rects: readonly NotaSectionBox[],
   name: string,
   sectionIndex: number,
-  broken: readonly BrokenMeasureChain[] = []
+  broken: readonly BrokenMeasureChain[] = [],
+  sections?: readonly Section[]
 ): NotaSectionBox[] {
   return rects.filter((box) => {
     if (box.name !== name) return false;
-    if (box.sectionIndex === sectionIndex) return true;
-    if (box.sectionIndex != null) return false;
-    if (isSectionLabel(box)) return true;
-    return isMeasureChained(broken, box.name, box.measure);
+    if (isSectionLabel(box)) {
+      return box.sectionIndex == null || box.sectionIndex === sectionIndex;
+    }
+    if (isMeasureChained(broken, box.name, box.measure)) {
+      return box.sectionIndex == null || box.sectionIndex === sectionIndex;
+    }
+    const wanted = voltaCanonicalIndex(sections, name, sectionIndex);
+    return box.sectionIndex === wanted;
   });
 }
 
@@ -669,11 +697,12 @@ export function hasNotaBox(
   name: string,
   measure: number,
   sectionIndex?: number,
-  broken: readonly BrokenMeasureChain[] = []
+  broken: readonly BrokenMeasureChain[] = [],
+  sections?: readonly Section[]
 ): boolean {
   const index = sectionIndex ?? -1;
   const chained = sectionIndex == null || isMeasureChained(broken, name, measure);
-  return boxForOccurrence(rects, name, measure, index, chained) != null;
+  return boxForOccurrence(rects, name, measure, index, chained, sections) != null;
 }
 
 export function nextEmptySectionMeasure(
@@ -681,10 +710,14 @@ export function nextEmptySectionMeasure(
   rects: readonly NotaSectionBox[],
   name: string,
   preferred = 0,
-  opts?: { sectionIndex?: number; broken?: readonly BrokenMeasureChain[] }
+  opts?: {
+    sectionIndex?: number;
+    broken?: readonly BrokenMeasureChain[];
+    sections?: readonly Section[];
+  }
 ): number | undefined {
   const empty = (measure: number) =>
-    !hasNotaBox(rects, name, measure, opts?.sectionIndex, opts?.broken);
+    !hasNotaBox(rects, name, measure, opts?.sectionIndex, opts?.broken, opts?.sections);
   if (preferred > 0 && measures.includes(preferred) && empty(preferred)) return preferred;
   const after = measures.find((measure) => measure > preferred && empty(measure));
   if (after != null) return after;
@@ -696,7 +729,8 @@ export function previousNotaBox(
   name: string,
   measure: number,
   sectionIndex?: number,
-  broken: readonly BrokenMeasureChain[] = []
+  broken: readonly BrokenMeasureChain[] = [],
+  sections?: readonly Section[]
 ): NotaSectionBox | undefined {
   const index = sectionIndex ?? -1;
   if (measure > 1) {
@@ -705,11 +739,12 @@ export function previousNotaBox(
       name,
       measure - 1,
       index,
-      isMeasureChained(broken, name, measure - 1)
+      isMeasureChained(broken, name, measure - 1),
+      sections
     );
     if (previous) return previous;
   }
-  const same = rectsForSectionOccurrence(rects, name, index, broken)
+  const same = rectsForSectionOccurrence(rects, name, index, broken, sections)
     .filter((box) => box.measure > 0 && box.measure < measure)
     .sort((a, b) => a.measure - b.measure);
   return same.at(-1);
@@ -764,27 +799,23 @@ export function createNotaBox(
   lastPage?: number,
   sectionIndex?: number,
   broken: readonly BrokenMeasureChain[] = [],
-  pageSize?: { width: number; height: number }
+  pageSize?: { width: number; height: number },
+  sections?: readonly Section[]
 ): NotaSectionBox {
-  const previous = previousNotaBox(rects, name, measure, sectionIndex, broken);
-  const stampIndex = sectionIndex != null && !isMeasureChained(broken, name, measure);
+  const previous = previousNotaBox(rects, name, measure, sectionIndex, broken, sections);
+  const stampIndex =
+    sectionIndex != null && !isMeasureChained(broken, name, measure)
+      ? voltaCanonicalIndex(sections, name, sectionIndex)
+      : undefined;
   if (!previous) {
-    return defaultNotaBox(
-      name,
-      page,
-      0,
-      measure,
-      stampIndex ? sectionIndex : undefined,
-      rects,
-      pageSize
-    );
+    return defaultNotaBox(name, page, 0, measure, stampIndex, rects, pageSize);
   }
   return clampNotaBox({
     id: createId("rect"),
     name,
     measure,
     ...boxBesidePrevious(previous, rects, lastPage),
-    ...(stampIndex ? { sectionIndex } : {})
+    ...(stampIndex != null ? { sectionIndex: stampIndex } : {})
   });
 }
 
@@ -796,12 +827,23 @@ export function addNotaBox(
   lastPage?: number,
   sectionIndex?: number,
   broken: readonly BrokenMeasureChain[] = [],
-  pageSize?: { width: number; height: number }
+  pageSize?: { width: number; height: number },
+  sections?: readonly Section[]
 ): { rects: NotaSectionBox[]; box: NotaSectionBox } | undefined {
-  if (!name || measure < 1 || hasNotaBox(rects, name, measure, sectionIndex, broken)) {
+  if (!name || measure < 1 || hasNotaBox(rects, name, measure, sectionIndex, broken, sections)) {
     return undefined;
   }
-  const box = createNotaBox(name, measure, page, rects, lastPage, sectionIndex, broken, pageSize);
+  const box = createNotaBox(
+    name,
+    measure,
+    page,
+    rects,
+    lastPage,
+    sectionIndex,
+    broken,
+    pageSize,
+    sections
+  );
   return { rects: [...rects, box], box };
 }
 
@@ -954,21 +996,24 @@ export function breakMeasureChain(
     existing.find((box) => box.sectionIndex === indexes[0]);
   const kept = rects.filter((box) => !(box.name === name && box.measure === measure));
   if (!shared && existing.length === 0) return [...rects];
+  const passes = indexes.slice(0, 2);
   const next = [...kept];
-  indexes.forEach((index, order) => {
+  let first: NotaSectionBox | undefined;
+  passes.forEach((index, order) => {
     const own = existing.find((box) => box.sectionIndex === index);
-    if (own) {
-      next.push(clampNotaBox({ ...own, sectionIndex: index }));
-      return;
-    }
-    if (!shared) return;
-    next.push(
-      clampNotaBox({
-        ...shared,
-        id: index === indexes[0] ? shared.id : createId("rect"),
-        sectionIndex: index
-      })
-    );
+    const source = own ?? shared;
+    if (!source) return;
+    const placed =
+      order === 1 && !own && first
+        ? { ...source, ...boxBesidePrevious(first, next) }
+        : source;
+    const box = clampNotaBox({
+      ...placed,
+      id: own?.id ?? (order === 0 ? source.id : createId("rect")),
+      sectionIndex: index
+    });
+    next.push(box);
+    if (order === 0) first = box;
   });
   return dedupeNotaRects(next);
 }

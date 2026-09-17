@@ -3,7 +3,7 @@
   "gigs": {
     "path": "gigs.json",
     "size": 2688,
-    "hash": "203620939aea3265f0a8ef085ab88f571757e281d73e905ff8e7c611ed960dd0"
+    "hash": "35758ff15a09717e3b144fdef4b90633310d40ac2f9ea16cc1fddca7d06d2ab5"
   },
   "songs": [
     {
@@ -43,8 +43,8 @@
         },
         {
           "path": "settings.json",
-          "size": 12893,
-          "hash": "e48338c533dc32ab89b581e3aef2cb3511a407ca6a01cdd3791f0c37b6db81b6"
+          "size": 12319,
+          "hash": "555c07b0655b8bbae0ea0be22fb0d6ec9bac029a2149dfcef10894d344edbdc7"
         },
         {
           "path": "song.json",
@@ -85,8 +85,8 @@
         },
         {
           "path": "settings.json",
-          "size": 15503,
-          "hash": "2ef30a4c56e14c64d38591e9bd446791f81190dae9f63e45efe1cda58617d189"
+          "size": 15509,
+          "hash": "9a91b7a6817968626e86903611bab25023b7e544b0cba1e66c3babf2952d5914"
         },
         {
           "path": "song.json",
@@ -112,8 +112,8 @@
         },
         {
           "path": "settings.json",
-          "size": 12829,
-          "hash": "d82e881111dab3b77a1afa71d1e15f8d0b1d5d8966a97419245b18243ca56609"
+          "size": 12147,
+          "hash": "82a889e84308286eabfdc587ae53b3450723dd8ec9d52bbdba0bf12751bd2eb8"
         },
         {
           "path": "song.json",
@@ -139,8 +139,8 @@
         },
         {
           "path": "settings.json",
-          "size": 15271,
-          "hash": "684c68f37716cb4651be3820fe5c5deb72baa27b8c3869837a52f1e30bd116bc"
+          "size": 11738,
+          "hash": "363fc4e3ab75042f04003a29fd1b41f4f09e0d9fbdac5c9ae33889833f69c885"
         },
         {
           "path": "song.json",
@@ -166,8 +166,8 @@
         },
         {
           "path": "settings.json",
-          "size": 17498,
-          "hash": "2815fe11176b43af0851a44f8ea35ca0d39747f89dcd044cfe70d4d7ade2c69a"
+          "size": 16174,
+          "hash": "73ae46b56ef94ed700067bea12264d0dda01cc8dfb01495302927d67da7b8bc3"
         },
         {
           "path": "song.json",
@@ -193,8 +193,8 @@
         },
         {
           "path": "settings.json",
-          "size": 13521,
-          "hash": "f71f055ab556e7128865c48872488cc3da4774900b9b3c0c5ab304dd0933c81d"
+          "size": 13512,
+          "hash": "ab91a9deefc77d3d25792ac25883a6cf6dcce6b575bb32fc8e5e7088eb101425"
         },
         {
           "path": "song.json",

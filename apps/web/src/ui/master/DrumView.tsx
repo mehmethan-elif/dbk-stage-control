@@ -330,6 +330,23 @@ export function drumFollowKey(form: SongForm, time: number): string {
   return formAt(form, time)?.block.id ?? "";
 }
 
+/** The run the band reads next, including the first groove of a new section. */
+export function nextDrumPatternRun(
+  chart: WrittenRow[],
+  pos: { block: { id: string } } | null,
+  nextPos: { block: { id: string }; originTime: number } | null
+): PatternRun | undefined {
+  if (!nextPos) return undefined;
+  const nextRow = chart.find((row) => row.block.id === nextPos.block.id);
+  if (!nextRow) return undefined;
+  const covering = nextRow.runs.find(
+    (run) => nextPos.originTime >= run.start - TIME_EPS && nextPos.originTime < run.end
+  );
+  if (covering) return covering;
+  if (pos && nextPos.block.id !== pos.block.id) return nextRow.runs[0];
+  return undefined;
+}
+
 /**
  * Which written row the playhead sits on. `paintDrumLive` already marks it every frame, so
  * reading the marker back aims the scroll at the same row the drummer sees highlighted
@@ -403,10 +420,7 @@ function paintDrumLive(
         ? measureEndAt(map, pos.originTime)
         : 0;
   const nextPos = chainNext ? null : pos ? formNextAt(form, time, afterOriginTime) : null;
-  const nextRow = nextPos ? chart.find((row) => row.block.id === nextPos.block.id) : undefined;
-  const nextRun = nextRow?.runs.find(
-    (run) => nextPos != null && nextPos.originTime >= run.start && nextPos.originTime < run.end
-  );
+  const nextRun = nextDrumPatternRun(chart, pos, nextPos);
   const visitIndex = pos ? form.visits.indexOf(pos.visit) : -1;
   const followingBlockId = visitIndex >= 0 ? form.visits[visitIndex + 1]?.blockId : undefined;
 

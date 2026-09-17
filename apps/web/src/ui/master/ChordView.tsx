@@ -122,6 +122,68 @@ export function chordFollowTargets(opts: {
   return { current, next: opts.nextSection, pack };
 }
 
+type ChordPaintMarks = {
+  currentBar: string;
+  nextBar: string;
+  playingId: string;
+  nextPlaying: string | null;
+  followingId: string | undefined;
+  rallTone: string;
+};
+
+const lastChordPaint = new WeakMap<HTMLElement, ChordPaintMarks>();
+
+function barKey(blockId: string, measure: number): string {
+  return `${blockId}#${measure}`;
+}
+
+function clearChordLiveMarks(root: HTMLElement): void {
+  for (const el of root.querySelectorAll<HTMLElement>(
+    "[data-chord-section].current, [data-chord-section].next, [data-chord-bar].current, [data-chord-bar].next, [data-chord-line].current, [data-chord-line].next, .chord-section.current, .chord-section.next, .chord-section.scroll-next, .chord-slot.current"
+  )) {
+    el.classList.remove("current", "next", "scroll-next");
+    if (el.hasAttribute("data-chord-section")) el.style.setProperty("--playhead", "0");
+  }
+  for (const el of root.querySelectorAll<HTMLElement>("[data-chord-rall]")) {
+    el.className = "drum-rall-bar idle";
+    el.dataset.chordRall = "idle";
+  }
+}
+
+function paintChordBar(
+  el: HTMLElement,
+  isCurrent: boolean,
+  isNext: boolean,
+  phase: number
+): void {
+  el.classList.toggle("current", isCurrent);
+  el.classList.toggle("next", !isCurrent && isNext);
+  const slots = el.querySelectorAll<HTMLElement>(".chord-slot");
+  if (slots.length > 1) {
+    slots.forEach((slot) => {
+      const from = Number(slot.dataset.slotFrom);
+      const to = Number(slot.dataset.slotTo);
+      slot.classList.toggle("current", isCurrent && phase >= from && phase < to);
+    });
+  }
+}
+
+function paintChordLineAndSection(bar: HTMLElement | null): void {
+  const line = bar?.closest<HTMLElement>("[data-chord-line]");
+  if (line) {
+    line.classList.toggle("current", Boolean(line.querySelector(".chord-measure.current")));
+    line.classList.toggle("next", Boolean(line.querySelector(".chord-measure.next")));
+  }
+  const section = bar?.closest<HTMLElement>(".chord-section");
+  if (!section) return;
+  const isCurrent = Boolean(
+    section.querySelector("[data-chord-section].current, .chord-measure.current")
+  );
+  const isNext = Boolean(section.querySelector("[data-chord-section].next, .chord-measure.next"));
+  section.classList.toggle("current", isCurrent);
+  section.classList.toggle("next", !isCurrent && isNext);
+}
+
 function paintChordLive(
   root: HTMLElement,
   chart: ChordChart,
@@ -131,85 +193,117 @@ function paintChordLive(
   live: boolean,
   chainNext: boolean
 ): void {
-  const pos = live ? formAt(form, time) : undefined;
-  const head = live ? chordPlayhead(chart, form, time, map, chainNext) : null;
+  if (!live) {
+    clearChordLiveMarks(root);
+    lastChordPaint.delete(root);
+    return;
+  }
+  const pos = formAt(form, time);
+  const head = chordPlayhead(chart, form, time, map, chainNext);
   const visit = pos?.visit;
   const visitIndex = visit ? form.visits.indexOf(visit) : -1;
   const followingId = visitIndex >= 0 ? form.visits[visitIndex + 1]?.blockId : undefined;
   const followingNamed = followingId ? (chart.named.get(followingId) ?? followingId) : undefined;
   const playingId = head?.playing ?? pos?.block.id ?? "";
   const nextPlaying = head?.nextPlaying ?? followingNamed ?? null;
-
-  // The rall lights only once the band is on the pass that slows, since the bars it is written
-  // over are often read several times before then.
+  const currentBar = head ? barKey(head.blockId, head.measure) : "";
+  const nextBar = head?.next ? barKey(head.next.blockId, head.next.measure) : "";
   const slowing = Boolean(chart.rall && pos?.block.id === chart.rall.blockId);
-  for (const el of root.querySelectorAll<HTMLElement>("[data-chord-rall]")) {
-    const tone = rallDrumTone(
-      slowing ? timeToMusical(map, time).measure : undefined,
-      chart.rall?.measure,
-      slowing
-    );
-    el.className = `drum-rall-bar ${tone}`;
-    el.dataset.chordRall = tone;
+  const rallTone = rallDrumTone(
+    slowing ? timeToMusical(map, time).measure : undefined,
+    chart.rall?.measure,
+    slowing
+  );
+  const prev = lastChordPaint.get(root);
+  const barsChanged =
+    !prev || prev.currentBar !== currentBar || prev.nextBar !== nextBar;
+  const namesChanged =
+    !prev ||
+    prev.playingId !== playingId ||
+    prev.nextPlaying !== nextPlaying ||
+    prev.followingId !== followingId;
+
+  if (!prev || prev.rallTone !== rallTone) {
+    for (const el of root.querySelectorAll<HTMLElement>("[data-chord-rall]")) {
+      el.className = `drum-rall-bar ${rallTone}`;
+      el.dataset.chordRall = rallTone;
+    }
   }
 
   // Names are lit one at a time even where several share a set of bars, so the band sees which
   // pass they are on: Biz lights SAN 1 the first time through those bars and SAN 2 the second.
-  for (const row of chart.rows) {
-    for (const item of row.heads) {
-      const here = playingId === item.block.id ? visit : undefined;
-      const fill = here ? measureRangeFill(map, here.start, here.end, time) : 0;
-      for (const el of root.querySelectorAll<HTMLElement>(
-        `[data-chord-section="${item.block.id}"]`
-      )) {
-        const leadIn = Boolean(el.closest("[data-lead-in]"));
-        el.classList.toggle("current", Boolean(here));
-        el.classList.toggle("next", leadIn || (!here && nextPlaying === item.block.id));
-        el.style.setProperty("--playhead", String(fill));
+  if (namesChanged || playingId) {
+    for (const row of chart.rows) {
+      for (const item of row.heads) {
+        const here = playingId === item.block.id ? visit : undefined;
+        if (
+          !namesChanged &&
+          !here &&
+          prev?.playingId !== item.block.id &&
+          prev?.nextPlaying !== item.block.id
+        ) {
+          continue;
+        }
+        const fill = here ? measureRangeFill(map, here.start, here.end, time) : 0;
+        for (const el of root.querySelectorAll<HTMLElement>(
+          `[data-chord-section="${item.block.id}"]`
+        )) {
+          const leadIn = Boolean(el.closest("[data-lead-in]"));
+          el.classList.toggle("current", Boolean(here));
+          el.classList.toggle("next", leadIn || (!here && nextPlaying === item.block.id));
+          el.style.setProperty("--playhead", String(fill));
+        }
       }
     }
   }
 
-  for (const el of root.querySelectorAll<HTMLElement>("[data-chord-bar]")) {
-    const blockId = el.dataset.blockId ?? "";
-    const measure = Number(el.dataset.measure);
-    const isCurrent = head?.blockId === blockId && head.measure === measure;
-    const isNext = head?.next?.blockId === blockId && head.next.measure === measure;
-    el.classList.toggle("current", isCurrent);
-    el.classList.toggle("next", !isCurrent && isNext);
-    const slots = el.querySelectorAll<HTMLElement>(".chord-slot");
-    if (slots.length > 1) {
-      slots.forEach((slot) => {
-        const from = Number(slot.dataset.slotFrom);
-        const to = Number(slot.dataset.slotTo);
-        const phase = head?.phase ?? 0;
-        slot.classList.toggle("current", isCurrent && phase >= from && phase < to);
-      });
+  if (barsChanged) {
+    const touched = new Set<HTMLElement>();
+    const mark = (key: string, isCurrent: boolean, isNext: boolean, phase: number) => {
+      if (!key) return;
+      const el = root.querySelector<HTMLElement>(`[data-chord-bar="${key}"]`);
+      if (!el) return;
+      paintChordBar(el, isCurrent, isNext, phase);
+      touched.add(el);
+    };
+    if (prev?.currentBar) mark(prev.currentBar, false, prev.currentBar === nextBar, 0);
+    if (prev?.nextBar && prev.nextBar !== prev.currentBar) {
+      mark(prev.nextBar, prev.nextBar === currentBar, false, head?.phase ?? 0);
+    }
+    mark(currentBar, true, false, head?.phase ?? 0);
+    if (nextBar && nextBar !== currentBar) mark(nextBar, false, true, 0);
+    for (const el of touched) paintChordLineAndSection(el);
+  } else if (currentBar && head && (head.phase ?? 0) >= 0) {
+    const el = root.querySelector<HTMLElement>(`[data-chord-bar="${currentBar}"]`);
+    if (el) paintChordBar(el, true, false, head.phase);
+  }
+
+  if (namesChanged) {
+    for (const el of root.querySelectorAll<HTMLElement>(".chord-section")) {
+      const isCurrent = Boolean(
+        el.querySelector("[data-chord-section].current, .chord-measure.current")
+      );
+      const isNext = Boolean(el.querySelector("[data-chord-section].next, .chord-measure.next"));
+      const isFollow = Boolean(
+        followingId && el.querySelector(`[data-chord-section="${followingId}"]`)
+      );
+      el.classList.toggle("current", isCurrent);
+      el.classList.toggle("next", !isCurrent && isNext);
+      el.classList.toggle(
+        "scroll-next",
+        el.hasAttribute("data-lead-in") || (!isCurrent && isFollow)
+      );
     }
   }
 
-  // The line is what the page scrolls to; a single bar is too small to aim at.
-  for (const el of root.querySelectorAll<HTMLElement>("[data-chord-line]")) {
-    el.classList.toggle("current", Boolean(el.querySelector(".chord-measure.current")));
-    el.classList.toggle("next", Boolean(el.querySelector(".chord-measure.next")));
-  }
-
-  // Follow aims at the next form section (or the next song's first section), not the next bar.
-  for (const el of root.querySelectorAll<HTMLElement>(".chord-section")) {
-    const isCurrent = Boolean(
-      el.querySelector("[data-chord-section].current, .chord-measure.current")
-    );
-    const isNext = Boolean(el.querySelector("[data-chord-section].next, .chord-measure.next"));
-    const isFollow = Boolean(
-      followingId && el.querySelector(`[data-chord-section="${followingId}"]`)
-    );
-    el.classList.toggle("current", isCurrent);
-    el.classList.toggle("next", !isCurrent && isNext);
-    el.classList.toggle(
-      "scroll-next",
-      el.hasAttribute("data-lead-in") || (!isCurrent && isFollow)
-    );
-  }
+  lastChordPaint.set(root, {
+    currentBar,
+    nextBar,
+    playingId,
+    nextPlaying,
+    followingId,
+    rallTone
+  });
 }
 
 export function ChordView() {
@@ -741,7 +835,7 @@ function ChordBarView(props: {
       data-chord-bar={`${props.blockId}#${props.bar.measure}`}
       data-block-id={props.blockId}
       data-measure={String(props.bar.measure)}
-      style={{ "--drum-steps": steps } as CSSProperties}
+      style={{ "--drum-steps": steps, "--drum-bar-steps": steps } as CSSProperties}
     >
       {props.bar.slots
         .filter((slot) => slot.step > 0)

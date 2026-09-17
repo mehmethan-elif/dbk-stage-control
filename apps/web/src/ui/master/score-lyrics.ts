@@ -124,7 +124,7 @@ export function scoreLyricPlacements(
     if (verses.length === 0) return;
     const span = lyricTimeSpan(song, lyric, index);
     const boxes = lyricCoveredHits(song, span.start, span.end)
-      .flatMap((hit) => rectsForHit(rects, hit, broken))
+      .flatMap((hit) => rectsForHit(rects, hit, broken, song.sections))
       .filter((box) => !isSectionLabel(box));
     const unique = [...new Map(boxes.map((box) => [box.id, box])).values()].sort(
       (a, b) => a.page - b.page || a.y - b.y || a.x - b.x
