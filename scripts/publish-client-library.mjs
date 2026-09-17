@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { publishClientLibrary } from "../host/src/publish-client-library.ts";
 
-const gigsPath = process.argv[2];
+const gigsPath = process.argv[2] ?? resolve(process.cwd(), "library/gigs.json");
 let gigs = [];
-if (gigsPath) {
+if (existsSync(gigsPath)) {
   const raw = JSON.parse(readFileSync(gigsPath, "utf8"));
   gigs = Array.isArray(raw) ? raw : (raw.gigs ?? []);
 }

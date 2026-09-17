@@ -1,0 +1,14 @@
+---
+description: Publish the Mac setlist and song library whenever pushing to GitHub
+alwaysApply: true
+---
+
+# Publish library on push
+
+When the user asks to push to GitHub (or create a PR that will be pushed):
+
+1. Run `npm run publish:library` from the repo root first. That copies the Mac `library/` songs and `library/gigs.json` setlist into `client-library/`.
+2. Stage the resulting `library/gigs.json` and `client-library/` changes with the rest of the push. Practice only sees this published copy.
+3. Do not leave setlist or song-library edits uncommitted on a push. The desk and the band page must ship the same show.
+
+Do not skip this because the files look like leftovers.

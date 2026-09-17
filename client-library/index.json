@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 2548,
-    "hash": "225c4e3fcc57c7c1752a6a22c145c1fae4b3438068f089a66b0d6e86e49d5cb2"
+    "size": 2688,
+    "hash": "203620939aea3265f0a8ef085ab88f571757e281d73e905ff8e7c611ed960dd0"
   },
   "songs": [
     {
@@ -139,8 +139,8 @@
         },
         {
           "path": "settings.json",
-          "size": 15242,
-          "hash": "3aa24fababcf8ee7d2091ee48cdb7677d01f81c8bf7602c7cba65a0e11dff7f6"
+          "size": 15271,
+          "hash": "684c68f37716cb4651be3820fe5c5deb72baa27b8c3869837a52f1e30bd116bc"
         },
         {
           "path": "song.json",
@@ -198,8 +198,8 @@
         },
         {
           "path": "song.json",
-          "size": 77112,
-          "hash": "c5abe4ea72aa680ec233243214d6a52a95ab6bf5424460c705487c7c3d794894"
+          "size": 77484,
+          "hash": "3d4cd58b727edce1b04617b806b9d132b9c8a546ddf1af6db2e82bf9aab1dc83"
         }
       ]
     }

@@ -197,11 +197,11 @@ function copyGigsToMasterLibrary(): void {
 function writePublishedIndex(songs: PublishedSong[], gigs: unknown = []): PublishedLibrarySummary {
   mkdirSync(CLIENT_LIBRARY, { recursive: true });
   copyMetroIntroClicks();
-  copyGigsToMasterLibrary();
   const gigList = Array.isArray(gigs) ? gigs : [];
   const gigsBody = `${JSON.stringify({ gigs: gigList }, null, 2)}\n`;
   const gigsBuf = Buffer.from(gigsBody, "utf8");
   writeFileSync(join(CLIENT_LIBRARY, "gigs.json"), gigsBuf);
+  copyGigsToMasterLibrary();
   const index = {
     name: CLIENT_LIBRARY_NAME,
     gigs: { path: "gigs.json", size: gigsBuf.byteLength, hash: sha256(gigsBuf) },
