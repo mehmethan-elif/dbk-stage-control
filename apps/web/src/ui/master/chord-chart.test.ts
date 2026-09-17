@@ -615,9 +615,9 @@ describe("chordPlayhead", () => {
   const built = chordChart(target, form);
   const head = (time: number) => chordPlayhead(built, form, time, target.tempoMap);
 
-  it("sits on the bar being played and points at the one after it", () => {
-    expect(head(0)).toMatchObject({ measure: 1, next: { measure: 2 } });
-    expect(head(5)).toMatchObject({ measure: 3, next: { measure: 4 } });
+  it("leaves ordinary following bars unlit", () => {
+    expect(head(0)).toMatchObject({ measure: 1, next: null });
+    expect(head(5)).toMatchObject({ measure: 3, next: null });
   });
 
   it("lights the written bars again on the second pass of a repeat", () => {
@@ -655,5 +655,21 @@ describe("chordPlayhead", () => {
   it("is nothing before the song and nothing after it", () => {
     expect(head(-1)).toBeNull();
     expect(head(60)).toBeNull();
+  });
+
+  it("lights a 1. or 2. ending when that bar is next", () => {
+    const volta = song(
+      [
+        { name: "SAN A", start: 0, end: 8 },
+        { name: "SAN A", start: 8, end: 16 }
+      ],
+      run(1, ["G", "Em", "Am", "Bm"]).concat(run(5, ["G", "Em", "Am", "B"]))
+    );
+    const form = spelledOut(volta);
+    const built = chordChart(volta, form);
+    const at = (time: number) => chordPlayhead(built, form, time, volta.tempoMap);
+    expect(at(2)).toMatchObject({ measure: 2, next: null });
+    expect(at(4)).toMatchObject({ measure: 3, next: { measure: 4 } });
+    expect(at(12)).toMatchObject({ measure: 3, next: { measure: 8 } });
   });
 });

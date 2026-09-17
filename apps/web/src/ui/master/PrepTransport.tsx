@@ -18,13 +18,11 @@ import {
 import { practiceEntryId } from "../../practice/gig";
 import { findSongByRef } from "../../store/song-library";
 import { nextTransportEntry } from "./next-song-section";
-import { CONCERT_FINAL_LABEL } from "./setlist-marker";
 import { useFollowPlayheadTime } from "../../store/follow-clock";
 import {
   clientPracticeMode,
   clientStageLive,
   currentGig,
-  followsFreeMasterClicks,
   followsMasterMetroVisuals,
   livePerformanceEntryId,
   liveSongIsBackingTracks,
@@ -44,7 +42,6 @@ import {
 } from "../../store/master-store";
 import { DockLeftIcon, MagnifierIcon, PauseIcon, PlayIcon, StopIcon } from "../shared/icons";
 import { PlayModeMark } from "./play-mode-mark";
-import { MetroPulse } from "./song-metro-beats";
 import { SongPositionTrack } from "./SongPositionTrack";
 
 function TransportSongSlot(props: {
@@ -55,24 +52,10 @@ function TransportSongSlot(props: {
   title: string;
   className?: string;
   showIcon?: boolean;
-  showPulse?: boolean;
-  pulseActive?: boolean;
-  pulseTone?: "current" | "next";
-  follow?: "sound" | "playback";
   track?: ReactNode;
 }) {
   return (
     <div className={`prep-song-slot${props.className ? ` ${props.className}` : ""}`}>
-      {props.showPulse ? (
-        <span className="prep-song-click">
-          <MetroPulse
-            song={props.song}
-            active={Boolean(props.pulseActive)}
-            follow={props.follow}
-            tone={props.pulseTone}
-          />
-        </span>
-      ) : null}
       {props.play}
       {props.showIcon && props.song ? (
         <PlayModeMark song={props.song} files={props.files} setlistMode={props.setlistMode} />
@@ -139,65 +122,34 @@ export function FadeButton() {
   );
 }
 
-const ZOOM_DRAG_PX = 20;
-
 export function StageViewTools() {
   const zoom = useMasterStore((s) =>
     isStageContentPage(s.masterPage) ? s.stageZooms[s.masterPage] : 1
   );
   const setStageZoom = useMasterStore((s) => s.setStageZoom);
-  const dragging = useRef(false);
-  const originY = useRef(0);
-  const originZoom = useRef(1);
-  const [held, setHeld] = useState(false);
   const percent = Math.round(zoom * 100);
 
-  const endDrag = () => {
-    dragging.current = false;
-    setHeld(false);
-  };
-
   return (
-    <div className="prep-transport-tools">
+    <div className="prep-transport-tools zoom-tools">
       <button
         type="button"
-        className={`lyrics-btn page-icon zoom-drag${held ? " on" : ""}`}
-        title={`Zoom ${percent}%. Drag up to zoom in, down to zoom out`}
-        aria-label="Zoom"
-        role="slider"
-        aria-orientation="vertical"
-        aria-valuemin={Math.round(STAGE_ZOOM_MIN * 100)}
-        aria-valuemax={Math.round(STAGE_ZOOM_MAX * 100)}
-        aria-valuenow={percent}
-        aria-valuetext={`${percent} percent`}
-        onPointerDown={(event) => {
-          if (event.button !== 0) return;
-          event.preventDefault();
-          dragging.current = true;
-          originY.current = event.clientY;
-          originZoom.current = zoom;
-          event.currentTarget.setPointerCapture(event.pointerId);
-          setHeld(true);
-        }}
-        onPointerMove={(event) => {
-          if (!dragging.current) return;
-          setStageZoom(
-            originZoom.current + ((originY.current - event.clientY) / ZOOM_DRAG_PX) * STAGE_ZOOM_STEP
-          );
-        }}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onLostPointerCapture={endDrag}
-        onWheel={(event) => {
-          event.preventDefault();
-          const state = useMasterStore.getState();
-          const current = isStageContentPage(state.masterPage)
-            ? state.stageZooms[state.masterPage]
-            : 1;
-          setStageZoom(current + (event.deltaY < 0 ? STAGE_ZOOM_STEP : -STAGE_ZOOM_STEP));
-        }}
+        className="lyrics-btn page-icon zoom-step"
+        title={`Zoom out (${percent}%)`}
+        aria-label="Zoom out"
+        disabled={zoom <= STAGE_ZOOM_MIN}
+        onClick={() => setStageZoom(zoom - STAGE_ZOOM_STEP)}
       >
-        <MagnifierIcon />
+        <MagnifierIcon mark="minus" />
+      </button>
+      <button
+        type="button"
+        className="lyrics-btn page-icon zoom-step"
+        title={`Zoom in (${percent}%)`}
+        aria-label="Zoom in"
+        disabled={zoom >= STAGE_ZOOM_MAX}
+        onClick={() => setStageZoom(zoom + STAGE_ZOOM_STEP)}
+      >
+        <MagnifierIcon mark="plus" />
       </button>
     </div>
   );
@@ -207,7 +159,6 @@ export function PrepTransport() {
   const songs = useMasterStore((s) => s.songs);
   const fileIndex = useMasterStore((s) => s.fileIndex);
   const deviceKind = useMasterStore((s) => s.deviceKind);
-  const masterPage = useMasterStore((s) => s.masterPage);
   const gig = useMasterStore(currentGig);
   const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
   const playback = useMasterStore((s) => s.playback);
@@ -222,15 +173,10 @@ export function PrepTransport() {
   const backingLive = useMasterStore(liveSongIsBackingTracks);
   const performanceEntryId = useMasterStore(livePerformanceEntryId);
   const freeMode = useMasterStore(usesFreeMetroTransport);
-  const followFreeClicks = useMasterStore(followsFreeMasterClicks);
   const showPlayButtons = !liveClient;
-  const prepTransport = masterPage === "prep";
   const panicOn = useMasterStore(panicBlocksFollow);
   const displayedEntries = gig ? withKeyChangeElifs(gig.setlist, songs) : [];
   const nextEntry = nextTransportEntry(displayedEntries, selectedEntryId ?? undefined);
-  const nextIsTalk = Boolean(nextEntry && isTalkEntry(nextEntry));
-  const nextSong =
-    nextEntry && isSongEntry(nextEntry) ? findSongByRef(songs, nextEntry.songId) : undefined;
   const nextSongId = nextEntry && isSongEntry(nextEntry) ? nextEntry.entryId : null;
   const selectedDisplayed = selectedEntryId
     ? displayedEntries.find((entry) => entry.entryId === selectedEntryId)
@@ -238,13 +184,6 @@ export function PrepTransport() {
   const currentIsTalk = Boolean(
     (selectedDisplayed && isTalkEntry(selectedDisplayed)) || selectedEntryId?.startsWith("elif_")
   );
-  const nextTitle =
-    nextIsTalk && nextEntry && isTalkEntry(nextEntry)
-      ? talkDisplayLabel(nextEntry)
-      : nextSong
-        ? songDisplayName(nextSong)
-        : CONCERT_FINAL_LABEL;
-  const showNextSongPulse = Boolean(nextSong) && !nextIsTalk;
   const playFromPointer = useRef(false);
   const playing =
     playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
@@ -321,16 +260,6 @@ export function PrepTransport() {
     else state.startMetronome();
   };
 
-  const playNextSong = () => {
-    if (!nextSongId) return;
-    const state = useMasterStore.getState();
-    state.selectSetlistEntry(nextSongId, { playNext: true });
-    const next = useMasterStore.getState();
-    if (practicePlaysMasterMix(next)) void next.playPractice();
-    else if (next.deviceKind === "client") next.startMetronome(0);
-    else void next.playSelected();
-  };
-
   useEffect(() => {
     if (freeMode) {
       useMasterStore.getState().syncFreeVisualMetronome();
@@ -393,23 +322,9 @@ export function PrepTransport() {
         : song
           ? songDisplayName(song)
           : "—";
-  const nextFiles = nextSong
-    ? [...(fileIndex[nextSong.id] ?? []), ...(nextSong.folder ? (fileIndex[nextSong.folder] ?? []) : [])]
-    : undefined;
-  const currentPulseActive = Boolean(song) && !currentIsTalk;
-  const nextPulseActive = showNextSongPulse;
   const showCurrentSlider = Boolean(
-    song &&
-      !currentIsTalk &&
-      songShowsPositionSlider(song, selectedFiles, gig?.performanceMode) &&
-      (panicOn || !isStageContentPage(masterPage))
+    song && !currentIsTalk && songShowsPositionSlider(song, selectedFiles, gig?.performanceMode)
   );
-  const currentFollow =
-    metronomePlaying || (freeMode && followFreeClicks)
-      ? "sound"
-      : playing && !metronomeMode
-        ? "playback"
-        : undefined;
   const showPanic =
     !practiceClient &&
     !metronomeMode &&
@@ -429,25 +344,9 @@ export function PrepTransport() {
       {buttonMode === "stop" ? <StopIcon /> : buttonMode === "pause" ? <PauseIcon /> : <PlayIcon />}
     </button>
   ) : null;
-  const nextPlay = showPlayButtons && showNextSongPulse ? (
-    <button
-      type="button"
-      className="add prep-play play"
-      title="Play next song"
-      aria-label="Play next song"
-      disabled={!showNextSongPulse || !nextSongId}
-      onPointerDown={onPlayPointerDown}
-      onClick={() => onPlayClick(playNextSong)}
-    >
-      <PlayIcon />
-    </button>
-  ) : null;
-
   return (
     <div
-      className={`prep-transport${
-        prepTransport || panicOn ? " is-current-only" : " is-song-pair"
-      }${panicOn ? " is-panic" : ""}${metronomeMode ? " metro" : ""}${continuousMetro || liveMetroVisuals ? " is-continuous-metro" : ""}${freeMode ? " is-free-metro" : ""}`}
+      className={`prep-transport is-current-only${panicOn ? " is-panic" : ""}${metronomeMode ? " metro" : ""}${continuousMetro || liveMetroVisuals ? " is-continuous-metro" : ""}${freeMode ? " is-free-metro" : ""}`}
     >
       {deviceKind === "master" ? null : showPanic ? <PanicButton /> : null}
       <TransportSongSlot
@@ -457,32 +356,22 @@ export function PrepTransport() {
         files={selectedFiles}
         setlistMode={gig?.performanceMode}
         title={currentTitle}
-        showIcon={!panicOn && !currentIsTalk && Boolean(song)}
-        showPulse={!panicOn && !currentIsTalk && Boolean(song)}
-        pulseActive={currentPulseActive}
-        pulseTone="current"
-        follow={currentFollow}
+        showIcon={!showCurrentSlider && !currentIsTalk && Boolean(song)}
         track={
           showCurrentSlider ? (
-            <SongPositionTrack song={song} showTitle={!panicOn} title={currentTitle} />
+            <SongPositionTrack
+              song={song}
+              showTitle
+              title={currentTitle}
+              icon={
+                song ? (
+                  <PlayModeMark song={song} files={selectedFiles} setlistMode={gig?.performanceMode} />
+                ) : null
+              }
+            />
           ) : undefined
         }
       />
-      {prepTransport || panicOn ? null : (
-        <TransportSongSlot
-          className="is-next"
-          play={nextPlay}
-          song={nextSong}
-          files={nextFiles}
-          setlistMode={gig?.performanceMode}
-          title={nextTitle}
-          showIcon={showNextSongPulse}
-          showPulse={showNextSongPulse}
-          pulseActive={nextPulseActive}
-          pulseTone="next"
-          follow={undefined}
-        />
-      )}
     </div>
   );
 }

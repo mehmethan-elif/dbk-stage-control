@@ -1,4 +1,4 @@
-import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, useEffect, useRef, type ErrorInfo, type ReactNode } from "react";
 import {
   clientPracticeMode,
   clientStageLive,
@@ -8,7 +8,6 @@ import { stageHomeScreenRole } from "../../native/sync-host";
 import {
   BassIcon,
   ChordIcon,
-  ChronometerIcon,
   DrumsIcon,
   LyricsIcon,
   ScoreIcon,
@@ -20,7 +19,9 @@ import { LyricsView } from "../master/LyricsView";
 import { NotaViewAsync, usePdfWarmup } from "../master/lazy-pdf";
 import { PrepTransport, StageSetlistButton, StageViewTools } from "../master/PrepTransport";
 import { ClientLibrary } from "./ClientLibrary";
+import { ConcertTime } from "../shared/ConcertTime";
 import { LibraryLoading } from "../shared/LibraryLoading";
+import { useStagePinchZoom } from "../master/stage-zoom";
 
 class StageCrashGuard extends Component<{ children: ReactNode }, { message: string | null }> {
   state = { message: null as string | null };
@@ -41,17 +42,9 @@ class StageCrashGuard extends Component<{ children: ReactNode }, { message: stri
   }
 }
 
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-function formatElapsed(ms: number): string {
-  const totalMin = Math.max(0, Math.floor(ms / 60_000));
-  return `${pad2(Math.floor(totalMin / 60))}:${pad2(totalMin % 60)}`;
-}
-
 export function ClientApp() {
   usePdfWarmup();
+  useStagePinchZoom();
   const ready = useMasterStore((s) => s.ready);
   const masterPage = useMasterStore((s) => s.masterPage);
   const setMasterPage = useMasterStore((s) => s.setMasterPage);
@@ -76,19 +69,6 @@ export function ClientApp() {
   const practice = useMasterStore(clientPracticeMode);
   const libraryStatus = useMasterStore((s) => s.libraryStatus);
   const practiceBusy = useMasterStore((s) => s.practiceBusy);
-  const [concertOn, setConcertOn] = useState(false);
-  const [concertMs, setConcertMs] = useState(0);
-  const concertStarted = useRef<number | null>(null);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      if (concertStarted.current != null) {
-        setConcertMs(Date.now() - concertStarted.current);
-      }
-    }, 250);
-    return () => window.clearInterval(id);
-  }, []);
-
   // Joining is the only reason the connect page exists, so it leaves of its own accord once the
   // desk answers and comes back if the link ever goes. Nobody has to think about it mid-show. The
   // page buttons still work while it is up, so losing the desk does not trap anyone here.
@@ -175,29 +155,7 @@ export function ClientApp() {
         <StageViewTools />
         {stageRole ? (
           <>
-            <div className="topbar-time-cluster">
-              <button
-                type="button"
-                className={`chrono-btn${concertOn ? " on" : ""}`}
-                title={concertOn ? "Reset concert time" : "Start concert time"}
-                aria-label={concertOn ? "Reset concert time" : "Start concert time"}
-                aria-pressed={concertOn}
-                onClick={() => {
-                  if (concertOn) {
-                    concertStarted.current = null;
-                    setConcertOn(false);
-                    setConcertMs(0);
-                    return;
-                  }
-                  concertStarted.current = Date.now();
-                  setConcertOn(true);
-                  setConcertMs(0);
-                }}
-              >
-                <ChronometerIcon />
-              </button>
-              <span className="concert-time-value">{formatElapsed(concertMs)}</span>
-            </div>
+            <ConcertTime />
             <span
               className={`lyrics-btn page-icon topbar-connect${stageLive ? " lan-ok" : ""}`}
               title={stageLive ? "Connected to the desk" : "Not connected"}

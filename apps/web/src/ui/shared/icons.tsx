@@ -245,10 +245,12 @@ export function ChainIcon() {
   );
 }
 
-export function MagnifierIcon() {
+export function MagnifierIcon(props: { mark?: "plus" | "minus" }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="10.5" cy="10.5" r="5.8" />
+      {props.mark === "plus" ? <path data-zoom-mark d="M10.5 7.6v5.8M7.6 10.5h5.8" /> : null}
+      {props.mark === "minus" ? <path data-zoom-mark d="M7.6 10.5h5.8" /> : null}
       <path d="M14.8 14.8 20 20" />
     </svg>
   );

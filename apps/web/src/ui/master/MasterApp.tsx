@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { bandRoster, lanRosterState } from "@dbk/core";
 import { currentGig, useMasterStore } from "../../store/master-store";
 import {
   BassIcon,
   ChordIcon,
-  ChronometerIcon,
   DrumsIcon,
   EditSectionsIcon,
   LyricsIcon,
@@ -27,19 +26,13 @@ import { FadeButton, PanicButton, PrepTransport, StageSetlistButton, StageViewTo
 import { PrepView } from "./PrepView";
 import { isNativeApp } from "../../native/platform";
 import { LibraryMissing } from "../native/LibraryMissing";
+import { ConcertTime } from "../shared/ConcertTime";
 import { holdLibraryLoading, LibraryLoading } from "../shared/LibraryLoading";
-
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-function formatElapsed(ms: number): string {
-  const totalMin = Math.max(0, Math.floor(ms / 60_000));
-  return `${pad2(Math.floor(totalMin / 60))}:${pad2(totalMin % 60)}`;
-}
+import { useStagePinchZoom } from "./stage-zoom";
 
 export function MasterApp() {
   usePdfWarmup();
+  useStagePinchZoom();
   const ready = useMasterStore((s) => s.ready);
   const libraryStatus = useMasterStore((s) => s.libraryStatus);
   const load = useMasterStore((s) => s.load);
@@ -55,19 +48,7 @@ export function MasterApp() {
   const online = useNavigatorOnline();
   const lanState = lanRosterState(bandRoster(gig), syncPeers, syncConnected, online);
   const native = isNativeApp();
-  const [concertOn, setConcertOn] = useState(false);
-  const [concertMs, setConcertMs] = useState(0);
-  const concertStarted = useRef<number | null>(null);
   const loadTries = useRef(0);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      if (concertStarted.current != null) {
-        setConcertMs(Date.now() - concertStarted.current);
-      }
-    }, 250);
-    return () => window.clearInterval(id);
-  }, []);
 
   useEffect(() => {
     if (ready && songCount > 0) return;
@@ -192,29 +173,7 @@ export function MasterApp() {
         </div>
         <PdfExportButton />
         <StageViewTools />
-        <div className="topbar-time-cluster">
-          <button
-            type="button"
-            className={`chrono-btn${concertOn ? " on" : ""}`}
-            title={concertOn ? "Reset concert time" : "Start concert time"}
-            aria-label={concertOn ? "Reset concert time" : "Start concert time"}
-            aria-pressed={concertOn}
-            onClick={() => {
-              if (concertOn) {
-                concertStarted.current = null;
-                setConcertOn(false);
-                setConcertMs(0);
-                return;
-              }
-              concertStarted.current = Date.now();
-              setConcertOn(true);
-              setConcertMs(0);
-            }}
-          >
-            <ChronometerIcon />
-          </button>
-          <span className="concert-time-value">{formatElapsed(concertMs)}</span>
-        </div>
+        <ConcertTime />
         <button
           type="button"
           className={`lyrics-btn page-icon${masterPage === "lan" ? " on" : lanState === "ready" ? " lan-ok" : lanState === "problem" ? " lan-bad" : " lan-warn"}`}

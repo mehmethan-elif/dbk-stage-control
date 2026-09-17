@@ -113,6 +113,8 @@ export interface ChordChart {
   bounds: Map<string, { first: number; last: number }>;
   /** The name that lights for a section with no name of its own, read off another's bars. */
   named: Map<string, string>;
+  /** Bars marked 1. or 2. where two passes end differently. */
+  endings: Set<string>;
   rall: ChordRall | null;
 }
 
@@ -530,6 +532,7 @@ export function chordChart(song: Song | undefined, form: SongForm): ChordChart {
       drawn: new Map(),
       bounds: new Map(),
       named: new Map(),
+      endings: new Set(),
       rall: null
     };
   }
@@ -567,9 +570,15 @@ export function chordChart(song: Song | undefined, form: SongForm): ChordChart {
   const drawn = new Map<string, ChordBarRef>();
   const bounds = new Map<string, { first: number; last: number }>();
   const named = new Map<string, string>();
+  const endings = new Set<string>();
   const rows = foldEndings(foldRepeatedRuns(written)).map((item) => {
     const owner = item.heads[0]?.block.id ?? "";
     const spans = spansOfRow(owner, item);
+    for (const span of spans) {
+      if (!span.ending) continue;
+      const bar = span.lines.flat()[span.ending.at];
+      if (bar) endings.add(barKey(owner, bar.measure));
+    }
     // The bar on the page each played bar is read from, in the order the row is played.
     const sequence: ChordBar[] = [];
     for (const span of spans) {
@@ -609,7 +618,7 @@ export function chordChart(song: Song | undefined, form: SongForm): ChordChart {
     });
     return { heads: item.heads, spans, width: nameBarWidth(spans) };
   });
-  return { rows, drawn, bounds, named, rall: rallOf(song, drawn, form) };
+  return { rows, drawn, bounds, named, endings, rall: rallOf(song, drawn, form) };
 }
 
 /**
@@ -653,7 +662,25 @@ function measureEndAt(map: TempoPoint[], time: number): number {
 }
 
 /**
- * The bar on the page under the playhead, and the bar the band reads next.
+ * The next bar is only worth lighting when the band has to look somewhere else: the next
+ * section, the top of a repeat, or a 1. / 2. ending.
+ */
+export function showsNextChordMeasure(
+  chart: ChordChart,
+  here: ChordBarRef,
+  next: ChordBarRef,
+  playing: string,
+  nextPlaying: string | null
+): boolean {
+  if (nextPlaying != null && nextPlaying !== playing) return true;
+  if (here.blockId !== next.blockId) return true;
+  if (next.measure < here.measure) return true;
+  return chart.endings.has(barKey(next.blockId, next.measure));
+}
+
+/**
+ * The bar on the page under the playhead, and the bar the band reads next when that jump
+ * matters.
  *
  * Both are looked up through the chart, so a second pass of a repeat lights the bars it is read
  * from, and the bar after the last of a repeat is the top of that repeat rather than whatever
@@ -676,19 +703,27 @@ export function chordPlayhead(
   const phase = Math.min(1, Math.max(0, (pos.originTime - bar.start) / length));
   const playing = chart.named.get(pos.block.id) ?? pos.block.id;
   const onward = chart.drawn.get(barKey(pos.block.id, measure + 1));
-  if (onward) return { ...here, phase, playing, next: onward, nextPlaying: playing };
-  if (chainNext) return { ...here, phase, playing, next: null, nextPlaying: null };
-  const played = measureEndAt(map, time);
-  const after =
-    played >= pos.visit.end - TIME_EPS ? pos.block.originEnd : measureEndAt(map, pos.originTime);
-  const nextPos = formNextAt(form, time, after);
-  if (!nextPos) return { ...here, phase, playing, next: null, nextPlaying: null };
-  const top = timeToMusical(map, nextPos.block.originStart + TIME_EPS).measure;
+  let next: ChordBarRef | null = null;
+  let nextPlaying: string | null = null;
+  if (onward) {
+    next = onward;
+    nextPlaying = playing;
+  } else if (!chainNext) {
+    const played = measureEndAt(map, time);
+    const after =
+      played >= pos.visit.end - TIME_EPS ? pos.block.originEnd : measureEndAt(map, pos.originTime);
+    const nextPos = formNextAt(form, time, after);
+    if (nextPos) {
+      const top = timeToMusical(map, nextPos.block.originStart + TIME_EPS).measure;
+      next = chart.drawn.get(barKey(nextPos.block.id, top)) ?? null;
+      nextPlaying = chart.named.get(nextPos.block.id) ?? nextPos.block.id;
+    }
+  }
   return {
     ...here,
     phase,
     playing,
-    next: chart.drawn.get(barKey(nextPos.block.id, top)) ?? null,
-    nextPlaying: chart.named.get(nextPos.block.id) ?? nextPos.block.id
+    next: next && showsNextChordMeasure(chart, here, next, playing, nextPlaying) ? next : null,
+    nextPlaying
   };
 }

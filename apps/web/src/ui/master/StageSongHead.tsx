@@ -4,11 +4,8 @@ import {
   currentGig,
   followsFreeMasterClicks,
   nextUnskippedSongEntryId,
-  panicBlocksFollow,
   setlistLocked,
-  showsTitlePositionSlider,
   songPlaying,
-  songShowsPositionSlider,
   useMasterStore,
   usesFreeMetroTransport
 } from "../../store/master-store";
@@ -16,7 +13,6 @@ import { PlayModeMark } from "./play-mode-mark";
 import { nextTransportSongEntry } from "./next-song-section";
 import { type StageNotesPage } from "./stage-page-notes";
 import { freePageMetroTone, MetroPulse } from "./song-metro-beats";
-import { SongPositionTrack } from "./SongPositionTrack";
 import { scrollStageToNode } from "./stage-scroll";
 
 const PAGE_LABELS: Record<StageNotesPage, string> = {
@@ -56,15 +52,6 @@ export function StageSongHead(props: {
     : undefined;
   const metroTone = freePageMetroTone(props.entryId, selectedEntryId, nextSongEntryId);
   const showTransport = Boolean(metroTone);
-  const localTitleSlider = useMasterStore(showsTitlePositionSlider);
-  const panicOn = useMasterStore(panicBlocksFollow);
-  const selected = Boolean(props.entryId && props.entryId === selectedEntryId);
-  const showTitleSlider = Boolean(
-    localTitleSlider &&
-      selected &&
-      !panicOn &&
-      songShowsPositionSlider(song, files, gigMode)
-  );
   const saveSongInfo = useMasterStore((s) => s.saveSongInfo);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -151,7 +138,6 @@ export function StageSongHead(props: {
           {props.children}
         </button>
       </h3>
-      {showTitleSlider ? <SongPositionTrack song={song} className="stage-title-track" /> : null}
       {songId ? (
         <>
           {readOnly ? (

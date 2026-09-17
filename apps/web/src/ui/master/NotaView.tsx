@@ -37,6 +37,7 @@ import {
   stageLeadInNode
 } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
+import { pdfRenderScale, scrollTopAfterZoom } from "./stage-zoom";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { countLabel, countSection, isCountSection } from "./count-section";
 import { sectionBarClass } from "./section-color";
@@ -248,14 +249,43 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
 
   const onPagesLayout = () => {
     setPagesTick((tick) => tick + 1);
-    if (!pinToSelected || !scrollTarget) return;
-    scrollStageToSongTitle(stageRef.current, `[data-nota-song="${scrollTarget}"]`);
   };
+
+  const zoomAnchor = useRef({ zoom, top: 0, height: 0 });
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const remember = () => {
+      zoomAnchor.current = {
+        zoom: zoomAnchor.current.zoom,
+        top: stage.scrollTop,
+        height: stage.scrollHeight
+      };
+    };
+    stage.addEventListener("scroll", remember, { passive: true });
+    remember();
+    return () => stage.removeEventListener("scroll", remember);
+  }, []);
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const prev = zoomAnchor.current;
+    const height = stage.scrollHeight;
+    if (prev.zoom !== zoom && prev.height > 1) {
+      stage.scrollTop = scrollTopAfterZoom({
+        prevTop: prev.top,
+        prevHeight: prev.height,
+        nextHeight: height,
+        viewHeight: stage.clientHeight
+      });
+    }
+    zoomAnchor.current = { zoom, top: stage.scrollTop, height };
+  }, [zoom, pagesTick]);
 
   useEffect(() => {
     if (!autoScroll || sectionEditing || playingEntryId || !scrollTarget) return;
     scrollStageToSongTitle(stageRef.current, `[data-nota-song="${scrollTarget}"]`);
-  }, [autoScroll, sectionEditing, playingEntryId, scrollTarget, zoom]);
+  }, [autoScroll, sectionEditing, playingEntryId, scrollTarget]);
 
   // A new song must always re-scroll, even if it opens on the same measure ids.
   useEffect(() => {
@@ -1460,7 +1490,9 @@ function NotaPages(props: {
   const [pageCount, setPageCount] = useState(0);
   const [failed, setFailed] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
+  const [paintWidth, setPaintWidth] = useState(0);
   const pageWidth = width > 0 ? Math.max(1, Math.round(width * props.zoom)) : 0;
+  const painted = useRef(0);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -1501,9 +1533,23 @@ function NotaPages(props: {
     };
   }, [props.songId, props.file]);
 
+  useEffect(() => {
+    if (pageWidth < 8) return;
+    if (painted.current === 0) {
+      painted.current = pageWidth;
+      setPaintWidth(pageWidth);
+      return;
+    }
+    const wait = window.setTimeout(() => {
+      painted.current = pageWidth;
+      setPaintWidth(pageWidth);
+    }, 160);
+    return () => window.clearTimeout(wait);
+  }, [pageWidth]);
+
   useLayoutEffect(() => {
     const doc = docRef.current;
-    if (!doc || pageCount === 0 || pageWidth < 8) return;
+    if (!doc || pageCount === 0 || paintWidth < 8) return;
     let cancelled = false;
     const paint = async () => {
       const dpr = window.devicePixelRatio || 1;
@@ -1514,7 +1560,9 @@ function NotaPages(props: {
         const page = await doc.getPage(number);
         if (cancelled) return;
         const unscaled = page.getViewport({ scale: 1 });
-        const viewport = page.getViewport({ scale: (pageWidth / unscaled.width) * dpr });
+        const viewport = page.getViewport({
+          scale: pdfRenderScale(paintWidth, unscaled.width, dpr)
+        });
         canvas.width = Math.floor(viewport.width);
         canvas.height = Math.floor(viewport.height);
         await page.render({
@@ -1530,7 +1578,7 @@ function NotaPages(props: {
     return () => {
       cancelled = true;
     };
-  }, [pageCount, pageWidth]);
+  }, [pageCount, paintWidth]);
 
   return (
     <>

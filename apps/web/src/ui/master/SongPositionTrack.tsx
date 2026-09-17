@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties, type PointerEvent } from "react";
+import { useRef, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import {
   measureStartTimes,
   PlaybackState,
@@ -26,6 +26,7 @@ export function SongPositionTrack(props: {
   className?: string;
   showTitle?: boolean;
   title?: string;
+  icon?: ReactNode;
 }) {
   const seek = useMasterStore((s) => s.seek);
   const playback = useMasterStore((s) => s.playback);
@@ -154,6 +155,7 @@ export function SongPositionTrack(props: {
       {props.showTitle ? (
         <div className="prep-now-overlay">
           <div className="prep-now-copy">
+            {props.icon}
             <span className="prep-now-title">{props.title ?? "—"}</span>
           </div>
         </div>
