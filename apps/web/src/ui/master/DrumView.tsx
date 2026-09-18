@@ -231,14 +231,15 @@ function patternRun(
   pattern: PatternEvent,
   spanEnd: number,
   map: TempoPoint[],
-  cue: TextCue | null
+  cue: TextCue | null,
+  start = pattern.time
 ): PatternRun {
   const written = Math.max(1, measureCount(map, pattern.time, pattern.end));
-  const total = Math.max(written, measureCount(map, pattern.time, spanEnd));
+  const total = Math.max(written, measureCount(map, start, spanEnd));
   const built = buildHits(pattern, map);
   return {
     name: pattern.text.trim(),
-    start: pattern.time,
+    start,
     end: spanEnd,
     cycle: built.cycle,
     repeats: Math.max(1, Math.round(total / written)),
@@ -299,12 +300,29 @@ function sectionChart(song: Song | undefined): SectionChart[] {
       runs.push(patternRun(pattern, spanEnd, song.tempoMap, runCue(texts, pattern.time, spanEnd, song.tempoMap)));
     }
     if (runs.length === 0) {
-      for (const pattern of texts) {
-        if (pattern.time < section.start - TIME_EPS) continue;
-        if (pattern.time >= section.end - TIME_EPS) break;
-        const next = texts.find((item) => item.time >= pattern.end - TIME_EPS);
-        const spanEnd = Math.min(next?.time ?? section.end, section.end);
-        runs.push(patternRun(pattern, spanEnd, song.tempoMap, null));
+      const inSection = (item: PatternEvent) =>
+        item.time >= section.start - TIME_EPS && item.time < section.end - TIME_EPS;
+      const sectionTexts = texts.filter(inSection);
+      const carried = [...midi].reverse().find((item) => item.time < section.start - TIME_EPS);
+      if (carried && sectionTexts.length > 0 && sectionTexts.every(isFillText)) {
+        const next = midi.find((item) => item.time >= section.start - TIME_EPS);
+        const spanEnd = Math.min(next?.time ?? song.duration, section.end);
+        runs.push(
+          patternRun(
+            carried,
+            spanEnd,
+            song.tempoMap,
+            runCue(sectionTexts, section.start, spanEnd, song.tempoMap),
+            section.start
+          )
+        );
+      } else {
+        for (const pattern of sectionTexts) {
+          if (isFillText(pattern)) continue;
+          const next = texts.find((item) => item.time >= pattern.end - TIME_EPS && !isFillText(item));
+          const spanEnd = Math.min(next?.time ?? section.end, section.end);
+          runs.push(patternRun(pattern, spanEnd, song.tempoMap, null));
+        }
       }
     }
     return { section, index, runs: joinRepeatedRuns(runs) };

@@ -162,6 +162,31 @@ describe("writtenChart", () => {
       end: 38
     });
   });
+
+  it("never draws FILL as a pattern when a section has only text FILL", () => {
+    const groove = (text: string, start: number, end: number, notes: number): PatternEvent => ({
+      text,
+      time: start,
+      end,
+      length: end - start,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: notes ? [{ time: start, pitch: 48, numerator: 4, denominator: 4 }] : []
+    });
+    const target: Song = {
+      ...song([
+        { name: "SAN A", start: 0, end: 16 },
+        { name: "SAN B", start: 16, end: 32 }
+      ]),
+      patterns: [groove("Pattern C", 0, 2, 1), groove("FILL", 30, 32, 0)]
+    };
+    const rows = writtenChart(target, songForm(target, { identity: "drums" }));
+    expect(rows.find((row) => row.section.name === "SAN B")?.runs.map((run) => [run.name, run.repeats, run.cue?.text])).toEqual([
+      ["Pattern C", 8, "FILL"]
+    ]);
+  });
 });
 
 describe("drumFollowKey", () => {

@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 3137,
-    "hash": "fd589406d8bed083da7e12181526cb35cc9eb8ff0695553cc218ec51cfeb5a2e"
+    "size": 3293,
+    "hash": "1d358e621d4771b9e5db35a5685222d19a3e5dd7d381a05806a8bfa28229f79d"
   },
   "songs": [
     {
@@ -77,6 +77,55 @@
           "path": "song.json",
           "size": 199862,
           "hash": "af003f5e1a81edd7a5692d89bf0ba7a923d66d23c28701ef1127124bbc1499d6"
+        }
+      ]
+    },
+    {
+      "id": "Bizim Türkümüz",
+      "folder": "bizim_turkumuz",
+      "title": "Bizim Türkümüz",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2714643,
+          "hash": "acdc3e8567298eb34d3eec6e8f58e5b6d56893cd169b9818c2ebab61295a11af"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 26240,
+          "hash": "d5528c197e582fff5c2e8ff4b9065fce4db0b2e7a8abd2c5c22d74b0968dbc1b"
+        },
+        {
+          "path": "song.json",
+          "size": 297,
+          "hash": "826c29bcb32b91e91b32776daa85f0ba8265351539a82e8cf6306b070b737e37"
+        }
+      ]
+    },
+    {
+      "id": "c_rp_n_rd_karadeniz",
+      "folder": "c_rp_n_rd_karadeniz",
+      "title": "Çırpınırdı Karadeniz",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3099584,
+          "hash": "3093932c1048f11cce64e4523a2c15e4844e85daccbe89ba11fc8e1b96a169d2"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 33908,
+          "hash": "0e4363b6aae135ab65ee0ee7806131eedc52712308b0188c5219a69e697e41d1"
+        },
+        {
+          "path": "settings.json",
+          "size": 14519,
+          "hash": "fce68b986ea2dbd833562d5e97e0d84fe500888dba77d368769ac9f389635dff"
+        },
+        {
+          "path": "song.json",
+          "size": 118449,
+          "hash": "29e70eb081d2107b019530b93fd0a31013bebdbabdf6e00acb8689ee2610d9ad"
         }
       ]
     },
