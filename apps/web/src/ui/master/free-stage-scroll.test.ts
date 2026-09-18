@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   nextSongTitleScrollTop,
   preferNextSongTitle,
+  shouldRepinSongTitle,
   songTitlePinReady,
   stageScrollTopForSpans
 } from "./stage-scroll";
@@ -171,5 +172,14 @@ describe("songTitlePinReady", () => {
       ready: true,
       nextStable: 2
     });
+  });
+});
+
+describe("shouldRepinSongTitle", () => {
+  it("pins when the title first appears or songs above grow", () => {
+    expect(shouldRepinSongTitle({ height: 0, top: 40, lastTop: Number.NaN })).toBe(false);
+    expect(shouldRepinSongTitle({ height: 80, top: 400, lastTop: Number.NaN })).toBe(true);
+    expect(shouldRepinSongTitle({ height: 80, top: 800, lastTop: 400 })).toBe(true);
+    expect(shouldRepinSongTitle({ height: 80, top: 400, lastTop: 400 })).toBe(false);
   });
 });

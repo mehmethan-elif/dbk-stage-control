@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 3881,
-    "hash": "44e4b80d81dbf7ca3cb44f79d77835b0f439f70d9fd86b2e393ae784358b261b"
+    "size": 4036,
+    "hash": "2b496e531b7e29d77814f16db54ed4de414fbbc7fac97974bf6be3e20a45c821"
   },
   "songs": [
     {
@@ -200,6 +200,33 @@
           "path": "song.json",
           "size": 85218,
           "hash": "a4e9ec0e64a902a7a15e1e0e141e821c323bc92820e24a928f244407dac207ae"
+        }
+      ]
+    },
+    {
+      "id": "kas_lar_n_karas_na",
+      "folder": "kas_lar_n_karas_na",
+      "title": "Kaşların Karasına",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2406190,
+          "hash": "a7d2d7de562b58ca8b2beac80f7c8118cfc93579ec4a87074f44d6b9839b14a5"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 32701,
+          "hash": "2991ec232bce76d6bb6342dae424808c17f2208dbdba420e573d16789e0d30e1"
+        },
+        {
+          "path": "settings.json",
+          "size": 7635,
+          "hash": "aa290fbcbc2453ce449000c94fa6d46659e4633e5d30fa118f39971fc39ae8eb"
+        },
+        {
+          "path": "song.json",
+          "size": 123701,
+          "hash": "f11ba1064c8b2414b36411afe27c0ebf4a3f9070c45d75ec23aa8c56ac03c7d6"
         }
       ]
     },

@@ -37,6 +37,7 @@ import {
   stageLeadInNode
 } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
+import { SCORE_LABEL_CSS } from "./pdf-export/pdf-layout";
 import { pdfRenderScale, scrollTopAfterZoom } from "./stage-zoom";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { countLabel, countSection, isCountSection, skipsCountIn } from "./count-section";
@@ -236,7 +237,6 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
     visible.find((entry) => entry.entryId === showEntry) ?? visible[0];
   const selectedSong = findSongByRef(songs, selected?.songId);
 
-  const pinToSelected = !panicFollow && (!detached || !autoScroll || !playingEntryId);
   const selectedSongId = selected?.entryId ?? null;
   // The ELIF KONUSMA or STOP itself rather than the song it leads into, so the scroll lands on
   // the marker the show has stopped at. See `pageEntryId`.
@@ -245,7 +245,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   usePinSelectedSong(stageRef, "data-nota-song", {
     page: masterPage,
     scrollEntry: scrollTarget,
-    skip: !pinToSelected || sectionEditing
+    skip: panicFollow || sectionEditing || Boolean(autoScroll && playingEntryId)
   });
 
   const onPagesLayout = () => {
@@ -282,11 +282,6 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
     }
     zoomAnchor.current = { zoom, top: stage.scrollTop, height };
   }, [zoom, pagesTick]);
-
-  useEffect(() => {
-    if (!autoScroll || sectionEditing || playingEntryId || !scrollTarget) return;
-    scrollStageToSongTitle(stageRef.current, `[data-nota-song="${scrollTarget}"]`);
-  }, [autoScroll, sectionEditing, playingEntryId, scrollTarget]);
 
   // A new song must always re-scroll, even if it opens on the same measure ids.
   useEffect(() => {
@@ -1620,7 +1615,14 @@ function NotaPages(props: {
             key={index}
             className="nota-page-wrap"
             data-nota-page={index}
-            style={pageWidth > 0 ? { width: pageWidth } : undefined}
+            style={
+              pageWidth > 0
+                ? ({
+                    width: pageWidth,
+                    "--nota-page-scale": pageWidth / SCORE_LABEL_CSS.refWidth
+                  } as CSSProperties)
+                : undefined
+            }
           >
             <canvas
               className="nota-page"

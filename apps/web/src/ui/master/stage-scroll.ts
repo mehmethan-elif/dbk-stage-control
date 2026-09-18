@@ -309,6 +309,14 @@ export function songTitlePinReady(opts: {
   return { ready: nextStable >= 2, nextStable };
 }
 
+/** Pin again only when the title itself moved — not when the player scrolls the stage. */
+export function shouldRepinSongTitle(opts: { height: number; top: number; lastTop: number }): boolean {
+  if (opts.height < 16 || !Number.isFinite(opts.top)) return false;
+  return !Number.isFinite(opts.lastTop) || Math.abs(opts.top - opts.lastTop) > 1;
+}
+
+const PIN_GROWTH_MS = 12000;
+
 export function pinStageSongWhenReady(
   stageRef: { current: HTMLElement | null },
   entrySelector: string,
@@ -316,8 +324,8 @@ export function pinStageSongWhenReady(
 ): () => void {
   let cancelled = false;
   let lastTop = Number.NaN;
-  let stable = 0;
-  let left = tries;
+  const started = performance.now();
+  const budget = Math.max(PIN_GROWTH_MS, tries * 16);
   const run = () => {
     if (cancelled) return;
     const stage = stageRef.current;
@@ -326,21 +334,16 @@ export function pinStageSongWhenReady(
       article instanceof HTMLElement
         ? (article.querySelector(".lyrics-song-head > .direct-pass-mark, .lyrics-song-title") ?? article)
         : null;
-    if (!(stage instanceof HTMLElement) || !(title instanceof HTMLElement)) {
-      if (left-- > 0) requestAnimationFrame(run);
-      return;
+    if (stage instanceof HTMLElement && title instanceof HTMLElement) {
+      const height = article instanceof HTMLElement ? article.getBoundingClientRect().height : 0;
+      const top =
+        title.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop;
+      if (shouldRepinSongTitle({ height, top, lastTop })) {
+        lastTop = top;
+        scrollStageToNode(stage, title, 0);
+      }
     }
-    const height = article instanceof HTMLElement ? article.getBoundingClientRect().height : 0;
-    const top =
-      title.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop;
-    const next = songTitlePinReady({ height, top, lastTop, stable });
-    lastTop = top;
-    stable = next.nextStable;
-    if (!next.ready) {
-      if (left-- > 0) requestAnimationFrame(run);
-      return;
-    }
-    scrollStageToNode(stage, title, 0);
+    if (performance.now() - started < budget) requestAnimationFrame(run);
   };
   requestAnimationFrame(run);
   return () => {

@@ -102,4 +102,8 @@ describe("page notes and credit", () => {
       1
     );
   });
+
+  it("keeps a half-width score at half the 13px chip size", () => {
+    expect(scoreLabelScale(SCORE_LABEL_CSS.refWidth / 2)).toBeCloseTo(0.5, 5);
+  });
 });

@@ -12,7 +12,7 @@ export const PDF_NOTE_H = 22;
 export const PDF_FOOTER_H = 28;
 export const PDF_GAP = 10;
 
-/** On-screen `.nota-section-label` is always 13px on the scaled score. */
+/** Section chips are 13px when the live score is `refWidth` CSS pixels wide. */
 export const SCORE_LABEL_CSS = {
   font: 13,
   padX: 7,
@@ -31,13 +31,6 @@ export const SCORE_CHORD_CSS = {
 
 export function scoreLabelScale(scoreWidth: number, cssWidth = SCORE_LABEL_CSS.refWidth): number {
   return scoreWidth / Math.max(1, cssWidth);
-}
-
-export function liveScoreCssWidth(): number | undefined {
-  if (typeof document === "undefined") return undefined;
-  const canvas = document.querySelector<HTMLCanvasElement>("canvas.nota-page");
-  const width = canvas?.getBoundingClientRect().width ?? 0;
-  return width >= 200 ? width : undefined;
 }
 
 export const SECTION_TONE = {

@@ -25,7 +25,6 @@ import {
   PDF_TEXT,
   SCORE_CHORD_CSS,
   SCORE_LABEL_CSS,
-  liveScoreCssWidth,
   scoreLabelScale,
   sectionTone
 } from "./pdf-layout";
@@ -228,7 +227,7 @@ function drawScoreOverlays(
     const pageNo = Math.max(0, Math.min(lastPage, box.page));
     return pageNo === pageIndex;
   });
-  const px = scoreLabelScale(score.width, liveScoreCssWidth() ?? SCORE_LABEL_CSS.refWidth);
+  const px = scoreLabelScale(score.width);
   const size = SCORE_LABEL_CSS.font * px;
   const padX = SCORE_LABEL_CSS.padX * px;
   const padY = SCORE_LABEL_CSS.padY * px;

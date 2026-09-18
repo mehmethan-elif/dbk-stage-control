@@ -3788,6 +3788,7 @@ button {
 .nota-page-wrap {
   position: relative;
   max-width: none;
+  --nota-page-scale: 1;
 }
 
 .nota-page {
@@ -3810,7 +3811,7 @@ button {
 .nota-rect-chords {
   position: absolute;
   z-index: 5;
-  height: 24px;
+  height: calc(24px * var(--nota-page-scale, 1));
   pointer-events: none;
   overflow: hidden;
 }
@@ -3821,19 +3822,19 @@ button {
 
 .nota-rect-beat {
   position: absolute;
-  top: 2px;
+  top: calc(2px * var(--nota-page-scale, 1));
   width: 1px;
-  height: 12px;
+  height: calc(12px * var(--nota-page-scale, 1));
   background: rgba(17, 17, 17, 0.55);
 }
 
 .nota-rect-chord {
   position: absolute;
   top: 0;
-  padding: 0 0 0 4px;
+  padding: 0 0 0 calc(4px * var(--nota-page-scale, 1));
   color: #111;
   font-weight: 800;
-  font-size: 16px;
+  font-size: calc(16px * var(--nota-page-scale, 1));
   line-height: 1.2;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -4037,11 +4038,11 @@ button {
   width: max-content;
   max-width: 40%;
   height: auto;
-  padding: 2px 7px;
+  padding: calc(2px * var(--nota-page-scale, 1)) calc(7px * var(--nota-page-scale, 1));
   box-sizing: border-box;
-  border-radius: 3px;
+  border-radius: calc(3px * var(--nota-page-scale, 1));
   font-weight: 800;
-  font-size: 13px;
+  font-size: calc(13px * var(--nota-page-scale, 1));
   line-height: 1.15;
   letter-spacing: 0.04em;
   color: #fff;
@@ -4100,11 +4101,11 @@ button {
   position: absolute;
   z-index: 5;
   box-sizing: border-box;
-  padding: 1px 4px;
+  padding: calc(1px * var(--nota-page-scale, 1)) calc(4px * var(--nota-page-scale, 1));
   overflow: hidden;
   color: #111;
   font-weight: 700;
-  font-size: 13px;
+  font-size: calc(13px * var(--nota-page-scale, 1));
   line-height: 1.2;
   letter-spacing: 0.01em;
   text-align: center;
@@ -4138,11 +4139,11 @@ button {
 .nota-final-mark {
   position: absolute;
   z-index: 6;
-  padding: 2px 7px;
-  border-radius: 3px;
+  padding: calc(2px * var(--nota-page-scale, 1)) calc(7px * var(--nota-page-scale, 1));
+  border-radius: calc(3px * var(--nota-page-scale, 1));
   box-sizing: border-box;
   font-weight: 800;
-  font-size: 13px;
+  font-size: calc(13px * var(--nota-page-scale, 1));
   line-height: 1.15;
   letter-spacing: 0.04em;
   pointer-events: none;
