@@ -60,6 +60,16 @@
           "type": "song",
           "entryId": "entry_3cb353d9-5a66-47db-89cd-2cecd4822744",
           "songId": "c_rp_n_rd_karadeniz"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_b7cdce18-0d41-458a-ae26-d9ba7b79a7d2",
+          "songId": "tu_rk_k_z"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_1fda07b3-181b-4c18-83a7-66559a2b98fa",
+          "songId": "bizim_tu_rku_mu_z"
         }
       ],
       "busMix": {

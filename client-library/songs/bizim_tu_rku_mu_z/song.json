@@ -1,0 +1,7356 @@
+{
+  "id": "bizim_tu_rku_mu_z",
+  "version": 1,
+  "title": "Bizim Türkümüz",
+  "duration": 169.611503,
+  "nextSongAt": 165.47619,
+  "finalAt": 161.904762,
+  "key": "D",
+  "scale": "USSAK",
+  "style": "TURKCU",
+  "kita": 3,
+  "tags": [
+    "reaper-export"
+  ],
+  "tempoMap": [
+    {
+      "time": 0,
+      "measure": 1,
+      "bpm": 126,
+      "numerator": 5,
+      "denominator": 8
+    }
+  ],
+  "sections": [
+    {
+      "name": "COUNT",
+      "start": 0,
+      "end": 2.380952
+    },
+    {
+      "name": "ARA",
+      "start": 2.380952,
+      "end": 11.904762
+    },
+    {
+      "name": "ARA",
+      "start": 11.904762,
+      "end": 21.428571
+    },
+    {
+      "name": "SAN A",
+      "start": 21.428571,
+      "end": 30.952381
+    },
+    {
+      "name": "SAN B",
+      "start": 30.952381,
+      "end": 38.095238
+    },
+    {
+      "name": "NAK A",
+      "start": 38.095238,
+      "end": 47.619048
+    },
+    {
+      "name": "NAK B",
+      "start": 47.619048,
+      "end": 57.142857
+    },
+    {
+      "name": "ARA",
+      "start": 57.142857,
+      "end": 66.666667
+    },
+    {
+      "name": "ARA",
+      "start": 66.666667,
+      "end": 76.190476
+    },
+    {
+      "name": "SAN A",
+      "start": 76.190476,
+      "end": 85.714286
+    },
+    {
+      "name": "SAN B",
+      "start": 85.714286,
+      "end": 92.857143
+    },
+    {
+      "name": "NAK A",
+      "start": 92.857143,
+      "end": 102.380952
+    },
+    {
+      "name": "NAK B",
+      "start": 102.380952,
+      "end": 111.904762
+    },
+    {
+      "name": "ARA",
+      "start": 111.904762,
+      "end": 121.428571
+    },
+    {
+      "name": "ARA",
+      "start": 121.428571,
+      "end": 130.952381
+    },
+    {
+      "name": "SAN A",
+      "start": 130.952381,
+      "end": 140.47619
+    },
+    {
+      "name": "SAN B",
+      "start": 140.47619,
+      "end": 147.619048
+    },
+    {
+      "name": "NAK A",
+      "start": 147.619048,
+      "end": 157.142857
+    },
+    {
+      "name": "NAK B",
+      "start": 157.142857,
+      "end": 166.666667
+    }
+  ],
+  "lyrics": [
+    {
+      "time": 21.428571,
+      "end": 30.952381,
+      "measure": 18,
+      "beat": 5,
+      "text": "ATLARIMIZ ALDAN KIRDAN YAĞIZDAN\r\nAKINCILAR KOPMUŞ GELMİŞ OĞUZ'DAN"
+    },
+    {
+      "time": 30.952381,
+      "end": 38.095238,
+      "measure": 27,
+      "beat": 1,
+      "text": "KÜÇÜKLÜ BÜYÜKLÜ HEP BİR AĞIZDAN\r\nDÜNYACA SÖYLENİR"
+    },
+    {
+      "time": 38.095238,
+      "end": 40.47619,
+      "measure": 32,
+      "beat": 5,
+      "text": "TÜRKÜMÜZ BİZİM"
+    },
+    {
+      "time": 40.47619,
+      "end": 42.857143,
+      "measure": 34,
+      "beat": 5,
+      "text": "TÜRKÜMÜZ BİZİM"
+    },
+    {
+      "time": 42.857143,
+      "end": 45.238095,
+      "measure": 37,
+      "beat": 1,
+      "text": "TÜRKÜMÜZ BİZİM"
+    },
+    {
+      "time": 45.238095,
+      "end": 47.619048,
+      "measure": 38,
+      "beat": 5,
+      "text": "TÜRKÜMÜZ BİZİM"
+    },
+    {
+      "time": 47.619048,
+      "end": 52.380952,
+      "measure": 41,
+      "beat": 1,
+      "text": "DÜNYACA SÖYLENİR TÜRKÜMÜZ BİZİM"
+    },
+    {
+      "time": 52.380952,
+      "end": 54.761905,
+      "measure": 44,
+      "beat": 5,
+      "text": "TÜRKÜMÜZ BİZİM"
+    },
+    {
+      "time": 54.761905,
+      "end": 57.142857,
+      "measure": 47,
+      "beat": 1,
+      "text": "TÜRKÜMÜZ BİZİM"
+    },
+    {
+      "time": 76.190476,
+      "end": 85.714286,
+      "measure": 64,
+      "beat": 5,
+      "text": "KANUNDUR DEĞİŞMEZ DÜNYANIN SEYRİ\r\nKİMSENİN KİMSEYE DOKUNMAZ HAYRI"
+    },
+    {
+      "time": 85.714286,
+      "end": 92.857143,
+      "measure": 73,
+      "beat": 1,
+      "text": "SAVAŞTAN YILMAYIZ ALLAH'TAN GAYRI\r\nHİÇ KİMSEDEN YOKTUR"
+    },
+    {
+      "time": 92.857143,
+      "end": 95.238095,
+      "measure": 79,
+      "beat": 1,
+      "text": "KORKUMUZ BİZİM"
+    },
+    {
+      "time": 95.238095,
+      "end": 97.619048,
+      "measure": 80,
+      "beat": 5,
+      "text": "KORKUMUZ BİZİM"
+    },
+    {
+      "time": 97.619048,
+      "end": 100,
+      "measure": 83,
+      "beat": 1,
+      "text": "KORKUMUZ BİZİM"
+    },
+    {
+      "time": 100,
+      "end": 102.380952,
+      "measure": 85,
+      "beat": 1,
+      "text": "KORKUMUZ BİZİM"
+    },
+    {
+      "time": 102.380952,
+      "end": 107.142857,
+      "measure": 86,
+      "beat": 5,
+      "text": "HİÇ KİMSEDEN YOKTUR KORKUMUZ BİZİM"
+    },
+    {
+      "time": 107.142857,
+      "end": 109.52381,
+      "measure": 90,
+      "beat": 5,
+      "text": "KORKUMUZ BİZİM"
+    },
+    {
+      "time": 109.52381,
+      "end": 111.904762,
+      "measure": 93,
+      "beat": 1,
+      "text": "KORKUMUZ BİZİM"
+    },
+    {
+      "time": 130.952381,
+      "end": 140.47619,
+      "measure": 111,
+      "beat": 1,
+      "text": "ÜÇ LAF ETSEM TÜRK'ÜM DERİM ÜÇÜNDE\r\nSANA CEVABIM VAR BANA NİÇİN DE"
+    },
+    {
+      "time": 140.47619,
+      "end": 147.619048,
+      "measure": 118,
+      "beat": 5,
+      "text": "72 BUÇUK MİLLET İÇİNDE\r\nİŞTE BUDUR GERÇEK"
+    },
+    {
+      "time": 147.619048,
+      "end": 150,
+      "measure": 125,
+      "beat": 1,
+      "text": "FARKIMIZ BİZİM"
+    },
+    {
+      "time": 150,
+      "end": 152.380952,
+      "measure": 127,
+      "beat": 1,
+      "text": "FARKIMIZ BİZİM"
+    },
+    {
+      "time": 152.380952,
+      "end": 154.761905,
+      "measure": 128,
+      "beat": 5,
+      "text": "FARKIMIZ BİZİM"
+    },
+    {
+      "time": 154.761905,
+      "end": 157.142857,
+      "measure": 131,
+      "beat": 1,
+      "text": "FARKIMIZ BİZİM"
+    },
+    {
+      "time": 157.142857,
+      "end": 161.904762,
+      "measure": 132,
+      "beat": 5,
+      "text": "İŞTE BUDUR GERÇEK FARKIMIZ BİZİM"
+    },
+    {
+      "time": 161.904762,
+      "end": 164.285714,
+      "measure": 137,
+      "beat": 1,
+      "text": "FARKIMIZ BİZİM"
+    },
+    {
+      "time": 164.285714,
+      "end": 166.666667,
+      "measure": 138,
+      "beat": 5,
+      "text": "FARKIMIZ BİZİM"
+    }
+  ],
+  "chords": [
+    {
+      "time": 0,
+      "end": 2.380952,
+      "measure": 1,
+      "beat": 1,
+      "text": "1 2 1 2 3 - SON 2 1 2 3"
+    },
+    {
+      "time": 2.380952,
+      "end": 3.571429,
+      "measure": 2,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 2.380952,
+          "end": 2.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 2,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 2.738095,
+          "end": 2.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 3.095238,
+          "end": 3.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 3.571429,
+      "end": 4.761905,
+      "measure": 4,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 3.571429,
+          "end": 3.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 4,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 3.928571,
+          "end": 4.047619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 4,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 4.285714,
+          "end": 4.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 4,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 4.761905,
+      "end": 5.952381,
+      "measure": 5,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 4.761905,
+          "end": 4.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 5,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 5.119048,
+          "end": 5.238095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 5,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 5.47619,
+          "end": 5.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 5,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 5.952381,
+      "end": 7.142857,
+      "measure": 6,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 5.952381,
+          "end": 6.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 6,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 6.309524,
+          "end": 6.428571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 6,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 6.666667,
+          "end": 6.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 6,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 7.142857,
+      "end": 8.333333,
+      "measure": 6,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 7.142857,
+          "end": 7.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 6,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 7.5,
+          "end": 7.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 7,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 7.857143,
+          "end": 7.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 7,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 8.333333,
+      "end": 9.52381,
+      "measure": 7,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 8.333333,
+          "end": 8.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 7,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 8.690476,
+          "end": 8.809524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 8,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 9.047619,
+          "end": 9.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 8,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 9.52381,
+      "end": 10.714286,
+      "measure": 9,
+      "beat": 1,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 9.52381,
+          "end": 9.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 9,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 9.880952,
+          "end": 10,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 9,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 10.238095,
+          "end": 10.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 9,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 10.714286,
+      "end": 11.904762,
+      "measure": 10,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 10.714286,
+          "end": 10.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 10,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 11.071429,
+          "end": 11.190476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 10,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 11.428571,
+          "end": 11.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 10,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 11.904762,
+      "end": 13.095238,
+      "measure": 11,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 11.904762,
+          "end": 12.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 12.261905,
+          "end": 12.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 12.619048,
+          "end": 12.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 13.095238,
+      "end": 14.285714,
+      "measure": 11,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 13.095238,
+          "end": 13.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 13.452381,
+          "end": 13.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 13.809524,
+          "end": 13.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 14.285714,
+      "end": 15.47619,
+      "measure": 12,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 14.285714,
+          "end": 14.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 14.642857,
+          "end": 14.761905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 13,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 15,
+          "end": 15.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 13,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 15.47619,
+      "end": 16.666667,
+      "measure": 13,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 15.47619,
+          "end": 15.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 13,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 15.833333,
+          "end": 15.952381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 14,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 16.190476,
+          "end": 16.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 14,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 16.666667,
+      "end": 17.857143,
+      "measure": 15,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 16.666667,
+          "end": 16.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 17.02381,
+          "end": 17.142857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 17.380952,
+          "end": 17.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 17.857143,
+      "end": 19.047619,
+      "measure": 16,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 17.857143,
+          "end": 17.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 16,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 18.214286,
+          "end": 18.333333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 16,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 18.571429,
+          "end": 18.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 16,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 19.047619,
+      "end": 20.238095,
+      "measure": 16,
+      "beat": 5,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 19.047619,
+          "end": 19.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 16,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 19.404762,
+          "end": 19.52381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 17,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 19.761905,
+          "end": 19.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 17,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 20.238095,
+      "end": 21.428571,
+      "measure": 17,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 20.238095,
+          "end": 20.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 17,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 20.595238,
+          "end": 20.714286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 18,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 20.952381,
+          "end": 21.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 18,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 21.428571,
+      "end": 22.619048,
+      "measure": 18,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 21.428571,
+          "end": 21.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 18,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 21.785714,
+          "end": 21.904762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 19,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 22.142857,
+          "end": 22.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 19,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 22.619048,
+      "end": 23.809524,
+      "measure": 20,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 22.619048,
+          "end": 22.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 22.97619,
+          "end": 23.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 23.333333,
+          "end": 23.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 23.809524,
+      "end": 25,
+      "measure": 21,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 23.809524,
+          "end": 23.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 21,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 24.166667,
+          "end": 24.285714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 21,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 24.52381,
+          "end": 24.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 21,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 25,
+      "end": 26.190476,
+      "measure": 22,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 25,
+          "end": 25.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 22,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 25.357143,
+          "end": 25.47619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 22,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 25.714286,
+          "end": 25.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 22,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 26.190476,
+      "end": 27.380952,
+      "measure": 22,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 26.190476,
+          "end": 26.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 22,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 26.547619,
+          "end": 26.666667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 23,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 26.904762,
+          "end": 27.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 23,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 27.380952,
+      "end": 28.571429,
+      "measure": 23,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 27.380952,
+          "end": 27.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 23,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 27.738095,
+          "end": 27.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 24,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 28.095238,
+          "end": 28.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 24,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 28.571429,
+      "end": 29.761905,
+      "measure": 25,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 28.571429,
+          "end": 28.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 25,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 28.928571,
+          "end": 29.047619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 25,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 29.285714,
+          "end": 29.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 25,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 29.761905,
+      "end": 30.952381,
+      "measure": 26,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 29.761905,
+          "end": 29.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 26,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 30.119048,
+          "end": 30.238095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 26,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 30.47619,
+          "end": 30.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 26,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 30.952381,
+      "end": 32.142857,
+      "measure": 27,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 30.952381,
+          "end": 31.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 31.309524,
+          "end": 31.428571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 31.666667,
+          "end": 31.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 32.142857,
+      "end": 33.333333,
+      "measure": 27,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 32.142857,
+          "end": 32.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 32.5,
+          "end": 32.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 28,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 32.857143,
+          "end": 32.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 28,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 33.333333,
+      "end": 34.52381,
+      "measure": 28,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 33.333333,
+          "end": 33.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 28,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 33.690476,
+          "end": 33.809524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 29,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 34.047619,
+          "end": 34.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 29,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 34.52381,
+      "end": 35.714286,
+      "measure": 30,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 34.52381,
+          "end": 34.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 30,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 34.880952,
+          "end": 35,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 30,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 35.238095,
+          "end": 35.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 30,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 35.714286,
+      "end": 36.904762,
+      "measure": 31,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 35.714286,
+          "end": 35.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 31,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 36.071429,
+          "end": 36.190476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 31,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 36.428571,
+          "end": 36.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 31,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 36.904762,
+      "end": 38.095238,
+      "measure": 32,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 36.904762,
+          "end": 37.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 32,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 37.261905,
+          "end": 37.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 32,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 37.619048,
+          "end": 37.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 32,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 38.095238,
+      "end": 39.285714,
+      "measure": 32,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 38.095238,
+          "end": 38.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 32,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 38.452381,
+          "end": 38.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 33,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 38.809524,
+          "end": 38.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 33,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 39.285714,
+      "end": 40.47619,
+      "measure": 33,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 39.285714,
+          "end": 39.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 33,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 39.642857,
+          "end": 39.761905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 34,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 40,
+          "end": 40.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 34,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 40.47619,
+      "end": 41.666667,
+      "measure": 34,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 40.47619,
+          "end": 40.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 34,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 40.833333,
+          "end": 40.952381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 35,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 41.190476,
+          "end": 41.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 35,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 41.666667,
+      "end": 42.857143,
+      "measure": 36,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 41.666667,
+          "end": 41.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 36,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 42.02381,
+          "end": 42.142857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 36,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 42.380952,
+          "end": 42.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 36,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 42.857143,
+      "end": 44.047619,
+      "measure": 37,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 42.857143,
+          "end": 42.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 37,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 43.214286,
+          "end": 43.333333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 37,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 43.571429,
+          "end": 43.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 37,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 44.047619,
+      "end": 45.238095,
+      "measure": 37,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 44.047619,
+          "end": 44.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 37,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 44.404762,
+          "end": 44.52381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 38,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 44.761905,
+          "end": 44.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 38,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 45.238095,
+      "end": 46.428571,
+      "measure": 38,
+      "beat": 5,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 45.238095,
+          "end": 45.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 38,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 45.595238,
+          "end": 45.714286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 45.952381,
+          "end": 46.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 46.428571,
+      "end": 47.619048,
+      "measure": 39,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 46.428571,
+          "end": 46.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 46.785714,
+          "end": 46.904762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 47.142857,
+          "end": 47.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 47.619048,
+      "end": 48.809524,
+      "measure": 41,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 47.619048,
+          "end": 47.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 41,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 47.97619,
+          "end": 48.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 41,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 48.333333,
+          "end": 48.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 41,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 48.809524,
+      "end": 50,
+      "measure": 42,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 48.809524,
+          "end": 48.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 42,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 49.166667,
+          "end": 49.285714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 42,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 49.52381,
+          "end": 49.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 42,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 50,
+      "end": 51.190476,
+      "measure": 43,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 50,
+          "end": 50.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 50.357143,
+          "end": 50.47619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 50.714286,
+          "end": 50.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 51.190476,
+      "end": 52.380952,
+      "measure": 43,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 51.190476,
+          "end": 51.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 51.547619,
+          "end": 51.666667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 44,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 51.904762,
+          "end": 52.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 44,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 52.380952,
+      "end": 53.571429,
+      "measure": 44,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 52.380952,
+          "end": 52.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 44,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 52.738095,
+          "end": 52.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 45,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 53.095238,
+          "end": 53.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 45,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 53.571429,
+      "end": 54.761905,
+      "measure": 46,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 53.571429,
+          "end": 53.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 46,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 53.928571,
+          "end": 54.047619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 46,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 54.285714,
+          "end": 54.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 46,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 54.761905,
+      "end": 55.952381,
+      "measure": 47,
+      "beat": 1,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 54.761905,
+          "end": 54.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 47,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 55.119048,
+          "end": 55.238095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 47,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 55.47619,
+          "end": 55.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 47,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 55.952381,
+      "end": 57.142857,
+      "measure": 48,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 55.952381,
+          "end": 56.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 56.309524,
+          "end": 56.428571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 56.666667,
+          "end": 56.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 57.142857,
+      "end": 58.333333,
+      "measure": 48,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 57.142857,
+          "end": 57.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 57.5,
+          "end": 57.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 49,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 57.857143,
+          "end": 57.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 49,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 58.333333,
+      "end": 59.52381,
+      "measure": 49,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 58.333333,
+          "end": 58.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 49,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 58.690476,
+          "end": 58.809524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 50,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 59.047619,
+          "end": 59.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 50,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 59.52381,
+      "end": 60.714286,
+      "measure": 51,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 59.52381,
+          "end": 59.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 51,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 59.880952,
+          "end": 60,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 51,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 60.238095,
+          "end": 60.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 51,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 60.714286,
+      "end": 61.904762,
+      "measure": 52,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 60.714286,
+          "end": 60.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 52,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 61.071429,
+          "end": 61.190476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 52,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 61.428571,
+          "end": 61.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 52,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 61.904762,
+      "end": 63.095238,
+      "measure": 53,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 61.904762,
+          "end": 62.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 53,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 62.261905,
+          "end": 62.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 53,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 62.619048,
+          "end": 62.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 53,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 63.095238,
+      "end": 64.285714,
+      "measure": 53,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 63.095238,
+          "end": 63.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 53,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 63.452381,
+          "end": 63.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 54,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 63.809524,
+          "end": 63.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 54,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 64.285714,
+      "end": 65.47619,
+      "measure": 54,
+      "beat": 5,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 64.285714,
+          "end": 64.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 54,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 64.642857,
+          "end": 64.761905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 55,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 65,
+          "end": 65.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 55,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 65.47619,
+      "end": 66.666667,
+      "measure": 55,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 65.47619,
+          "end": 65.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 55,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 65.833333,
+          "end": 65.952381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 56,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 66.190476,
+          "end": 66.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 56,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 66.666667,
+      "end": 67.857143,
+      "measure": 57,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 66.666667,
+          "end": 66.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 57,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 67.02381,
+          "end": 67.142857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 57,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 67.380952,
+          "end": 67.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 57,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 67.857143,
+      "end": 69.047619,
+      "measure": 58,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 67.857143,
+          "end": 67.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 58,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 68.214286,
+          "end": 68.333333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 58,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 68.571429,
+          "end": 68.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 58,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 69.047619,
+      "end": 70.238095,
+      "measure": 58,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 69.047619,
+          "end": 69.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 58,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 69.404762,
+          "end": 69.52381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 59,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 69.761905,
+          "end": 69.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 59,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 70.238095,
+      "end": 71.428571,
+      "measure": 59,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 70.238095,
+          "end": 70.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 59,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 70.595238,
+          "end": 70.714286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 60,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 70.952381,
+          "end": 71.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 60,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 71.428571,
+      "end": 72.619048,
+      "measure": 60,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 71.428571,
+          "end": 71.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 60,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 71.785714,
+          "end": 71.904762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 61,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 72.142857,
+          "end": 72.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 61,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 72.619048,
+      "end": 73.809524,
+      "measure": 62,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 72.619048,
+          "end": 72.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 62,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 72.97619,
+          "end": 73.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 62,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 73.333333,
+          "end": 73.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 62,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 73.809524,
+      "end": 75,
+      "measure": 63,
+      "beat": 1,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 73.809524,
+          "end": 73.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 63,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 74.166667,
+          "end": 74.285714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 63,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 74.52381,
+          "end": 74.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 63,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 75,
+      "end": 76.190476,
+      "measure": 64,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 75,
+          "end": 75.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 75.357143,
+          "end": 75.47619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 75.714286,
+          "end": 75.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 76.190476,
+      "end": 77.380952,
+      "measure": 64,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 76.190476,
+          "end": 76.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 76.547619,
+          "end": 76.666667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 65,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 76.904762,
+          "end": 77.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 65,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 77.380952,
+      "end": 78.571429,
+      "measure": 65,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 77.380952,
+          "end": 77.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 65,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 77.738095,
+          "end": 77.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 66,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 78.095238,
+          "end": 78.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 66,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 78.571429,
+      "end": 79.761905,
+      "measure": 67,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 78.571429,
+          "end": 78.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 67,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 78.928571,
+          "end": 79.047619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 67,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 79.285714,
+          "end": 79.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 67,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 79.761905,
+      "end": 80.952381,
+      "measure": 68,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 79.761905,
+          "end": 79.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 68,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 80.119048,
+          "end": 80.238095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 68,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 80.47619,
+          "end": 80.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 68,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 80.952381,
+      "end": 82.142857,
+      "measure": 69,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 80.952381,
+          "end": 81.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 69,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 81.309524,
+          "end": 81.428571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 69,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 81.666667,
+          "end": 81.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 69,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 82.142857,
+      "end": 83.333333,
+      "measure": 69,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 82.142857,
+          "end": 82.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 69,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 82.5,
+          "end": 82.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 70,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 82.857143,
+          "end": 82.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 70,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 83.333333,
+      "end": 84.52381,
+      "measure": 70,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 83.333333,
+          "end": 83.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 70,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 83.690476,
+          "end": 83.809524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 71,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 84.047619,
+          "end": 84.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 71,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 84.52381,
+      "end": 85.714286,
+      "measure": 72,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 84.52381,
+          "end": 84.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 72,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 84.880952,
+          "end": 85,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 72,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 85.238095,
+          "end": 85.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 72,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 85.714286,
+      "end": 86.904762,
+      "measure": 73,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 85.714286,
+          "end": 85.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 73,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 86.071429,
+          "end": 86.190476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 73,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 86.428571,
+          "end": 86.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 73,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 86.904762,
+      "end": 88.095238,
+      "measure": 74,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 86.904762,
+          "end": 87.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 74,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 87.261905,
+          "end": 87.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 74,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 87.619048,
+          "end": 87.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 74,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 88.095238,
+      "end": 89.285714,
+      "measure": 74,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 88.095238,
+          "end": 88.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 74,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 88.452381,
+          "end": 88.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 75,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 88.809524,
+          "end": 88.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 75,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 89.285714,
+      "end": 90.47619,
+      "measure": 75,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 89.285714,
+          "end": 89.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 75,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 89.642857,
+          "end": 89.761905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 76,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 90,
+          "end": 90.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 76,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 90.47619,
+      "end": 91.666667,
+      "measure": 76,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 90.47619,
+          "end": 90.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 76,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 90.833333,
+          "end": 90.952381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 77,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 91.190476,
+          "end": 91.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 77,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 91.666667,
+      "end": 92.857143,
+      "measure": 78,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 91.666667,
+          "end": 91.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 78,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 92.02381,
+          "end": 92.142857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 78,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 92.380952,
+          "end": 92.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 78,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 92.857143,
+      "end": 94.047619,
+      "measure": 79,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 92.857143,
+          "end": 92.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 93.214286,
+          "end": 93.333333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 93.571429,
+          "end": 93.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 94.047619,
+      "end": 95.238095,
+      "measure": 79,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 94.047619,
+          "end": 94.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 94.404762,
+          "end": 94.52381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 80,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 94.761905,
+          "end": 94.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 80,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 95.238095,
+      "end": 96.428571,
+      "measure": 80,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 95.238095,
+          "end": 95.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 80,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 95.595238,
+          "end": 95.714286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 81,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 95.952381,
+          "end": 96.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 81,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 96.428571,
+      "end": 97.619048,
+      "measure": 81,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 96.428571,
+          "end": 96.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 81,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 96.785714,
+          "end": 96.904762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 82,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 97.142857,
+          "end": 97.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 82,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 97.619048,
+      "end": 98.809524,
+      "measure": 83,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 97.619048,
+          "end": 97.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 83,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 97.97619,
+          "end": 98.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 83,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 98.333333,
+          "end": 98.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 83,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 98.809524,
+      "end": 100,
+      "measure": 84,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 98.809524,
+          "end": 98.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 84,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 99.166667,
+          "end": 99.285714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 84,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 99.52381,
+          "end": 99.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 84,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 100,
+      "end": 101.190476,
+      "measure": 85,
+      "beat": 1,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 100,
+          "end": 100.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 85,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 100.357143,
+          "end": 100.47619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 85,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 100.714286,
+          "end": 100.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 85,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 101.190476,
+      "end": 102.380952,
+      "measure": 85,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 101.190476,
+          "end": 101.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 85,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 101.547619,
+          "end": 101.666667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 86,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 101.904762,
+          "end": 102.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 86,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 102.380952,
+      "end": 103.571429,
+      "measure": 86,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 102.380952,
+          "end": 102.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 86,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 102.738095,
+          "end": 102.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 87,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 103.095238,
+          "end": 103.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 87,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 103.571429,
+      "end": 104.761905,
+      "measure": 88,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 103.571429,
+          "end": 103.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 88,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 103.928571,
+          "end": 104.047619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 88,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 104.285714,
+          "end": 104.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 88,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 104.761905,
+      "end": 105.952381,
+      "measure": 89,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 104.761905,
+          "end": 104.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 89,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 105.119048,
+          "end": 105.238095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 89,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 105.47619,
+          "end": 105.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 89,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 105.952381,
+      "end": 107.142857,
+      "measure": 90,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 105.952381,
+          "end": 106.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 90,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 106.309524,
+          "end": 106.428571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 90,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 106.666667,
+          "end": 106.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 90,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 107.142857,
+      "end": 108.333333,
+      "measure": 90,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 107.142857,
+          "end": 107.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 90,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 107.5,
+          "end": 107.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 91,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 107.857143,
+          "end": 107.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 91,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 108.333333,
+      "end": 109.52381,
+      "measure": 91,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 108.333333,
+          "end": 108.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 91,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 108.690476,
+          "end": 108.809524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 92,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 109.047619,
+          "end": 109.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 92,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 109.52381,
+      "end": 110.714286,
+      "measure": 93,
+      "beat": 1,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 109.52381,
+          "end": 109.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 93,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 109.880952,
+          "end": 110,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 93,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 110.238095,
+          "end": 110.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 93,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 110.714286,
+      "end": 111.904762,
+      "measure": 94,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 110.714286,
+          "end": 110.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 94,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 111.071429,
+          "end": 111.190476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 94,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 111.428571,
+          "end": 111.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 94,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 111.904762,
+      "end": 113.095238,
+      "measure": 95,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 111.904762,
+          "end": 112.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 112.261905,
+          "end": 112.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 112.619048,
+          "end": 112.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 113.095238,
+      "end": 114.285714,
+      "measure": 95,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 113.095238,
+          "end": 113.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 113.452381,
+          "end": 113.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 96,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 113.809524,
+          "end": 113.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 96,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 114.285714,
+      "end": 115.47619,
+      "measure": 96,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 114.285714,
+          "end": 114.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 96,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 114.642857,
+          "end": 114.761905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 97,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 115,
+          "end": 115.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 97,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 115.47619,
+      "end": 116.666667,
+      "measure": 97,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 115.47619,
+          "end": 115.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 97,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 115.833333,
+          "end": 115.952381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 98,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 116.190476,
+          "end": 116.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 98,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 116.666667,
+      "end": 117.857143,
+      "measure": 99,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 116.666667,
+          "end": 116.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 99,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 117.02381,
+          "end": 117.142857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 99,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 117.380952,
+          "end": 117.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 99,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 117.857143,
+      "end": 119.047619,
+      "measure": 100,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 117.857143,
+          "end": 117.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 100,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 118.214286,
+          "end": 118.333333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 100,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 118.571429,
+          "end": 118.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 100,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 119.047619,
+      "end": 120.238095,
+      "measure": 100,
+      "beat": 5,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 119.047619,
+          "end": 119.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 100,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 119.404762,
+          "end": 119.52381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 101,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 119.761905,
+          "end": 119.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 101,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 120.238095,
+      "end": 121.428571,
+      "measure": 101,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 120.238095,
+          "end": 120.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 101,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 120.595238,
+          "end": 120.714286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 120.952381,
+          "end": 121.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 121.428571,
+      "end": 122.619048,
+      "measure": 102,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 121.428571,
+          "end": 121.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 121.785714,
+          "end": 121.904762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 103,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 122.142857,
+          "end": 122.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 103,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 122.619048,
+      "end": 123.809524,
+      "measure": 104,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 122.619048,
+          "end": 122.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 104,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 122.97619,
+          "end": 123.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 104,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 123.333333,
+          "end": 123.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 104,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 123.809524,
+      "end": 125,
+      "measure": 105,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 123.809524,
+          "end": 123.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 105,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 124.166667,
+          "end": 124.285714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 105,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 124.52381,
+          "end": 124.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 105,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 125,
+      "end": 126.190476,
+      "measure": 106,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 125,
+          "end": 125.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 106,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 125.357143,
+          "end": 125.47619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 106,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 125.714286,
+          "end": 125.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 106,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 126.190476,
+      "end": 127.380952,
+      "measure": 106,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 126.190476,
+          "end": 126.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 106,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 126.547619,
+          "end": 126.666667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 107,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 126.904762,
+          "end": 127.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 107,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 127.380952,
+      "end": 128.571429,
+      "measure": 107,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 127.380952,
+          "end": 127.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 107,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 127.738095,
+          "end": 127.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 108,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 128.095238,
+          "end": 128.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 108,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 128.571429,
+      "end": 129.761905,
+      "measure": 109,
+      "beat": 1,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 128.571429,
+          "end": 128.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 109,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 128.928571,
+          "end": 129.047619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 109,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 129.285714,
+          "end": 129.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 109,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 129.761905,
+      "end": 130.952381,
+      "measure": 110,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 129.761905,
+          "end": 129.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 110,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 130.119048,
+          "end": 130.238095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 110,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 130.47619,
+          "end": 130.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 110,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 130.952381,
+      "end": 132.142857,
+      "measure": 111,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 130.952381,
+          "end": 131.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 111,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 131.309524,
+          "end": 131.428571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 111,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 131.666667,
+          "end": 131.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 111,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 132.142857,
+      "end": 133.333333,
+      "measure": 111,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 132.142857,
+          "end": 132.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 111,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 132.5,
+          "end": 132.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 112,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 132.857143,
+          "end": 132.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 112,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 133.333333,
+      "end": 134.52381,
+      "measure": 112,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 133.333333,
+          "end": 133.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 112,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 133.690476,
+          "end": 133.809524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 113,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 134.047619,
+          "end": 134.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 113,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 134.52381,
+      "end": 135.714286,
+      "measure": 114,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 134.52381,
+          "end": 134.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 114,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 134.880952,
+          "end": 135,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 114,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 135.238095,
+          "end": 135.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 114,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 135.714286,
+      "end": 136.904762,
+      "measure": 115,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 135.714286,
+          "end": 135.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 115,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 136.071429,
+          "end": 136.190476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 115,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 136.428571,
+          "end": 136.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 115,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 136.904762,
+      "end": 138.095238,
+      "measure": 116,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 136.904762,
+          "end": 137.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 116,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 137.261905,
+          "end": 137.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 116,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 137.619048,
+          "end": 137.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 116,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 138.095238,
+      "end": 139.285714,
+      "measure": 116,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 138.095238,
+          "end": 138.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 116,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 138.452381,
+          "end": 138.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 117,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 138.809524,
+          "end": 138.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 117,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 139.285714,
+      "end": 140.47619,
+      "measure": 117,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 139.285714,
+          "end": 139.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 117,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 139.642857,
+          "end": 139.761905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 118,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 140,
+          "end": 140.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 118,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 140.47619,
+      "end": 141.666667,
+      "measure": 118,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 140.47619,
+          "end": 140.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 118,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 140.833333,
+          "end": 140.952381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 119,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 141.190476,
+          "end": 141.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 119,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 141.666667,
+      "end": 142.857143,
+      "measure": 120,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 141.666667,
+          "end": 141.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 120,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 142.02381,
+          "end": 142.142857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 120,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 142.380952,
+          "end": 142.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 120,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 142.857143,
+      "end": 144.047619,
+      "measure": 121,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 142.857143,
+          "end": 142.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 121,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 143.214286,
+          "end": 143.333333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 121,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 143.571429,
+          "end": 143.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 121,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 144.047619,
+      "end": 145.238095,
+      "measure": 121,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 144.047619,
+          "end": 144.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 121,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 144.404762,
+          "end": 144.52381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 122,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 144.761905,
+          "end": 144.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 122,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 145.238095,
+      "end": 146.428571,
+      "measure": 122,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 145.238095,
+          "end": 145.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 122,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 145.595238,
+          "end": 145.714286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 123,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 145.952381,
+          "end": 146.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 123,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 146.428571,
+      "end": 147.619048,
+      "measure": 123,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 146.428571,
+          "end": 146.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 123,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 146.785714,
+          "end": 146.904762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 124,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 147.142857,
+          "end": 147.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 124,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 147.619048,
+      "end": 148.809524,
+      "measure": 125,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 147.619048,
+          "end": 147.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 125,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 147.97619,
+          "end": 148.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 125,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 148.333333,
+          "end": 148.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 125,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 148.809524,
+      "end": 150,
+      "measure": 126,
+      "beat": 1,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 148.809524,
+          "end": 148.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 126,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 149.166667,
+          "end": 149.285714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 126,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 149.52381,
+          "end": 149.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 126,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 150,
+      "end": 151.190476,
+      "measure": 127,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 150,
+          "end": 150.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 127,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 150.357143,
+          "end": 150.47619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 127,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 150.714286,
+          "end": 150.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 127,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 151.190476,
+      "end": 152.380952,
+      "measure": 127,
+      "beat": 5,
+      "text": "F",
+      "notes": [
+        {
+          "time": 151.190476,
+          "end": 151.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 127,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 151.547619,
+          "end": 151.666667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 128,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 151.904762,
+          "end": 152.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 128,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 152.380952,
+      "end": 153.571429,
+      "measure": 128,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 152.380952,
+          "end": 152.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 128,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 152.738095,
+          "end": 152.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 129,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 153.095238,
+          "end": 153.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 129,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 153.571429,
+      "end": 154.761905,
+      "measure": 130,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 153.571429,
+          "end": 153.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 130,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 153.928571,
+          "end": 154.047619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 130,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 154.285714,
+          "end": 154.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 130,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 154.761905,
+      "end": 155.952381,
+      "measure": 131,
+      "beat": 1,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 154.761905,
+          "end": 154.880952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 131,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 155.119048,
+          "end": 155.238095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 131,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 155.47619,
+          "end": 155.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 131,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 155.952381,
+      "end": 157.142857,
+      "measure": 132,
+      "beat": 1,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 155.952381,
+          "end": 156.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 132,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 156.309524,
+          "end": 156.428571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 132,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 156.666667,
+          "end": 156.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 132,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 157.142857,
+      "end": 158.333333,
+      "measure": 132,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 157.142857,
+          "end": 157.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 132,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 157.5,
+          "end": 157.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 133,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 157.857143,
+          "end": 157.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 133,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 158.333333,
+      "end": 159.52381,
+      "measure": 133,
+      "beat": 5,
+      "text": "Gm",
+      "notes": [
+        {
+          "time": 158.333333,
+          "end": 158.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 133,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 158.690476,
+          "end": 158.809524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 134,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 159.047619,
+          "end": 159.166667,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 134,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 159.52381,
+      "end": 160.714286,
+      "measure": 135,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 159.52381,
+          "end": 159.642857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 135,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 159.880952,
+          "end": 160,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 135,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 160.238095,
+          "end": 160.357143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 135,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 160.714286,
+      "end": 161.904762,
+      "measure": 136,
+      "beat": 1,
+      "text": "F",
+      "notes": [
+        {
+          "time": 160.714286,
+          "end": 160.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 136,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 161.071429,
+          "end": 161.190476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 136,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 161.428571,
+          "end": 161.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 136,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 161.904762,
+      "end": 163.095238,
+      "measure": 137,
+      "beat": 1,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 161.904762,
+          "end": 162.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 137,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 162.261905,
+          "end": 162.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 137,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 162.619048,
+          "end": 162.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 137,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 163.095238,
+      "end": 164.285714,
+      "measure": 137,
+      "beat": 5,
+      "text": "Csus4",
+      "notes": [
+        {
+          "time": 163.095238,
+          "end": 163.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 137,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 163.452381,
+          "end": 163.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 138,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 163.809524,
+          "end": 163.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 138,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 164.285714,
+      "end": 165.47619,
+      "measure": 138,
+      "beat": 5,
+      "text": "Bbmaj7",
+      "notes": [
+        {
+          "time": 164.285714,
+          "end": 164.404762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 138,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 164.642857,
+          "end": 164.761905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 139,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 165,
+          "end": 165.119048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 139,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "time": 165.47619,
+      "end": 166.666667,
+      "measure": 139,
+      "beat": 5,
+      "text": "Dm",
+      "notes": [
+        {
+          "time": 165.47619,
+          "end": 165.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 139,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 165.833333,
+          "end": 165.952381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 140,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 166.190476,
+          "end": 166.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 140,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    }
+  ],
+  "patterns": [
+    {
+      "text": "1 2 1 2 3 - SON 2 1 2 3",
+      "time": 0,
+      "end": 2.380952,
+      "length": 2.380952,
+      "measure": 1,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 2.380952,
+      "end": 3.571429,
+      "length": 1.190477,
+      "measure": 2,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 2.380952,
+          "end": 2.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 2,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 2.738095,
+          "end": 2.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 2.857143,
+          "end": 2.97619,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 3.095238,
+          "end": 3.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 10.714286,
+      "end": 11.904762,
+      "length": 1.190476,
+      "measure": 10,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 11.904762,
+      "end": 13.095238,
+      "length": 1.190476,
+      "measure": 11,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 11.904762,
+          "end": 12.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 12.261905,
+          "end": 12.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 12.380952,
+          "end": 12.5,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 12.619048,
+          "end": 12.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 20.238095,
+      "end": 21.428571,
+      "length": 1.190476,
+      "measure": 17,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "DÜZ",
+      "time": 21.428571,
+      "end": 22.619048,
+      "length": 1.190477,
+      "measure": 18,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 21.428571,
+          "end": 21.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 18,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 21.904762,
+          "end": 22.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 19,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 22.142857,
+          "end": 22.261905,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 19,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "DÜZ",
+      "time": 30.952381,
+      "end": 32.142857,
+      "length": 1.190476,
+      "measure": 27,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 30.952381,
+          "end": 31.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 31.428571,
+          "end": 31.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 31.666667,
+          "end": 31.785714,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 36.904762,
+      "end": 38.095238,
+      "length": 1.190476,
+      "measure": 32,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 38.095238,
+      "end": 39.285714,
+      "length": 1.190476,
+      "measure": 32,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 38.095238,
+          "end": 38.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 32,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 38.452381,
+          "end": 38.571429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 33,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 38.571429,
+          "end": 38.690476,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 33,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 38.809524,
+          "end": 38.928571,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 33,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 46.428571,
+      "end": 47.619048,
+      "length": 1.190477,
+      "measure": 39,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 47.619048,
+      "end": 48.809524,
+      "length": 1.190476,
+      "measure": 41,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 47.619048,
+          "end": 47.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 41,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 47.97619,
+          "end": 48.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 41,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 48.095238,
+          "end": 48.214286,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 41,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 48.333333,
+          "end": 48.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 41,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 55.952381,
+      "end": 57.142857,
+      "length": 1.190476,
+      "measure": 48,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 57.142857,
+      "end": 58.333333,
+      "length": 1.190476,
+      "measure": 48,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 57.142857,
+          "end": 57.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 57.5,
+          "end": 57.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 49,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 57.619048,
+          "end": 57.738095,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 49,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 57.857143,
+          "end": 57.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 49,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 65.47619,
+      "end": 66.666667,
+      "length": 1.190477,
+      "measure": 55,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 66.666667,
+      "end": 67.857143,
+      "length": 1.190476,
+      "measure": 57,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 66.666667,
+          "end": 66.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 57,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 67.02381,
+          "end": 67.142857,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 57,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 67.142857,
+          "end": 67.261905,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 57,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 67.380952,
+          "end": 67.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 57,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 75,
+      "end": 76.190476,
+      "length": 1.190476,
+      "measure": 64,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "DÜZ",
+      "time": 76.190476,
+      "end": 77.380952,
+      "length": 1.190476,
+      "measure": 64,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 76.190476,
+          "end": 76.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 76.666667,
+          "end": 76.785714,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 65,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 76.904762,
+          "end": 77.02381,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 65,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "DÜZ",
+      "time": 85.714286,
+      "end": 86.904762,
+      "length": 1.190476,
+      "measure": 73,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 85.714286,
+          "end": 85.833333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 73,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 86.190476,
+          "end": 86.309524,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 73,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 86.428571,
+          "end": 86.547619,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 73,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 91.666667,
+      "end": 92.857143,
+      "length": 1.190476,
+      "measure": 78,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 92.857143,
+      "end": 94.047619,
+      "length": 1.190476,
+      "measure": 79,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 92.857143,
+          "end": 92.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 93.214286,
+          "end": 93.333333,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 93.333333,
+          "end": 93.452381,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 93.571429,
+          "end": 93.690476,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 101.190476,
+      "end": 102.380952,
+      "length": 1.190476,
+      "measure": 85,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 102.380952,
+      "end": 103.571429,
+      "length": 1.190477,
+      "measure": 86,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 102.380952,
+          "end": 102.5,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 86,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 102.738095,
+          "end": 102.857143,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 87,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 102.857143,
+          "end": 102.97619,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 87,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 103.095238,
+          "end": 103.214286,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 87,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 110.714286,
+      "end": 111.904762,
+      "length": 1.190476,
+      "measure": 94,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 111.904762,
+      "end": 113.095238,
+      "length": 1.190476,
+      "measure": 95,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 111.904762,
+          "end": 112.02381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 112.261905,
+          "end": 112.380952,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 112.380952,
+          "end": 112.5,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 112.619048,
+          "end": 112.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 95,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 120.238095,
+      "end": 121.428571,
+      "length": 1.190476,
+      "measure": 101,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 121.428571,
+      "end": 122.619048,
+      "length": 1.190477,
+      "measure": 102,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 121.428571,
+          "end": 121.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 121.785714,
+          "end": 121.904762,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 103,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 121.904762,
+          "end": 122.02381,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 103,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 122.142857,
+          "end": 122.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 103,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 129.761905,
+      "end": 130.952381,
+      "length": 1.190476,
+      "measure": 110,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "DÜZ",
+      "time": 130.952381,
+      "end": 132.142857,
+      "length": 1.190476,
+      "measure": 111,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 130.952381,
+          "end": 131.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 111,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 131.428571,
+          "end": 131.547619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 111,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 131.666667,
+          "end": 131.785714,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 111,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "DÜZ",
+      "time": 140.47619,
+      "end": 141.666667,
+      "length": 1.190477,
+      "measure": 118,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 140.47619,
+          "end": 140.595238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 118,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 140.952381,
+          "end": 141.071429,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 119,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 141.190476,
+          "end": 141.309524,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 119,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 146.428571,
+      "end": 147.619048,
+      "length": 1.190477,
+      "measure": 123,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 147.619048,
+      "end": 148.809524,
+      "length": 1.190476,
+      "measure": 125,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 147.619048,
+          "end": 147.738095,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 125,
+          "beat": 1,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 147.97619,
+          "end": 148.095238,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 125,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 148.095238,
+          "end": 148.214286,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 125,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 148.333333,
+          "end": 148.452381,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 125,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 155.952381,
+      "end": 157.142857,
+      "length": 1.190476,
+      "measure": 132,
+      "beat": 1,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "FAST",
+      "time": 157.142857,
+      "end": 158.333333,
+      "length": 1.190476,
+      "measure": 132,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 157.142857,
+          "end": 157.261905,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 132,
+          "beat": 5,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 157.5,
+          "end": 157.619048,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 133,
+          "beat": 2,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 157.619048,
+          "end": 157.738095,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 133,
+          "beat": 3,
+          "numerator": 5,
+          "denominator": 8
+        },
+        {
+          "time": 157.857143,
+          "end": 157.97619,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 133,
+          "beat": 4,
+          "numerator": 5,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 163.095238,
+      "end": 164.285714,
+      "length": 1.190476,
+      "measure": 137,
+      "beat": 5,
+      "numerator": 5,
+      "denominator": 8,
+      "notes": []
+    }
+  ],
+  "assets": [
+    {
+      "id": "master",
+      "kind": "audio",
+      "path": "Master.mp3",
+      "hash": "sha256:pending",
+      "label": "Master"
+    },
+    {
+      "id": "click",
+      "kind": "audio",
+      "path": "Click.flac",
+      "hash": "sha256:pending",
+      "audioRole": "click",
+      "bus": "CUE",
+      "label": "Click"
+    },
+    {
+      "id": "kick",
+      "kind": "audio",
+      "path": "Kick.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Kick"
+    },
+    {
+      "id": "drums",
+      "kind": "audio",
+      "path": "Drums.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Drums"
+    },
+    {
+      "id": "perc",
+      "kind": "audio",
+      "path": "Perc.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Perc"
+    },
+    {
+      "id": "bass",
+      "kind": "audio",
+      "path": "Bass.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Bass"
+    },
+    {
+      "id": "keys",
+      "kind": "audio",
+      "path": "Keys.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Keys"
+    },
+    {
+      "id": "pluck",
+      "kind": "audio",
+      "path": "Pluck.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Pluck"
+    },
+    {
+      "id": "string",
+      "kind": "audio",
+      "path": "String.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "String"
+    },
+    {
+      "id": "melody",
+      "kind": "audio",
+      "path": "Melody.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Melody"
+    },
+    {
+      "id": "choir",
+      "kind": "audio",
+      "path": "Choir.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Choir"
+    },
+    {
+      "id": "guitar",
+      "kind": "audio",
+      "path": "Guitar.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Guitar"
+    }
+  ],
+  "info": {
+    "bpm": 126,
+    "numerator": 5,
+    "denominator": 8,
+    "duration": 169.611503,
+    "key": "D",
+    "scale": "KURDI",
+    "style": "TURKCU",
+    "kita": 3,
+    "playMode": "PLAYBACK"
+  }
+}

@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 3293,
-    "hash": "1d358e621d4771b9e5db35a5685222d19a3e5dd7d381a05806a8bfa28229f79d"
+    "size": 3593,
+    "hash": "3e07c350e4acdd36d60000407e59b9c1a276723658102658d0d8828a5aeba5be"
   },
   "songs": [
     {
@@ -81,9 +81,9 @@
       ]
     },
     {
-      "id": "Bizim Türkümüz",
-      "folder": "bizim_turkumuz",
-      "title": "Bizim Türkümüz",
+      "id": "bizim_tu_rku_mu_z",
+      "folder": "bizim_tu_rku_mu_z",
+      "title": "Bizim Türkümüz",
       "files": [
         {
           "path": "Master.mp3",
@@ -96,9 +96,14 @@
           "hash": "d5528c197e582fff5c2e8ff4b9065fce4db0b2e7a8abd2c5c22d74b0968dbc1b"
         },
         {
+          "path": "settings.json",
+          "size": 12390,
+          "hash": "3af800645750f85ebf9aec0106a555b1decf909a7076c7a296e8b56a8fdf81a8"
+        },
+        {
           "path": "song.json",
-          "size": 297,
-          "hash": "826c29bcb32b91e91b32776daa85f0ba8265351539a82e8cf6306b070b737e37"
+          "size": 156055,
+          "hash": "97f1795c7bd4f4f329b81b147d0cfe7b762a24a5ed82a6a69b75b9b8fab29519"
         }
       ]
     },
@@ -109,8 +114,8 @@
       "files": [
         {
           "path": "Master.mp3",
-          "size": 3099584,
-          "hash": "3093932c1048f11cce64e4523a2c15e4844e85daccbe89ba11fc8e1b96a169d2"
+          "size": 3133021,
+          "hash": "4081e799581559564884ec18a6194509831e33dd3562bf0d6e941ec8b45e8ee2"
         },
         {
           "path": "Nota.pdf",
@@ -124,8 +129,8 @@
         },
         {
           "path": "song.json",
-          "size": 118449,
-          "hash": "29e70eb081d2107b019530b93fd0a31013bebdbabdf6e00acb8689ee2610d9ad"
+          "size": 118823,
+          "hash": "48cbb7ccc16df47b427ba6527f85045383c29bb81ce56b11ef3a38d9ba574eee"
         }
       ]
     },
@@ -276,6 +281,33 @@
           "path": "song.json",
           "size": 132481,
           "hash": "4f321f56f75ff82ceedd86133c9337e78de8888015bc69ea3adbb5c42d0deb45"
+        }
+      ]
+    },
+    {
+      "id": "tu_rk_k_z",
+      "folder": "tu_rk_k_z",
+      "title": "Türk Kızı",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3072834,
+          "hash": "3aae0a67620caa75b1c41ba35b6199db226b9af9a83125c947ebee214bea6c05"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 27759,
+          "hash": "4815b7dd23ab9066c05d8690bfaf0e0ae0056651d46fc648701d0b70ba0dcfcf"
+        },
+        {
+          "path": "settings.json",
+          "size": 9987,
+          "hash": "e4191cf27434b3133f9c311db0d80ea04834a94fcf278b664865e7926d6d1962"
+        },
+        {
+          "path": "song.json",
+          "size": 89988,
+          "hash": "e8bb1b51efa7855a2171abe8eac40355e038631214811a7491f3ea3a4bbdfeb7"
         }
       ]
     },
