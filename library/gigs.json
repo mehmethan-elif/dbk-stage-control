@@ -70,6 +70,16 @@
           "type": "song",
           "entryId": "entry_1fda07b3-181b-4c18-83a7-66559a2b98fa",
           "songId": "bizim_tu_rku_mu_z"
+        },
+        {
+          "type": "talk",
+          "entryId": "entry_130ea669-734f-4dcb-b993-837f579b2585",
+          "label": "STOP"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_9864d83d-e8be-4c6c-9bff-33524b0b912d",
+          "songId": "go_nu_l_dag"
         }
       ],
       "busMix": {

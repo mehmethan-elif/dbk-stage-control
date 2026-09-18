@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 3593,
-    "hash": "3e07c350e4acdd36d60000407e59b9c1a276723658102658d0d8828a5aeba5be"
+    "size": 3881,
+    "hash": "44e4b80d81dbf7ca3cb44f79d77835b0f439f70d9fd86b2e393ae784358b261b"
   },
   "songs": [
     {
@@ -131,6 +131,33 @@
           "path": "song.json",
           "size": 118823,
           "hash": "48cbb7ccc16df47b427ba6527f85045383c29bb81ce56b11ef3a38d9ba574eee"
+        }
+      ]
+    },
+    {
+      "id": "go_nu_l_dag",
+      "folder": "go_nu_l_dag",
+      "title": "Gönül Dağı",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3163532,
+          "hash": "b4447fd8c9b8eceeb6316b0f412f10b2213a8678ffe7b2a93fd186b3de7e1de4"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 43508,
+          "hash": "9c0d6eb9a77e0a1fad69af2664b7daafc87caa32b11c01331a529f3c9f60f5be"
+        },
+        {
+          "path": "settings.json",
+          "size": 14428,
+          "hash": "db8556ff42534c856637009328538d773aec6b98b005dd6f72d1d301d413f2d2"
+        },
+        {
+          "path": "song.json",
+          "size": 159482,
+          "hash": "4482bbf0a44b02eb5da72f51441ba5e76874cd266c51021e7389dca75cfeeaf5"
         }
       ]
     },
