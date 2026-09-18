@@ -86,6 +86,21 @@ export function ClientApp() {
     }
   }, [stageRole, stageLive, masterPage, setMasterPage]);
 
+  useEffect(() => {
+    if (!practice) return;
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void useMasterStore.getState().refreshPracticeCharts();
+    };
+    refresh();
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("pageshow", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("pageshow", refresh);
+    };
+  }, [practice]);
+
   if (!ready) {
     return <LibraryLoading status={libraryStatus ?? practiceBusy} />;
   }

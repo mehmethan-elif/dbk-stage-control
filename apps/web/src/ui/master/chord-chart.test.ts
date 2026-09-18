@@ -320,6 +320,22 @@ describe("chordChart", () => {
       expect(built.rall?.measure).toBe(9);
       expect(built.rall?.shown.blockId).toBe(built.rows[1]?.heads[0]?.block.id);
     });
+
+    it("points FINAL at the written bar of the FINAL marker", () => {
+      const target = song(
+        [
+          { name: "SAN 2", start: 0, end: 8 },
+          { name: "CEV 2", start: 8, end: 12 }
+        ],
+        run(1, ["Dm", "G", "C", "Am"]).concat(run(5, ["Bb", "A"]))
+      );
+      const marked = { ...target, finalAt: 8 };
+      const built = chart(marked);
+      const cev = built.rows.find((row) => row.heads[0]?.section.name === "CEV 2");
+      expect(built.final?.measure).toBe(5);
+      expect(built.final?.shown.blockId).toBe(cev?.heads[0]?.block.id);
+      expect(built.final?.shown.measure).toBe(5);
+    });
   });
 
   describe("sections that play bars already on the page", () => {
@@ -397,6 +413,29 @@ describe("chordChart", () => {
       expect(rows[0]?.spans[0]?.closes).toBe(3);
     });
 
+    it("puts a form repeat of CEV into NAK on those bars", () => {
+      const other = song(
+        [
+          { name: "CEV", start: 0, end: 8 },
+          { name: "NAK", start: 8, end: 16 },
+          { name: "CEV", start: 16, end: 24 },
+          { name: "NAK", start: 24, end: 32 }
+        ],
+        run(1, ["Am", "Bm", "C", "D"])
+          .concat(run(5, ["Em", "F", "G", "A"]))
+          .concat(run(9, ["Am", "Bm", "C", "D"]))
+          .concat(run(13, ["Em", "F", "G", "A"]))
+      );
+      const rows = chart(other).rows;
+      expect(rows.map((row) => row.heads[0]?.section.name)).toEqual(["CEV", "NAK"]);
+      expect(rows[0]?.heads[0]?.block.repeatStart).toBe(true);
+      expect(rows[1]?.heads[0]?.block.repeatEnd).toBe(true);
+      expect(rows[0]?.spans[0]?.opens).toBe(true);
+      expect(rows[0]?.spans.at(-1)?.closes).toBeUndefined();
+      expect(rows[1]?.spans[0]?.opens).toBeUndefined();
+      expect(rows[1]?.spans.at(-1)?.closes).toBe(2);
+    });
+
     it("puts a repeat sign round the bars a stack of names is read from", () => {
       const rows = chart(target).rows;
       // The repeat opens at the top of the run and closes at the foot of it, so the band plays
@@ -451,6 +490,24 @@ describe("chordChart", () => {
       // Both passes light the one name on the page.
       const name = built.rows[0]?.heads[0]?.block.id;
       expect(chordPlayhead(built, form, 10, other.tempoMap)?.playing).toBe(name);
+    });
+
+    it("keeps D.S. when two same-print NAKs join into one row", () => {
+      const other = song(
+        [
+          { name: "NAK", start: 0, end: 8 },
+          { name: "NAK", start: 8, end: 16 }
+        ],
+        run(1, ["Bm", "Em", "D", "A"]).concat(run(5, ["Bm", "Em", "D", "A"]))
+      );
+      const form = spelledOut(other);
+      const marked = {
+        ...form,
+        blocks: form.blocks.map((block, index) => (index === 1 ? { ...block, ds: true } : block))
+      };
+      const rows = chordChart(other, marked).rows;
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.heads[0]?.block.ds).toBe(true);
     });
 
     it("keeps D.S. on a SAN D that ends two ways", () => {
@@ -655,6 +712,40 @@ describe("chordPlayhead", () => {
   it("is nothing before the song and nothing after it", () => {
     expect(head(-1)).toBeNull();
     expect(head(60)).toBeNull();
+  });
+
+  it("lights FINAL when the last pass of NAK is shorter than the written bars", () => {
+    // Yolcu: NAK is written with a last bar the final pass never plays. That leftover bar
+    // must not hide FINAL — FINAL is the next measure the band has to look at.
+    const yolcu = song(
+      [
+        { name: "NAK", start: 0, end: 16 },
+        { name: "NAK", start: 16, end: 28 },
+        { name: "FINAL", start: 28, end: 32 }
+      ],
+      run(1, ["Bm", "Bm", "D", "Bm", "Bm", "D", "Em", "D"]).concat(
+        run(9, ["Bm", "Bm", "D", "Bm", "Bm", "D"]).concat(run(15, ["Em", "D"]))
+      )
+    );
+    const yolcuForm = songForm(yolcu, { identity: "chords" });
+    const yolcuChart = chordChart(yolcu, yolcuForm);
+    const at = (time: number) => chordPlayhead(yolcuChart, yolcuForm, time, yolcu.tempoMap);
+    const final = yolcuChart.rows.find((row) => row.heads[0]?.section.name === "FINAL");
+    expect(at(26)?.next).toMatchObject({
+      blockId: final?.heads[0]?.block.id,
+      measure: 15
+    });
+    expect(at(26)?.nextPlaying).toBe(final?.heads[0]?.block.id);
+  });
+
+  it("lights the next bar of FINAL, the last section", () => {
+    const last = song([{ name: "FINAL", start: 0, end: 6 }], run(1, ["Em", "D", "Am"]));
+    const lastForm = songForm(last, { identity: "chords" });
+    const lastChart = chordChart(last, lastForm);
+    expect(chordPlayhead(lastChart, lastForm, 0, last.tempoMap)).toMatchObject({
+      measure: 1,
+      next: { measure: 2 }
+    });
   });
 
   it("lights a 1. or 2. ending when that bar is next", () => {

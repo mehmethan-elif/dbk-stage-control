@@ -56,10 +56,10 @@ import { SongTitleMeta } from "./stage-title-meta";
 import { scrollStageToFollowedRows, stageLeadInNode } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
-import { ChordRepeatMark, FormSectionBar } from "./form-marks";
-import { isCountSection } from "./count-section";
+import { FormSectionBar } from "./form-marks";
+import { hidesCountSection, isCountSection } from "./count-section";
 import { sectionBarClass } from "./section-color";
-import { firstTempoChangeMeasure, rallDrumTone, runShowsRallBar } from "./rall-alert";
+import { paintSongCueBars, SongCueBars } from "./song-cue-bar";
 
 const TIME_EPS = 0.02;
 const STEPS_PER_BEAT = 4;
@@ -113,33 +113,6 @@ function measureCount(map: TempoPoint[], start: number, end: number): number {
   return Math.max(0, last - first + 1);
 }
 
-function isLastNamedChartRow(
-  chart: readonly { section: Section }[],
-  row: { section: Section }
-): boolean {
-  // Hand-rolled rather than findLast, which needs a newer Safari than some tablets run.
-  for (let i = chart.length - 1; i >= 0; i -= 1) {
-    const item = chart[i];
-    if (item?.section.name === row.section.name) return item === row;
-  }
-  return false;
-}
-
-function sectionFollowsPlayhead(
-  song: Song | undefined,
-  section: Section,
-  time: number,
-  follow: boolean
-): boolean {
-  if (!follow || !song) return false;
-  return song.sections.some(
-    (item) =>
-      item.name === section.name &&
-      time >= item.start &&
-      time < item.end - TIME_EPS
-  );
-}
-
 function measureEndAt(map: TempoPoint[], time: number): number {
   const point = tempoAt(map, time);
   const measure = timeToMusical(map, time).measure;
@@ -191,6 +164,10 @@ export function buildHits(pattern: PatternEvent, map: TempoPoint[]): {
   return { hits, cycle, steps, barSteps, written };
 }
 
+function isFillText(pattern: PatternEvent): boolean {
+  return pattern.text.trim().toLocaleUpperCase("tr-TR") === "FILL";
+}
+
 function textCueBefore(
   texts: PatternEvent[],
   nextTime: number,
@@ -203,6 +180,35 @@ function textCueBefore(
   const cue = last[last.length - 1];
   if (!cue) return null;
   return { text: cue.text.trim(), start: cue.time, end: Math.min(cue.end, nextTime) };
+}
+
+function runCue(
+  texts: PatternEvent[],
+  start: number,
+  spanEnd: number,
+  map: TempoPoint[]
+): TextCue | null {
+  const fills = texts.filter(
+    (item) => isFillText(item) && item.time >= start - TIME_EPS && item.time < spanEnd - TIME_EPS
+  );
+  const fill = fills[fills.length - 1];
+  if (fill) return { text: fill.text.trim(), start: fill.time, end: Math.min(fill.end, spanEnd) };
+  return textCueBefore(texts, spanEnd, map);
+}
+
+/** FILL is text-only and can move on a later visit; read it from the visit, not the written bar. */
+export function visitFillCue(
+  song: Song | undefined,
+  visit: { start: number; end: number } | null | undefined
+): TextCue | null {
+  if (!song || !visit) return null;
+  const fills = (song.patterns ?? []).filter((pattern) => {
+    if (hasNotes(pattern) || !isFillText(pattern)) return false;
+    return pattern.time >= visit.start - TIME_EPS && pattern.time < visit.end - TIME_EPS;
+  });
+  const fill = fills[fills.length - 1];
+  if (!fill) return null;
+  return { text: fill.text.trim(), start: fill.time, end: Math.min(fill.end, visit.end) };
 }
 
 function cueLeadIn(map: TempoPoint[], start: number): number {
@@ -290,7 +296,7 @@ function sectionChart(song: Song | undefined): SectionChart[] {
       if (pattern.time >= section.end - TIME_EPS) break;
       const next = midi.find((item) => item.time >= pattern.end - TIME_EPS);
       const spanEnd = Math.min(next?.time ?? song.duration, section.end);
-      runs.push(patternRun(pattern, spanEnd, song.tempoMap, textCueBefore(texts, spanEnd, song.tempoMap)));
+      runs.push(patternRun(pattern, spanEnd, song.tempoMap, runCue(texts, pattern.time, spanEnd, song.tempoMap)));
     }
     if (runs.length === 0) {
       for (const pattern of texts) {
@@ -413,12 +419,15 @@ function paintDrumLive(
         ?.runs.find((run) => pos.originTime >= run.start && pos.originTime < run.end)
     : undefined;
   const actualMeasureEnd = pos ? measureEndAt(map, time) : 0;
+  const visitOriginEnd = pos
+    ? pos.block.originStart + Math.max(TIME_EPS, pos.visit.end - pos.visit.start)
+    : 0;
+  const originMeasureEnd = pos ? measureEndAt(map, pos.originTime) : 0;
   const afterOriginTime =
-    pos && actualMeasureEnd >= pos.visit.end - TIME_EPS
+    pos &&
+    (actualMeasureEnd >= pos.visit.end - TIME_EPS || originMeasureEnd >= visitOriginEnd - TIME_EPS)
       ? pos.block.originEnd
-      : pos
-        ? measureEndAt(map, pos.originTime)
-        : 0;
+      : originMeasureEnd;
   const nextPos = chainNext ? null : pos ? formNextAt(form, time, afterOriginTime) : null;
   const nextRun = nextDrumPatternRun(chart, pos, nextPos);
   const visitIndex = pos ? form.visits.indexOf(pos.visit) : -1;
@@ -464,18 +473,9 @@ function paintDrumLive(
         currentRun !== run && nextRun === run && nextPos?.block.id === row.block.id
       );
       const runLive = live && pos?.block.id === row.block.id;
-      const sectionCurrent = sectionFollowsPlayhead(song, row.section, time, live || preview);
-      const rall = el.querySelector<HTMLElement>("[data-drum-rall]");
-      if (rall && !rall.classList.contains("drum-rall-gap")) {
-        const tone = rallDrumTone(
-          sectionCurrent ? timeToMusical(map, time).measure : undefined,
-          firstTempoChangeMeasure(map),
-          sectionCurrent
-        );
-        rall.className = `drum-rall-bar ${tone}`;
-        rall.dataset.drumRall = tone;
-      }
-      const phase = run.cue ? cuePhase(run.cue, writtenTime, map, runLive) : "hidden";
+      const visitCue = visitFillCue(song, visit);
+      const liveCue = visitCue ?? run.cue;
+      const phase = liveCue ? cuePhase(liveCue, visitCue ? time : writtenTime, map, runLive) : "hidden";
       const cueLive = phase === "live";
       el.classList.toggle("cue-live", cueLive);
       const cue = el.querySelector<HTMLElement>(".drum-run-cue");
@@ -492,6 +492,7 @@ function paintDrumLive(
       }
     }
   }
+  paintSongCueBars(root, song, time, live || preview, "drum");
 }
 
 export function DrumView() {
@@ -794,7 +795,7 @@ export const DrumChartBody = memo(function DrumChartBody(props: {
     () => (hasPatternData(props.song) ? writtenChart(props.song, form) : []),
     [props.song, form]
   );
-  const packs = useMemo(() => packSections(chart, props.song) as WrittenRow[][], [chart, props.song]);
+  const packs = useMemo(() => packSections(chart.filter((row) => !hidesCountSection(props.song, row.section)), props.song) as WrittenRow[][], [chart, props.song]);
   const map = props.song?.tempoMap ?? [];
   const rootRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef(chart);
@@ -890,42 +891,13 @@ export const DrumChartBody = memo(function DrumChartBody(props: {
                       data-drum-section={row.block.id}
                       className="drum-section-runs"
                     >
-                      {row.runs.map((run, runIndex) => {
-                        const showRall = Boolean(
-                          props.song &&
-                            runShowsRallBar(
-                              run,
-                              row,
-                              props.song,
-                              runIndex === row.runs.length - 1,
-                              isLastNamedChartRow(chart, row)
-                            )
-                        );
-                        const cols = pair ? 1 : 2;
-                        const rallAlign =
-                          !showRall &&
-                          row.runs.some(
-                            (other, otherIndex) =>
-                              props.song &&
-                              Math.floor(otherIndex / cols) === Math.floor(runIndex / cols) &&
-                              runShowsRallBar(
-                                other,
-                                row,
-                                props.song,
-                                otherIndex === row.runs.length - 1,
-                                isLastNamedChartRow(chart, row)
-                              )
-                          );
-                        return (
+                      {row.runs.map((run) => (
                           <DrumRunView
                             key={`${run.name}-${run.start}`}
                             run={run}
                             blockId={row.block.id}
-                            showRall={showRall}
-                            rallAlign={rallAlign}
                           />
-                        );
-                      })}
+                        ))}
                     </div>
                   )
                 )}
@@ -934,6 +906,12 @@ export const DrumChartBody = memo(function DrumChartBody(props: {
           </div>
         );
       })}
+      <SongCueBars
+        song={props.song}
+        time={0}
+        active={false}
+        attrPrefix="drum"
+      />
     </div>
   );
 });
@@ -951,12 +929,9 @@ function DrumSectionTitle(props: {
   return (
     <div
       data-drum-section={props.block.id}
-      className={`lyrics-section drum-section-name playhead-green${sectionBarClass(props.row.section.name)}${
-        props.block.repeatStart ? " repeat-start" : ""
-      }${props.block.repeatEnd ? " repeat-end" : ""}`}
+      className={`lyrics-section drum-section-name playhead-green${sectionBarClass(props.row.section.name)}`}
     >
       <span className="lyrics-playhead" aria-hidden="true" />
-      {props.block.repeatStart ? <ChordRepeatMark side="start" /> : null}
       <div className="lyrics-cue-body drum-section-bar">
         <FormSectionBar
           block={props.block}
@@ -965,7 +940,6 @@ function DrumSectionTitle(props: {
           extraClass={isCount ? "drum-count-label" : undefined}
         />
       </div>
-      {props.block.repeatEnd ? <ChordRepeatMark side="end" /> : null}
     </div>
   );
 }
@@ -973,8 +947,6 @@ function DrumSectionTitle(props: {
 function DrumRunView(props: {
   run: PatternRun;
   blockId: string;
-  showRall: boolean;
-  rallAlign?: boolean;
 }) {
   const barSteps = Math.max(STEPS_PER_BEAT, props.run.barSteps);
   return (
@@ -990,13 +962,6 @@ function DrumRunView(props: {
         } as CSSProperties
       }
     >
-      {props.showRall ? (
-        <div className="drum-rall-bar idle" data-drum-rall="idle" aria-label="RALL">
-          RALL
-        </div>
-      ) : props.rallAlign ? (
-        <div className="drum-rall-bar drum-rall-gap" aria-hidden="true" />
-      ) : null}
       <div className="drum-run-grid">
         <div className="drum-measure-name">
           <span className="drum-pattern-name">{props.run.name}</span>

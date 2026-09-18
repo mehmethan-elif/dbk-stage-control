@@ -44,6 +44,7 @@ export const SECTION_TONE = {
   count: { r: 230 / 255, g: 193 / 255, b: 74 / 255 },
   serbest: { r: 139 / 255, g: 92 / 255, b: 246 / 255 },
   song: { r: 61 / 255, g: 186 / 255, b: 122 / 255 },
+  rall: { r: 232 / 255, g: 193 / 255, b: 42 / 255 },
   final: { r: 226 / 255, g: 74 / 255, b: 74 / 255 },
   def: { r: 47 / 255, g: 111 / 255, b: 237 / 255 }
 } as const;
@@ -99,6 +100,7 @@ export function sectionTone(name: string): (typeof SECTION_TONE)[keyof typeof SE
   if (isNamed(name, "COUNT")) return SECTION_TONE.count;
   if (isNamed(name, "SERBEST")) return SECTION_TONE.serbest;
   if (isNamed(name, "SAN") || isNamed(name, "NAK")) return SECTION_TONE.song;
-  if (isNamed(name, "FINAL") || isNamed(name, "RALL")) return SECTION_TONE.final;
+  if (isNamed(name, "RALL")) return SECTION_TONE.rall;
+  if (isNamed(name, "FINAL")) return SECTION_TONE.final;
   return SECTION_TONE.def;
 }

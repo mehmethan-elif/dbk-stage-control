@@ -4,6 +4,7 @@
   "title": "Biz",
   "duration": 180.909091,
   "nextSongAt": 178.181818,
+  "finalAt": 174.545455,
   "key": "D",
   "scale": "MINOR",
   "style": "BESTE",
@@ -42,7 +43,7 @@
       "end": 58.181818
     },
     {
-      "name": "CEV",
+      "name": "CEV 1",
       "start": 58.181818,
       "end": 61.818182
     },
@@ -52,7 +53,7 @@
       "end": 87.272727
     },
     {
-      "name": "CEV+ FINAL",
+      "name": "CEV 2",
       "start": 87.272727,
       "end": 90.909091
     },
@@ -72,7 +73,7 @@
       "end": 145.454545
     },
     {
-      "name": "CEV",
+      "name": "CEV 1",
       "start": 145.454545,
       "end": 149.090909
     },
@@ -82,7 +83,7 @@
       "end": 174.545455
     },
     {
-      "name": "CEV+ FINAL",
+      "name": "CEV 2",
       "start": 174.545455,
       "end": 178.181818
     }

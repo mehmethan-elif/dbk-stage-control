@@ -124,8 +124,8 @@ describe("songForm", () => {
     ]);
     expect(form.blocks.find((block) => block.name === "ARA")?.segno).toBe(true);
     expect(form.blocks.find((block) => block.name === "SAN D")?.ds).toBe(true);
-    expect(form.blocks.find((block) => block.name === "SAN D")?.toCoda).toBe(true);
-    expect(form.blocks.find((block) => block.name === "FINAL")?.coda).toBe(true);
+    expect(form.blocks.find((block) => block.name === "SAN D")?.toCoda).toBe(false);
+    expect(form.blocks.find((block) => block.name === "FINAL")?.coda).toBe(false);
   });
 
   it("keeps a second-cycle ARA on the first when a hit sits on the bar line", () => {
@@ -654,6 +654,51 @@ describe("songForm", () => {
     );
     expect(form.blocks.map((block) => block.name)).toEqual(["ARA", "SAN", "NAK", "ARA", "SAN", "NAK"]);
     expect(form.blocks.some((block) => block.segno || block.ds)).toBe(false);
+  });
+
+  it("does not write a coda when a later NAK only moves the FILL", () => {
+    const hit = (time: number) => ({
+      time,
+      end: time + 0.1,
+      pitch: 48,
+      channel: 0,
+      velocity: 96,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4
+    });
+    const pattern = (text: string, time: number, end: number, notes: ReturnType<typeof hit>[]) => ({
+      text,
+      time,
+      end,
+      length: end - time,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "ARA", start: 0, end: 4 },
+          { name: "NAK", start: 4, end: 22 },
+          { name: "ARA", start: 22, end: 26 },
+          { name: "NAK", start: 26, end: 44.5 }
+        ]),
+        patterns: [
+          pattern("TUS", 0, 2, [hit(0)]),
+          pattern("ROCK", 4, 6, [hit(4)]),
+          pattern("FILL", 20, 22, []),
+          pattern("TUS", 22, 24, [hit(22)]),
+          pattern("ROCK", 26, 28, [hit(26)]),
+          pattern("FILL", 36, 38, [])
+        ]
+      },
+      { identity: "drums" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual(["ARA", "NAK"]);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
   });
 
   it("marks the first return as senyo, not every repeated section", () => {

@@ -1,3 +1,4 @@
+import { DirectPassMark } from "./DirectPassMark";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import {
   canInsertElifAfter,
@@ -364,6 +365,7 @@ export function PrepSongList(props: {
               }${frozen ? " is-frozen" : ""}`}
               onPointerDown={(event) => onPointerDown(entry.entryId, event)}
             >
+              {songNumber > 1 ? <DirectPassMark song={song} setlist /> : null}
               <SongItem
                 added
                 order={songNumber}

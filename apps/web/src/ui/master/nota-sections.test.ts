@@ -1110,6 +1110,12 @@ describe("preferNotaLayout", () => {
     expect(preferNotaLayout(cached, { rects: [measure], brokenChains: [] })).toBe(cached);
   });
 
+  it("uses disk when the same boxes have only moved", () => {
+    const cached = { rects: [{ ...measure, x: 0.4 }], brokenChains: [] };
+    const disk = { rects: [measure], brokenChains: [] };
+    expect(preferNotaLayout(cached, disk, { keepEdits: false })).toBe(disk);
+  });
+
   it("uses disk when the session cache is leftover crumbs", () => {
     const disk = {
       rects: [measure, { ...measure, id: "m2", measure: 2 }, { ...measure, id: "m3", measure: 3 }],

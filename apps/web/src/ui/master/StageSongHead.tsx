@@ -1,3 +1,4 @@
+import { DirectPassMark } from "./DirectPassMark";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { parseSongInfo, withKeyChangeElifs } from "@dbk/core";
 import {
@@ -100,7 +101,7 @@ export function StageSongHead(props: {
   const openSong = (event: MouseEvent<HTMLButtonElement>) => {
     const title = event.currentTarget.closest(".lyrics-song-title");
     if (title instanceof HTMLElement) {
-      scrollStageToNode(title.closest(".lyrics-stage"), title);
+      scrollStageToNode(title.closest(".lyrics-stage"), title.parentElement?.querySelector<HTMLElement>(".direct-pass-mark") ?? title);
     }
     if (!props.entryId || frozen) return;
     void selectSetlistEntry(props.entryId);
@@ -108,6 +109,7 @@ export function StageSongHead(props: {
 
   return (
     <div className="lyrics-song-head">
+      <DirectPassMark song={song} />
       <h3 className="lyrics-song-title">
         {showTransport ? (
           <span className="lyrics-song-click">

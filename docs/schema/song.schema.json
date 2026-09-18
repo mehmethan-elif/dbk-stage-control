@@ -11,6 +11,7 @@
     "duration": { "type": "number" },
     "clickDuration": { "type": "number" },
     "nextSongAt": { "type": "number", "minimum": 0 },
+    "finalAt": { "type": "number", "minimum": 0 },
     "key": { "type": "string" },
     "scale": { "type": "string" },
     "style": { "type": "string" },

@@ -1,5 +1,5 @@
 -- @description DBK Stage Control Export
--- @version 0.3.12
+-- @version 0.3.13
 -- @about
 --   Collects duration, tempo map, sections, lyrics, chords, and selected stems
 --   from the current REAPER project and writes song.json plus audio for DBK.
@@ -12,6 +12,7 @@
 --       selected; they are mixed through that folder and the master bus.
 --     NOTA     muted for Master.mp3 (guide / score audio; not part of the mix)
 --     NEXT     project marker → nextSongAt (when PLAY_NEXT starts the following song)
+--     FINAL    project marker → finalAt (time of the FINAL measure, when present)
 --     MASTER   always available → Master.mp3 (full mix, 128 kbps CBR; NOTA muted)
 --     CLICK    if present → Click.flac through master bus (44.1 kHz 16-bit)
 --     KICK, DRUMS, ... → one Kick.flac, Drums.flac, ... through master bus
@@ -896,6 +897,11 @@ local function is_end_marker_name(name)
   return n == "END" or n == "=END" or n == "PROJECT END" or n == "PROJEND" or n == "SONG END" or n == "FIN"
 end
 
+local function is_cue_marker_name(name)
+  local n = fold_track_name(name)
+  return n == "NEXT" or n == "FINAL"
+end
+
 local function last_media_item_end()
   local max_end = 0
   for t = 0, reaper.CountTracks(0) - 1 do
@@ -994,7 +1000,7 @@ local function project_duration()
         named_end = mark.pos
       end
     end
-    if fold_track_name(mark.name) ~= "NEXT" then
+    if not is_cue_marker_name(mark.name) then
       if not last_marker or mark.pos > last_marker then
         last_marker = mark.pos
       end
@@ -1029,13 +1035,14 @@ local function track_named_exact(name, keyword)
   return trim(name or "") == keyword
 end
 
-local function collect_next_marker()
+local function collect_named_marker(keyword)
   local found
+  local want = fold_track_name(keyword)
   each_project_marker(function(mark)
     if mark.is_region or type(mark.pos) ~= "number" then
       return
     end
-    if fold_track_name(mark.name) == "NEXT" then
+    if fold_track_name(mark.name) == want then
       if not found or mark.pos < found then
         found = mark.pos
       end
@@ -1045,6 +1052,14 @@ local function collect_next_marker()
     return round(found, 6)
   end
   return nil
+end
+
+local function collect_next_marker()
+  return collect_named_marker("NEXT")
+end
+
+local function collect_final_marker()
+  return collect_named_marker("FINAL")
 end
 
 local function item_text(item)
@@ -1346,6 +1361,7 @@ local function collect_project()
     duration = duration,
     tempoMap = collect_tempo_map(),
     nextSongAt = collect_next_marker(),
+    finalAt = collect_final_marker(),
     sections = sections,
     lyrics = lyrics_items,
     chords = chords_items,
@@ -1807,6 +1823,9 @@ local function build_song_json(data, master_path, click_path, stem_files, opts)
   if include.NEXT ~= false and data.nextSongAt then
     parts[#parts + 1] = '  "nextSongAt": ' .. json_num(data.nextSongAt) .. ","
   end
+  if include.FINAL ~= false and data.finalAt then
+    parts[#parts + 1] = '  "finalAt": ' .. json_num(data.finalAt) .. ","
+  end
   if include.KEY ~= false and key_str ~= "" then
     parts[#parts + 1] = '  "key": ' .. json_str(key_str) .. ","
   end
@@ -2135,7 +2154,8 @@ local function include_map(data)
     LYRICS = true,
     CHORDS = true,
     PATTERN = true,
-    NEXT = true
+    NEXT = true,
+    FINAL = true
   }
   for _, stem in ipairs(data.stems or {}) do
     m[stem.key] = wants_include(stem.key, stem.found)
@@ -2370,6 +2390,15 @@ local function draw()
   set_font(16)
   local next_msg = next_found and format_duration(state.data.nextSongAt) or "Marker not found"
   text_at(x + 14, y + 28, next_msg, next_color, x + half - 12, y + row_h - 6)
+  local final_found = state.data.finalAt ~= nil
+  fill_rect(x + half + gap, y, half, row_h, COL.panel)
+  local final_color = final_found and COL.ok or COL.err
+  fill_rect(x + half + gap, y, 4, row_h, final_color)
+  set_font(13)
+  text_at(x + half + gap + 14, y + 8, "FINAL", COL.muted)
+  set_font(16)
+  local final_msg = final_found and format_duration(state.data.finalAt) or "Marker not found"
+  text_at(x + half + gap + 14, y + 28, final_msg, final_color, x + w - 12, y + row_h - 6)
   y = y + row_h + 14
 
   set_font(13)

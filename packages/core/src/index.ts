@@ -143,6 +143,8 @@ export {
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
   publishedLibraryMissing,
+  publishedChartSettings,
+  withPublishedChartSettings,
   humanizePracticeFolder,
   publishedSongTitle,
   resolvePublishedSongId

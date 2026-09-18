@@ -110,6 +110,11 @@ describe("normalizeSong", () => {
     ]);
   });
 
+  it("keeps a FINAL marker time from the Reaper export", () => {
+    expect(normalizeSong({ duration: 32, nextSongAt: 30, finalAt: 28 }).finalAt).toBe(28);
+    expect(normalizeSong({ duration: 32 }).finalAt).toBeUndefined();
+  });
+
   it("snaps rounded section and lyric times onto the tempo-map barline", () => {
     const bar = 240 / 114;
     const song = normalizeSong({

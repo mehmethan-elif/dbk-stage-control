@@ -271,6 +271,13 @@ describe("notesInMeasure", () => {
     expect(displayChordText("Dm")).toBe("Dm");
   });
 
+  it("replaces dim with a circle", () => {
+    expect(displayChordText("G#dim")).toBe("G#°");
+    expect(displayChordText("Bdim7")).toBe("B°7");
+    expect(displayChordText("Adim/C")).toBe("A°/C");
+    expect(displayChordText("Dm")).toBe("Dm");
+  });
+
   it("is empty when there are no chord notes", () => {
     const empty = song();
     empty.chords = [{ time: 2, text: "Dm" }];

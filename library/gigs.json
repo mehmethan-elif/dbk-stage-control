@@ -27,8 +27,23 @@
           "songId": "kendim_ettim_kendim_buldum"
         },
         {
+          "type": "song",
+          "entryId": "entry_0c758db5-8ff4-44db-89fb-70e785c4a923",
+          "songId": "yolcu"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_57af59c7-31e2-46fc-af77-a866be149bfb",
+          "songId": "ayr_ld_m_gu_ler_miyim"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_26e89578-389f-4253-9193-d1d764e67a78",
+          "songId": "kesik_c_ay_r"
+        },
+        {
           "type": "talk",
-          "entryId": "entry_3c1a22fd-6c95-4175-8da3-3c8ff901bbb2",
+          "entryId": "entry_5c1ab6db-7a54-4b31-957c-ec69c4573722",
           "label": "STOP"
         },
         {

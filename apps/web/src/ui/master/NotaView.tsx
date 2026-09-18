@@ -39,7 +39,7 @@ import {
 import { usePinSelectedSong } from "./stage-pin";
 import { pdfRenderScale, scrollTopAfterZoom } from "./stage-zoom";
 import { upcomingSongLeadIn } from "./next-song-section";
-import { countLabel, countSection, isCountSection } from "./count-section";
+import { countLabel, countSection, isCountSection, skipsCountIn } from "./count-section";
 import { sectionBarClass } from "./section-color";
 import {
   ChordNoteLane,
@@ -52,7 +52,7 @@ import {
   type ChordNoteHit
 } from "./chord-notes";
 import { NOTE_GRID_GAP } from "./nota-rect-notes";
-import { rallOverlayBoxes } from "./rall-alert";
+import { scoreFooterCues } from "./rall-alert";
 import { SCORE_LYRIC_GAP_PX, activeScoreLyric, scoreLyricPlacements } from "./score-lyrics";
 import {
   addNotaBox,
@@ -364,6 +364,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
   }, [selectedSong?.id]);
 
   const visibleSongIds = visible.map((entry) => entry.songId).join("\0");
+  const practiceLibraryRev = useMasterStore((s) => s.practiceLibraryRev);
   useEffect(() => {
     const ids = [...new Set(visibleSongIds ? visibleSongIds.split("\0") : [])];
     if (ids.length === 0) {
@@ -378,7 +379,12 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
       ids.map(async (id) => {
         try {
           const song = songs.find((item) => item.id === id);
-          return [id, await loadNotaLayout(id, song?.sections ?? [])] as const;
+          return [
+            id,
+            await loadNotaLayout(id, song?.sections ?? [], {
+              keepEdits: dirtySongIds.current.has(id)
+            })
+          ] as const;
         } catch {
           return [id, { rects: [], brokenChains: [] }] as const;
         }
@@ -410,7 +416,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
     return () => {
       cancelled = true;
     };
-  }, [visibleSongIds]);
+  }, [visibleSongIds, practiceLibraryRev]);
 
   const addSong = (songId: string) => {
     if (!gig) return;
@@ -928,7 +934,9 @@ function SongNota(props: {
                 {liveRects
                   .filter(
                     (box) =>
-                      isSectionLabel(box) && clampNotaPage(box.page, pageCount - 1) === page
+                      isSectionLabel(box) &&
+                      !(skipsCountIn(song) && box.name.trim().toUpperCase() === "COUNT") &&
+                      clampNotaPage(box.page, pageCount - 1) === page
                   )
                   .map((box) => (
                     <SectionLabelRect key={box.id} box={box} />
@@ -984,6 +992,8 @@ function NotaProgressBar(props: { entryId: string; song: Song }) {
   const sectionIndex = playing ? sectionIndexAt(props.song.sections, time) : -1;
   const section = sectionIndex >= 0 ? props.song.sections[sectionIndex] : undefined;
   const showingCount = !section || isCountSection(props.song, section);
+
+  if (showingCount && skipsCountIn(props.song)) return null;
 
   let name = count.name;
   let label = countLabel(props.song, count.start, count.end);
@@ -1145,24 +1155,20 @@ function RallMarks(props: {
       pageEntrySongId(s) === props.entryId;
     return live || idlePreview ? stagePlayheadTime(s) : undefined;
   });
+  const cues = scoreFooterCues(props.song, storeTime);
+  if (cues.length === 0) return null;
   return (
-    <>
-      {rallOverlayBoxes(props.song, props.rects, storeTime, props.brokenChains)
-        .filter((box) => clampNotaPage(box.page, props.lastPage) === props.page)
-        .map((box) => (
-          <div
-            key={`rall-${box.id}`}
-            className="nota-rall-mark"
-            data-rall-mark={box.id}
-            style={{
-              left: `${box.x * 100}%`,
-              top: `calc(${(box.y + box.h) * 100}% + 3px)`
-            }}
-          >
-            RALL
-          </div>
-        ))}
-    </>
+    <div className="nota-cue-footer">
+      {cues.map((cue) => (
+        <div
+          key={cue.kind}
+          className={`nota-rall-mark ${cue.kind === "final" ? "nota-final-mark" : "nota-rall-kind"} ${cue.tone}`}
+          {...(cue.kind === "rall" ? { "data-rall-mark": cue.kind } : { "data-final-mark": cue.kind })}
+        >
+          {cue.kind === "rall" ? "RALL" : "FINAL"}
+        </div>
+      ))}
+    </div>
   );
 }
 

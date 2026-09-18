@@ -1,3 +1,4 @@
+import { hidesCountSection } from "./count-section";
 import type { LyricLine, Song } from "@dbk/core";
 
 const TIME_EPS = 0.05;
@@ -23,7 +24,7 @@ export function stageRows(song: Song | undefined, showSections = true): LyricSta
   const rows: LyricStageRow[] = [];
   if (showSections) {
     for (const section of song?.sections ?? []) {
-      if (!lyricCovers(lyrics, section.start)) {
+      if (!hidesCountSection(song, section) && !lyricCovers(lyrics, section.start)) {
         rows.push({ kind: "section", time: section.start, end: section.end, name: section.name });
       }
     }

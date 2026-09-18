@@ -59,7 +59,7 @@ import { scrollStageToFollowedRows, stageLeadInNode } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
 import { ChordRepeatMark, FormSectionBar } from "./form-marks";
-import { isCountSection } from "./count-section";
+import { hidesCountSection, isCountSection } from "./count-section";
 import { sectionBarClass } from "./section-color";
 import { ChordDrumLanes, ChordNoteLane, displayChordText, drumNotesForMeasure } from "./chord-notes";
 import {
@@ -71,13 +71,10 @@ import {
   type ChordBar,
   type ChordChart,
   type ChordHead,
-  type ChordRall,
   type ChordRow,
   type ChordSpan
 } from "./chord-chart";
-import { rallDrumTone } from "./rall-alert";
-
-const TIME_EPS = 0.02;
+import { paintSongCueBars, SongCueBars } from "./song-cue-bar";
 
 type ChordGridKind = "notes" | "drums";
 
@@ -129,6 +126,7 @@ type ChordPaintMarks = {
   nextPlaying: string | null;
   followingId: string | undefined;
   rallTone: string;
+  finalTone: string;
 };
 
 const lastChordPaint = new WeakMap<HTMLElement, ChordPaintMarks>();
@@ -144,10 +142,7 @@ function clearChordLiveMarks(root: HTMLElement): void {
     el.classList.remove("current", "next", "scroll-next");
     if (el.hasAttribute("data-chord-section")) el.style.setProperty("--playhead", "0");
   }
-  for (const el of root.querySelectorAll<HTMLElement>("[data-chord-rall]")) {
-    el.className = "drum-rall-bar idle";
-    el.dataset.chordRall = "idle";
-  }
+  paintSongCueBars(root, undefined, 0, false, "chord");
 }
 
 function paintChordBar(
@@ -191,10 +186,13 @@ function paintChordLive(
   time: number,
   map: TempoPoint[],
   live: boolean,
-  chainNext: boolean
+  chainNext: boolean,
+  song?: Song,
+  preview = false
 ): void {
   if (!live) {
     clearChordLiveMarks(root);
+    if (preview) paintSongCueBars(root, song, time, true, "chord");
     lastChordPaint.delete(root);
     return;
   }
@@ -208,12 +206,9 @@ function paintChordLive(
   const nextPlaying = head?.nextPlaying ?? followingNamed ?? null;
   const currentBar = head ? barKey(head.blockId, head.measure) : "";
   const nextBar = head?.next ? barKey(head.next.blockId, head.next.measure) : "";
-  const slowing = Boolean(chart.rall && pos?.block.id === chart.rall.blockId);
-  const rallTone = rallDrumTone(
-    slowing ? timeToMusical(map, time).measure : undefined,
-    chart.rall?.measure,
-    slowing
-  );
+  paintSongCueBars(root, song, time, true, "chord");
+  const rallTone = root.querySelector<HTMLElement>("[data-chord-rall]")?.dataset.chordRall ?? "idle";
+  const finalTone = root.querySelector<HTMLElement>("[data-chord-final]")?.dataset.chordFinal ?? "idle";
   const prev = lastChordPaint.get(root);
   const barsChanged =
     !prev || prev.currentBar !== currentBar || prev.nextBar !== nextBar;
@@ -222,13 +217,6 @@ function paintChordLive(
     prev.playingId !== playingId ||
     prev.nextPlaying !== nextPlaying ||
     prev.followingId !== followingId;
-
-  if (!prev || prev.rallTone !== rallTone) {
-    for (const el of root.querySelectorAll<HTMLElement>("[data-chord-rall]")) {
-      el.className = `drum-rall-bar ${rallTone}`;
-      el.dataset.chordRall = rallTone;
-    }
-  }
 
   // Names are lit one at a time even where several share a set of bars, so the band sees which
   // pass they are on: Biz lights SAN 1 the first time through those bars and SAN 2 the second.
@@ -302,7 +290,8 @@ function paintChordLive(
     playingId,
     nextPlaying,
     followingId,
-    rallTone
+    rallTone,
+    finalTone
   });
 }
 
@@ -436,6 +425,7 @@ export function ChordView() {
                     entryId={entry.entryId}
                     song={item}
                     live={playingEntryId === entry.entryId}
+                    preview={showEntry === entry.entryId}
                     leadIn={leadInId === entry.entryId}
                     chainNext={chainNext && playingEntryId === entry.entryId}
                     grid={grid}
@@ -568,6 +558,7 @@ const SongChords = memo(function SongChords(props: {
   entryId: string;
   song: Song | undefined;
   live: boolean;
+  preview?: boolean;
   leadIn?: boolean;
   chainNext?: boolean;
   grid: ChordGridKind;
@@ -585,6 +576,7 @@ const SongChords = memo(function SongChords(props: {
       <ChordChartBody
         song={props.song}
         live={props.live}
+        preview={props.preview}
         leadIn={props.leadIn}
         chainNext={props.chainNext}
         grid={props.grid}
@@ -596,6 +588,7 @@ const SongChords = memo(function SongChords(props: {
 export const ChordChartBody = memo(function ChordChartBody(props: {
   song: Song | undefined;
   live?: boolean;
+  preview?: boolean;
   leadIn?: boolean;
   chainNext?: boolean;
   grid?: ChordGridKind;
@@ -611,9 +604,11 @@ export const ChordChartBody = memo(function ChordChartBody(props: {
   const chartRef = useRef(chart);
   const formRef = useRef(form);
   const mapRef = useRef(map);
+  const songRef = useRef(props.song);
   chartRef.current = chart;
   formRef.current = form;
   mapRef.current = map;
+  songRef.current = props.song;
 
   useEffect(() => {
     const root = rootRef.current;
@@ -626,11 +621,16 @@ export const ChordChartBody = memo(function ChordChartBody(props: {
         time,
         mapRef.current,
         live,
-        Boolean(props.chainNext)
+        Boolean(props.chainNext),
+        songRef.current,
+        Boolean(props.preview)
       );
     if (!live) {
-      paint(0);
-      return;
+      paint(props.preview ? stagePlayheadTime(useMasterStore.getState()) : 0);
+      if (!props.preview) return;
+      return useMasterStore.subscribe((state) => {
+        paint(stagePlayheadTime(state));
+      });
     }
     let handle = 0;
     const loop = () => {
@@ -643,7 +643,7 @@ export const ChordChartBody = memo(function ChordChartBody(props: {
     paint(followClockPlaying() ? followClockTime() : stagePlayheadTime(useMasterStore.getState()));
     handle = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(handle);
-  }, [live, props.chainNext, props.song?.id]);
+  }, [live, props.preview, props.chainNext, props.song?.id]);
 
   if (chart.rows.length === 0) {
     return <div className="lyrics-empty meta">No Chords</div>;
@@ -655,7 +655,7 @@ export const ChordChartBody = memo(function ChordChartBody(props: {
         className="drum-section-list chord-section-list"
         data-chord-grid={props.grid ?? "notes"}
       >
-        {chart.rows.map((row, rowIndex) => (
+        {chart.rows.filter((row) => !hidesCountSection(props.song, row.heads[0]?.section)).map((row, rowIndex) => (
           <div
             key={row.heads[0]?.block.id}
             className="chord-section"
@@ -671,11 +671,23 @@ export const ChordChartBody = memo(function ChordChartBody(props: {
                     key={span.id}
                     span={span}
                     blockId={row.heads[0]?.block.id ?? ""}
-                    rall={chart.rall}
                   />
                 ))}
           </div>
         ))}
+        <SongCueBars
+          song={props.song}
+          time={0}
+          active={false}
+          attrPrefix="chord"
+          wrap={(bar) => (
+            <div className="chord-section-head">
+              <div className="chord-repeat-col" />
+              {bar}
+              <div className="chord-repeat-col" />
+            </div>
+          )}
+        />
       </div>
     </ChordGridContext.Provider>
   );
@@ -687,9 +699,7 @@ function ChordSectionTitle(props: { row: ChordRow; head: ChordHead; song: Song |
   if (!props.head.section.name) return null;
   return (
     <div className="chord-section-head">
-      <div className="chord-repeat-col">
-        {block.repeatStart ? <ChordRepeatMark side="start" /> : null}
-      </div>
+      <div className="chord-repeat-col" />
       <div
         data-chord-section={block.id}
         className={`lyrics-section drum-section-name chord-section-name playhead-green${sectionBarClass(
@@ -711,9 +721,7 @@ function ChordSectionTitle(props: { row: ChordRow; head: ChordHead; song: Song |
           />
         </div>
       </div>
-      <div className="chord-repeat-col">
-        {block.repeatEnd ? <ChordRepeatMark side="end" /> : null}
-      </div>
+      <div className="chord-repeat-col" />
     </div>
   );
 }
@@ -726,21 +734,21 @@ function ChordSectionTitle(props: { row: ChordRow; head: ChordHead; song: Song |
  * A span is played more than once either on its own account, as bars that come round again, or
  * because the whole row is read again under another name stacked on it.
  */
-function ChordSpanView(props: { span: ChordSpan; blockId: string; rall: ChordRall | null }) {
+function ChordSpanView(props: {
+  span: ChordSpan;
+  blockId: string;
+}) {
   const span = props.span;
   const opens = span.opens || span.plays > 1;
   const plays = span.closes ?? (span.plays > 1 ? span.plays : 0);
   const last = span.lines.length - 1;
-  const rall = props.rall?.shown.blockId === props.blockId ? props.rall.shown.measure : undefined;
   return (
     <>
       {span.lines.map((bars, lineIndex) => {
         const closes = plays > 1 && lineIndex === last;
         const part = bars.length < BARS_PER_LINE;
-        const slows = rall != null && bars.some((bar) => bar.measure === rall);
         return (
           <Fragment key={`${span.id}#${lineIndex}`}>
-            {slows ? <ChordRallBar /> : null}
             <div className={`chord-row${closes && plays >= 3 ? " has-plays" : ""}`}>
               <div className="chord-repeat-col">
                 {opens && lineIndex === 0 ? <ChordRepeatMark side="start" /> : null}
@@ -783,22 +791,6 @@ function ChordSpanView(props: { span: ChordSpan; blockId: string; rall: ChordRal
         );
       })}
     </>
-  );
-}
-
-/**
- * Where the tempo gives, over the bars it gives on. It reads the same as the drum page: grey
- * while it is only a warning, amber a bar out, red while the band is in it.
- */
-function ChordRallBar() {
-  return (
-    <div className="chord-row chord-rall-row">
-      <div className="chord-repeat-col" />
-      <div className="drum-rall-bar idle" data-chord-rall="idle" aria-label="RALL">
-        RALL
-      </div>
-      <div className="chord-repeat-col" />
-    </div>
   );
 }
 

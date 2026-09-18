@@ -4,6 +4,7 @@ import {
   localFoldersNotOnRemote,
   publishedLibraryMissing,
   publishedSongTitle,
+  withPublishedChartSettings,
   type ClientLibraryFile,
   type ClientLibraryIndex,
   type ClientLibrarySong,
@@ -18,11 +19,18 @@ import {
   writePublishedGigs
 } from "./store";
 
+const BUILD = typeof __APP_BUILD__ === "string" ? __APP_BUILD__ : "dev";
+
 function clientLibraryUrl(relPath = ""): string {
   const base = import.meta.env.BASE_URL || "/";
   const root = base.endsWith("/") ? `${base}client-library` : `${base}/client-library`;
   if (!relPath) return root;
   return `${root}/${relPath.replace(/^\//, "")}`;
+}
+
+function cacheBusted(url: string): string {
+  const join = url.includes("?") ? "&" : "?";
+  return `${url}${join}v=${encodeURIComponent(BUILD)}&t=${Date.now()}`;
 }
 
 function encodeRel(rel: string): string {
@@ -47,7 +55,7 @@ async function practiceChartLooksValid(folder: string, path: string): Promise<bo
 }
 
 async function fetchClientLibraryIndex(): Promise<ClientLibraryIndex | null> {
-  const response = await fetch(`${clientLibraryUrl("index.json")}?t=${Date.now()}`, { cache: "no-store" });
+  const response = await fetch(cacheBusted(clientLibraryUrl("index.json")), { cache: "no-store" });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Library ${response.status}`);
   return (await response.json()) as ClientLibraryIndex;
@@ -83,7 +91,7 @@ async function fetchPublishedBuffer(url: string): Promise<ArrayBuffer> {
   let lastError = "Network error";
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const response = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
+      const response = await fetch(cacheBusted(url), { cache: "no-store" });
       if (!response.ok) {
         lastError = `HTTP ${response.status}`;
         await wait(400 * attempt);
@@ -131,7 +139,7 @@ export async function syncPublishedLibrary(
 
   const local = await listPracticeManifest();
   const remoteFolders = new Set(index.songs.map((song) => song.folder));
-  const queue = publishedLibraryMissing(index, local);
+  const queue = withPublishedChartSettings(publishedLibraryMissing(index, local), index);
   for (const song of index.songs) {
     const chart = song.files.find((file) => file.path.toLowerCase() === "song.json");
     if (!chart) continue;

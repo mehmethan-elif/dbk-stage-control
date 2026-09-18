@@ -59,6 +59,43 @@ describe("songTransportSections", () => {
     ]);
     expect(songTransportEnd(biz)).toBeCloseTo(176.4);
   });
+
+  it("adds FINAL from the marker through its section", () => {
+    const marked = song(
+      [
+        { name: "SAN 2", start: 149.090909, end: 174.545455 },
+        { name: "CEV 2", start: 174.545455, end: 178.181818 }
+      ],
+      180.909091
+    );
+    marked.finalAt = 174.545455;
+    const extra = songTransportSections(marked).at(-1);
+    expect(extra).toEqual({
+      name: "FINAL",
+      start: 174.545455,
+      end: 178.181818
+    });
+    expect(sectionStartAtTime(songTransportSections(marked), 176)).toBeCloseTo(174.545455);
+  });
+
+  it("adds RALL from the first tempo drop through the end", () => {
+    const rall = song(
+      [
+        { name: "NAK", start: 0, end: 16 },
+        { name: "NAK", start: 16, end: 32 }
+      ],
+      32
+    );
+    rall.tempoMap = [
+      { time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 },
+      { time: 16, measure: 9, bpm: 60, numerator: 4, denominator: 4 }
+    ];
+    expect(songTransportSections(rall).at(-1)).toEqual({
+      name: "RALL",
+      start: 16,
+      end: 32
+    });
+  });
 });
 
 describe("sliderTimeFromClientX", () => {

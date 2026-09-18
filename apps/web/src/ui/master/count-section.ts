@@ -1,4 +1,4 @@
-import type { Section, Song } from "@dbk/core";
+import { firstSectionNamed, type Section, type Song } from "@dbk/core";
 
 const TIME_EPS = 0.02;
 
@@ -25,4 +25,17 @@ export function countLabel(
     .map((chord) => chord.text.trim())
     .filter((text) => text.length > 0);
   return texts.length > 0 ? texts.join("  ") : null;
+}
+
+/** Matches Song Info's COUNT IN toggle: playback starts at the second section. */
+export function skipsCountIn(song: Song | undefined): boolean {
+  const second = song?.sections[1];
+  return Boolean(
+    firstSectionNamed(song?.sections, "COUNT") && second &&
+    (song?.info?.startAt ?? 0) >= second.start - TIME_EPS
+  );
+}
+
+export function hidesCountSection(song: Song | undefined, section: Section | undefined): boolean {
+  return skipsCountIn(song) && section?.name.trim().toUpperCase() === "COUNT";
 }

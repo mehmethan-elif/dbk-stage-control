@@ -2,10 +2,37 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 2688,
-    "hash": "35758ff15a09717e3b144fdef4b90633310d40ac2f9ea16cc1fddca7d06d2ab5"
+    "size": 3137,
+    "hash": "fd589406d8bed083da7e12181526cb35cc9eb8ff0695553cc218ec51cfeb5a2e"
   },
   "songs": [
+    {
+      "id": "ayr_ld_m_gu_ler_miyim",
+      "folder": "ayr_ld_m_gu_ler_miyim",
+      "title": "Ayrıldım Güler miyim",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2818297,
+          "hash": "6db6467b4eb23a430cd1f501ba18da63e616f3d4cf5ff125b7467872895b7feb"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 19482,
+          "hash": "e82e1281dadf2c181b79d1c235ee13d7eda2f6c32f3462d159258294ae3fe66b"
+        },
+        {
+          "path": "settings.json",
+          "size": 6781,
+          "hash": "ddd3dcaca15f9f72a774ed3a9f64d7bca5469cf6ecc06a401607bdfef9d86be5"
+        },
+        {
+          "path": "song.json",
+          "size": 148713,
+          "hash": "54ed7113bcdb4f66135885c8ba2ce2d2e8e7bec5f46e99748ef509464c6f0b1b"
+        }
+      ]
+    },
     {
       "id": "biz",
       "folder": "biz",
@@ -34,7 +61,7 @@
         {
           "path": "Master.mp3",
           "size": 2895620,
-          "hash": "88c4da6806bcfe586fc41d9ed15ba784b9742e784c912ae28f38ad32b156120c"
+          "hash": "425671041301341cefcfc9fcf3d0ee59bbcb8d8a0451633958c9fefa5d75d0f3"
         },
         {
           "path": "Nota.pdf",
@@ -43,13 +70,13 @@
         },
         {
           "path": "settings.json",
-          "size": 12958,
-          "hash": "463553cb21e6677716cbf875e34e6e3c0032f29c537dcac25a6447b4ac5f88c9"
+          "size": 14635,
+          "hash": "a9ed305538000bf1d3401cea4defe97c834e6ac18290abe55a5c8c8061dae7ec"
         },
         {
           "path": "song.json",
-          "size": 199843,
-          "hash": "c6a98c6d1016e6220c7a9701791a9cdaff5fbc12d603cec6a27b3a98ff01f992"
+          "size": 199862,
+          "hash": "af003f5e1a81edd7a5692d89bf0ba7a923d66d23c28701ef1127124bbc1499d6"
         }
       ]
     },
@@ -117,8 +144,8 @@
         },
         {
           "path": "song.json",
-          "size": 121168,
-          "hash": "76705226b7a28fb416182a5212a19741a08e938e7b7848f0156b2fb24ce00b14"
+          "size": 117495,
+          "hash": "6f055c65f62ecf012bdfb4fbdab1ab9c03427ad6da354d821ae03a5c37aa3eeb"
         }
       ]
     },
@@ -150,6 +177,33 @@
       ]
     },
     {
+      "id": "kesik_c_ay_r",
+      "folder": "kesik_c_ay_r",
+      "title": "Kesik Çayır",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3464462,
+          "hash": "b3e40f91ee9d203661d3a17b310ce6261747311d04fd61bcc2d87df0df5a6849"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 34871,
+          "hash": "3a75ac764017e8bc632a07335fd68f16fb1159d1452ea9e35d55be963f8cac3c"
+        },
+        {
+          "path": "settings.json",
+          "size": 10738,
+          "hash": "e8fbee72bde3d650cd47863c9c1002af956402276468b3cd7d504437d0c406c1"
+        },
+        {
+          "path": "song.json",
+          "size": 229469,
+          "hash": "b8b724b66b62c33fdcb8f0020847d852cfb707ea96df3f76d33c094b3ad909e2"
+        }
+      ]
+    },
+    {
       "id": "telli_turnam",
       "folder": "telli_turnam",
       "title": "Telli Turnam",
@@ -171,8 +225,8 @@
         },
         {
           "path": "song.json",
-          "size": 134158,
-          "hash": "9a5cb417c220453a4629ed8ed64290a391c4a0e4138ecbeb3e48f3d557a73391"
+          "size": 132481,
+          "hash": "4f321f56f75ff82ceedd86133c9337e78de8888015bc69ea3adbb5c42d0deb45"
         }
       ]
     },
@@ -198,8 +252,35 @@
         },
         {
           "path": "song.json",
-          "size": 77484,
-          "hash": "3d4cd58b727edce1b04617b806b9d132b9c8a546ddf1af6db2e82bf9aab1dc83"
+          "size": 76717,
+          "hash": "0e2b35c16bcbd1e0988d875e0a3ff7c4a56780c6f40422596931376b27e55403"
+        }
+      ]
+    },
+    {
+      "id": "yolcu",
+      "folder": "yolcu",
+      "title": "Yolcu",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2966255,
+          "hash": "4b99fe79863fd36b05e07c3db5a6ae6823428d40737ff071a4ea7a781acda6e3"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 46960,
+          "hash": "9aed6ab986324c634a71309e5743f68aeefe0d489ea5a086f95da5af1673af54"
+        },
+        {
+          "path": "settings.json",
+          "size": 15774,
+          "hash": "a33bc41fd8f10fc694d87c5d30f897a8f6e532db1eed1b755dfa2e6a7699f66a"
+        },
+        {
+          "path": "song.json",
+          "size": 166562,
+          "hash": "c55f9d5b948b4172a37ec9f45f5d3a2ba0bc6f0012379b937a6c2147e559261e"
         }
       ]
     }

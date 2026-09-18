@@ -6619,85 +6619,6 @@
       "numerator": 4,
       "denominator": 4,
       "notes": []
-    },
-    {
-      "text": "SLOW",
-      "time": 270,
-      "end": 272.086957,
-      "length": 2.086957,
-      "measure": 136,
-      "beat": 1,
-      "numerator": 4,
-      "denominator": 4,
-      "notes": [
-        {
-          "time": 270,
-          "end": 270.130435,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 127,
-          "measure": 136,
-          "beat": 1,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
-          "time": 270.782609,
-          "end": 270.913043,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 136,
-          "beat": 2,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
-          "time": 271.043478,
-          "end": 271.173913,
-          "pitch": 50,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 136,
-          "beat": 2,
-          "numerator": 4,
-          "denominator": 4
-        }
-      ]
-    },
-    {
-      "text": "TUS",
-      "time": 274.268775,
-      "end": 276.554489,
-      "length": 2.285714,
-      "measure": 138,
-      "beat": 1,
-      "numerator": 4,
-      "denominator": 4,
-      "notes": [
-        {
-          "time": 274.268775,
-          "end": 274.411632,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 127,
-          "measure": 138,
-          "beat": 1,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
-          "time": 274.268775,
-          "end": 274.411632,
-          "pitch": 53,
-          "channel": 0,
-          "velocity": 127,
-          "measure": 138,
-          "beat": 1,
-          "numerator": 4,
-          "denominator": 4
-        }
-      ]
     }
   ],
   "assets": [
@@ -6720,6 +6641,7 @@
     "scale": "KURDI",
     "style": "SLOW",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "startAt": 0
   }
 }

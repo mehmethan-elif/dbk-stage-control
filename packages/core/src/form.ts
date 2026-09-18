@@ -269,6 +269,10 @@ export function isCodaName(name: string): boolean {
   return n === "FINAL" || n === "CODA" || n.startsWith("CODA ");
 }
 
+function isFinalName(name: string): boolean {
+  return name.trim().toUpperCase() === "FINAL";
+}
+
 export function songForm(song: Song | undefined, options: SongFormOptions = {}): SongForm {
   if (!song) return { blocks: [], visits: [] };
   const sections = sectionList(song);
@@ -355,12 +359,20 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
 
   const codaVisit = visits.find((visit) => blocks.some((block) => block.id === visit.blockId && block.coda));
   if (codaVisit) {
+    const codaBlock = blocks.find((block) => block.id === codaVisit.blockId);
     const fromIndex = visits.indexOf(codaVisit) - 1;
     const fromVisit = fromIndex >= 0 ? visits[fromIndex] : undefined;
     const from = fromVisit
       ? blocks.find((block) => block.id === fromVisit.blockId)
       : undefined;
-    if (from && fromVisit) {
+    // D.S. already played through to its last section; FINAL just follows. That is
+    // Fine, not a coda jump — Kerkük replays SAN D, then FINAL, and must not read
+    // D.S. al Coda on those bars.
+    if (from?.ds && codaBlock && isFinalName(codaBlock.name)) {
+      codaBlock.coda = false;
+      const visit = visits[visits.indexOf(codaVisit)];
+      if (visit) visit.fromJump = "none";
+    } else if (from && fromVisit) {
       from.toCoda = true;
       from.toCodaAt = Math.min(
         from.originEnd,

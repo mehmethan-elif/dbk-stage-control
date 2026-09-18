@@ -125,6 +125,23 @@ export function publishedLibraryMissing(
   });
 }
 
+/** Score boxes live in settings.json; always re-fetch them even when the index hash looks current. */
+export function publishedChartSettings(index: ClientLibraryIndex) {
+  return publishedPracticeFiles(index).filter((item) => item.file.path.toLowerCase() === "settings.json");
+}
+
+export function withPublishedChartSettings<T extends { folder: string; file: { path: string } }>(
+  queue: T[],
+  index: ClientLibraryIndex
+): T[] {
+  const next = [...queue];
+  for (const item of publishedChartSettings(index)) {
+    if (next.some((row) => row.folder === item.folder && row.file.path === item.file.path)) continue;
+    next.push(item as T);
+  }
+  return next;
+}
+
 export function needsClientLibraryDownload(
   local: { size: number; hash?: string } | undefined,
   remote: { size: number; hash: string }

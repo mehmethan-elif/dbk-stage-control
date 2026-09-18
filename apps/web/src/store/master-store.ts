@@ -118,6 +118,7 @@ import { practiceHostFromInput, pullPracticeFromHost } from "../practice/pull";
 import { loadPracticeLibrary, readPracticeFileBuffer, readPublishedGigs } from "../practice/store";
 import { importPracticeFileList, importPracticeZip } from "../practice/zip";
 import { loadSongMixers, saveSongMixer } from "../ui/master/song-mixer";
+import { clearNotaLayoutMemory } from "../ui/master/nota-sections";
 import { updateSongSettings, writeSongInfo } from "../ui/master/song-settings";
 import { readMetroIntroBuffer, readShippedGigs, writeLibraryGigs } from "../native/library";
 import { mergeShippedGigs } from "../persist/shipped-gigs";
@@ -548,6 +549,8 @@ interface MasterState {
   clientSession: ClientSession;
   practiceBusy: string | null;
   libraryStatus: string | null;
+  /** Bumped after Practice reloads published charts so score boxes re-read from disk. */
+  practiceLibraryRev: number;
   masterPage: MasterPage;
   setlistOpen: boolean;
   autoScroll: boolean;
@@ -576,6 +579,7 @@ interface MasterState {
   remoteSeek: (time: number) => void;
   selectPracticeSong: (songId: string) => void;
   reloadPracticeLibrary: () => Promise<void>;
+  refreshPracticeCharts: () => Promise<void>;
   importPracticePackage: (file: Blob) => Promise<void>;
   importPracticeFolder: (files: Iterable<File>) => Promise<void>;
   pullPracticeLibrary: (host?: string) => Promise<void>;
@@ -1948,6 +1952,7 @@ async function loadLibraryNow(
           fileIndex = again.fileIndex;
         }
         hostOk = songs.length > 0;
+        clearNotaLayoutMemory();
         set({ practiceBusy: null, libraryStatus: null });
         if (tracks) {
           // A song whose only audio is Master.mp3 reads as metronome-only while the file is
@@ -2288,6 +2293,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     clientSession: "practice",
     practiceBusy: null,
     libraryStatus: null,
+    practiceLibraryRev: 0,
     masterPage: "prep",
     setlistOpen: setlistStartsOpen(),
     autoScroll: true,
@@ -2472,15 +2478,30 @@ export const useMasterStore = create<MasterState>((set, get) => {
     },
 
     reloadPracticeLibrary: async () => {
+      clearNotaLayoutMemory();
       const index = await loadPracticeLibrary();
       const published = await readPublishedGigs();
       const current = (currentGig(get()) ?? get().gigs[0])?.setlist.find(isSongEntry)?.songId;
       const songs = await withLiveHostSongMeta(index.songs);
       const next = applyClientLibrary(songs, index.fileIndex, published, current);
-      set(next);
+      set({
+        ...next,
+        practiceLibraryRev: get().practiceLibraryRev + 1
+      });
       const songId = next.gigs.find((gig) => gig.id === next.gigId)?.setlist.find(isSongEntry)?.songId;
       if (songId) {
         queuePracticeAudio({ ...get(), ...next }, findSongByRef(next.songs, songId));
+      }
+    },
+
+    refreshPracticeCharts: async () => {
+      if (get().deviceKind !== "client" || isNativeApp()) return;
+      if (get().clientSession === "stage") return;
+      try {
+        await syncPublishedLibrary(undefined, { tracks: false });
+        await get().reloadPracticeLibrary();
+      } catch {
+        // keep the last published library
       }
     },
 

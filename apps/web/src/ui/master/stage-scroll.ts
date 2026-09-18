@@ -175,7 +175,7 @@ export function preferNextSongTitle(
 function stageSongTitleNode(from: HTMLElement): HTMLElement {
   const article = from.closest("article.lyrics-song");
   const root = article instanceof HTMLElement ? article : from;
-  const title = root.querySelector(".lyrics-song-title");
+  const title = root.querySelector(".lyrics-song-head > .direct-pass-mark, .lyrics-song-title");
   return title instanceof HTMLElement ? title : root;
 }
 
@@ -292,7 +292,7 @@ export function scrollStageToSongTitle(
   if (!stage) return;
   const article = stage.querySelector(entrySelector);
   if (!(article instanceof HTMLElement)) return;
-  const title = article.querySelector(".lyrics-song-title");
+  const title = article.querySelector(".lyrics-song-head > .direct-pass-mark, .lyrics-song-title");
   scrollStageToNode(stage, title instanceof HTMLElement ? title : article, ms);
 }
 
@@ -324,7 +324,7 @@ export function pinStageSongWhenReady(
     const article = stage?.querySelector(entrySelector);
     const title =
       article instanceof HTMLElement
-        ? (article.querySelector(".lyrics-song-title") ?? article)
+        ? (article.querySelector(".lyrics-song-head > .direct-pass-mark, .lyrics-song-title") ?? article)
         : null;
     if (!(stage instanceof HTMLElement) || !(title instanceof HTMLElement)) {
       if (left-- > 0) requestAnimationFrame(run);

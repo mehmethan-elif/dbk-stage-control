@@ -1,13 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { Song, TempoPoint } from "@dbk/core";
 import {
+  finalDrumTone,
+  finalLastMeasure,
+  finalMeasure,
   firstTempoChangeMeasure,
   lyricLineShowsRall,
   rallDrumTone,
   rallOverlayBoxes,
   runCoversAbsoluteMeasure,
   runShowsRallBar,
-  showsRallAlert
+  scoreFooterCues,
+  showsFinalAlert,
+  showsRallAlert,
+  songCues,
+  songCueTone
 } from "./rall-alert";
 
 const karahisarMap: TempoPoint[] = [
@@ -172,5 +179,53 @@ describe("rallOverlayBoxes", () => {
     };
     expect(songWith([label], 0).map((box) => box.id)).toEqual([]);
     expect(songWith([label], 181.1).map((box) => box.id)).toEqual(["nak"]);
+  });
+});
+
+describe("final cues", () => {
+  const bizMap: TempoPoint[] = [{ time: 0, measure: 1, bpm: 132, numerator: 4, denominator: 4 }];
+  const biz = {
+    id: "biz",
+    title: "Biz",
+    duration: 180.909091,
+    finalAt: 174.545455,
+    tempoMap: bizMap,
+    sections: [
+      { name: "SAN 2", start: 149.090909, end: 174.545455 },
+      { name: "CEV 2", start: 174.545455, end: 178.181818 }
+    ]
+  } as Song;
+
+  it("reads the FINAL marker as a measure", () => {
+    expect(finalMeasure(biz)).toBe(97);
+    expect(finalLastMeasure(biz)).toBe(98);
+    expect(finalMeasure({ tempoMap: bizMap })).toBeUndefined();
+  });
+
+  it("flashes one bar early and stays through CEV 2", () => {
+    expect(showsFinalAlert(95, biz)).toBe(false);
+    expect(showsFinalAlert(96, biz)).toBe(true);
+    expect(showsFinalAlert(97, biz)).toBe(true);
+    expect(showsFinalAlert(98, biz)).toBe(true);
+    expect(showsFinalAlert(99, biz)).toBe(false);
+    expect(finalDrumTone(96, biz, true)).toBe("soon");
+    expect(finalDrumTone(97, biz, true)).toBe("now");
+    expect(finalDrumTone(98, biz, true)).toBe("now");
+    expect(finalDrumTone(99, biz, true)).toBe("idle");
+  });
+
+  it("adds FINAL as a last section bar", () => {
+    expect(songCues(biz)).toEqual(["final"]);
+    expect(songCueTone(96, "final", biz)).toBe("soon");
+    expect(songCueTone(97, "final", biz)).toBe("now");
+  });
+
+  it("keeps the score footer visible and only blinks from one bar early", () => {
+    expect(scoreFooterCues(biz, 170)).toEqual([{ kind: "final", tone: "idle" }]);
+    expect(scoreFooterCues(biz, 172.8)).toEqual([{ kind: "final", tone: "soon" }]);
+    expect(scoreFooterCues(biz, 174.6)).toEqual([{ kind: "final", tone: "now" }]);
+    expect(scoreFooterCues(biz, 176.4)).toEqual([{ kind: "final", tone: "now" }]);
+    expect(scoreFooterCues(biz, 178.2)).toEqual([{ kind: "final", tone: "idle" }]);
+    expect(scoreFooterCues(biz, undefined)).toEqual([{ kind: "final", tone: "idle" }]);
   });
 });

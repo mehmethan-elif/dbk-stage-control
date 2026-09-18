@@ -177,6 +177,7 @@ export function overlayHostSongMeta(practice: Song[], host: Song[]): Song[] {
       kita: hostSong.kita ?? song.kita,
       duration: song.duration > 0 ? song.duration : hostSong.duration,
       nextSongAt: song.nextSongAt ?? hostSong.nextSongAt,
+      finalAt: song.finalAt ?? hostSong.finalAt,
       tempoMap: thinChart && hostSong.tempoMap.length > 0 ? hostSong.tempoMap : song.tempoMap,
       sections: thinChart ? hostSong.sections : song.sections,
       lyrics: (song.lyrics?.length ?? 0) > 0 ? song.lyrics : hostSong.lyrics,

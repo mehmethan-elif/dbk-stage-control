@@ -196,6 +196,8 @@ export interface Song {
   duration: number;
   clickDuration?: number;
   nextSongAt?: number;
+  /** Seconds into the song at the FINAL marker, when the export found one. */
+  finalAt?: number;
   key?: string;
   scale?: string;
   style?: string;
@@ -317,6 +319,7 @@ export function normalizeSong(raw: unknown, folder?: string): Song {
     duration: Number.isFinite(duration) && duration >= 0 ? duration : (info.duration ?? 0),
     clickDuration: typeof record.clickDuration === "number" ? record.clickDuration : undefined,
     nextSongAt: typeof record.nextSongAt === "number" ? record.nextSongAt : undefined,
+    finalAt: typeof record.finalAt === "number" ? record.finalAt : undefined,
     key: typeof record.key === "string" ? record.key : info.key,
     scale: typeof record.scale === "string" ? record.scale : info.scale,
     style: typeof record.style === "string" ? record.style : info.style,

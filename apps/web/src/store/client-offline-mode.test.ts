@@ -536,10 +536,7 @@ describe("practice landing after a song ends", () => {
     selectedEntryId: string
   ): Parameters<typeof practiceEndedSelectionId>[0] {
     return {
-      deviceKind: "client",
-      clientSession: "practice",
-      syncConnected: false,
-      gigId: "gig",
+      ...practiceState({}),
       selectedEntryId,
       songs,
       gigs: [
@@ -552,7 +549,7 @@ describe("practice landing after a song ends", () => {
           performanceMode: SetlistPerformanceMode.FollowSongInfo
         }
       ]
-    } as unknown as Parameters<typeof practiceEndedSelectionId>[0];
+    };
   }
 
   const s1 = keyed("s1", "D MINOR");
@@ -590,4 +587,3 @@ describe("practice landing after a song ends", () => {
     expect(practiceEndedSelectionId(endedState([e1], [s1], "e1"))).toBeNull();
   });
 });
-

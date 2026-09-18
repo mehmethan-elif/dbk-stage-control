@@ -3,9 +3,11 @@ import {
   dropMissingSetlistSongs,
   localFoldersNotOnRemote,
   needsClientLibraryDownload,
+  publishedChartSettings,
   publishedLibraryMissing,
   publishedSongTitle,
-  resolvePublishedSongId
+  resolvePublishedSongId,
+  withPublishedChartSettings
 } from "./client-library.js";
 import { FinishMode, type Gig } from "./models.js";
 
@@ -60,6 +62,38 @@ describe("publishedLibraryMissing", () => {
         tuna_nehri: [{ path: "song.json", size: 8, hash: "c" }]
       })
     ).toEqual([]);
+  });
+});
+
+describe("withPublishedChartSettings", () => {
+  const index = {
+    name: "DBK",
+    songs: [
+      {
+        id: "biz",
+        folder: "biz",
+        title: "Biz",
+        files: [
+          { path: "song.json", size: 10, hash: "a" },
+          { path: "settings.json", size: 4, hash: "s" }
+        ]
+      }
+    ]
+  };
+
+  it("queues every settings.json even when the local hash already matches", () => {
+    expect(publishedChartSettings(index).map((item) => item.file.path)).toEqual(["settings.json"]);
+    expect(
+      withPublishedChartSettings(
+        publishedLibraryMissing(index, {
+          biz: [
+            { path: "song.json", size: 10, hash: "a" },
+            { path: "settings.json", size: 4, hash: "s" }
+          ]
+        }),
+        index
+      ).map((item) => item.file.path)
+    ).toEqual(["settings.json"]);
   });
 });
 

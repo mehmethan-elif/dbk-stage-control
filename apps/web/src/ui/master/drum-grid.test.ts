@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formAt, formNextAt, songForm, type PatternEvent, type Song, type TempoPoint } from "@dbk/core";
-import { buildHits, drumBarSteps, drumFollowKey, nextDrumPatternRun, writtenChart } from "./DrumView";
+import { buildHits, drumBarSteps, drumFollowKey, nextDrumPatternRun, visitFillCue, writtenChart } from "./DrumView";
 
 const waltz: TempoPoint[] = [{ time: 0, measure: 1, bpm: 75, numerator: 3, denominator: 4 }];
 const common: TempoPoint[] = [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }];
@@ -113,6 +113,54 @@ describe("writtenChart", () => {
       ["TUS", 2],
       ["TUS", 1]
     ]);
+  });
+
+  it("puts a mid-section FILL on that bar, not the last bar of the NAK", () => {
+    const rock = (start: number, end: number): PatternEvent => ({
+      text: "ROCK",
+      time: start,
+      end,
+      length: end - start,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: [{ time: start, pitch: 48, numerator: 4, denominator: 4 }]
+    });
+    const fill = (start: number, end: number): PatternEvent => ({
+      text: "FILL",
+      time: start,
+      end,
+      length: end - start,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: []
+    });
+    const target: Song = {
+      ...song([
+        { name: "ARA", start: 0, end: 4 },
+        { name: "NAK", start: 4, end: 22 },
+        { name: "ARA", start: 22, end: 26 },
+        { name: "NAK", start: 26, end: 44 }
+      ]),
+      patterns: [rock(0, 2), fill(2, 4), rock(4, 6), fill(20, 22), rock(22, 24), fill(24, 26), rock(26, 28), fill(36, 38)]
+    };
+    const form = songForm(target, { identity: "drums" });
+    const rows = writtenChart(target, form);
+    expect(form.blocks.map((block) => [block.name, block.coda, block.toCoda])).toEqual([
+      ["ARA", false, false],
+      ["NAK", false, false]
+    ]);
+    expect(rows.find((row) => row.section.name === "NAK")?.runs.map((run) => [run.name, run.repeats, run.cue?.start])).toEqual([
+      ["ROCK", 9, 20]
+    ]);
+    expect(visitFillCue(target, { start: 26, end: 44 })).toEqual({
+      text: "FILL",
+      start: 36,
+      end: 38
+    });
   });
 });
 

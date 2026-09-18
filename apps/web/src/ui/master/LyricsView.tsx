@@ -49,9 +49,9 @@ import {
 } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
 import { upcomingSongLeadIn } from "./next-song-section";
-import { lyricLineShowsRall } from "./rall-alert";
 import { sectionBarClass } from "./section-color";
 import { lyricBlocks, stageRows } from "./lyric-rows";
+import { paintSongCueBars, SongCueBars } from "./song-cue-bar";
 
 function cueFill(
   current: number,
@@ -359,6 +359,7 @@ function SongLyrics(props: {
           );
           applyCueClasses(el, at, index, Boolean(props.chainNext));
         }
+        paintSongCueBars(root, props.song, t, true, "lyric");
       }
       handle = requestAnimationFrame(loop);
     };
@@ -392,10 +393,6 @@ function SongLyrics(props: {
         rows.map((row, index) => {
           const lead = Boolean(props.leadIn && index === 0);
           const state = lead ? " next future" : cueClass(current, index, props.chainNext);
-          const rall =
-            Boolean(props.followRall) &&
-            row.kind === "lyric" &&
-            lyricLineShowsRall(props.song, row.line, props.time);
           return row.kind === "section" ? (
             <CueRow
               key={`section-${row.time}-${row.name}-${index}`}
@@ -410,28 +407,23 @@ function SongLyrics(props: {
             <CueRow
               key={`${row.line.time}-${row.lyricIndex}`}
               index={index}
-              className={`lyrics-line lyrics-cue${state}${rall ? " is-rall" : ""}`}
+              className={`lyrics-line lyrics-cue${state}`}
               fill={cueFill(current, index, row.time, row.end, props.time, props.song?.tempoMap)}
               leadIn={lead}
             >
-              {rall ? (
-                <>
-                  <div className="lyrics-rall-text">
-                    {lyricBlocks(row.line).map((block, blockIndex) => (
-                      <div key={`${row.line.time}-${row.lyricIndex}-${blockIndex}`}>{block}</div>
-                    ))}
-                  </div>
-                  <span className="lyrics-rall-mark">RALL</span>
-                </>
-              ) : (
-                lyricBlocks(row.line).map((block, blockIndex) => (
-                  <div key={`${row.line.time}-${row.lyricIndex}-${blockIndex}`}>{block}</div>
-                ))
-              )}
+              {lyricBlocks(row.line).map((block, blockIndex) => (
+                <div key={`${row.line.time}-${row.lyricIndex}-${blockIndex}`}>{block}</div>
+              ))}
             </CueRow>
           );
         })
       )}
+      <SongCueBars
+        song={props.song}
+        time={props.time}
+        active={Boolean(props.live || props.followRall)}
+        attrPrefix="lyric"
+      />
     </article>
   );
 }

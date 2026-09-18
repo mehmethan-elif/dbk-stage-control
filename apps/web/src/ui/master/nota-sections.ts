@@ -548,17 +548,19 @@ export function clearNotaLayoutMemory(): void {
 
 export function preferNotaLayout(
   cached: { rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] } | undefined,
-  disk: { rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] }
+  disk: { rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] },
+  options?: { keepEdits?: boolean }
 ): { rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] } {
   const diskMeasures = disk.rects.filter((box) => !isSectionLabel(box)).length;
   const cacheMeasures = cached?.rects.filter((box) => !isSectionLabel(box)).length ?? 0;
-  if (cached && cacheMeasures >= diskMeasures) return cached;
+  if (cached && cacheMeasures >= diskMeasures && options?.keepEdits !== false) return cached;
   return disk;
 }
 
 export async function loadNotaLayout(
   songId: string,
-  sections: Section[] = []
+  sections: Section[] = [],
+  options?: { keepEdits?: boolean }
 ): Promise<{ rects: NotaSectionBox[]; brokenChains: BrokenMeasureChain[] }> {
   const cached = notaLayoutMemory.get(songId);
   try {
@@ -568,7 +570,7 @@ export async function loadNotaLayout(
       rects,
       brokenChains: effectiveBrokenChains(rects, parseBrokenChains(settings.notaSections))
     };
-    const layout = preferNotaLayout(cached, disk);
+    const layout = preferNotaLayout(cached, disk, options);
     rememberNotaLayout(songId, layout.rects, layout.brokenChains);
     return layout;
   } catch {

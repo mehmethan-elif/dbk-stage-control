@@ -1,3 +1,4 @@
+import { DirectPassMark } from "./DirectPassMark";
 import { useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import {
   canInsertElifAfter,
@@ -274,6 +275,7 @@ export function StageSetlist(props: {
         }${lockRows ? " is-frozen" : ""}`}
         onPointerDown={(event) => onPointerDown(entry.entryId, event)}
       >
+        {!songLibrary && songNumber > 1 ? <DirectPassMark song={item} setlist /> : null}
         <StageSongRow
           song={item}
           files={item ? fileIndex[item.id] : undefined}

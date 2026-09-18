@@ -19,7 +19,7 @@ import {
   stepsForMeasure,
   type ChordNoteHit
 } from "./chord-notes";
-import { firstTempoChangeMeasure } from "./rall-alert";
+import { finalMeasure, firstTempoChangeMeasure } from "./rall-alert";
 
 const TIME_EPS = 0.02;
 
@@ -116,6 +116,7 @@ export interface ChordChart {
   /** Bars marked 1. or 2. where two passes end differently. */
   endings: Set<string>;
   rall: ChordRall | null;
+  final: ChordRall | null;
 }
 
 export interface ChordPlayhead extends ChordBarRef {
@@ -507,7 +508,21 @@ function spansOfRow(owner: string, item: Written): ChordSpan[] {
   const last = spans[spans.length - 1];
   if (item.opens && first) first.opens = true;
   if (item.closes > 1 && last) last.closes = item.closes;
+  applyFormRepeatMarks(item, spans);
   return spans;
+}
+
+/**
+ * A form repeat that jumps back a section (Yolcu's CEV into NAK) is marked on those blocks.
+ * The signs belong on the chord and note rows, so the name bars stay names.
+ */
+function applyFormRepeatMarks(item: Written, spans: ChordSpan[]): void {
+  const first = spans[0];
+  const last = spans[spans.length - 1];
+  if (item.heads.some((head) => head.block.repeatStart) && first) first.opens = true;
+  if (item.heads.some((head) => head.block.repeatEnd) && last) {
+    last.closes = last.closes && last.closes > 1 ? last.closes : 2;
+  }
 }
 
 function nameBarWidth(spans: ChordSpan[]): number {
@@ -533,7 +548,8 @@ export function chordChart(song: Song | undefined, form: SongForm): ChordChart {
       bounds: new Map(),
       named: new Map(),
       endings: new Set(),
-      rall: null
+      rall: null,
+      final: null
     };
   }
   const written: Written[] = [];
@@ -550,6 +566,14 @@ export function chordChart(song: Song | undefined, form: SongForm): ChordChart {
       last.bars.push(...bars);
       last.owners.push(...bars.map(() => block.id));
       last.prints.push(...prints);
+      const shown = last.heads[0];
+      if (shown) {
+        if (block.ds) shown.block.ds = true;
+        if (block.toCoda) {
+          shown.block.toCoda = true;
+          if (block.toCodaAt != null) shown.block.toCodaAt = block.toCodaAt;
+        }
+      }
       continue;
     }
     written.push({
@@ -618,25 +642,38 @@ export function chordChart(song: Song | undefined, form: SongForm): ChordChart {
     });
     return { heads: item.heads, spans, width: nameBarWidth(spans) };
   });
-  return { rows, drawn, bounds, named, endings, rall: rallOf(song, drawn, form) };
+  return {
+    rows,
+    drawn,
+    bounds,
+    named,
+    endings,
+    rall: cueOf(song, drawn, form, firstTempoChangeMeasure(song.tempoMap)),
+    final: cueOf(song, drawn, form, finalMeasure(song))
+  };
 }
 
 /**
- * The bar the rall is read from. The bar it is played in is often not on the page at all — the
+ * The bar a cue is read from. The bar it is played in is often not on the page at all — the
  * last pass of Karahisar's NAK is read off the bars written for the pass before it — so the sign
  * goes over the line those bars are on, and lights when the band reaches the pass that slows.
  */
-function rallOf(song: Song, drawn: Map<string, ChordBarRef>, form: SongForm): ChordRall | null {
-  const measure = firstTempoChangeMeasure(song.tempoMap);
+function cueOf(
+  song: Song,
+  drawn: Map<string, ChordBarRef>,
+  form: SongForm,
+  measure: number | undefined
+): ChordRall | null {
   if (measure == null) return null;
   for (const [key, shown] of drawn) {
     const cut = key.lastIndexOf("#");
     if (Number(key.slice(cut + 1)) !== measure) continue;
     return { shown, measure, blockId: key.slice(0, cut) };
   }
-  const point = (song.tempoMap ?? []).find((item) => item.measure === measure);
-  if (!point) return null;
-  const pos = formAt(form, point.time + TIME_EPS);
+  const fromMap = (song.tempoMap ?? []).find((item) => item.measure === measure);
+  const time = fromMap?.time ?? (Number.isFinite(song.finalAt) ? song.finalAt : undefined);
+  if (time == null) return null;
+  const pos = formAt(form, time + TIME_EPS);
   if (!pos) return null;
   const originMeasure = timeToMusical(song.tempoMap ?? [], pos.originTime + TIME_EPS).measure;
   const shown = drawn.get(barKey(pos.block.id, originMeasure));
@@ -703,15 +740,19 @@ export function chordPlayhead(
   const phase = Math.min(1, Math.max(0, (pos.originTime - bar.start) / length));
   const playing = chart.named.get(pos.block.id) ?? pos.block.id;
   const onward = chart.drawn.get(barKey(pos.block.id, measure + 1));
+  const visitEnd = pos.block.originStart + Math.max(TIME_EPS, pos.visit.end - pos.visit.start);
+  const onwardInVisit = Boolean(onward && bar.end < visitEnd - TIME_EPS);
   let next: ChordBarRef | null = null;
   let nextPlaying: string | null = null;
-  if (onward) {
+  if (onwardInVisit && onward) {
     next = onward;
     nextPlaying = playing;
   } else if (!chainNext) {
     const played = measureEndAt(map, time);
     const after =
-      played >= pos.visit.end - TIME_EPS ? pos.block.originEnd : measureEndAt(map, pos.originTime);
+      played >= pos.visit.end - TIME_EPS || bar.end >= visitEnd - TIME_EPS
+        ? pos.block.originEnd
+        : measureEndAt(map, pos.originTime);
     const nextPos = formNextAt(form, time, after);
     if (nextPos) {
       const top = timeToMusical(map, nextPos.block.originStart + TIME_EPS).measure;
@@ -719,11 +760,16 @@ export function chordPlayhead(
       nextPlaying = chart.named.get(nextPos.block.id) ?? nextPos.block.id;
     }
   }
+  const lastVisit = form.visits[form.visits.length - 1] === pos.visit;
+  const showNext =
+    Boolean(next) &&
+    (showsNextChordMeasure(chart, here, next!, playing, nextPlaying) ||
+      (lastVisit && (next!.blockId !== here.blockId || next!.measure !== here.measure)));
   return {
     ...here,
     phase,
     playing,
-    next: next && showsNextChordMeasure(chart, here, next, playing, nextPlaying) ? next : null,
-    nextPlaying
+    next: showNext ? next : null,
+    nextPlaying: showNext ? nextPlaying : playing
   };
 }
