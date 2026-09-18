@@ -1,5 +1,5 @@
 import { DirectPassMark } from "./DirectPassMark";
-import { useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from "react";
+import { useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import {
   canInsertElifAfter,
   createId,
@@ -133,6 +133,18 @@ export function StageSetlist(props: {
   } | null>(null);
   const [liveOrder, setLiveOrder] = useState<string[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  // Each top-row page (Nota, Chords, Drums, Lyrics, ...) renders its own StageSetlist, so
+  // switching pages unmounts and remounts this list — this always fires on that first render.
+  // It also re-fires whenever the selection changes, such as tapping a song title on the page
+  // itself (StageSongHead's openSong), so the sidebar follows without jumping when it's already
+  // in view: scrollIntoView("nearest") only moves the list when the row is actually offscreen.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const active = list.querySelector<HTMLElement>(".lyrics-set-block.on, .lyrics-set-item.on");
+    active?.scrollIntoView({ block: "nearest" });
+  }, [props.selectedEntryId]);
 
   // Annotated because dropping the locked ELIF KONUSMA rows leaves the spoken ones, and an
   // inferred predicate reads the filter as keeping songs only.

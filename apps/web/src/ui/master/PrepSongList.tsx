@@ -1,5 +1,5 @@
 import { DirectPassMark } from "./DirectPassMark";
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import {
   canInsertElifAfter,
   createId,
@@ -151,6 +151,15 @@ export function PrepSongList(props: {
     }
     selectSetlistEntry(first.entryId);
   }, [gig?.id, gig?.setlist, selectedEntryId, selectSetlistEntry]);
+
+  // Switching to another top-row page (Nota, Chords, Drums, ...) unmounts this list; when it
+  // remounts on return, keep the selected song in view instead of landing back at the top.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const active = list.querySelector<HTMLElement>(".set-block.active, .prep-lib-wrap.active");
+    active?.scrollIntoView({ block: "nearest" });
+  }, []);
 
   const songMap = new Map(songs.map((song) => [song.id, song]));
   const listEntries = gig && !songLibrary
