@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 5259,
-    "hash": "b536fc8b3ea48b039146886d611b379627ba02dbca0303b0e7ff64d7ec361f6d"
+    "size": 5416,
+    "hash": "542b838163bb3bfe7bd894cb66b8acf9cc3d9ce1912cdd1930f1f34da2878574"
   },
   "songs": [
     {
@@ -291,8 +291,35 @@
         },
         {
           "path": "song.json",
-          "size": 90605,
-          "hash": "634cce1a9eec25573a28a025a54024669899f7a89025400952bad806841779ab"
+          "size": 92087,
+          "hash": "2a4ba66a4ffd0b996a6cf99d0d0ef2a0c4a8f9ad63a2c6bc09bf1eb83dc39af5"
+        }
+      ]
+    },
+    {
+      "id": "kag_zmana_ismarlad_m",
+      "folder": "kag_zmana_ismarlad_m",
+      "title": "Kağızmana Ismarladım",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2077674,
+          "hash": "9ab0623d195b67e68eaa641506b43156399ce882cb05340c2f80b643e47fa85d"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 17219,
+          "hash": "b09c76916083782f6700d39d77e8acf41cc461648f086e73a18d593460beb3b3"
+        },
+        {
+          "path": "settings.json",
+          "size": 10079,
+          "hash": "e666a8faaa0cefa2c862bce4ea05c6ba871e2f12301ecea508d48c63331293b9"
+        },
+        {
+          "path": "song.json",
+          "size": 112442,
+          "hash": "2ff45fc95261337eb5c5e4daba520a79a61980be9962c4e38517566765172bfb"
         }
       ]
     },
