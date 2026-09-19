@@ -95,6 +95,16 @@
           "type": "song",
           "entryId": "entry_0b431938-7ae9-4766-868e-f66b01b188cf",
           "songId": "arpa_bug_day_daneler"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_754748c7-374b-487e-8158-caffcba6c4eb",
+          "songId": "osman_ag_a"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_3d28195d-ab8a-4be1-8571-435d8684cceb",
+          "songId": "bahc_e_duvar_ndan_as_t_m"
         }
       ],
       "busMix": {

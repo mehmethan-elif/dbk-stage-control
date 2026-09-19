@@ -228,4 +228,32 @@ describe("final cues", () => {
     expect(scoreFooterCues(biz, 178.2)).toEqual([{ kind: "final", tone: "idle" }]);
     expect(scoreFooterCues(biz, undefined)).toEqual([{ kind: "final", tone: "idle" }]);
   });
+
+  it("still warns when the last section is itself named FINAL", () => {
+    const named = {
+      ...biz,
+      finalAt: 174.545455,
+      sections: [
+        { name: "SAN 2", start: 149.090909, end: 174.545455 },
+        { name: "FINAL", start: 174.545455, end: 178.181818 }
+      ]
+    } as Song;
+    expect(songCues(named)).toEqual(["final"]);
+    expect(scoreFooterCues(named, 172.8)).toEqual([{ kind: "final", tone: "soon" }]);
+    expect(scoreFooterCues(named, 174.6)).toEqual([{ kind: "final", tone: "now" }]);
+  });
+
+  it("treats a FINAL section as the marker when the export has no FINAL time", () => {
+    const onlySection = {
+      ...biz,
+      finalAt: undefined,
+      sections: [
+        { name: "SAN", start: 0, end: 174.545455 },
+        { name: "FINAL", start: 174.545455, end: 178.181818 }
+      ]
+    } as Song;
+    expect(finalMeasure(onlySection)).toBe(97);
+    expect(songCues(onlySection)).toEqual(["final"]);
+    expect(scoreFooterCues(onlySection, 172.8)).toEqual([{ kind: "final", tone: "soon" }]);
+  });
 });

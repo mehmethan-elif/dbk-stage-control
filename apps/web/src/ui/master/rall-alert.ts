@@ -101,12 +101,29 @@ export function rallOwnerSection(song: Pick<Song, "sections" | "tempoMap">): Sec
   return sectionAtTime(song.sections, point.time);
 }
 
+export function isFinalSectionName(name: string): boolean {
+  return name.trim().toLocaleUpperCase("tr-TR") === "FINAL";
+}
+
+/** Reaper FINAL marker, or the last section actually named FINAL. */
+export function finalMarkerTime(
+  song: Pick<Song, "finalAt" | "sections"> | undefined
+): number | undefined {
+  const at = song?.finalAt;
+  if (at != null && Number.isFinite(at) && at >= 0) return at;
+  const named = [...(song?.sections ?? [])].reverse().find((section) => isFinalSectionName(section.name));
+  return named?.start;
+}
+
 export function finalOwnerSection(
   song: Pick<Song, "sections" | "finalAt" | "tempoMap">
 ): Section | undefined {
-  const at = song.finalAt;
-  if (at == null || !Number.isFinite(at)) return undefined;
-  return sectionAtTime(song.sections, at);
+  const at = finalMarkerTime(song);
+  if (at == null) return undefined;
+  return (
+    sectionAtTime(song.sections, at) ??
+    [...song.sections].reverse().find((section) => isFinalSectionName(section.name))
+  );
 }
 
 function runShowsCueBar(
@@ -176,11 +193,13 @@ export function runCoversAbsoluteMeasure(
   return measure >= first && measure <= last;
 }
 
-/** Absolute measure of the FINAL marker, when the export found one. */
-export function finalMeasure(song: Pick<Song, "finalAt" | "tempoMap"> | undefined): number | undefined {
-  const at = song?.finalAt;
-  if (at == null || !Number.isFinite(at) || at < 0) return undefined;
-  return timeToMusical([...(song.tempoMap ?? [])], at).measure;
+/** Absolute measure of the FINAL marker, when the export or a FINAL section found one. */
+export function finalMeasure(
+  song: Pick<Song, "finalAt" | "tempoMap" | "sections"> | undefined
+): number | undefined {
+  const at = finalMarkerTime(song);
+  if (at == null) return undefined;
+  return timeToMusical([...(song?.tempoMap ?? [])], at).measure;
 }
 
 export function lastFormMeasure(
@@ -239,10 +258,6 @@ export function finalDrumTone(
 
 export type SongCueKind = "rall" | "final";
 
-export function isFinalSectionName(name: string): boolean {
-  return name.trim().toLocaleUpperCase("tr-TR") === "FINAL";
-}
-
 function lastSectionName(
   song: Pick<Song, "sections"> | undefined
 ): string | undefined {
@@ -250,7 +265,7 @@ function lastSectionName(
   return sections[sections.length - 1]?.name;
 }
 
-/** Cues drawn as a last section bar — skipped when that name is already the last section. */
+/** Cues drawn as a last section bar. FINAL still warns when a real FINAL section exists. */
 export function songCues(
   song: Pick<Song, "finalAt" | "tempoMap" | "sections" | "duration"> | undefined
 ): SongCueKind[] {
@@ -260,7 +275,7 @@ export function songCues(
   if (firstTempoChangeMeasure(song.tempoMap) != null && !isRallSectionName(last ?? "")) {
     cues.push("rall");
   }
-  if (finalMeasure(song) != null && !isFinalSectionName(last ?? "")) {
+  if (finalMeasure(song) != null) {
     cues.push("final");
   }
   return cues;

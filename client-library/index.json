@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 4340,
-    "hash": "4c962759aec61c724ed948ce6139cba12af4e5b2641bcd6725eb32cd06e7581a"
+    "size": 4648,
+    "hash": "99a652c4e7cfc30151e07d183007a8a4bc1ad2fb1b5c3efdafbc4d4dc7c201c1"
   },
   "songs": [
     {
@@ -57,6 +57,33 @@
           "path": "song.json",
           "size": 148713,
           "hash": "54ed7113bcdb4f66135885c8ba2ce2d2e8e7bec5f46e99748ef509464c6f0b1b"
+        }
+      ]
+    },
+    {
+      "id": "bahc_e_duvar_ndan_as_t_m",
+      "folder": "bahc_e_duvar_ndan_as_t_m",
+      "title": "Bahçe Duvarından Aştım",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2269935,
+          "hash": "c853be7f5b34bd155287b515d3a89239051d92465c1c8d87627d13035c61efd4"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 33590,
+          "hash": "29c64f3023275b0965881e764fa1dd569b4178821be95f1ad580ae9d03a78548"
+        },
+        {
+          "path": "settings.json",
+          "size": 9953,
+          "hash": "d9833d917996e3e218f971eca69ac3ccd463e4525895ed530600a317e1e093a3"
+        },
+        {
+          "path": "song.json",
+          "size": 94655,
+          "hash": "4c0d05689a34af27a029ee63cd606992ff4a9fbf04e4a6de349cb2ac26098517"
         }
       ]
     },
@@ -279,8 +306,8 @@
         },
         {
           "path": "song.json",
-          "size": 123556,
-          "hash": "59f8f798bfd64ee973b49eba5883acb65da4aac9a3f2d560edfad780faa13a4d"
+          "size": 123558,
+          "hash": "ff7e09feaefc9c5570c4d151ccf7485075bd955cd08897af9d08984b10633b89"
         }
       ]
     },
@@ -362,6 +389,33 @@
           "path": "song.json",
           "size": 231192,
           "hash": "877b4e8ed85418f97f7d4e6857bd83bbda102caf56abc76579720c50d48b97d2"
+        }
+      ]
+    },
+    {
+      "id": "osman_ag_a",
+      "folder": "osman_ag_a",
+      "title": "Osman Ağa",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2065971,
+          "hash": "fe81b76efb7d9e5491abcd9aee08d6d096a2d029d5267102e2b383a9749cce25"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 25558,
+          "hash": "2850dbbc8c564639fe9d4355d0a35b72a2440c42ad8c6449759a85d1fe4a434b"
+        },
+        {
+          "path": "settings.json",
+          "size": 7877,
+          "hash": "821135e7a9b28b2567b5db53072a36dc46b74a702619de432f276490cdde237d"
+        },
+        {
+          "path": "song.json",
+          "size": 104767,
+          "hash": "01fe92208c7d742a5adb157496b7761a156d396166260127eb26c8a5947ce1e8"
         }
       ]
     },

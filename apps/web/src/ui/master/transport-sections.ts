@@ -40,7 +40,15 @@ export function songTransportSections(song: Song | undefined): TransportSection[
   if (!song) return sections;
   for (const kind of songCues(song)) {
     const extra = kind === "rall" ? rallTransportSection(song) : finalTransportSection(song);
-    if (extra) sections.push(extra);
+    if (
+      extra &&
+      !sections.some(
+        (section) =>
+          section.name === extra.name && Math.abs(section.start - extra.start) < 0.02
+      )
+    ) {
+      sections.push(extra);
+    }
   }
   return sections;
 }
