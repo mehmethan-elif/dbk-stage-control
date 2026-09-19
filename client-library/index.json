@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 4648,
-    "hash": "99a652c4e7cfc30151e07d183007a8a4bc1ad2fb1b5c3efdafbc4d4dc7c201c1"
+    "size": 4946,
+    "hash": "bb78c0c59f5511b1623c235cdbf1676f779ebc1704964830005335c58b4192bb"
   },
   "songs": [
     {
@@ -239,6 +239,33 @@
           "path": "song.json",
           "size": 159482,
           "hash": "4482bbf0a44b02eb5da72f51441ba5e76874cd266c51021e7389dca75cfeeaf5"
+        }
+      ]
+    },
+    {
+      "id": "kara_go_zu_n_ay_badan",
+      "folder": "kara_go_zu_n_ay_badan",
+      "title": "Kara Gözün Ay Badan",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3313161,
+          "hash": "7650b1d559595955ebd8d453f1fae8394184bd264e4691c557978ed61c5fc957"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 32235,
+          "hash": "0666d195b82c70fece4828a3c35b4bf31a9096b5b4bc799c8a92f3b3873e6350"
+        },
+        {
+          "path": "settings.json",
+          "size": 18269,
+          "hash": "6a0caa62e23aa470e10c64a990936249b5cbad1efd65c3b0b93fae1783a3baaf"
+        },
+        {
+          "path": "song.json",
+          "size": 161848,
+          "hash": "14adb8e21e4106198a19e0d07091fe07bd3213484a1f69898e564d27ab594dd6"
         }
       ]
     },

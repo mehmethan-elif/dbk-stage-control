@@ -105,6 +105,16 @@
           "type": "song",
           "entryId": "entry_3d28195d-ab8a-4be1-8571-435d8684cceb",
           "songId": "bahc_e_duvar_ndan_as_t_m"
+        },
+        {
+          "type": "talk",
+          "entryId": "entry_fc86bc8c-bb2e-4e2d-9d17-9f086f0bff5f",
+          "label": "STOP"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_c2dc763f-b70f-4f11-b546-0a4cd29b2589",
+          "songId": "kara_go_zu_n_ay_badan"
         }
       ],
       "busMix": {

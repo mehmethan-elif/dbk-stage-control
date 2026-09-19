@@ -82,6 +82,36 @@ describe("songForm", () => {
     expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
   });
 
+  it("puts D.S. on a mid-song FINAL instead of a coda when the form then goes back", () => {
+    const form = songForm(
+      song([
+        { name: "COUNT", start: 0, end: 2 },
+        { name: "INTRO", start: 2, end: 6 },
+        { name: "ARA", start: 6, end: 10 },
+        { name: "NAK", start: 10, end: 14 },
+        { name: "NAK", start: 14, end: 18 },
+        { name: "FINAL", start: 18, end: 20 },
+        { name: "INTRO", start: 20, end: 24 },
+        { name: "ARA", start: 24, end: 28 },
+        { name: "NAK", start: 28, end: 32 },
+        { name: "NAK", start: 32, end: 36 },
+        { name: "FINAL", start: 36, end: 38 }
+      ])
+    );
+
+    expect(form.blocks.map((block) => block.name)).toEqual([
+      "COUNT",
+      "INTRO",
+      "ARA",
+      "NAK",
+      "NAK",
+      "FINAL"
+    ]);
+    expect(form.blocks.find((block) => block.name === "INTRO")?.segno).toBe(true);
+    expect(form.blocks.find((block) => block.name === "FINAL")?.ds).toBe(true);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
+  });
+
   it("reads a second cycle as D.S. when its notes land a millisecond later", () => {
     const note = (time: number) => ({ time, pitch: 60, numerator: 4, denominator: 4 });
     const chord = (time: number, text: string, drift = 0) => ({

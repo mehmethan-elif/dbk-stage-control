@@ -348,6 +348,23 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
     });
   }
 
+  // A FINAL in the middle of the first pass is a tag, not a landing. Kara Gözün
+  // Ay Badan plays FINAL, then goes back to the INTRO; that is D.S., and the
+  // last NAK must not carry "to Coda".
+  for (const block of blocks) {
+    if (!block.coda || !isCodaName(block.name)) continue;
+    const returnsAfter = visits.some((visit, index) => {
+      if (visit.blockId !== block.id) return false;
+      const next = visits[index + 1];
+      return Boolean(next && (next.fromJump === "ds" || next.fromJump === "repeat"));
+    });
+    if (!returnsAfter) continue;
+    block.coda = false;
+    for (const visit of visits) {
+      if (visit.blockId === block.id && visit.fromJump === "coda") visit.fromJump = "none";
+    }
+  }
+
   const firstReturn = visits.find((visit) => visit.fromJump === "ds");
   if (firstReturn) {
     const segno = blocks.find((block) => block.id === firstReturn.blockId);
