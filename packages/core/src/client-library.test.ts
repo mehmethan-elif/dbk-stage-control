@@ -81,8 +81,11 @@ describe("withPublishedChartSettings", () => {
     ]
   };
 
-  it("queues every settings.json even when the local hash already matches", () => {
-    expect(publishedChartSettings(index).map((item) => item.file.path)).toEqual(["settings.json"]);
+  it("queues song.json and settings.json even when the local hash already matches", () => {
+    expect(publishedChartSettings(index).map((item) => item.file.path)).toEqual([
+      "song.json",
+      "settings.json"
+    ]);
     expect(
       withPublishedChartSettings(
         publishedLibraryMissing(index, {
@@ -93,7 +96,7 @@ describe("withPublishedChartSettings", () => {
         }),
         index
       ).map((item) => item.file.path)
-    ).toEqual(["settings.json"]);
+    ).toEqual(["song.json", "settings.json"]);
   });
 });
 

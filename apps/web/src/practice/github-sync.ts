@@ -55,7 +55,7 @@ async function practiceChartLooksValid(folder: string, path: string): Promise<bo
 }
 
 async function fetchClientLibraryIndex(): Promise<ClientLibraryIndex | null> {
-  const response = await fetch(cacheBusted(clientLibraryUrl("index.json")), { cache: "no-store" });
+      const response = await fetch(cacheBusted(clientLibraryUrl("index.json")), { cache: "reload" });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Library ${response.status}`);
   return (await response.json()) as ClientLibraryIndex;
@@ -91,7 +91,7 @@ async function fetchPublishedBuffer(url: string): Promise<ArrayBuffer> {
   let lastError = "Network error";
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const response = await fetch(cacheBusted(url), { cache: "no-store" });
+      const response = await fetch(cacheBusted(url), { cache: "reload" });
       if (!response.ok) {
         lastError = `HTTP ${response.status}`;
         await wait(400 * attempt);

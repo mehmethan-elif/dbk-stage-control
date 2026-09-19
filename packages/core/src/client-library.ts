@@ -125,9 +125,12 @@ export function publishedLibraryMissing(
   });
 }
 
-/** Score boxes live in settings.json; always re-fetch them even when the index hash looks current. */
+/** Charts and boxes: always re-fetch even when the index hash looks current. */
 export function publishedChartSettings(index: ClientLibraryIndex) {
-  return publishedPracticeFiles(index).filter((item) => item.file.path.toLowerCase() === "settings.json");
+  return publishedPracticeFiles(index).filter((item) => {
+    const path = item.file.path.toLowerCase();
+    return path === "settings.json" || path === "song.json";
+  });
 }
 
 export function withPublishedChartSettings<T extends { folder: string; file: { path: string } }>(

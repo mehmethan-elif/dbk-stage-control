@@ -5259,6 +5259,7 @@
     "scale": "HICAZ",
     "style": "ANKARA",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "startAt": 0
   }
 }
