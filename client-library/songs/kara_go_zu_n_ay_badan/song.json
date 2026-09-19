@@ -3,6 +3,7 @@
   "version": 1,
   "title": "Kara Gözün Ay Badan",
   "duration": 207,
+  "clickDuration": 207,
   "nextSongAt": 200,
   "finalAt": 197,
   "key": "D",

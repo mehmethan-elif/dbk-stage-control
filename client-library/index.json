@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 4946,
-    "hash": "bb78c0c59f5511b1623c235cdbf1676f779ebc1704964830005335c58b4192bb"
+    "size": 5259,
+    "hash": "b536fc8b3ea48b039146886d611b379627ba02dbca0303b0e7ff64d7ec361f6d"
   },
   "songs": [
     {
@@ -84,6 +84,33 @@
           "path": "song.json",
           "size": 94704,
           "hash": "8303d200556a1e4e768971dc6a091f4096c65106d2e3dabca462e36d2b8bbb8e"
+        }
+      ]
+    },
+    {
+      "id": "bahc_esi_var_bag_var",
+      "folder": "bahc_esi_var_bag_var",
+      "title": "Bahçesi Var Bağı Var",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2102751,
+          "hash": "8a2a44de261e5f5e1b825efb932548e3da7b07fc45622098cde73ec279a880eb"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 31045,
+          "hash": "4ac617d22176721194db9bd99cbef20ce5757f2ebcbf401a30eef119c02cd251"
+        },
+        {
+          "path": "settings.json",
+          "size": 14122,
+          "hash": "e1fe5b7bcfa858a4dc69aea87bc9fa120991cf8947c6f27b632245ccbe1af4ff"
+        },
+        {
+          "path": "song.json",
+          "size": 109635,
+          "hash": "6984d739042c32562dfe18fc1d577ffac22debaba634bb465ed81b4bcc2e01b5"
         }
       ]
     },
@@ -243,6 +270,33 @@
       ]
     },
     {
+      "id": "i_ndim_dere_irmag_a",
+      "folder": "i_ndim_dere_irmag_a",
+      "title": "İndim Dere Irmağa",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 1622934,
+          "hash": "6e998db90f96804e5a9c3f7382836aabe03a717518cb17d2bb260fcbc5b8ba5b"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 16675,
+          "hash": "8d43f5ced9a52f788bd7c429bf12576b8dc38833314f0629660ce8da3db65a71"
+        },
+        {
+          "path": "settings.json",
+          "size": 10181,
+          "hash": "5a6cc12586e018eba00ffa70b399c33e53d60d985c21762c385d2d624e1df3a5"
+        },
+        {
+          "path": "song.json",
+          "size": 90605,
+          "hash": "634cce1a9eec25573a28a025a54024669899f7a89025400952bad806841779ab"
+        }
+      ]
+    },
+    {
       "id": "kara_go_zu_n_ay_badan",
       "folder": "kara_go_zu_n_ay_badan",
       "title": "Kara Gözün Ay Badan",
@@ -250,12 +304,12 @@
         {
           "path": "Master.mp3",
           "size": 3313161,
-          "hash": "7650b1d559595955ebd8d453f1fae8394184bd264e4691c557978ed61c5fc957"
+          "hash": "70ee3884cccbb251924dca6751d44f3b5afc6a369381a67d5c8144fb11b32dd5"
         },
         {
           "path": "Nota.pdf",
-          "size": 32235,
-          "hash": "0666d195b82c70fece4828a3c35b4bf31a9096b5b4bc799c8a92f3b3873e6350"
+          "size": 46054,
+          "hash": "0ca5e60af828c8c29f2827fae76817c00dc7477422717dcba52ac7c8a6ae42a1"
         },
         {
           "path": "settings.json",
@@ -264,8 +318,8 @@
         },
         {
           "path": "song.json",
-          "size": 161848,
-          "hash": "14adb8e21e4106198a19e0d07091fe07bd3213484a1f69898e564d27ab594dd6"
+          "size": 161872,
+          "hash": "0eefed6167689de5f7560e79c253706fd31c26cbd0e7cbc0a3643838123518f6"
         }
       ]
     },
