@@ -3,6 +3,7 @@
   "version": 1,
   "title": "Bahçe Duvarından Aştım",
   "duration": 141.818182,
+  "clickDuration": 141.818182,
   "nextSongAt": 137.454545,
   "finalAt": 135.272727,
   "key": "D",
@@ -4477,6 +4478,7 @@
     "scale": "HICAZ",
     "style": "ANKARA",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "startAt": 4.363636363636363
   }
 }
