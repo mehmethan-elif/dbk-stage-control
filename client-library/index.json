@@ -2,10 +2,37 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 4036,
-    "hash": "2b496e531b7e29d77814f16db54ed4de414fbbc7fac97974bf6be3e20a45c821"
+    "size": 4340,
+    "hash": "4c962759aec61c724ed948ce6139cba12af4e5b2641bcd6725eb32cd06e7581a"
   },
   "songs": [
+    {
+      "id": "arpa_bug_day_daneler",
+      "folder": "arpa_bug_day_daneler",
+      "title": "Arpa Buğday Daneler",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2455509,
+          "hash": "e29d259224e0a1c68f48944933373302b728734cb35715b0af1100b81ef2ad11"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 41563,
+          "hash": "67e5183c57342c71a84d821ecacad30ce04624caa72612509f4f560e7e07465b"
+        },
+        {
+          "path": "settings.json",
+          "size": 6564,
+          "hash": "3e48e0dd80319c8f72089ced12046b38ee21b837c1d30e3538e2b44faab4f581"
+        },
+        {
+          "path": "song.json",
+          "size": 111277,
+          "hash": "a7594247f812d7733deb49dbf85cba01eed3d372d4f9f81a3eed61cd0c16f481"
+        }
+      ]
+    },
     {
       "id": "ayr_ld_m_gu_ler_miyim",
       "folder": "ayr_ld_m_gu_ler_miyim",
@@ -135,6 +162,33 @@
       ]
     },
     {
+      "id": "doyulur_mu",
+      "folder": "doyulur_mu",
+      "title": "Doyulur mu",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2038386,
+          "hash": "2028536f16d39ff7d742c2d85b05c79e872ba7d16d3350fff985c2c495a94701"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 19673,
+          "hash": "178a61f3f8315130cfc461e44017c19d538fc11f03458eafb6aecb568661f756"
+        },
+        {
+          "path": "settings.json",
+          "size": 6843,
+          "hash": "034f07d008d424140e0fcdc11c77d3905943658a9a61962849b84114414b79c0"
+        },
+        {
+          "path": "song.json",
+          "size": 103050,
+          "hash": "ae4e53d79f651b2743aed350804b9a7ba9a61beb203d13c771df4f8638eb145b"
+        }
+      ]
+    },
+    {
       "id": "go_nu_l_dag",
       "folder": "go_nu_l_dag",
       "title": "Gönül Dağı",
@@ -211,7 +265,7 @@
         {
           "path": "Master.mp3",
           "size": 2406190,
-          "hash": "a7d2d7de562b58ca8b2beac80f7c8118cfc93579ec4a87074f44d6b9839b14a5"
+          "hash": "55b48d51f834871996c97bfb3afa6a36463c07c89ec01f050ca69b9463451371"
         },
         {
           "path": "Nota.pdf",
@@ -225,8 +279,8 @@
         },
         {
           "path": "song.json",
-          "size": 123701,
-          "hash": "f11ba1064c8b2414b36411afe27c0ebf4a3f9070c45d75ec23aa8c56ac03c7d6"
+          "size": 123556,
+          "hash": "59f8f798bfd64ee973b49eba5883acb65da4aac9a3f2d560edfad780faa13a4d"
         }
       ]
     },
@@ -292,7 +346,7 @@
         {
           "path": "Master.mp3",
           "size": 3464462,
-          "hash": "b3e40f91ee9d203661d3a17b310ce6261747311d04fd61bcc2d87df0df5a6849"
+          "hash": "f3be32ede9a579be2897ecbb0066169dd9d101bd58caccddcd1efecd8c757da3"
         },
         {
           "path": "Nota.pdf",
@@ -306,8 +360,8 @@
         },
         {
           "path": "song.json",
-          "size": 229469,
-          "hash": "a63431e99d2770bcf9b41170218183b42ca8c7bac332863709ac59edbda1f110"
+          "size": 231192,
+          "hash": "877b4e8ed85418f97f7d4e6857bd83bbda102caf56abc76579720c50d48b97d2"
         }
       ]
     },
