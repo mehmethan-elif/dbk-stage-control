@@ -34,6 +34,8 @@ export interface AudioDeck {
   readonly loadedSongId: string | null;
   readonly isLoaded: boolean;
   readonly isPlaying: boolean;
+  /** Transport is armed, including a start that is still in the future. */
+  readonly isArmed: boolean;
   on(event: DeckEvent, cb: DeckEventHandler): () => void;
   unload(): void;
 }

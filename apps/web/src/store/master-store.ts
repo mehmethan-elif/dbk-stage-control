@@ -99,16 +99,21 @@ import { practiceEntryId, practiceGig } from "../practice/gig";
 import { downloadBytes, exportPracticeZip } from "../practice/export";
 import {
   attachPracticeContext,
+  armPracticeNextAt,
   isPracticeAudioLoaded,
+  isPracticeNextLoaded,
   loadPracticeAudio,
+  loadPracticeNextAudio,
   type PracticeAudioKind,
   onPracticeTime,
   parkPracticeTail,
   pausePracticeAudio,
   playPracticeAudio,
+  practiceAudioArmed,
   practiceAudioDuration,
   practiceAudioPlaying,
   practiceAudioTime,
+  promoteArmedPracticeNext,
   seekPracticeAudio,
   stopPracticeAudio
 } from "../practice/playback";
@@ -630,6 +635,7 @@ let tickHandle = 0;
 let metroTickHandle = 0;
 let freeVisualSongId: string | null = null;
 let lastBroadcast = 0;
+let lastBroadcastSongId: string | null = null;
 let lastPlaybackStoreAt = 0;
 let lastPracticeStoreAt = 0;
 let practiceHandoffEntryId: string | null = null;
@@ -1151,8 +1157,17 @@ function broadcastClock(snapshot: PlaybackSnapshot, force = false) {
   const clock = snapshot.clock;
   if (!clock) return;
   const now = performance.now();
-  if (!force && now - lastBroadcast < 80 && snapshot.state !== PlaybackState.Transitioning) return;
+  const songChanged = snapshot.clock.songId !== lastBroadcastSongId;
+  if (
+    !force &&
+    now - lastBroadcast < 80 &&
+    snapshot.state !== PlaybackState.Transitioning &&
+    !songChanged
+  ) {
+    return;
+  }
   lastBroadcast = now;
+  lastBroadcastSongId = snapshot.clock.songId;
   const state = useMasterStore.getState();
   const time = panicBlocksFollow(state) ? state.panicTargetTime : clock.time;
   sendSync({
@@ -1652,6 +1667,33 @@ function queuePracticeAudio(state: MasterState, song?: Song) {
     // decode waits until play if the shared context is not ready
   }
   void loadPracticeAudio(target.id, filesForSong(target, state.fileIndex), kind);
+}
+
+function nextPracticeMix(state: MasterState): { song: Song; kind: PracticeAudioKind } | null {
+  if (!practiceShouldPlayNext(state)) return null;
+  const gig = currentGig(state);
+  const nextId = nextUnskippedSongEntryId(gig, state.selectedEntryId);
+  const nextEntry = nextId ? gig?.setlist.find((item) => item.entryId === nextId) : undefined;
+  if (!nextEntry || !isSongEntry(nextEntry)) return null;
+  const song = findSongByRef(state.songs, nextEntry.songId);
+  if (!song) return null;
+  const kind = practiceAudioKind(state, song);
+  if (!kind) return null;
+  return { song, kind };
+}
+
+function queuePracticeNextAudio(state: MasterState) {
+  const next = nextPracticeMix(state);
+  if (!next) return;
+  try {
+    attachPracticeContext(engine.prime());
+  } catch {
+    // decode waits until play if the shared context is not ready
+  }
+  if (isPracticeNextLoaded(next.song.id, next.kind) || isPracticeAudioLoaded(next.song.id, next.kind)) {
+    return;
+  }
+  void loadPracticeNextAudio(next.song.id, filesForSong(next.song, state.fileIndex), next.kind);
 }
 
 export function practiceBlocksSongSelect(state: MasterState): boolean {
@@ -2633,10 +2675,19 @@ export const useMasterStore = create<MasterState>((set, get) => {
           shouldPlayNext: stillThisEntry && practiceShouldPlayNext(current),
           already: practiceHandoffEntryId === entry.entryId
         });
+        if (stillThisEntry && practiceShouldPlayNext(current)) {
+          queuePracticeNextAudio(current);
+          const next = nextPracticeMix(current);
+          if (next && cue != null) {
+            const gig = currentGig(current);
+            const nextId = nextUnskippedSongEntryId(gig, current.selectedEntryId);
+            armPracticeNextAt(cue, startAtOf(gig, nextId, current.songs));
+          }
+        }
         if (action) {
           practiceHandoffEntryId = entry.entryId;
           if (action === "play-next") {
-            parkPracticeTail();
+            if (!promoteArmedPracticeNext()) parkPracticeTail();
             const store = useMasterStore.getState();
             const gig = currentGig(store);
             const nextId = nextUnskippedSongEntryId(gig, store.selectedEntryId);
@@ -2686,17 +2737,21 @@ export const useMasterStore = create<MasterState>((set, get) => {
         if (!ok) return;
       }
       const startAt = get().previewTime;
-      try {
-        await playPracticeAudio(startAt);
-      } catch {
-        const ok = await loadPracticeAudio(entry.songId, files, kind);
-        if (!ok) return;
+      const already = practiceAudioPlaying() || practiceAudioArmed();
+      if (!already) {
         try {
-          await playPracticeAudio(get().previewTime);
+          await playPracticeAudio(startAt);
         } catch {
-          return;
+          const ok = await loadPracticeAudio(entry.songId, files, kind);
+          if (!ok) return;
+          try {
+            await playPracticeAudio(get().previewTime);
+          } catch {
+            return;
+          }
         }
       }
+      queuePracticeNextAudio(get());
       const duration = practiceAudioDuration();
       const playhead = practiceAudioTime();
       setFollowClockSource(() => practiceAudioTime());

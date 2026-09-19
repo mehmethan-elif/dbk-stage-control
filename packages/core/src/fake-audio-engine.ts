@@ -65,6 +65,10 @@ export class FakeAudioDeck implements AudioDeck {
     return this.engine.getContextTime() >= this.state.startedAt;
   }
 
+  get isArmed(): boolean {
+    return this.state.playing && this.state.startedAt !== null;
+  }
+
   get clickEndsAt(): number | null {
     if (this.state.startedAt === null) return null;
     const cue = playNextCueSeconds(this.state.song, this.state.clickDuration);

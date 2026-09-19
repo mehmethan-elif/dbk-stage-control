@@ -316,6 +316,12 @@ export class PlaybackController {
     const deck = this.decks[this.primary];
     if (deck.isLoaded) {
       deck.seek(t);
+      const secondary = this.decks[otherDeck(this.primary)];
+      if (this.outgoing !== secondary.id && secondary.isArmed) {
+        secondary.stop();
+        this.playNextScheduled = false;
+      }
+      this.schedulePlayNextIfNeeded();
       this.emit();
     }
   }
@@ -525,14 +531,19 @@ export class PlaybackController {
     nextEntry: SongSetlistEntry,
     nextDeck: AudioDeck
   ): void {
+    const cueAt = this.decks[fromDeck].clickEndsAt;
+    const already = nextDeck.isArmed;
     this.outgoing = fromDeck;
     this.primary = nextDeck.id;
     this.currentIndex = nextIndex;
     this.playNextScheduled = false;
     this.state = PlaybackState.Transitioning;
-    const startAt = songChainStartAt(this.songs.get(nextEntry.songId), nextEntry);
-    if (startAt > 0) nextDeck.seek(startAt);
-    nextDeck.play();
+    if (!already) {
+      const startAt = songChainStartAt(this.songs.get(nextEntry.songId), nextEntry);
+      if (startAt > 0) nextDeck.seek(startAt);
+      const now = this.engine.getContextTime();
+      nextDeck.play(cueAt != null && cueAt > now ? cueAt : undefined);
+    }
     this.logger.playback("play_next", {
       fromSongId: this.decks[fromDeck].loadedSongId,
       toSongId: nextEntry.songId
@@ -594,14 +605,32 @@ export class PlaybackController {
       this.playNextScheduled = false;
       return;
     }
-    const next = this.nextSong();
+    const nextIndex = this.nextPlayableIndex();
+    const nextEntry = nextIndex >= 0 ? this.gig?.setlist[nextIndex] : undefined;
+    const next =
+      nextEntry && isSongEntry(nextEntry) ? this.songs.get(nextEntry.songId) : undefined;
     const secondary = this.decks[otherDeck(this.primary)];
-    if (!next || secondary.loadedSongId !== next.id) {
+    if (!next || !nextEntry || !isSongEntry(nextEntry) || secondary.loadedSongId !== next.id) {
+      this.playNextScheduled = false;
+      return;
+    }
+    if (songPlaysAsMetronome(next, nextEntry)) {
+      this.playNextScheduled = true;
+      return;
+    }
+    const when = this.decks[this.primary].clickEndsAt;
+    if (when == null) {
       this.playNextScheduled = false;
       return;
     }
     this.playNextScheduled = true;
+    if (secondary.isArmed) return;
     this.logger.playback("play_next_ready", { songId: next.id });
+    if (when <= this.engine.getContextTime()) return;
+    const startAt = songChainStartAt(next, nextEntry);
+    if (startAt > 0) secondary.seek(startAt);
+    secondary.play(when);
+    this.logger.playback("play_next_armed", { songId: next.id, at: when });
   }
 
   private syncLoadedSongs(): void {

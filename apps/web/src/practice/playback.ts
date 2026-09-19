@@ -27,6 +27,15 @@ let webPlaying = false;
 let startOffset = 0;
 let startedAt: number | null = null;
 
+let nextSongId: string | null = null;
+let nextKind: PracticeAudioKind | null = null;
+let nextBytes: ArrayBuffer | null = null;
+let nextPcm: AudioBuffer | null = null;
+let nextDecodePromise: Promise<AudioBuffer | null> | null = null;
+let nextSource: AudioBufferSourceNode | null = null;
+let nextStartedAt: number | null = null;
+let nextStartOffset = 0;
+
 function emitTime(ended = false): void {
   if (!ended && !webPlaying && audio?.paused) return;
   timeListener?.(practiceAudioTime(), ended);
@@ -82,22 +91,46 @@ function htmlAudioFinished(node: HTMLAudioElement): boolean {
   return Number.isFinite(duration) && duration > 0 && node.currentTime >= duration - 0.05;
 }
 
+function stopNode(node: AudioBufferSourceNode | null): void {
+  if (!node) return;
+  node.onended = null;
+  try {
+    node.stop();
+  } catch {
+    // already stopped
+  }
+  try {
+    node.disconnect();
+  } catch {
+    // already disconnected
+  }
+}
+
 function stopSource(): void {
   if (webPlaying && practiceCtx && startedAt != null) {
     startOffset = Math.max(0, startOffset + (practiceCtx.currentTime - startedAt));
   }
-  if (source) {
-    source.onended = null;
-    try {
-      source.stop();
-    } catch {
-      // already stopped
-    }
-    source.disconnect();
-    source = null;
-  }
+  stopNode(source);
+  source = null;
   webPlaying = false;
   startedAt = null;
+}
+
+function stopArmedNext(): void {
+  stopNode(nextSource);
+  nextSource = null;
+  nextStartedAt = null;
+  nextStartOffset = 0;
+}
+
+function clearPracticeNext(keepBuffers = false): void {
+  stopArmedNext();
+  if (keepBuffers) return;
+  nextSongId = null;
+  nextKind = null;
+  nextBytes = null;
+  nextPcm = null;
+  nextDecodePromise = null;
 }
 
 function stopTail(): void {
@@ -231,7 +264,25 @@ async function decodeIfNeeded(): Promise<AudioBuffer | null> {
   return decodePromise;
 }
 
-function startBuffer(offset: number): void {
+async function decodeNextIfNeeded(): Promise<AudioBuffer | null> {
+  if (nextPcm) return nextPcm;
+  if (!nextBytes || !practiceCtx) return null;
+  if (nextDecodePromise) return nextDecodePromise;
+  const ctx = practiceCtx;
+  const copy = nextBytes.slice(0);
+  nextDecodePromise = decodeAudio(ctx, copy)
+    .then((buffer) => {
+      nextPcm = buffer;
+      return buffer;
+    })
+    .catch(() => null)
+    .finally(() => {
+      nextDecodePromise = null;
+    });
+  return nextDecodePromise;
+}
+
+function startBuffer(offset: number, when?: number): void {
   if (!practiceCtx || !pcm) return;
   stopSource();
   startOffset = Math.max(0, Math.min(offset, Math.max(0, pcm.duration - 0.001)));
@@ -246,9 +297,22 @@ function startBuffer(offset: number): void {
     timeListener?.(pcm?.duration ?? startOffset, true);
   };
   source = node;
-  startedAt = practiceCtx.currentTime;
-  webPlaying = true;
+  startedAt = when ?? practiceCtx.currentTime;
+  webPlaying = practiceCtx.currentTime >= startedAt;
   node.start(startedAt, startOffset);
+}
+
+function startNextBuffer(offset: number, when: number): boolean {
+  if (!practiceCtx || !nextPcm) return false;
+  stopArmedNext();
+  nextStartOffset = Math.max(0, Math.min(offset, Math.max(0, nextPcm.duration - 0.001)));
+  const node = practiceCtx.createBufferSource();
+  node.buffer = nextPcm;
+  node.connect(practiceCtx.destination);
+  nextSource = node;
+  nextStartedAt = when;
+  node.start(when, nextStartOffset);
+  return true;
 }
 
 async function playHtmlAudio(startAt: number): Promise<void> {
@@ -277,6 +341,7 @@ async function playHtmlAudio(startAt: number): Promise<void> {
 export function attachPracticeContext(ctx: AudioContext): void {
   practiceCtx = ctx;
   void decodeIfNeeded();
+  void decodeNextIfNeeded();
 }
 
 export function onPracticeTime(listener: ((time: number, ended: boolean) => void) | null): void {
@@ -287,6 +352,7 @@ export function stopPracticeAudio(): void {
   stopTick();
   stopTail();
   stopSource();
+  clearPracticeNext();
   startOffset = 0;
   pcm = null;
   bytes = null;
@@ -312,11 +378,23 @@ export function isPracticeAudioLoaded(songId: string, kind?: PracticeAudioKind):
   );
 }
 
-export async function loadPracticeAudio(
+export function isPracticeNextLoaded(songId: string, kind?: PracticeAudioKind): boolean {
+  return (
+    nextSongId === songId &&
+    Boolean(nextPcm || nextBytes) &&
+    (kind == null || nextKind === kind)
+  );
+}
+
+export function practiceAudioArmed(): boolean {
+  return Boolean(source && startedAt != null);
+}
+
+async function findPracticeAudio(
   songId: string,
   files: string[],
-  kind: PracticeAudioKind = "master"
-): Promise<boolean> {
+  kind: PracticeAudioKind
+): Promise<{ path: string; data: ArrayBuffer } | null> {
   const folder = folderForSong(songId);
   const names = (
     kind === "click"
@@ -325,15 +403,21 @@ export async function loadPracticeAudio(
   ).filter(
     (name, index, list): name is string => Boolean(name) && list.indexOf(name) === index
   );
-  let found: { path: string; data: ArrayBuffer } | null = null;
   for (const name of names) {
     const data =
       (await readPracticeFileBuffer(folder, name)) ?? (await readPracticeFileBuffer(songId, name));
-    if (data) {
-      found = { path: name, data };
-      break;
-    }
+    if (data) return { path: name, data };
   }
+  return null;
+}
+
+export async function loadPracticeAudio(
+  songId: string,
+  files: string[],
+  kind: PracticeAudioKind = "master"
+): Promise<boolean> {
+  if (isPracticeAudioLoaded(songId, kind)) return true;
+  const found = await findPracticeAudio(songId, files, kind);
   if (!found) {
     stopPracticeAudio();
     return false;
@@ -353,6 +437,73 @@ export async function loadPracticeAudio(
   loadedSongId = songId;
   loadedKind = kind;
   void decodeIfNeeded();
+  return true;
+}
+
+export async function loadPracticeNextAudio(
+  songId: string,
+  files: string[],
+  kind: PracticeAudioKind = "master"
+): Promise<boolean> {
+  if (isPracticeNextLoaded(songId, kind) || isPracticeAudioLoaded(songId, kind)) return true;
+  const found = await findPracticeAudio(songId, files, kind);
+  if (!found) {
+    clearPracticeNext();
+    return false;
+  }
+  stopArmedNext();
+  nextPcm = null;
+  nextDecodePromise = null;
+  nextBytes = found.data.slice(0);
+  nextSongId = songId;
+  nextKind = kind;
+  void decodeNextIfNeeded();
+  return true;
+}
+
+/** Start the preloaded next mix at the PLAY NEXT cue on the audio clock. */
+export function armPracticeNextAt(cueSongTime: number, startOffset = 0): boolean {
+  if (!practiceCtx || !nextPcm || nextSource) return Boolean(nextSource);
+  const remaining = cueSongTime - practiceAudioTime();
+  const when = practiceCtx.currentTime + remaining;
+  if (remaining < -0.02) {
+    return startNextBuffer(startOffset, practiceCtx.currentTime);
+  }
+  return startNextBuffer(startOffset, when);
+}
+
+/** Park the current mix and make the armed next mix the live slot. */
+export function promoteArmedPracticeNext(): boolean {
+  if (!nextSongId || !(nextPcm || nextBytes)) return false;
+  parkPracticeTail();
+  loadedSongId = nextSongId;
+  loadedKind = nextKind;
+  bytes = nextBytes;
+  pcm = nextPcm;
+  decodePromise = nextDecodePromise;
+  const armed = nextSource;
+  if (armed) {
+    source = armed;
+    startedAt = nextStartedAt;
+    startOffset = nextStartOffset;
+    webPlaying = Boolean(practiceCtx && startedAt != null && practiceCtx.currentTime >= startedAt);
+    armed.onended = () => {
+      if (source !== armed) return;
+      webPlaying = false;
+      startedAt = null;
+      stopTick();
+      timeListener?.(pcm?.duration ?? startOffset, true);
+    };
+  }
+  nextSource = null;
+  nextStartedAt = null;
+  nextStartOffset = 0;
+  nextSongId = null;
+  nextKind = null;
+  nextBytes = null;
+  nextPcm = null;
+  nextDecodePromise = null;
+  startTick();
   return true;
 }
 
@@ -376,7 +527,8 @@ export async function playPracticeAudio(startAt?: number): Promise<void> {
 export function pausePracticeAudio(): void {
   stopTick();
   stopTail();
-  if (webPlaying) {
+  stopArmedNext();
+  if (webPlaying || practiceAudioArmed()) {
     stopSource();
     return;
   }
@@ -387,6 +539,7 @@ export function pausePracticeAudio(): void {
 export function seekPracticeAudio(time: number): void {
   const next = Math.max(0, time);
   startOffset = next;
+  stopArmedNext();
   if (webPlaying && pcm && practiceCtx) {
     startBuffer(next);
     startTick();
@@ -406,9 +559,9 @@ export function practiceAudioPlaying(): boolean {
 }
 
 export function practiceAudioTime(): number {
-  if (webPlaying && practiceCtx && startedAt != null) {
+  if (source && practiceCtx && startedAt != null) {
     const duration = pcm?.duration ?? Number.POSITIVE_INFINITY;
-    return Math.min(duration, startOffset + (practiceCtx.currentTime - startedAt));
+    return Math.max(0, Math.min(duration, startOffset + (practiceCtx.currentTime - startedAt)));
   }
   if (audio && !audio.paused && !webPlaying) return audio.currentTime;
   return startOffset || audio?.currentTime || 0;

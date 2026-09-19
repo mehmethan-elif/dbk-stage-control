@@ -185,6 +185,10 @@ export class WebAudioDeck implements AudioDeck {
     return this.engine.getContextTime() >= this.startedAt;
   }
 
+  get isArmed(): boolean {
+    return this.playing && this.startedAt !== null;
+  }
+
   get clickEndsAt(): number | null {
     if (this.startedAt === null) return null;
     const cue = playNextCueSeconds(this.song, this.clickDuration);

@@ -20,7 +20,7 @@ describe("practicePlayNextDue", () => {
         shouldPlayNext: true,
         already: false
       })
-    ).toBe(true);
+    ).toBe(false);
     expect(
       practicePlayNextDue({
         ended: false,

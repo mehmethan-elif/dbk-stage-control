@@ -13,7 +13,7 @@ export function practiceHandoff(opts: {
   already: boolean;
 }): PracticeHandoff | null {
   if (opts.already) return null;
-  const atCue = opts.cue != null && opts.time + 0.03 >= opts.cue;
+  const atCue = opts.cue != null && opts.time >= opts.cue;
   if (opts.shouldPlayNext && (opts.ended || atCue)) return "play-next";
   if (opts.ended) return "land";
   return null;

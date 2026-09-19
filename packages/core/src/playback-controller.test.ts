@@ -151,7 +151,25 @@ describe("PlaybackController", () => {
     expect(mid.clock?.songId).toBe("song_b");
     expect(engine.getDeck("A")?.isPlaying).toBe(true);
     expect(engine.getDeck("B")?.isPlaying).toBe(true);
+    expect(engine.getDeck("B")?.getPosition()).toBeCloseTo(0.01, 3);
     expect(events.some((event) => event.event === "play_next")).toBe(true);
+  });
+
+  it("arms PLAY_NEXT on the next deck so a late poll does not restart it", async () => {
+    const markedA = { ...makeSong("song_a", "Song A", 12, 8), nextSongAt: 4 };
+    const gig = makeGig([
+      { type: "song", entryId: "e1", songId: "song_a", finishMode: FinishMode.PlayNext },
+      { type: "song", entryId: "e2", songId: "song_b", finishMode: FinishMode.Stop }
+    ]);
+    const { engine, controller } = await setup([markedA, songB], gig);
+    await controller.selectIndex(0);
+    await controller.play();
+    expect(engine.getDeck("B")?.isArmed).toBe(true);
+    expect(engine.getDeck("B")?.isPlaying).toBe(false);
+    engine.advance(4);
+    expect(engine.getDeck("B")?.getPosition()).toBeCloseTo(0, 3);
+    engine.advance(0.5);
+    expect(engine.getDeck("B")?.getPosition()).toBeCloseTo(0.5, 3);
   });
 
   it("PLAY_NEXT continues when click and backing end together", async () => {
