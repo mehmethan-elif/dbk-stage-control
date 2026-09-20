@@ -13,11 +13,6 @@
         },
         {
           "type": "song",
-          "entryId": "entry_ac9e2fae-f7e3-4aa4-a47f-7f083a7a1fd0",
-          "songId": "karahisar_kalesi"
-        },
-        {
-          "type": "song",
           "entryId": "entry_beff069a-f470-4b99-9c6e-a7e6382c034d",
           "songId": "telli_turnam"
         },
@@ -43,8 +38,24 @@
         },
         {
           "type": "talk",
-          "entryId": "entry_5c1ab6db-7a54-4b31-957c-ec69c4573722",
-          "label": "STOP"
+          "entryId": "entry_8d47d958-d76e-46cd-b2a6-8a41610ef7f9",
+          "label": "STOP",
+          "notes": "KAHRAMANLIK"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_ac9e2fae-f7e3-4aa4-a47f-7f083a7a1fd0",
+          "songId": "karahisar_kalesi"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_31e26f06-92c3-4d99-b090-6b56b8c6150d",
+          "songId": "tuna_nehri"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_8bf4cc9e-2ff3-4fcd-8786-378f2620b5f8",
+          "songId": "benden_selam_olsun"
         },
         {
           "type": "song",
@@ -52,9 +63,9 @@
           "songId": "kerku_k_zindan"
         },
         {
-          "type": "song",
-          "entryId": "entry_246b0d88-56c4-4a68-9fc2-9f58ee5b1dff",
-          "songId": "tuna_nehri"
+          "type": "talk",
+          "entryId": "entry_5c1ab6db-7a54-4b31-957c-ec69c4573722",
+          "label": "STOP"
         },
         {
           "type": "song",
@@ -109,13 +120,12 @@
         {
           "type": "talk",
           "entryId": "entry_fc86bc8c-bb2e-4e2d-9d17-9f086f0bff5f",
-          "label": "STOP",
-          "notes": "TEREKEME"
+          "label": "STOP"
         },
         {
           "type": "song",
-          "entryId": "entry_c2dc763f-b70f-4f11-b546-0a4cd29b2589",
-          "songId": "kara_go_zu_n_ay_badan"
+          "entryId": "entry_239b9d41-f0f3-4e0a-8e6b-6f434786754a",
+          "songId": "sar_gelin"
         },
         {
           "type": "song",
@@ -137,41 +147,6 @@
           "entryId": "entry_8abdb2f2-7ed9-4e75-b09e-0385238087de",
           "label": "STOP",
           "notes": "2/4 HALAYLAR"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_355ac08e-7f1f-431a-97da-183239ac60e1",
-          "songId": "Altın Yüzüğüm Kırıldı"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_1f9d8035-c0e3-4995-8b1a-8164d71ddb29",
-          "songId": "Ay Akşamdan Işıktır"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_f5363ad4-2350-4ed3-bb4a-a8d5fe065562",
-          "songId": "Sine Sine"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_4d9088a8-181f-4434-9b1a-aed98dad059e",
-          "songId": "Vur Davulcu"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_b65546a7-b4b6-43d9-b630-3f6147600e82",
-          "songId": "Makaram Sarı Bağlar"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_540e9c69-dc1f-45f3-abba-da4ed37b6a6b",
-          "songId": "Mardin Kapı Şen Olur"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_4b0b2580-a281-4196-8500-dcebfd6253f3",
-          "songId": "Tarama Yar Tarama"
         },
         {
           "type": "song",

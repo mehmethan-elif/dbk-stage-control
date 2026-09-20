@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 7463,
-    "hash": "6c7074cf635e89ecb0724b69271140b9cdfe33c9a09ed946e78ecdeb4e14bafd"
+    "size": 6650,
+    "hash": "be6eec914b4f67f04a571ddb29573b7dad65b41e0e2d6c5cd49957e398b0bc5a"
   },
   "songs": [
     {
@@ -99,8 +99,8 @@
         },
         {
           "path": "song.json",
-          "size": 148713,
-          "hash": "54ed7113bcdb4f66135885c8ba2ce2d2e8e7bec5f46e99748ef509464c6f0b1b"
+          "size": 148697,
+          "hash": "d7bef160f2526e95f4b98b4b15d349603c26212d2eb07e3097e8c1be5b9f46b6"
         }
       ]
     },
@@ -155,6 +155,33 @@
           "path": "song.json",
           "size": 109635,
           "hash": "6984d739042c32562dfe18fc1d577ffac22debaba634bb465ed81b4bcc2e01b5"
+        }
+      ]
+    },
+    {
+      "id": "benden_selam_olsun",
+      "folder": "benden_selam_olsun",
+      "title": "Benden Selam Olsun",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2345586,
+          "hash": "b2ebb8dfe721606397a2e5e25bad9ab0977b45a2a1a317921492a76075e5c104"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 20547,
+          "hash": "50f65276fa1ca1c7a075206340dfb60b0ecea3d216b244d8627b3ddcfae5de68"
+        },
+        {
+          "path": "settings.json",
+          "size": 16108,
+          "hash": "db1b54028b58e2b91e1fc811bf24195e5364caf398979dd70e00495c76a21e33"
+        },
+        {
+          "path": "song.json",
+          "size": 140869,
+          "hash": "5f1385d077d7116ec936c23ac841de73b3818aac6a0bed3147dd29dd9a5521ec"
         }
       ]
     },
@@ -678,6 +705,33 @@
           "path": "song.json",
           "size": 104767,
           "hash": "01fe92208c7d742a5adb157496b7761a156d396166260127eb26c8a5947ce1e8"
+        }
+      ]
+    },
+    {
+      "id": "sar_gelin",
+      "folder": "sar_gelin",
+      "title": "Sarı Gelin",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2944939,
+          "hash": "de177a5279e1be67536996cbe15c127510deda631388e8d3e66fe25a19a56cc3"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 24712,
+          "hash": "5e370b779b0daafd7b537f122b8ef02a42ff3de0b6b0c32c1c465c4e765483a0"
+        },
+        {
+          "path": "settings.json",
+          "size": 6582,
+          "hash": "c4c118c278462673ceaf5951511d44789c0e1b5414056d963883430b56e07df1"
+        },
+        {
+          "path": "song.json",
+          "size": 32494,
+          "hash": "d2c7e3d04cd1ada9adba32572e660fe9eca722f638e91d09705853f91ef0cf5b"
         }
       ]
     },

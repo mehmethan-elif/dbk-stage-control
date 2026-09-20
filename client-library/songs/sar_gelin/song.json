@@ -1,0 +1,1693 @@
+{
+  "id": "sar_gelin",
+  "version": 1,
+  "title": "Sarı Gelin",
+  "duration": 184.006993,
+  "nextSongAt": 180.734266,
+  "key": "D",
+  "scale": "MINOR",
+  "style": "AZERI",
+  "kita": 2,
+  "tags": [
+    "reaper-export"
+  ],
+  "tempoMap": [
+    {
+      "time": 0,
+      "measure": 1,
+      "bpm": 65,
+      "numerator": 6,
+      "denominator": 8
+    },
+    {
+      "time": 174.461538,
+      "measure": 64,
+      "bpm": 60,
+      "numerator": 6,
+      "denominator": 8
+    },
+    {
+      "time": 177.461538,
+      "measure": 65,
+      "bpm": 55,
+      "numerator": 6,
+      "denominator": 8
+    }
+  ],
+  "sections": [
+    {
+      "name": "COUNT",
+      "start": 0,
+      "end": 2.769231
+    },
+    {
+      "name": "ARA",
+      "start": 2.769231,
+      "end": 13.846154
+    },
+    {
+      "name": "ARA",
+      "start": 13.846154,
+      "end": 24.923077
+    },
+    {
+      "name": "SAN A",
+      "start": 24.923077,
+      "end": 38.769231
+    },
+    {
+      "name": "SAN A",
+      "start": 38.769231,
+      "end": 52.615385
+    },
+    {
+      "name": "SAN B",
+      "start": 52.615385,
+      "end": 72
+    },
+    {
+      "name": "SAN B",
+      "start": 72,
+      "end": 91.384615
+    },
+    {
+      "name": "ARA",
+      "start": 91.384615,
+      "end": 102.461538
+    },
+    {
+      "name": "ARA",
+      "start": 102.461538,
+      "end": 113.538462
+    },
+    {
+      "name": "SAN A",
+      "start": 113.538462,
+      "end": 127.384615
+    },
+    {
+      "name": "SAN A",
+      "start": 127.384615,
+      "end": 141.230769
+    },
+    {
+      "name": "SAN B",
+      "start": 141.230769,
+      "end": 160.615385
+    },
+    {
+      "name": "SAN B",
+      "start": 160.615385,
+      "end": 180.734266
+    }
+  ],
+  "lyrics": [
+    {
+      "time": 24.923077,
+      "end": 30.461538,
+      "measure": 10,
+      "beat": 1,
+      "text": "SAÇIN UZUN HÖRMEZLER"
+    },
+    {
+      "time": 30.461538,
+      "end": 36,
+      "measure": 11,
+      "beat": 6,
+      "text": "GÜLÜ GÖNÇE DERMEZLER SARI GELİN"
+    },
+    {
+      "time": 36,
+      "end": 38.769231,
+      "measure": 14,
+      "beat": 1,
+      "text": "SARI GELİN"
+    },
+    {
+      "time": 38.769231,
+      "end": 44.307692,
+      "measure": 15,
+      "beat": 1,
+      "text": "SAÇIN UZUN HÖRMEZLER"
+    },
+    {
+      "time": 44.307692,
+      "end": 49.846154,
+      "measure": 16,
+      "beat": 6,
+      "text": "GÜLÜ GÖNÇE DERMEZLER SARI GELİN"
+    },
+    {
+      "time": 49.846154,
+      "end": 52.615385,
+      "measure": 19,
+      "beat": 1,
+      "text": "SARI GELİN"
+    },
+    {
+      "time": 52.615385,
+      "end": 58.153846,
+      "measure": 20,
+      "beat": 1,
+      "text": "BU SEVDA NE SEVDADIR"
+    },
+    {
+      "time": 58.153846,
+      "end": 63.692308,
+      "measure": 21,
+      "beat": 6,
+      "text": "SENİ MENE VERMEZLER"
+    },
+    {
+      "time": 63.692308,
+      "end": 69.230769,
+      "measure": 24,
+      "beat": 1,
+      "text": "NEYNİM AMAN AMAN NEYNİM AMAN AMAN"
+    },
+    {
+      "time": 69.230769,
+      "end": 72,
+      "measure": 25,
+      "beat": 6,
+      "text": "SARI GELİN"
+    },
+    {
+      "time": 72,
+      "end": 77.538462,
+      "measure": 27,
+      "beat": 1,
+      "text": "BU SEVDA NE SEVDADIR"
+    },
+    {
+      "time": 77.538462,
+      "end": 83.076923,
+      "measure": 29,
+      "beat": 1,
+      "text": "SENİ MENE VERMEZLER"
+    },
+    {
+      "time": 83.076923,
+      "end": 88.615385,
+      "measure": 30,
+      "beat": 6,
+      "text": "NEYNİM AMAN AMAN NEYNİM AMAN AMAN"
+    },
+    {
+      "time": 88.615385,
+      "end": 91.384615,
+      "measure": 33,
+      "beat": 1,
+      "text": "SARI GELİN"
+    },
+    {
+      "time": 113.538462,
+      "end": 119.076923,
+      "measure": 42,
+      "beat": 1,
+      "text": "BU DERENİN UZUNU"
+    },
+    {
+      "time": 119.076923,
+      "end": 124.615385,
+      "measure": 43,
+      "beat": 6,
+      "text": "ÇOBAN GAYTAR GUZUNU"
+    },
+    {
+      "time": 124.615385,
+      "end": 127.384615,
+      "measure": 46,
+      "beat": 1,
+      "text": "SARI GELİN"
+    },
+    {
+      "time": 127.384615,
+      "end": 132.923077,
+      "measure": 46,
+      "beat": 6,
+      "text": "BU DERENİN UZUNU"
+    },
+    {
+      "time": 132.923077,
+      "end": 138.461538,
+      "measure": 49,
+      "beat": 1,
+      "text": "ÇOBAN GAYTAR GUZUNU"
+    },
+    {
+      "time": 138.461538,
+      "end": 141.230769,
+      "measure": 50,
+      "beat": 6,
+      "text": "SARI GELİN"
+    },
+    {
+      "time": 141.230769,
+      "end": 146.769231,
+      "measure": 51,
+      "beat": 6,
+      "text": "NE OLA BİR GÜN GÖRSEYDİM"
+    },
+    {
+      "time": 146.769231,
+      "end": 152.307692,
+      "measure": 54,
+      "beat": 1,
+      "text": "NAZLI YARIN ÜZÜNÜ"
+    },
+    {
+      "time": 152.307692,
+      "end": 157.846154,
+      "measure": 55,
+      "beat": 6,
+      "text": "NEYNİM AMAN AMAN NEYNİM AMAN AMAN"
+    },
+    {
+      "time": 157.846154,
+      "end": 160.615385,
+      "measure": 58,
+      "beat": 1,
+      "text": "SARI GELİN"
+    },
+    {
+      "time": 160.615385,
+      "end": 166.153846,
+      "measure": 59,
+      "beat": 1,
+      "text": "NE OLA BİR GÜN GÖRSEYDİM"
+    },
+    {
+      "time": 166.153846,
+      "end": 171.692308,
+      "measure": 60,
+      "beat": 6,
+      "text": "NAZLI YARIN ÜZÜNÜ"
+    },
+    {
+      "time": 171.692308,
+      "end": 177.230769,
+      "measure": 63,
+      "beat": 1,
+      "text": "NEYNİM AMAN AMAN NEYNİM AMAN AMAN"
+    },
+    {
+      "time": 177.230769,
+      "end": 180,
+      "measure": 64,
+      "beat": 6,
+      "text": "SARI GELİN"
+    }
+  ],
+  "chords": [
+    {
+      "time": 0,
+      "end": 2.769231,
+      "measure": 1,
+      "beat": 1,
+      "text": "1 2 3 - SON 2 3"
+    },
+    {
+      "time": 2.769231,
+      "end": 5.538462,
+      "measure": 2,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 5.538462,
+      "end": 8.307692,
+      "measure": 3,
+      "beat": 1,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 8.307692,
+      "end": 9.692308,
+      "measure": 3,
+      "beat": 6,
+      "text": "Gm7"
+    },
+    {
+      "time": 9.692308,
+      "end": 11.076923,
+      "measure": 4,
+      "beat": 4,
+      "text": "Am7"
+    },
+    {
+      "time": 11.076923,
+      "end": 13.846154,
+      "measure": 4,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 13.846154,
+      "end": 16.615385,
+      "measure": 6,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 16.615385,
+      "end": 19.384615,
+      "measure": 7,
+      "beat": 1,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 19.384615,
+      "end": 20.769231,
+      "measure": 7,
+      "beat": 6,
+      "text": "Gm7"
+    },
+    {
+      "time": 20.769231,
+      "end": 22.153846,
+      "measure": 8,
+      "beat": 4,
+      "text": "Am7"
+    },
+    {
+      "time": 22.153846,
+      "end": 24.923077,
+      "measure": 8,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 24.923077,
+      "end": 27.692308,
+      "measure": 10,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 27.692308,
+      "end": 30.461538,
+      "measure": 11,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 30.461538,
+      "end": 33.230769,
+      "measure": 11,
+      "beat": 6,
+      "text": "G"
+    },
+    {
+      "time": 33.230769,
+      "end": 36,
+      "measure": 12,
+      "beat": 6,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 36,
+      "end": 37.384615,
+      "measure": 14,
+      "beat": 1,
+      "text": "Am7"
+    },
+    {
+      "time": 37.384615,
+      "end": 38.769231,
+      "measure": 14,
+      "beat": 3,
+      "text": "Dm"
+    },
+    {
+      "time": 38.769231,
+      "end": 41.538462,
+      "measure": 15,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 41.538462,
+      "end": 44.307692,
+      "measure": 16,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 44.307692,
+      "end": 47.076923,
+      "measure": 16,
+      "beat": 6,
+      "text": "G"
+    },
+    {
+      "time": 47.076923,
+      "end": 49.846154,
+      "measure": 17,
+      "beat": 6,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 49.846154,
+      "end": 51.230769,
+      "measure": 19,
+      "beat": 1,
+      "text": "Am7"
+    },
+    {
+      "time": 51.230769,
+      "end": 52.615385,
+      "measure": 19,
+      "beat": 3,
+      "text": "Dm"
+    },
+    {
+      "time": 52.615385,
+      "end": 55.384615,
+      "measure": 20,
+      "beat": 1,
+      "text": "G"
+    },
+    {
+      "time": 55.384615,
+      "end": 58.153846,
+      "measure": 20,
+      "beat": 6,
+      "text": "Gm"
+    },
+    {
+      "time": 58.153846,
+      "end": 60.923077,
+      "measure": 21,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 60.923077,
+      "end": 63.692308,
+      "measure": 23,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 63.692308,
+      "end": 66.461538,
+      "measure": 24,
+      "beat": 1,
+      "text": "G"
+    },
+    {
+      "time": 66.461538,
+      "end": 69.230769,
+      "measure": 24,
+      "beat": 6,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 69.230769,
+      "end": 70.615385,
+      "measure": 25,
+      "beat": 6,
+      "text": "Am7"
+    },
+    {
+      "time": 70.615385,
+      "end": 72,
+      "measure": 26,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 72,
+      "end": 74.769231,
+      "measure": 27,
+      "beat": 1,
+      "text": "G"
+    },
+    {
+      "time": 74.769231,
+      "end": 77.538462,
+      "measure": 28,
+      "beat": 1,
+      "text": "Gm"
+    },
+    {
+      "time": 77.538462,
+      "end": 80.307692,
+      "measure": 29,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 80.307692,
+      "end": 83.076923,
+      "measure": 29,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 83.076923,
+      "end": 85.846154,
+      "measure": 30,
+      "beat": 6,
+      "text": "G"
+    },
+    {
+      "time": 85.846154,
+      "end": 88.615385,
+      "measure": 32,
+      "beat": 1,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 88.615385,
+      "end": 90,
+      "measure": 33,
+      "beat": 1,
+      "text": "Am7"
+    },
+    {
+      "time": 90,
+      "end": 91.384615,
+      "measure": 33,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 91.384615,
+      "end": 94.153846,
+      "measure": 33,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 94.153846,
+      "end": 96.923077,
+      "measure": 34,
+      "beat": 6,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 96.923077,
+      "end": 98.307692,
+      "measure": 36,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 98.307692,
+      "end": 99.692308,
+      "measure": 36,
+      "beat": 3,
+      "text": "Am7"
+    },
+    {
+      "time": 99.692308,
+      "end": 102.461538,
+      "measure": 37,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 102.461538,
+      "end": 105.230769,
+      "measure": 37,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 105.230769,
+      "end": 108,
+      "measure": 38,
+      "beat": 6,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 108,
+      "end": 109.384615,
+      "measure": 40,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 109.384615,
+      "end": 110.769231,
+      "measure": 40,
+      "beat": 3,
+      "text": "Am7"
+    },
+    {
+      "time": 110.769231,
+      "end": 113.538462,
+      "measure": 41,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 113.538462,
+      "end": 116.307692,
+      "measure": 42,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 116.307692,
+      "end": 119.076923,
+      "measure": 42,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 119.076923,
+      "end": 121.846154,
+      "measure": 43,
+      "beat": 6,
+      "text": "G"
+    },
+    {
+      "time": 121.846154,
+      "end": 124.615385,
+      "measure": 45,
+      "beat": 1,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 124.615385,
+      "end": 126,
+      "measure": 46,
+      "beat": 1,
+      "text": "Am7"
+    },
+    {
+      "time": 126,
+      "end": 127.384615,
+      "measure": 46,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 127.384615,
+      "end": 130.153846,
+      "measure": 46,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 130.153846,
+      "end": 132.923077,
+      "measure": 47,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 132.923077,
+      "end": 135.692308,
+      "measure": 49,
+      "beat": 1,
+      "text": "G"
+    },
+    {
+      "time": 135.692308,
+      "end": 138.461538,
+      "measure": 50,
+      "beat": 1,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 138.461538,
+      "end": 139.846154,
+      "measure": 50,
+      "beat": 6,
+      "text": "Am7"
+    },
+    {
+      "time": 139.846154,
+      "end": 141.230769,
+      "measure": 51,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 141.230769,
+      "end": 144,
+      "measure": 51,
+      "beat": 6,
+      "text": "G"
+    },
+    {
+      "time": 144,
+      "end": 146.769231,
+      "measure": 53,
+      "beat": 1,
+      "text": "Gm"
+    },
+    {
+      "time": 146.769231,
+      "end": 149.538462,
+      "measure": 54,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 149.538462,
+      "end": 152.307692,
+      "measure": 55,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 152.307692,
+      "end": 155.076923,
+      "measure": 55,
+      "beat": 6,
+      "text": "G"
+    },
+    {
+      "time": 155.076923,
+      "end": 157.846154,
+      "measure": 56,
+      "beat": 6,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 157.846154,
+      "end": 159.230769,
+      "measure": 58,
+      "beat": 1,
+      "text": "Am7"
+    },
+    {
+      "time": 159.230769,
+      "end": 160.615385,
+      "measure": 58,
+      "beat": 3,
+      "text": "Dm"
+    },
+    {
+      "time": 160.615385,
+      "end": 163.384615,
+      "measure": 59,
+      "beat": 1,
+      "text": "G"
+    },
+    {
+      "time": 163.384615,
+      "end": 166.153846,
+      "measure": 59,
+      "beat": 6,
+      "text": "Gm"
+    },
+    {
+      "time": 166.153846,
+      "end": 168.923077,
+      "measure": 60,
+      "beat": 6,
+      "text": "Dm"
+    },
+    {
+      "time": 168.923077,
+      "end": 171.692308,
+      "measure": 62,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 171.692308,
+      "end": 174.461538,
+      "measure": 63,
+      "beat": 1,
+      "text": "G"
+    },
+    {
+      "time": 174.461538,
+      "end": 177.461538,
+      "measure": 63,
+      "beat": 6,
+      "text": "Bbmaj7"
+    },
+    {
+      "time": 177.461538,
+      "end": 179.097902,
+      "measure": 64,
+      "beat": 6,
+      "text": "Am7"
+    },
+    {
+      "time": 179.097902,
+      "end": 180.734266,
+      "measure": 65,
+      "beat": 3,
+      "text": "Dm"
+    }
+  ],
+  "patterns": [
+    {
+      "text": "1 2 3 - SON 2 3",
+      "time": 0,
+      "end": 2.769231,
+      "length": 2.769231,
+      "measure": 1,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "SLOW",
+      "time": 2.769231,
+      "end": 5.538462,
+      "length": 2.769231,
+      "measure": 2,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 2.769231,
+          "end": 3,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 2,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 3.692308,
+          "end": 3.923077,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 2,
+          "beat": 3,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 4.153846,
+          "end": 4.384615,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 2,
+          "beat": 3,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 11.076923,
+      "end": 13.846154,
+      "length": 2.769231,
+      "measure": 4,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "SLOW",
+      "time": 13.846154,
+      "end": 16.615385,
+      "length": 2.769231,
+      "measure": 6,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 13.846154,
+          "end": 14.076923,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 6,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 14.769231,
+          "end": 15,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 6,
+          "beat": 3,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 15.230769,
+          "end": 15.461538,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 6,
+          "beat": 3,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 22.153846,
+      "end": 24.923077,
+      "length": 2.769231,
+      "measure": 8,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "KASNAK",
+      "time": 24.923077,
+      "end": 27.692308,
+      "length": 2.769231,
+      "measure": 10,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 24.923077,
+          "end": 25.153846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 10,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 26.307692,
+          "end": 26.538462,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 10,
+          "beat": 3,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 36,
+      "end": 38.769231,
+      "length": 2.769231,
+      "measure": 14,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "KASNAK",
+      "time": 38.769231,
+      "end": 41.538462,
+      "length": 2.769231,
+      "measure": 15,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 38.769231,
+          "end": 39,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 40.153846,
+          "end": 40.384615,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 3,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 49.846154,
+      "end": 52.615385,
+      "length": 2.769231,
+      "measure": 19,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "KASNAK 2",
+      "time": 52.615385,
+      "end": 55.384615,
+      "length": 2.76923,
+      "measure": 20,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 52.615385,
+          "end": 52.846154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 54,
+          "end": 54.230769,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 54.923077,
+          "end": 55.153846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "KASNAK 2",
+      "time": 52.615385,
+      "end": 55.384615,
+      "length": 2.76923,
+      "measure": 20,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 52.615385,
+          "end": 52.846154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 54,
+          "end": 54.230769,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 54.923077,
+          "end": 55.153846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 69.230769,
+      "end": 72,
+      "length": 2.769231,
+      "measure": 25,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "RIDE",
+      "time": 72,
+      "end": 74.769231,
+      "length": 2.769231,
+      "measure": 27,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 72,
+          "end": 72.230769,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 73.384615,
+          "end": 73.615385,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 3,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 74.307692,
+          "end": 74.538462,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 5,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 88.615385,
+      "end": 91.384615,
+      "length": 2.76923,
+      "measure": 33,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "SLOW",
+      "time": 91.384615,
+      "end": 94.153846,
+      "length": 2.769231,
+      "measure": 33,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 91.384615,
+          "end": 91.615385,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 33,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 92.307692,
+          "end": 92.538462,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 34,
+          "beat": 2,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 92.769231,
+          "end": 93,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 34,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 99.692308,
+      "end": 102.461538,
+      "length": 2.76923,
+      "measure": 37,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "SLOW",
+      "time": 102.461538,
+      "end": 105.230769,
+      "length": 2.769231,
+      "measure": 37,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 102.461538,
+          "end": 102.692308,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 37,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 103.384615,
+          "end": 103.615385,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 38,
+          "beat": 2,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 103.846154,
+          "end": 104.076923,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 38,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 110.769231,
+      "end": 113.538462,
+      "length": 2.769231,
+      "measure": 41,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "KASNAK",
+      "time": 113.538462,
+      "end": 116.307692,
+      "length": 2.76923,
+      "measure": 42,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 113.538462,
+          "end": 113.769231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 42,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 114.923077,
+          "end": 115.153846,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 42,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 124.615385,
+      "end": 127.384615,
+      "length": 2.76923,
+      "measure": 46,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "KASNAK",
+      "time": 127.384615,
+      "end": 130.153846,
+      "length": 2.769231,
+      "measure": 46,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 127.384615,
+          "end": 127.615385,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 46,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 128.769231,
+          "end": 129,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 47,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 138.461538,
+      "end": 141.230769,
+      "length": 2.769231,
+      "measure": 50,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "KASNAK 2",
+      "time": 141.230769,
+      "end": 144,
+      "length": 2.769231,
+      "measure": 51,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 141.230769,
+          "end": 141.461538,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 51,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 142.615385,
+          "end": 142.846154,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 52,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 143.538462,
+          "end": 143.769231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 52,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "KASNAK 2",
+      "time": 141.230769,
+      "end": 144,
+      "length": 2.769231,
+      "measure": 51,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 141.230769,
+          "end": 141.461538,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 51,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 142.615385,
+          "end": 142.846154,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 52,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 143.538462,
+          "end": 143.769231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 52,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 157.846154,
+      "end": 160.615385,
+      "length": 2.769231,
+      "measure": 58,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    },
+    {
+      "text": "RIDE",
+      "time": 160.615385,
+      "end": 163.384615,
+      "length": 2.76923,
+      "measure": 59,
+      "beat": 1,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": [
+        {
+          "time": 160.615385,
+          "end": 160.846154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 59,
+          "beat": 1,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 162,
+          "end": 162.230769,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 59,
+          "beat": 4,
+          "numerator": 6,
+          "denominator": 8
+        },
+        {
+          "time": 162.923077,
+          "end": 163.153846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 59,
+          "beat": 6,
+          "numerator": 6,
+          "denominator": 8
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 177.230769,
+      "end": 180,
+      "length": 2.769231,
+      "measure": 64,
+      "beat": 6,
+      "numerator": 6,
+      "denominator": 8,
+      "notes": []
+    }
+  ],
+  "assets": [
+    {
+      "id": "master",
+      "kind": "audio",
+      "path": "Master.mp3",
+      "hash": "sha256:pending",
+      "label": "Master"
+    },
+    {
+      "id": "click",
+      "kind": "audio",
+      "path": "Click.flac",
+      "hash": "sha256:pending",
+      "audioRole": "click",
+      "bus": "CUE",
+      "label": "Click"
+    },
+    {
+      "id": "kick",
+      "kind": "audio",
+      "path": "Kick.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Kick"
+    },
+    {
+      "id": "drums",
+      "kind": "audio",
+      "path": "Drums.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Drums"
+    },
+    {
+      "id": "perc",
+      "kind": "audio",
+      "path": "Perc.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Perc"
+    },
+    {
+      "id": "bass",
+      "kind": "audio",
+      "path": "Bass.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Bass"
+    },
+    {
+      "id": "keys",
+      "kind": "audio",
+      "path": "Keys.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Keys"
+    },
+    {
+      "id": "pluck",
+      "kind": "audio",
+      "path": "Pluck.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Pluck"
+    },
+    {
+      "id": "string",
+      "kind": "audio",
+      "path": "String.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "String"
+    },
+    {
+      "id": "melody",
+      "kind": "audio",
+      "path": "Melody.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Melody"
+    },
+    {
+      "id": "choir",
+      "kind": "audio",
+      "path": "Choir.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Choir"
+    },
+    {
+      "id": "guitar",
+      "kind": "audio",
+      "path": "Guitar.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Guitar"
+    }
+  ],
+  "info": {
+    "bpm": 65,
+    "numerator": 6,
+    "denominator": 8,
+    "duration": 184.006993,
+    "key": "D",
+    "scale": "MINOR",
+    "style": "AZERI",
+    "kita": 2,
+    "playMode": "PLAYBACK"
+  }
+}
