@@ -1,0 +1,2122 @@
+{
+  "id": "dut_ag_ac_boyunca",
+  "version": 1,
+  "title": "Dut Ağacı Boyunca",
+  "duration": 212.307692,
+  "nextSongAt": 208.299856,
+  "key": "D",
+  "scale": "MINOR",
+  "style": "AZERI",
+  "kita": 2,
+  "tags": [
+    "reaper-export"
+  ],
+  "tempoMap": [
+    {
+      "time": 0,
+      "measure": 1,
+      "bpm": 104,
+      "numerator": 4,
+      "denominator": 4
+    },
+    {
+      "time": 200.769231,
+      "measure": 88,
+      "bpm": 99,
+      "numerator": 4,
+      "denominator": 4
+    },
+    {
+      "time": 203.193473,
+      "measure": 89,
+      "bpm": 94,
+      "numerator": 4,
+      "denominator": 4
+    }
+  ],
+  "sections": [
+    {
+      "name": "COUNT",
+      "start": 0,
+      "end": 4.615385
+    },
+    {
+      "name": "ARA",
+      "start": 4.615385,
+      "end": 23.076923
+    },
+    {
+      "name": "ARA",
+      "start": 23.076923,
+      "end": 41.538462
+    },
+    {
+      "name": "SAN A",
+      "start": 41.538462,
+      "end": 50.769231
+    },
+    {
+      "name": "SAN A",
+      "start": 50.769231,
+      "end": 60
+    },
+    {
+      "name": "SAN B",
+      "start": 60,
+      "end": 69.230769
+    },
+    {
+      "name": "SAN B",
+      "start": 69.230769,
+      "end": 78.461538
+    },
+    {
+      "name": "NAK A",
+      "start": 78.461538,
+      "end": 87.692308
+    },
+    {
+      "name": "NAK B",
+      "start": 87.692308,
+      "end": 106.153846
+    },
+    {
+      "name": "ARA",
+      "start": 106.153846,
+      "end": 124.615385
+    },
+    {
+      "name": "ARA",
+      "start": 124.615385,
+      "end": 143.076923
+    },
+    {
+      "name": "SAN A",
+      "start": 143.076923,
+      "end": 152.307692
+    },
+    {
+      "name": "SAN A",
+      "start": 152.307692,
+      "end": 161.538462
+    },
+    {
+      "name": "SAN B",
+      "start": 161.538462,
+      "end": 170.769231
+    },
+    {
+      "name": "SAN B",
+      "start": 170.769231,
+      "end": 180
+    },
+    {
+      "name": "NAK A",
+      "start": 180,
+      "end": 189.230769
+    },
+    {
+      "name": "NAK B",
+      "start": 189.230769,
+      "end": 208.299856
+    }
+  ],
+  "lyrics": [
+    {
+      "time": 41.538462,
+      "end": 50.769231,
+      "measure": 19,
+      "beat": 1,
+      "text": "DUT AĞACI BOYUNCA\r\nDUT YEMEDİM DOYUNCA"
+    },
+    {
+      "time": 50.769231,
+      "end": 60,
+      "measure": 23,
+      "beat": 1,
+      "text": "DUT AĞACI BOYUNCA\r\nDUT YEMEDİM DOYUNCA"
+    },
+    {
+      "time": 60,
+      "end": 69.230769,
+      "measure": 27,
+      "beat": 1,
+      "text": "YARİ HALVETTE GÖRDÜM\r\nDANIŞMADIM DOYUNCA"
+    },
+    {
+      "time": 69.230769,
+      "end": 78.461538,
+      "measure": 30,
+      "beat": 4,
+      "text": "YARİ HALVETTE GÖRDÜM\r\nDANIŞMADIM DOYUNCA"
+    },
+    {
+      "time": 78.461538,
+      "end": 87.692308,
+      "measure": 34,
+      "beat": 4,
+      "text": "MENİM BALAM KİME NEYLER\r\nKÖRPE BALAM KİME NEYLER"
+    },
+    {
+      "time": 87.692308,
+      "end": 96.923077,
+      "measure": 39,
+      "beat": 1,
+      "text": "MENİM BALAM AY BALAM\r\nKÖRPE BALAM AY BALAM"
+    },
+    {
+      "time": 96.923077,
+      "end": 106.153846,
+      "measure": 43,
+      "beat": 1,
+      "text": "MENİM BALAM AY BALAM\r\nKÖRPE BALAM AY BALAM"
+    },
+    {
+      "time": 143.076923,
+      "end": 152.307692,
+      "measure": 62,
+      "beat": 4,
+      "text": "GEDİRDİM YAVAŞ YAVAŞ\r\nAYAĞIMA DEĞDİ TAŞ"
+    },
+    {
+      "time": 152.307692,
+      "end": 161.538462,
+      "measure": 66,
+      "beat": 4,
+      "text": "GEDİRDİM YAVAŞ YAVAŞ\r\nAYAĞIMA DEĞDİ TAŞ"
+    },
+    {
+      "time": 161.538462,
+      "end": 170.769231,
+      "measure": 71,
+      "beat": 1,
+      "text": "SENDEN MENE YAR OLMAZ\r\nGEL OLAH BACI GARDAŞ"
+    },
+    {
+      "time": 170.769231,
+      "end": 180,
+      "measure": 75,
+      "beat": 1,
+      "text": "SENDEN MENE YAR OLMAZ\r\nGEL OLAH BACI GARDAŞ"
+    },
+    {
+      "time": 180,
+      "end": 189.230769,
+      "measure": 79,
+      "beat": 1,
+      "text": "MENİM BALAM KİME NEYLER\r\nKÖRPE BALAM KİME NEYLER"
+    },
+    {
+      "time": 189.230769,
+      "end": 198.461538,
+      "measure": 82,
+      "beat": 4,
+      "text": "MENİM BALAM AY BALAM\r\nKÖRPE BALAM AY BALAM"
+    },
+    {
+      "time": 198.461538,
+      "end": 208.299856,
+      "measure": 86,
+      "beat": 4,
+      "text": "MENİM BALAM AY BALAM\r\nKÖRPE BALAM AY BALAM"
+    }
+  ],
+  "chords": [
+    {
+      "time": 0,
+      "end": 4.615385,
+      "measure": 1,
+      "beat": 1,
+      "text": "1 2 3 4 - SON  2 3 4"
+    },
+    {
+      "time": 4.615385,
+      "end": 6.923077,
+      "measure": 3,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 6.923077,
+      "end": 9.230769,
+      "measure": 4,
+      "beat": 1,
+      "text": "A"
+    },
+    {
+      "time": 9.230769,
+      "end": 11.538462,
+      "measure": 4,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 11.538462,
+      "end": 13.846154,
+      "measure": 6,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 13.846154,
+      "end": 16.153846,
+      "measure": 7,
+      "beat": 1,
+      "text": "A"
+    },
+    {
+      "time": 16.153846,
+      "end": 17.307692,
+      "measure": 7,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 17.307692,
+      "end": 18.461538,
+      "measure": 8,
+      "beat": 2,
+      "text": "Gm7"
+    },
+    {
+      "time": 18.461538,
+      "end": 20.769231,
+      "measure": 8,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 20.769231,
+      "end": 23.076923,
+      "measure": 10,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 23.076923,
+      "end": 25.384615,
+      "measure": 10,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 25.384615,
+      "end": 27.692308,
+      "measure": 11,
+      "beat": 4,
+      "text": "A"
+    },
+    {
+      "time": 27.692308,
+      "end": 30,
+      "measure": 13,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 30,
+      "end": 32.307692,
+      "measure": 14,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 32.307692,
+      "end": 34.615385,
+      "measure": 14,
+      "beat": 4,
+      "text": "A"
+    },
+    {
+      "time": 34.615385,
+      "end": 35.769231,
+      "measure": 16,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 35.769231,
+      "end": 36.923077,
+      "measure": 16,
+      "beat": 3,
+      "text": "Gm7"
+    },
+    {
+      "time": 36.923077,
+      "end": 39.230769,
+      "measure": 17,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 39.230769,
+      "end": 41.538462,
+      "measure": 17,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 41.538462,
+      "end": 43.846154,
+      "measure": 19,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 43.846154,
+      "end": 46.153846,
+      "measure": 20,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 46.153846,
+      "end": 48.461538,
+      "measure": 20,
+      "beat": 4,
+      "text": "Gm7"
+    },
+    {
+      "time": 48.461538,
+      "end": 50.769231,
+      "measure": 21,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 50.769231,
+      "end": 51.923077,
+      "measure": 23,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 51.923077,
+      "end": 53.076923,
+      "measure": 23,
+      "beat": 3,
+      "text": "D7"
+    },
+    {
+      "time": 53.076923,
+      "end": 55.384615,
+      "measure": 23,
+      "beat": 4,
+      "text": "Gm7"
+    },
+    {
+      "time": 55.384615,
+      "end": 57.692308,
+      "measure": 24,
+      "beat": 4,
+      "text": "Gm7"
+    },
+    {
+      "time": 57.692308,
+      "end": 58.846154,
+      "measure": 26,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 58.846154,
+      "end": 60,
+      "measure": 26,
+      "beat": 3,
+      "text": "D7"
+    },
+    {
+      "time": 60,
+      "end": 62.307692,
+      "measure": 27,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 62.307692,
+      "end": 64.615385,
+      "measure": 27,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 64.615385,
+      "end": 66.923077,
+      "measure": 29,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 66.923077,
+      "end": 68.076923,
+      "measure": 30,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 68.076923,
+      "end": 69.230769,
+      "measure": 30,
+      "beat": 2,
+      "text": "D7"
+    },
+    {
+      "time": 69.230769,
+      "end": 71.538462,
+      "measure": 30,
+      "beat": 4,
+      "text": "Gm7"
+    },
+    {
+      "time": 71.538462,
+      "end": 73.846154,
+      "measure": 32,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 73.846154,
+      "end": 76.153846,
+      "measure": 33,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 76.153846,
+      "end": 78.461538,
+      "measure": 33,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 78.461538,
+      "end": 80.769231,
+      "measure": 34,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 80.769231,
+      "end": 83.076923,
+      "measure": 36,
+      "beat": 1,
+      "text": "A"
+    },
+    {
+      "time": 83.076923,
+      "end": 85.384615,
+      "measure": 36,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 85.384615,
+      "end": 87.692308,
+      "measure": 37,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 87.692308,
+      "end": 90,
+      "measure": 39,
+      "beat": 1,
+      "text": "A"
+    },
+    {
+      "time": 90,
+      "end": 91.153846,
+      "measure": 40,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 91.153846,
+      "end": 92.307692,
+      "measure": 40,
+      "beat": 2,
+      "text": "Gm7"
+    },
+    {
+      "time": 92.307692,
+      "end": 94.615385,
+      "measure": 40,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 94.615385,
+      "end": 96.923077,
+      "measure": 42,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 96.923077,
+      "end": 99.230769,
+      "measure": 43,
+      "beat": 1,
+      "text": "A"
+    },
+    {
+      "time": 99.230769,
+      "end": 100.384615,
+      "measure": 43,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 100.384615,
+      "end": 101.538462,
+      "measure": 44,
+      "beat": 2,
+      "text": "Gm7"
+    },
+    {
+      "time": 101.538462,
+      "end": 103.846154,
+      "measure": 45,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 103.846154,
+      "end": 106.153846,
+      "measure": 46,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 106.153846,
+      "end": 108.461538,
+      "measure": 46,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 108.461538,
+      "end": 110.769231,
+      "measure": 47,
+      "beat": 4,
+      "text": "A"
+    },
+    {
+      "time": 110.769231,
+      "end": 113.076923,
+      "measure": 49,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 113.076923,
+      "end": 115.384615,
+      "measure": 49,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 115.384615,
+      "end": 117.692308,
+      "measure": 50,
+      "beat": 4,
+      "text": "A"
+    },
+    {
+      "time": 117.692308,
+      "end": 118.845553,
+      "measure": 52,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 118.845553,
+      "end": 120,
+      "measure": 52,
+      "beat": 2,
+      "text": "Gm7"
+    },
+    {
+      "time": 120,
+      "end": 122.307692,
+      "measure": 53,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 122.307692,
+      "end": 124.615385,
+      "measure": 53,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 124.615385,
+      "end": 126.923077,
+      "measure": 55,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 126.923077,
+      "end": 129.230769,
+      "measure": 56,
+      "beat": 1,
+      "text": "A"
+    },
+    {
+      "time": 129.230769,
+      "end": 131.538462,
+      "measure": 56,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 131.538462,
+      "end": 133.846154,
+      "measure": 58,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 133.846154,
+      "end": 136.153846,
+      "measure": 59,
+      "beat": 1,
+      "text": "A"
+    },
+    {
+      "time": 136.153846,
+      "end": 137.307091,
+      "measure": 59,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 137.307091,
+      "end": 138.461538,
+      "measure": 60,
+      "beat": 2,
+      "text": "Gm7"
+    },
+    {
+      "time": 138.461538,
+      "end": 140.769231,
+      "measure": 60,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 140.769231,
+      "end": 143.076923,
+      "measure": 62,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 143.076923,
+      "end": 145.384615,
+      "measure": 62,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 145.384615,
+      "end": 147.692308,
+      "measure": 63,
+      "beat": 4,
+      "text": "Gm7"
+    },
+    {
+      "time": 147.692308,
+      "end": 150,
+      "measure": 65,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 150,
+      "end": 152.307692,
+      "measure": 66,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 152.307692,
+      "end": 153.460937,
+      "measure": 66,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 153.460938,
+      "end": 154.615385,
+      "measure": 67,
+      "beat": 2,
+      "text": "D7"
+    },
+    {
+      "time": 154.615385,
+      "end": 156.923077,
+      "measure": 68,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 156.923077,
+      "end": 159.230769,
+      "measure": 69,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 159.230769,
+      "end": 160.384014,
+      "measure": 69,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 160.384014,
+      "end": 161.538462,
+      "measure": 70,
+      "beat": 2,
+      "text": "D7"
+    },
+    {
+      "time": 161.538462,
+      "end": 163.846154,
+      "measure": 71,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 163.846154,
+      "end": 166.153846,
+      "measure": 72,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 166.153846,
+      "end": 168.461538,
+      "measure": 72,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 168.461538,
+      "end": 169.614784,
+      "measure": 73,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 169.614784,
+      "end": 170.769231,
+      "measure": 74,
+      "beat": 2,
+      "text": "D7"
+    },
+    {
+      "time": 170.769231,
+      "end": 173.076923,
+      "measure": 75,
+      "beat": 1,
+      "text": "Gm7"
+    },
+    {
+      "time": 173.076923,
+      "end": 175.384615,
+      "measure": 75,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 175.384615,
+      "end": 177.692308,
+      "measure": 76,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 177.692308,
+      "end": 180,
+      "measure": 78,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 180,
+      "end": 182.307692,
+      "measure": 79,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 182.307692,
+      "end": 184.615385,
+      "measure": 79,
+      "beat": 4,
+      "text": "A"
+    },
+    {
+      "time": 184.615385,
+      "end": 186.923077,
+      "measure": 81,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 186.923077,
+      "end": 189.230769,
+      "measure": 82,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 189.230769,
+      "end": 191.538462,
+      "measure": 82,
+      "beat": 4,
+      "text": "A"
+    },
+    {
+      "time": 191.538462,
+      "end": 192.691707,
+      "measure": 84,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 192.691707,
+      "end": 193.846154,
+      "measure": 84,
+      "beat": 2,
+      "text": "Gm7"
+    },
+    {
+      "time": 193.846154,
+      "end": 196.153846,
+      "measure": 85,
+      "beat": 1,
+      "text": "A7"
+    },
+    {
+      "time": 196.153846,
+      "end": 198.461538,
+      "measure": 85,
+      "beat": 4,
+      "text": "Dm"
+    },
+    {
+      "time": 198.461538,
+      "end": 200.769231,
+      "measure": 86,
+      "beat": 4,
+      "text": "A"
+    },
+    {
+      "time": 200.769231,
+      "end": 201.980721,
+      "measure": 88,
+      "beat": 1,
+      "text": "Dm"
+    },
+    {
+      "time": 201.980721,
+      "end": 203.193473,
+      "measure": 88,
+      "beat": 2,
+      "text": "Gm7"
+    },
+    {
+      "time": 203.193473,
+      "end": 205.746665,
+      "measure": 88,
+      "beat": 4,
+      "text": "A7"
+    },
+    {
+      "time": 205.746665,
+      "end": 208.299856,
+      "measure": 90,
+      "beat": 1,
+      "text": "Dm"
+    }
+  ],
+  "patterns": [
+    {
+      "text": "1 2 3 4 - SON  2 3 4",
+      "time": 0,
+      "end": 4.615385,
+      "length": 4.615385,
+      "measure": 1,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 4.615385,
+      "end": 6.923077,
+      "length": 2.307692,
+      "measure": 3,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 4.615385,
+          "end": 4.759615,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 4.615385,
+          "end": 4.759615,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 6.923077,
+      "end": 9.230769,
+      "length": 2.307692,
+      "measure": 4,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 6.923077,
+          "end": 7.067308,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 4,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 7.788462,
+          "end": 7.932692,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 4,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 8.076923,
+          "end": 8.221154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 4,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 8.653846,
+          "end": 8.798077,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 4,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 20.769231,
+      "end": 23.076923,
+      "length": 2.307692,
+      "measure": 10,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 23.076923,
+      "end": 25.384615,
+      "length": 2.307692,
+      "measure": 10,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 23.076923,
+          "end": 23.221154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 10,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 23.076923,
+          "end": 23.221154,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 10,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 25.384615,
+      "end": 27.692308,
+      "length": 2.307693,
+      "measure": 11,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 25.384615,
+          "end": 25.528846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 11,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 26.25,
+          "end": 26.394231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 26.538462,
+          "end": 26.682692,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 27.115385,
+          "end": 27.259615,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 39.230769,
+      "end": 41.538462,
+      "length": 2.307693,
+      "measure": 17,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 41.538462,
+      "end": 43.846154,
+      "length": 2.307692,
+      "measure": 19,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 41.538462,
+          "end": 41.682692,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 19,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 41.538462,
+          "end": 41.682692,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 19,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 43.846154,
+      "end": 46.153846,
+      "length": 2.307692,
+      "measure": 20,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 43.846154,
+          "end": 43.990385,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 44.711538,
+          "end": 44.855769,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 45,
+          "end": 45.144231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 45.576923,
+          "end": 45.721154,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 57.692308,
+      "end": 60,
+      "length": 2.307692,
+      "measure": 26,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "BOLERO",
+      "time": 60,
+      "end": 62.307692,
+      "length": 2.307692,
+      "measure": 27,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 60,
+          "end": 60.144231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 60.865385,
+          "end": 61.009615,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 61.153846,
+          "end": 61.298077,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 61.730769,
+          "end": 61.875,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 76.153846,
+      "end": 78.461538,
+      "length": 2.307692,
+      "measure": 33,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 78.461538,
+      "end": 80.769231,
+      "length": 2.307693,
+      "measure": 34,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 78.461538,
+          "end": 78.605769,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 34,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 78.461538,
+          "end": 78.605769,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 34,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 80.769231,
+      "end": 83.076923,
+      "length": 2.307692,
+      "measure": 36,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 80.769231,
+          "end": 80.913462,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 36,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 81.634615,
+          "end": 81.778846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 36,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 81.923077,
+          "end": 82.067308,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 36,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 82.5,
+          "end": 82.644231,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 36,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 87.692308,
+      "end": 90,
+      "length": 2.307692,
+      "measure": 39,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 87.692308,
+          "end": 87.836538,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 88.557692,
+          "end": 88.701923,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 88.846154,
+          "end": 88.990385,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 89.423077,
+          "end": 89.567308,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 103.846154,
+      "end": 106.153846,
+      "length": 2.307692,
+      "measure": 46,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 106.153846,
+      "end": 108.461538,
+      "length": 2.307692,
+      "measure": 46,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 106.153846,
+          "end": 106.298077,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 46,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 106.153846,
+          "end": 106.298077,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 46,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 108.461538,
+      "end": 110.769231,
+      "length": 2.307693,
+      "measure": 47,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 108.461538,
+          "end": 108.605769,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 47,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 109.326923,
+          "end": 109.471154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 109.615385,
+          "end": 109.759615,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 110.192308,
+          "end": 110.336538,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 122.307692,
+      "end": 124.615385,
+      "length": 2.307693,
+      "measure": 53,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 124.615385,
+      "end": 126.923077,
+      "length": 2.307692,
+      "measure": 55,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 124.615385,
+          "end": 124.759615,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 55,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 124.615385,
+          "end": 124.759615,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 55,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 126.923077,
+      "end": 129.230769,
+      "length": 2.307692,
+      "measure": 56,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 126.923077,
+          "end": 127.067308,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 56,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 127.788462,
+          "end": 127.932692,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 56,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 128.076923,
+          "end": 128.221154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 56,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 128.653846,
+          "end": 128.798077,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 56,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 140.769231,
+      "end": 143.076923,
+      "length": 2.307692,
+      "measure": 62,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 143.076923,
+      "end": 145.384615,
+      "length": 2.307692,
+      "measure": 62,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 143.076923,
+          "end": 143.221154,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 62,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 143.076923,
+          "end": 143.221154,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 62,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 145.384615,
+      "end": 147.692308,
+      "length": 2.307693,
+      "measure": 63,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 145.384615,
+          "end": 145.528846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 63,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 146.25,
+          "end": 146.394231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 146.538462,
+          "end": 146.682692,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 147.115385,
+          "end": 147.259615,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 64,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 159.230769,
+      "end": 161.538462,
+      "length": 2.307693,
+      "measure": 69,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "BOLERO",
+      "time": 161.538462,
+      "end": 163.846154,
+      "length": 2.307692,
+      "measure": 71,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 161.538462,
+          "end": 161.682692,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 71,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 162.403846,
+          "end": 162.548077,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 71,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 162.692308,
+          "end": 162.836538,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 71,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 163.269231,
+          "end": 163.413462,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 71,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "FILL",
+      "time": 177.692308,
+      "end": 180,
+      "length": 2.307692,
+      "measure": 78,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
+      "text": "TUS",
+      "time": 180,
+      "end": 182.307692,
+      "length": 2.307692,
+      "measure": 79,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 180,
+          "end": 180.144231,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 180,
+          "end": 180.144231,
+          "pitch": 53,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 182.307692,
+      "end": 184.615385,
+      "length": 2.307693,
+      "measure": 79,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 182.307692,
+          "end": 182.451923,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 79,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 183.173077,
+          "end": 183.317308,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 80,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 183.461538,
+          "end": 183.605769,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 80,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 184.038462,
+          "end": 184.182692,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 80,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
+      "text": "BOLERO",
+      "time": 189.230769,
+      "end": 191.538462,
+      "length": 2.307693,
+      "measure": 82,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 189.230769,
+          "end": 189.375,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 82,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 190.096154,
+          "end": 190.240385,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 83,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 190.384615,
+          "end": 190.528846,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 83,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 190.961538,
+          "end": 191.105769,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 83,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "master",
+      "kind": "audio",
+      "path": "Master.mp3",
+      "hash": "sha256:pending",
+      "label": "Master"
+    },
+    {
+      "id": "click",
+      "kind": "audio",
+      "path": "Click.flac",
+      "hash": "sha256:pending",
+      "audioRole": "click",
+      "bus": "CUE",
+      "label": "Click"
+    },
+    {
+      "id": "kick",
+      "kind": "audio",
+      "path": "Kick.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Kick"
+    },
+    {
+      "id": "drums",
+      "kind": "audio",
+      "path": "Drums.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Drums"
+    },
+    {
+      "id": "perc",
+      "kind": "audio",
+      "path": "Perc.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Perc"
+    },
+    {
+      "id": "bass",
+      "kind": "audio",
+      "path": "Bass.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Bass"
+    },
+    {
+      "id": "keys",
+      "kind": "audio",
+      "path": "Keys.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Keys"
+    },
+    {
+      "id": "pluck",
+      "kind": "audio",
+      "path": "Pluck.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Pluck"
+    },
+    {
+      "id": "string",
+      "kind": "audio",
+      "path": "String.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "String"
+    },
+    {
+      "id": "melody",
+      "kind": "audio",
+      "path": "Melody.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Melody"
+    },
+    {
+      "id": "choir",
+      "kind": "audio",
+      "path": "Choir.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Choir"
+    },
+    {
+      "id": "guitar",
+      "kind": "audio",
+      "path": "Guitar.flac",
+      "hash": "sha256:pending",
+      "audioRole": "stem",
+      "bus": "MAIN",
+      "label": "Guitar"
+    }
+  ],
+  "info": {
+    "bpm": 104,
+    "numerator": 4,
+    "denominator": 4,
+    "duration": 212.307692,
+    "key": "D",
+    "scale": "MINOR",
+    "style": "AZERI",
+    "kita": 2,
+    "playMode": "PLAYBACK"
+  }
+}

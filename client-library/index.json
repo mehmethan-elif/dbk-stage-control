@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 6650,
-    "hash": "be6eec914b4f67f04a571ddb29573b7dad65b41e0e2d6c5cd49957e398b0bc5a"
+    "size": 6958,
+    "hash": "11599b5d9cc702a62e40b4f02b8484a02d8be2593983296c86af2fd38ac99d44"
   },
   "songs": [
     {
@@ -314,6 +314,33 @@
       ]
     },
     {
+      "id": "dut_ag_ac_boyunca",
+      "folder": "dut_ag_ac_boyunca",
+      "title": "Dut Ağacı Boyunca",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3398007,
+          "hash": "fd534ccdf3f5dcd9d471609861289b3c3fd167b6efad04ca551770bf6ac3c346"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 31095,
+          "hash": "0e902e8d74059f5901984fa2a3086e7d9fccd22d4be6700467721faec3f15f97"
+        },
+        {
+          "path": "settings.json",
+          "size": 10150,
+          "hash": "385bb9f27bde08466bc7a8cd8de3fe8844bc93e46fb499a3e237bafc2900ed71"
+        },
+        {
+          "path": "song.json",
+          "size": 41596,
+          "hash": "b03a1c35742ce597b095786e78c3a9de4b467574f2b7848a9781fbe5b8892086"
+        }
+      ]
+    },
+    {
       "id": "go_nu_l_dag",
       "folder": "go_nu_l_dag",
       "title": "Gönül Dağı",
@@ -364,6 +391,33 @@
           "path": "song.json",
           "size": 92087,
           "hash": "2a4ba66a4ffd0b996a6cf99d0d0ef2a0c4a8f9ad63a2c6bc09bf1eb83dc39af5"
+        }
+      ]
+    },
+    {
+      "id": "ig_d_r_n_al_almas",
+      "folder": "ig_d_r_n_al_almas",
+      "title": "Iğdır'ın Al Alması",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3572296,
+          "hash": "722c968fdd2ded70588879c533cbfafb227c768cc79af7021a2cb7c6f0caa12e"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 26123,
+          "hash": "7a600d28f6e77fa9712bcab712ba8b3c3de66223358fe9176f543772db7c7243"
+        },
+        {
+          "path": "settings.json",
+          "size": 15048,
+          "hash": "9e21d02b58833703e7e3fac7fa5bbc2f9102d7eaf1441726b805a5bd870e246b"
+        },
+        {
+          "path": "song.json",
+          "size": 43835,
+          "hash": "99e5f839882f3f0d5520940273203192acc961e5288f21903f3afb812f867669"
         }
       ]
     },
