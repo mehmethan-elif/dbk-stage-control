@@ -635,6 +635,7 @@ export function DrumView() {
                       label={talkDisplayLabel(entry)}
                       entryId={entry.entryId}
                       locked={isLockedElif(entry)}
+                      notes={entry.notes}
                       attr="data-drum-song"
                     />
                   );

@@ -2,10 +2,32 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 5416,
-    "hash": "542b838163bb3bfe7bd894cb66b8acf9cc3d9ce1912cdd1930f1f34da2878574"
+    "size": 7463,
+    "hash": "6c7074cf635e89ecb0724b69271140b9cdfe33c9a09ed946e78ecdeb4e14bafd"
   },
   "songs": [
+    {
+      "id": "Altın Yüzüğüm Kırıldı",
+      "folder": "altin_yuzugum_kirildi",
+      "title": "Altın Yüzüğüm Kırıldı",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 31663,
+          "hash": "be65c097d3f452cc8dd1c678d84bc18be6ddb6c9ecb48e86d8cadfcbdc1ae581"
+        },
+        {
+          "path": "settings.json",
+          "size": 544,
+          "hash": "74e5dc39da2b7283d70e7f86c239008935cedd1066aec680afc128dbdd1a5b7a"
+        },
+        {
+          "path": "song.json",
+          "size": 845,
+          "hash": "61df3122339ea14850c6a7823c9aa47d7132effb62a48c884d66e659aeba33ac"
+        }
+      ]
+    },
     {
       "id": "arpa_bug_day_daneler",
       "folder": "arpa_bug_day_daneler",
@@ -30,6 +52,28 @@
           "path": "song.json",
           "size": 111295,
           "hash": "f72035d7e1ce48d53085d3672bef83d319bdf65c5c242fab5d23af97c1ce842d"
+        }
+      ]
+    },
+    {
+      "id": "Ay Akşamdan Işıktır",
+      "folder": "ay_aksamdan_isiktir",
+      "title": "Ay Akşamdan Işıktır",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 35494,
+          "hash": "6dbc4cb74021053d3d5062b61a716866f3f9ef19bec0e93dd88b375399f92f27"
+        },
+        {
+          "path": "settings.json",
+          "size": 1009,
+          "hash": "9c547e0543891f0cac3dfbea51c1a49841ac249345120d9c5a02d8370f89df42"
+        },
+        {
+          "path": "song.json",
+          "size": 1297,
+          "hash": "bc50469d96982b82c93aaa3e6099d5447202b4476f0fad7c7988b33bd2d85ebb"
         }
       ]
     },
@@ -501,6 +545,116 @@
       ]
     },
     {
+      "id": "Lorke",
+      "folder": "Lorke",
+      "title": "Lorke",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 30124,
+          "hash": "d0fd877a7d46189f2e58bff169c6b8168f9cad836ec5eb26ba7c667aa935e032"
+        },
+        {
+          "path": "settings.json",
+          "size": 505,
+          "hash": "50075f70a4de62bd12cbe2a9c9b2d6a4e1e235fd5b78f013cd0fbffc55c7f1b8"
+        },
+        {
+          "path": "song.json",
+          "size": 755,
+          "hash": "c485b6f082537bf3eafd7ac4c10aece11cb10e3e8dad47a56e36c2750c88d060"
+        }
+      ]
+    },
+    {
+      "id": "Makaram Sarı Bağlar",
+      "folder": "makaram_sari_baglar",
+      "title": "Makaram Sarı Bağlar",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 34259,
+          "hash": "144e9e7b77d52e55f199f527aeedc05b355bebff630dddd5b7f5ec4c94bc0f4e"
+        },
+        {
+          "path": "settings.json",
+          "size": 480,
+          "hash": "9418111260c7bfb7b0b29a1d13ff2380361ea64bcab4cec2706fcce80b94f4ee"
+        },
+        {
+          "path": "song.json",
+          "size": 763,
+          "hash": "1f5e70de56880f99727a8fe774b371cc3aa1c78578b1c1b9ac0a31d3805edf42"
+        }
+      ]
+    },
+    {
+      "id": "Mardin Kapı Şen Olur",
+      "folder": "mardin_kapi_sen_olur",
+      "title": "Mardin Kapı Şen Olur",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 32971,
+          "hash": "9ab116b9cb98aa0ee339116a5b699a7bf2b09c7e821a40568f0f43832486b78d"
+        },
+        {
+          "path": "settings.json",
+          "size": 874,
+          "hash": "f36228bf92fb3ab33259317758487720cd62a7814b21e4ad3d7c2e6718a453a0"
+        },
+        {
+          "path": "song.json",
+          "size": 1159,
+          "hash": "19faff72d8293037e6bff84ebd9069bd9119cad44814f103b9e302567a2789f2"
+        }
+      ]
+    },
+    {
+      "id": "Menşure Hanım",
+      "folder": "mensure_hanim",
+      "title": "Menşure Hanım",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 27752,
+          "hash": "7fff3dd19131d83e010b2b29afa2a8670de706425b75730a036bb1669c7ebf21"
+        },
+        {
+          "path": "settings.json",
+          "size": 236,
+          "hash": "3ee3f12fd9b45a1102351f0167a957614f4b2e338dda36755ad54027c1826bcb"
+        },
+        {
+          "path": "song.json",
+          "size": 507,
+          "hash": "75dbd3637e403890f41156f935e9dfcf6fb8b6841a5a875c8f7df8a125c743e2"
+        }
+      ]
+    },
+    {
+      "id": "Nare Esvab Yıkıyor",
+      "folder": "nare_esvab_yikiyor",
+      "title": "Nare Esvab Yıkıyor",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 28359,
+          "hash": "396a8e00a31a49ec72288497b4c121a235d16eb9fd6dca47309482594e11d2b5"
+        },
+        {
+          "path": "settings.json",
+          "size": 489,
+          "hash": "d73469d6910b8f8b7e915182d61d96964ae139f853cc91da6c918e6cd87c76a6"
+        },
+        {
+          "path": "song.json",
+          "size": 769,
+          "hash": "325e79b967f47cea71fd473c6632ff11d971864a1e65808277c7e38c63dceeff"
+        }
+      ]
+    },
+    {
       "id": "osman_ag_a",
       "folder": "osman_ag_a",
       "title": "Osman Ağa",
@@ -528,6 +682,50 @@
       ]
     },
     {
+      "id": "Sine Sine",
+      "folder": "sine_sine",
+      "title": "Sine Sine",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 27979,
+          "hash": "8ebc75c090cc27a67109cd64ad1912b69ce42b556cec0cccf219ffde7b157de5"
+        },
+        {
+          "path": "settings.json",
+          "size": 663,
+          "hash": "fb28796865a36ad06d969d928c916785560a9dc0de0124ec49ec954667d56f48"
+        },
+        {
+          "path": "song.json",
+          "size": 921,
+          "hash": "9661f1d5cebcf47f983217997760566f35bd6ca42077c89095580e5e953c9300"
+        }
+      ]
+    },
+    {
+      "id": "Tarama Yar Tarama",
+      "folder": "tarama_yar_tarama",
+      "title": "Tarama Yar Tarama",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 31050,
+          "hash": "21eef7fc95997825f69c2f1ca199d34df948d594508daf00ea53850ecde95a4f"
+        },
+        {
+          "path": "settings.json",
+          "size": 444,
+          "hash": "4ea1e336b6cba32b19a4f5cc0b08ca77ba64264ce1833577dc7e1e27f227b61b"
+        },
+        {
+          "path": "song.json",
+          "size": 718,
+          "hash": "8772c73e386be32bfbdc9b4a4fc5e854deef64f81e4bad5f6fb5236f4a23e641"
+        }
+      ]
+    },
+    {
       "id": "telli_turnam",
       "folder": "telli_turnam",
       "title": "Telli Turnam",
@@ -551,6 +749,28 @@
           "path": "song.json",
           "size": 132481,
           "hash": "4f321f56f75ff82ceedd86133c9337e78de8888015bc69ea3adbb5c42d0deb45"
+        }
+      ]
+    },
+    {
+      "id": "Toycular",
+      "folder": "Toycular",
+      "title": "Toycular",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 31887,
+          "hash": "23c934f379516e98e826fdfec634b3157ec98354557d1aa7f2f6fea920e2e197"
+        },
+        {
+          "path": "settings.json",
+          "size": 429,
+          "hash": "9731f80420c139d9d6245504a15aa711f010cb29aa0fff4b3d304d7a934e7daf"
+        },
+        {
+          "path": "song.json",
+          "size": 664,
+          "hash": "2c0f6634a412854df7e222404d27ab52a372ce56ba06c8ab0921852ea1db275c"
         }
       ]
     },
@@ -609,6 +829,28 @@
       ]
     },
     {
+      "id": "Vur Davulcu",
+      "folder": "vur_davulcu",
+      "title": "Vur Davulcu",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 29404,
+          "hash": "0d26e8cfb6226f0fbbf9e5c378f7cfc2b8ad79248d638de6f649c4265b89a7b5"
+        },
+        {
+          "path": "settings.json",
+          "size": 761,
+          "hash": "3e2caad309ede02eb3ed2e8313f5395b7997c5c0372330b618273a3e0681124d"
+        },
+        {
+          "path": "song.json",
+          "size": 1023,
+          "hash": "6f3c0b56d454ed31c2e4e3afe62bfafe1162007772a9eb3223a743f1cb3683ea"
+        }
+      ]
+    },
+    {
       "id": "yolcu",
       "folder": "yolcu",
       "title": "Yolcu",
@@ -632,6 +874,28 @@
           "path": "song.json",
           "size": 166562,
           "hash": "c55f9d5b948b4172a37ec9f45f5d3a2ba0bc6f0012379b937a6c2147e559261e"
+        }
+      ]
+    },
+    {
+      "id": "Zap Suyu",
+      "folder": "zap_suyu",
+      "title": "Zap Suyu",
+      "files": [
+        {
+          "path": "Nota.pdf",
+          "size": 32045,
+          "hash": "60faca99eb8dc383031770dfe2fc5ecbcb735e25baa68cc8fceb68a56987ab5f"
+        },
+        {
+          "path": "settings.json",
+          "size": 706,
+          "hash": "ba0b49549c59aa2bd84d5fb1b8be291d9e0143d71f8d2c3ac12c787f4837f5d7"
+        },
+        {
+          "path": "song.json",
+          "size": 962,
+          "hash": "dcd274e0aa1af3c338b8e70b0d17cd348c1d0ef33473c279afefc46ae1ab05b0"
         }
       ]
     }

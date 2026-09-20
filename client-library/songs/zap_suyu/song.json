@@ -1,0 +1,19 @@
+{
+  "info": {
+    "bpm": 120,
+    "numerator": 4,
+    "denominator": 4,
+    "duration": 120,
+    "key": "D",
+    "scale": "USSAK",
+    "style": "HALAY",
+    "kita": 3,
+    "playMode": "VIEW",
+    "metroNotes": {
+      "lyrics": "ZAP SUYU DERİN AKAR (sinem sinem sinem mi)\nCAN ALIR YÜREK YAKAR (yaktın sinem mi sinem mi)\nBEN SEVİP ELLER ALA (sinem sinem sinem mi)\nBANA DA KİMLER BAKAR (yaktın sinem mi sinem mi)\n\n[NAKARAT]\nYAR SİNEM Mİ SİNEM Mİ.....\n\nZAP SUYU AKTI GEÇTİ (sinem sinem sinem mi)\nSİNEMİ YAKTI GEÇTİ (yaktın sinem mi sinem mi)\nGÜZELLERİN İÇİNDEN (sinem sinem sinem mi)\nBENİM YARIMİ SEÇTİ (yaktın sinem mi sinem mi)\n\n[NAKARAT]\n\nZAP SUYU GEÇİT VERMEZ (sinem sinem sinem mi)\nSIRRINA AKIL ERMEK (yaktın sinem mi sinem mi)\nÖYLE BİR YARE DÜŞTÜM (sinem sinem sinem mi)\nDÜNYADA YÜZÜM GÜLMEZ (yaktın sinem mi sinem mi)\n\n[NAKARAT]"
+    }
+  },
+  "kita": 3,
+  "title": "Zap Suyu",
+  "id": "Zap Suyu"
+}

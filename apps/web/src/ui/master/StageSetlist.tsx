@@ -35,7 +35,7 @@ import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
 import { practiceEntryId } from "../../practice/gig";
 import { listedSongForColor, songRowStyle } from "../shared/key-color";
 import { AddIcon } from "../shared/icons";
-import { ConcertFinalBlock, ElifNote, StopLabel, TalkLabel, TalkLeadIcon, setlistHasSongs } from "./setlist-marker";
+import { ConcertFinalBlock, ElifNote, StopLabel, StopNote, TalkLabel, TalkLeadIcon, setlistHasSongs } from "./setlist-marker";
 import { groupLibrarySongs } from "./library-groups";
 import { scrollStageToSongTitle } from "./stage-scroll";
 
@@ -348,6 +348,7 @@ export function StageSetlist(props: {
                   <TalkLabel entry={entry} />
                   {locked ? <ElifNote /> : null}
                 </span>
+                {isStopMarker(entry) ? <StopNote notes={entry.notes} /> : null}
                 {!readOnly && !locked ? (
                   <button
                     type="button"

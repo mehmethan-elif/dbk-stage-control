@@ -63,6 +63,12 @@ export function ElifNote() {
   return <span className="elif-note">{ELIF_KEY_CHANGE_NOTE}</span>;
 }
 
+export function StopNote(props: { notes?: string }) {
+  const text = props.notes?.trim() ?? "";
+  if (!text) return null;
+  return <span className="elif-note stop-setlist-note">{text}</span>;
+}
+
 export function ConcertFinalBlock(props: { variant: "prep" | "lyrics" }) {
   if (props.variant === "prep") {
     return (
@@ -111,8 +117,9 @@ export function StageFinishRow(props: {
         <TalkLeadIcon locked={props.locked} stop={stop} />
         {elif ? <ElifLabel /> : stop ? <StopLabel /> : props.label}
         {elif && props.locked ? <ElifNote /> : null}
+        {stop ? <StopNote notes={notes} /> : null}
       </div>
-      {talk && props.showNotes && notes ? (
+      {elif && props.showNotes && notes ? (
         <p className="elif-setlist-notes">{notes}</p>
       ) : null}
     </div>

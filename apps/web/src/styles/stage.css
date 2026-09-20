@@ -1597,6 +1597,13 @@ button {
   white-space: nowrap;
 }
 
+.stop-setlist-note {
+  min-width: 0;
+  max-width: 58%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .stage-finish-row .elif-note {
   font-size: 0.58em;
 }
@@ -1617,6 +1624,13 @@ button {
   text-align: left;
   font-size: 0.68rem;
   line-height: 1.2;
+}
+
+.lyrics-elif-item .stop-setlist-note {
+  margin-left: auto;
+  padding-left: 8px;
+  text-align: right;
+  flex: 0 1 auto;
 }
 
 .prep-elif-row .prep-cell.num {

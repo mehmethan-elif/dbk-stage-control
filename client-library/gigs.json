@@ -109,7 +109,8 @@
         {
           "type": "talk",
           "entryId": "entry_fc86bc8c-bb2e-4e2d-9d17-9f086f0bff5f",
-          "label": "STOP"
+          "label": "STOP",
+          "notes": "TEREKEME"
         },
         {
           "type": "song",
@@ -130,6 +131,72 @@
           "type": "song",
           "entryId": "entry_21649ac3-352a-4b2e-b952-cf5250d5c912",
           "songId": "kag_zmana_ismarlad_m"
+        },
+        {
+          "type": "talk",
+          "entryId": "entry_8abdb2f2-7ed9-4e75-b09e-0385238087de",
+          "label": "STOP",
+          "notes": "2/4 HALAYLAR"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_355ac08e-7f1f-431a-97da-183239ac60e1",
+          "songId": "Altın Yüzüğüm Kırıldı"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_1f9d8035-c0e3-4995-8b1a-8164d71ddb29",
+          "songId": "Ay Akşamdan Işıktır"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_f5363ad4-2350-4ed3-bb4a-a8d5fe065562",
+          "songId": "Sine Sine"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_4d9088a8-181f-4434-9b1a-aed98dad059e",
+          "songId": "Vur Davulcu"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_b65546a7-b4b6-43d9-b630-3f6147600e82",
+          "songId": "Makaram Sarı Bağlar"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_540e9c69-dc1f-45f3-abba-da4ed37b6a6b",
+          "songId": "Mardin Kapı Şen Olur"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_4b0b2580-a281-4196-8500-dcebfd6253f3",
+          "songId": "Tarama Yar Tarama"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_690e5209-78eb-45aa-adc8-aee5b2708714",
+          "songId": "Menşure Hanım"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_30c93834-f006-493a-affe-2e86e0db17a7",
+          "songId": "Zap Suyu"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_c97dd00b-4e34-476f-8ffe-314acf25484e",
+          "songId": "Nare Esvab Yıkıyor"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_9e45b1da-27fd-4b9e-b486-72109c8477d1",
+          "songId": "Lorke"
+        },
+        {
+          "type": "song",
+          "entryId": "entry_5a4505b6-16f2-4c91-a3a0-aa49a612dbef",
+          "songId": "Toycular"
         }
       ],
       "busMix": {

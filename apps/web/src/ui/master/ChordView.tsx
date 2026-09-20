@@ -413,6 +413,7 @@ export function ChordView() {
                       label={talkDisplayLabel(entry)}
                       entryId={entry.entryId}
                       locked={isLockedElif(entry)}
+                      notes={entry.notes}
                       attr="data-chord-song"
                     />
                   );

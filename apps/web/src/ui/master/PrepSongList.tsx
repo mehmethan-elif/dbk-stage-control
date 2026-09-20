@@ -41,7 +41,7 @@ import {
   type SongFacet
 } from "../shared/key-color";
 import { groupLibrarySongs } from "./library-groups";
-import { ConcertFinalBlock, ElifNote, TalkLabel, setlistHasSongs } from "./setlist-marker";
+import { ConcertFinalBlock, ElifNote, StopNote, TalkLabel, setlistHasSongs } from "./setlist-marker";
 
 const DRAG_THRESHOLD = 8;
 
@@ -497,6 +497,7 @@ function ElifItem(props: { entry: BreakSetlistEntry; locked?: boolean; onRemove?
       <div className="prep-cell title">
         <TalkLabel entry={props.entry} />
         {props.locked ? <ElifNote /> : null}
+        {isStopMarker(props.entry) ? <StopNote notes={props.entry.notes} /> : null}
       </div>
       <div className="prep-cell actions">
         {props.onRemove ? (

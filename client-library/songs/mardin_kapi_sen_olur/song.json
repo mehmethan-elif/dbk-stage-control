@@ -1,0 +1,19 @@
+{
+  "kita": 3,
+  "info": {
+    "bpm": 115,
+    "numerator": 4,
+    "denominator": 4,
+    "duration": 120,
+    "key": "D",
+    "scale": "USSAK",
+    "style": "HALAY",
+    "kita": 3,
+    "playMode": "VIEW",
+    "metroNotes": {
+      "lyrics": "MARDİN KAPI ŞEN OLUR le le le... le hanım\nMARDİN KAPI ŞEN OLUR DİBİ DEĞİRMAN OLUR\nBURALARDA YAR SEVEN VALLAHİ VEREM OLUR\nle le le... le hanım\nBURALARDA YAR SEVEN VALLAHİ VEREM OLUR\nle le le... le hanım\n\n[NAKARAT]\nLE HANIM HA HANIM EY\nSORMİRSEN HİÇ HALIM EY\nGÖĞSÜME VURA VURA \nÇÜRÜTTÜM SOL YANIM EY\nle le le... le hanım\n\nDAĞKAPISI DAŞLIDIR le le le... le hanım\nDAĞKAPISI DAŞLIDIR YARİM KARA KAŞLIDIR\nBEN YARİMİ TANIRAM KIVIR KIVIR SAÇLIDIR\nle le le... le hanım\nBEN YARİMİ TANIRAM KIVIR KIVIR SAÇLIDIR\nle le le... le hanım\n\n[NAKARAT]\n\nURFA KAPI BAĞLIDIR le le le... le hanım\nURFA KAPI BAĞLIDIR YARİM KARADAĞLIDIR\nBEN YARIMA KIYAMAM YARİM KÜÇÜK ÇAĞLIDIR\nle le le... le hanım\nBEN YARIMA KIYAMAM YARİM KÜÇÜK ÇAĞLIDIR\nle le le... le hanım\n\n[NAKARAT]"
+    }
+  },
+  "title": "Mardin Kapı Şen Olur",
+  "id": "Mardin Kapı Şen Olur"
+}

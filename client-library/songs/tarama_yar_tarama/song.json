@@ -1,0 +1,19 @@
+{
+  "kita": 3,
+  "info": {
+    "bpm": 115,
+    "numerator": 4,
+    "denominator": 4,
+    "duration": 120,
+    "key": "D",
+    "scale": "USSAK",
+    "style": "HALAY",
+    "kita": 3,
+    "playMode": "VIEW",
+    "metroNotes": {
+      "lyrics": "TARAMA YAR TARAMA\nYAR ZÜLÜFÜN TARAMA\nBEN BU DERTTEN ÖLÜRSEM\nMELHEM OLMA YARAMA\n\n[NAKARAT]\nHELE HELE YAR YAR GÜLENDE\nGÜLENDE YAR GÜLENDE\nAKLIMI BAŞTAN ALDI\nYAR YÜZÜME GÜLENDE\n\nMENDİLİNDE KARE VAR\nYÜREĞİMDE YARE VAR\nNE BEN ÖLDÜM KURTULDUM\nNE BU DERDE ÇARE VAR\n\n[NAKARAT]\n\nTANDIR YAKTIM TERLEDİM\nÇIKTIM HEVES EYLEDİM\nDESELER YARİM GELDİ\nGOÇU GURBAN EYLERİM"
+    }
+  },
+  "title": "Tarama Yar Tarama",
+  "id": "Tarama Yar Tarama"
+}

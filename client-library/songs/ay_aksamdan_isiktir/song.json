@@ -1,0 +1,19 @@
+{
+  "kita": 3,
+  "info": {
+    "bpm": 100,
+    "numerator": 4,
+    "denominator": 4,
+    "duration": 120,
+    "key": "D",
+    "scale": "USSAK",
+    "style": "HALAY",
+    "kita": 3,
+    "playMode": "VIEW",
+    "metroNotes": {
+      "lyrics": "AY AKŞAMDAN IŞIĞDIR (yaylalar yaylalar)(yaylalar yaylalar)\nYÜKÜM ŞİMŞİR KAŞIĞDIR (dilo dilo yaylalar)\nYÜKÜM ŞİMŞİR KAŞIĞDIR (dilo dilo yaylalar)\n\nGOMŞU GIZIN ZAPDEYLE (yaylalar yaylalar)(yaylalar yaylalar)\nBİZİM OĞLAN AŞIĞDIR (dilo dilo yaylalar)\nBİZİM OĞLAN AŞIĞDIR (dilo dilo yaylalar)\n\nARANAĞME\n\nAY AĞŞAMDAN AŞ DA GEL (yaylalar yaylalar)(yaylalar yaylalar)\nCILGA YOLA DÜŞ DE GEL (dilo dilo yaylalar)\nCILGA YOLA DÜŞ DE GEL (dilo dilo yaylalar)\n\nEĞER ANAN GOYMAZSA (yaylalar yaylalar)(yaylalar yaylalar)\nVİCDANAN DANIŞ DA GEL (dilo dilo yaylalar)\nVİCDANAN DANIŞ DA GEL (dilo dilo yaylalar)\n\nARANAĞME\n\nAYIN ÖNÜNDE YILDIZ (yaylalar yaylalar)(yaylalar yaylalar)\nNERDEN GELİRSEN BALDIZ (dilo dilo yaylalar)\nNERDEN GELİRSEN BALDIZ (dilo dilo yaylalar)\n\nSEN GET DE ABLAN GELSİN (yaylalar yaylalar)(yaylalar yaylalar)\nDURAMİRAM YALINIZ (dilo dilo yaylalar)\nDURAMİRAM YALINIZ (dilo dilo yaylalar)"
+    }
+  },
+  "title": "Ay Akşamdan Işıktır",
+  "id": "Ay Akşamdan Işıktır"
+}

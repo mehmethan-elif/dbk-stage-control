@@ -494,6 +494,7 @@ export function NotaView({ layer = "score" }: { layer?: NotaLayer }) {
                       label={talkDisplayLabel(entry)}
                       entryId={entry.entryId}
                       locked={isLockedElif(entry)}
+                      notes={entry.notes}
                       attr="data-nota-song"
                     />
                   );

@@ -1,0 +1,19 @@
+{
+  "kita": 2,
+  "info": {
+    "bpm": 110,
+    "numerator": 4,
+    "denominator": 4,
+    "duration": 120,
+    "key": "D",
+    "scale": "USSAK",
+    "style": "HALAY",
+    "kita": 2,
+    "playMode": "VIEW",
+    "metroNotes": {
+      "lyrics": "SİNESİNE SİNESİNE\nBEN GİDERİM (vay vay) SİNESİNE\nGÜMÜŞ GERDANLIK TAKTIRMIŞ\nKARDAN BEYAZ (vay vay) SİNESİNE\n\nŞIK ŞINGILDAR ŞIK ŞINGILDAR\nKÖSTEK BELDE CILGILDAR\nŞIK ŞINGILDAR ŞIK ŞINGILDAR\nZİNCİR BELDE CINGILDAR\nŞIK ŞINGILDAR ŞIK ŞINGILDAR\nHANÇER BELDE PARILDAR\n\nARANAĞME\n\nYARE KALDI YARE KALDİ\nSİNEMDE BİR (vay vay) YARE KALDİ\nDERMANSIZ BİR DERDE DÜŞTÜM\nBİR GÜMANIM (vay vay) YARE KALDİ\n\nŞIK ŞINGILDAR ŞIK ŞINGILDAR\nKÖSTEK BELDE CILGILDAR\nŞIK ŞINGILDAR ŞIK ŞINGILDAR\nZİNCİR BELDE CINGILDAR\nŞIK ŞINGILDAR ŞIK ŞINGILDAR\nHANÇER BELDE PARILDAR"
+    }
+  },
+  "title": "Sine Sine",
+  "id": "Sine Sine"
+}
