@@ -3650,6 +3650,13 @@ button {
   display: flex;
   flex-direction: column;
   border-right: 2px solid #fff;
+  /*
+   * How many of the internal 16th steps one drawn cell covers. The chart is held on a 16th
+   * grid and the hits still sit exactly where they fall on it — this only thins the ruling
+   * out, so a beat reads as two eighths rather than four sixteenths. Two lines to a beat is
+   * what a drummer glances at from behind the kit; four is a wall.
+   */
+  --drum-grid-steps: 2;
 }
 
 .drum-lane {
@@ -3670,7 +3677,7 @@ button {
     repeating-linear-gradient(
       90deg,
       #4a4a4a 0 1px,
-      transparent 1px calc(100% / var(--drum-steps, 16))
+      transparent 1px calc(100% * var(--drum-grid-steps, 1) / var(--drum-steps, 16))
     );
 }
 
