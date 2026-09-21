@@ -23,6 +23,7 @@ type SyncSocketApi = {
   hostSend(options: { uuid: string; message: string }): Promise<void>;
   drainHost(): Promise<{ events?: NativeHostEvent[]; peers?: NativeHostPeer[] }>;
   lanAddress(): Promise<{ address?: string }>;
+  outputLatency(): Promise<{ seconds?: number }>;
   addListener(
     eventName: "open" | "message" | "close",
     listener: (event: { data?: string }) => void
@@ -86,6 +87,10 @@ class SyncSocketWeb extends WebPlugin implements SyncSocketApi {
   }
 
   async lanAddress(): Promise<{ address?: string }> {
+    return {};
+  }
+
+  async outputLatency(): Promise<{ seconds?: number }> {
     return {};
   }
 }

@@ -6,6 +6,8 @@ type FollowOrigin = {
   playing: boolean;
   source?: () => number;
   lastSample?: number;
+  /** Web Audio already is the clock. Do not invent time from the wall while iOS holds currentTime. */
+  lockSource?: boolean;
 };
 
 let origin: FollowOrigin = { time: 0, at: 0, playing: false };
@@ -33,28 +35,34 @@ function wakeFollowClock(): void {
 }
 
 export function setFollowClock(time: number, playing: boolean, at = performance.now()): void {
-  origin = { time, at, playing, source: undefined, lastSample: undefined };
+  origin = { time, at, playing, source: undefined, lastSample: undefined, lockSource: false };
   wakeFollowClock();
 }
 
 /** Pin the playhead to a live audio clock (HTML element or engine position). */
-export function setFollowClockSource(source: () => number, at = performance.now()): void {
+export function setFollowClockSource(
+  source: () => number,
+  at = performance.now(),
+  options?: { lock?: boolean }
+): void {
+  const lock = options?.lock === true;
   const time = Math.max(0, source());
   if (
+    !lock &&
     origin.playing &&
     origin.source &&
     origin.lastSample != null &&
     Math.abs(time - origin.lastSample) < 0.25
   ) {
-    origin = { ...origin, source };
+    origin = { ...origin, source, lockSource: false };
     return;
   }
-  origin = { time, at, playing: true, source, lastSample: time };
+  origin = { time, at, playing: true, source, lastSample: time, lockSource: lock };
   wakeFollowClock();
 }
 
 export function stopFollowClock(time = origin.time, at = performance.now()): void {
-  origin = { time, at, playing: false };
+  origin = { time, at, playing: false, source: undefined, lastSample: undefined, lockSource: false };
 }
 
 export function followClockPlaying(): boolean {
@@ -65,6 +73,10 @@ export function followClockTime(now = performance.now()): number {
   if (!origin.playing) return origin.time;
   if (origin.source) {
     const sampled = Math.max(0, origin.source());
+    if (origin.lockSource) {
+      origin = { ...origin, time: sampled, at: now, lastSample: sampled };
+      return sampled;
+    }
     const last = origin.lastSample;
     if (last == null || Math.abs(sampled - last) > 1e-4) {
       origin = { ...origin, time: sampled, at: now, lastSample: sampled };

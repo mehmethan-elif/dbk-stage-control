@@ -2765,7 +2765,6 @@ button {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
 }
 
 .lyrics-set-block.is-elif-add,

@@ -9,6 +9,7 @@ import { PrepSongList } from "./PrepSongList";
 import { SetlistPerformancePanel } from "./SetlistPerformancePanel";
 
 export function PrepView() {
+  const clientDesk = useMasterStore((s) => s.deviceKind === "client");
   const songs = useMasterStore((s) => s.songs);
   const gigs = useMasterStore(selectableGigs);
   const gigId = useMasterStore((s) => s.gigId);
@@ -69,6 +70,7 @@ export function PrepView() {
                 {songCount} songs · {formatDuration(total)}
               </span>
             </h2>
+            {clientDesk ? null : (
             <div className="panel-head-actions">
               <button className="icon-btn" title="Select" aria-label="Select" onClick={() => setDialog("select")}>
                 <SelectIcon />
@@ -97,6 +99,7 @@ export function PrepView() {
                 ×
               </button>
             </div>
+            )}
           </div>
         </div>
         <PrepSongList

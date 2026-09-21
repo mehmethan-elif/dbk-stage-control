@@ -647,6 +647,17 @@ function audibleEngineTime(): number {
   return Math.max(0, (controller.getClock()?.time ?? 0) - engine.getOutputLatency());
 }
 
+async function applyNativeOutputLatency(): Promise<void> {
+  if (!isNativeApp()) return;
+  try {
+    const { SyncSocket } = await import("../native/sync-socket");
+    const { seconds } = await SyncSocket.outputLatency();
+    if (typeof seconds === "number") engine.setOutputLatencyHint(seconds);
+  } catch {
+    // Web Audio still plays; the playhead just has no speaker delay to subtract.
+  }
+}
+
 function audibleMetronomeTime(): number {
   return Math.max(0, metronome.time - engine.getOutputLatency());
 }
@@ -1192,7 +1203,7 @@ function startTick() {
     const playing =
       snap.state === PlaybackState.Playing || snap.state === PlaybackState.Transitioning;
     if (playing) {
-      setFollowClockSource(() => audibleEngineTime());
+      setFollowClockSource(() => audibleEngineTime(), performance.now(), { lock: true });
     }
     const resumeAt = useMasterStore.getState().panicResumeAt;
     if (resumeAt != null) {
@@ -1222,7 +1233,7 @@ function startMetronomeTick() {
       metroTickHandle = 0;
       return;
     }
-    setFollowClockSource(() => audibleMetronomeTime());
+    setFollowClockSource(() => audibleMetronomeTime(), performance.now(), { lock: true });
     const now = performance.now();
     if (now - lastPlaybackStoreAt >= PLAYBACK_UI_MS) {
       lastPlaybackStoreAt = now;
@@ -1957,7 +1968,10 @@ async function loadLibraryNow(
     });
     return;
   }
-  if (kind === "master") connectSync(get, set);
+  if (kind === "master") {
+    connectSync(get, set);
+    void applyNativeOutputLatency();
+  }
   let songs: Song[] = [];
   let fileIndex: Record<string, string[]> = {};
   let hostOk = false;
@@ -2247,7 +2261,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     const playing =
       playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
     if (playing) {
-      setFollowClockSource(() => audibleEngineTime());
+      setFollowClockSource(() => audibleEngineTime(), performance.now(), { lock: true });
     } else if (!get().metronomePlaying) {
       // A song that finishes into a STOP leaves the engine standing still, and a follow clock
       // nobody parked carries on guessing the time from the wall clock: the playhead walks off
@@ -3500,7 +3514,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
               : {})
           });
           metronome.start(metronomeTempoMap(parsed), time, { silent, intro: !silent });
-          setFollowClockSource(() => audibleMetronomeTime());
+          setFollowClockSource(() => audibleMetronomeTime(), performance.now(), { lock: true });
           startMetronomeTick();
           // The ticks say nothing about which song they are counting. Sending the row is what
           // takes the band to the song the click has started, the same as pressing play on a track.

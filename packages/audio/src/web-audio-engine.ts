@@ -1001,13 +1001,22 @@ export class WebAudioEngine implements AudioEngine {
     return this.ctx?.currentTime ?? 0;
   }
 
+  private outputLatencyHint = 0;
+
+  /** iOS Web Audio reports no outputLatency; the session still has a real buffer. */
+  setOutputLatencyHint(seconds: number): void {
+    this.outputLatencyHint =
+      Number.isFinite(seconds) && seconds > 0 && seconds <= 0.25 ? seconds : 0;
+  }
+
   /** Seconds from graph time to the speaker. Zero when the context is not running. */
   getOutputLatency(): number {
     const ctx = this.ctx;
-    if (!ctx) return 0;
+    if (!ctx) return this.outputLatencyHint;
     const output = "outputLatency" in ctx ? Number(ctx.outputLatency) : 0;
     const base = "baseLatency" in ctx ? Number(ctx.baseLatency) : 0;
-    const value = output > 0 ? output : base;
+    const reported = output > 0 ? output : base;
+    const value = reported > 0 ? reported : this.outputLatencyHint;
     if (!Number.isFinite(value) || value <= 0 || value > 0.25) return 0;
     return value;
   }

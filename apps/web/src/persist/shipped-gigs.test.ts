@@ -68,8 +68,24 @@ describe("mergeShippedGigs", () => {
       setlist: [{ type: "song", entryId: "e", songId: "biz" }]
     };
     expect(mergeShippedGigs([local], [oba], songs).map((gig) => gig.name)).toEqual([
-      "Rehearsal",
-      "24 Eylül Oba Hotel"
+      "24 Eylül Oba Hotel",
+      "Rehearsal"
+    ]);
+  });
+
+  it("replaces a matching iPad show with the Mac setlist order", () => {
+    const local: Gig = {
+      ...oba,
+      setlist: [
+        { type: "song", entryId: "e2", songId: "candan_ileri" },
+        { type: "song", entryId: "e1", songId: "biz" }
+      ]
+    };
+    const merged = mergeShippedGigs([local], [oba], songs);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.setlist.map((entry) => "songId" in entry && entry.songId)).toEqual([
+      "biz",
+      "candan_ileri"
     ]);
   });
 });

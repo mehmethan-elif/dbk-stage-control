@@ -2,6 +2,7 @@ import { Component, useEffect, useRef, type ErrorInfo, type ReactNode } from "re
 import {
   clientPracticeMode,
   clientStageLive,
+  elifCanEditSetlist,
   useMasterStore
 } from "../../store/master-store";
 import { stageHomeScreenRole } from "../../native/sync-host";
@@ -10,6 +11,7 @@ import {
   ChordIcon,
   DrumsIcon,
   LyricsIcon,
+  PreparationIcon,
   ScoreIcon,
   StageConnectIcon
 } from "../shared/icons";
@@ -17,6 +19,7 @@ import { ChordView } from "../master/ChordView";
 import { DrumView } from "../master/DrumView";
 import { LyricsView } from "../master/LyricsView";
 import { NotaViewAsync, usePdfWarmup } from "../master/lazy-pdf";
+import { PrepView } from "../master/PrepView";
 import { PrepTransport, StageSetlistButton, StageViewTools } from "../master/PrepTransport";
 import { ClientLibrary } from "./ClientLibrary";
 import { ConcertTime } from "../shared/ConcertTime";
@@ -50,21 +53,24 @@ export function ClientApp() {
   const setMasterPage = useMasterStore((s) => s.setMasterPage);
   const songs = useMasterStore((s) => s.songs);
   const stageLive = useMasterStore(clientStageLive);
+  const elifEdits = useMasterStore(elifCanEditSetlist);
   // Only the stage icon joins a show, so the practice one carries no connect button, no concert
   // clock, and nothing that could leave it parked on the connect page. See `stageHomeScreenRole`.
   const stageRole = stageHomeScreenRole();
   const requested =
-    masterPage === "nota"
-      ? "nota"
-      : masterPage === "chords"
-        ? "chords"
-        : masterPage === "bass"
-          ? "bass"
-          : masterPage === "drums"
-            ? "drums"
-            : masterPage === "lan"
-              ? "lan"
-              : "lyrics";
+    masterPage === "prep" && elifEdits
+      ? "prep"
+      : masterPage === "nota"
+        ? "nota"
+        : masterPage === "chords"
+          ? "chords"
+          : masterPage === "bass"
+            ? "bass"
+            : masterPage === "drums"
+              ? "drums"
+              : masterPage === "lan"
+                ? "lan"
+                : "lyrics";
   const page = requested === "lan" && !stageRole ? "lyrics" : requested;
   const practice = useMasterStore(clientPracticeMode);
   const libraryStatus = useMasterStore((s) => s.libraryStatus);
@@ -115,6 +121,18 @@ export function ClientApp() {
           <div className="brand-name">ELIF AVCI</div>
         </div>
         <StageSetlistButton />
+        {elifEdits ? (
+          <button
+            type="button"
+            className={`lyrics-btn page-icon${page === "prep" ? " on" : ""}`}
+            title="Preparation"
+            aria-label="Preparation"
+            aria-pressed={page === "prep"}
+            onClick={() => setMasterPage("prep")}
+          >
+            <PreparationIcon />
+          </button>
+        ) : null}
         <button
           type="button"
           className={`lyrics-btn page-icon${page === "lyrics" ? " on" : ""}`}
@@ -187,10 +205,12 @@ export function ClientApp() {
           <PrepTransport />
         </div>
       ) : null}
-      {empty && page !== "lan" ? (
+      {empty && page !== "lan" && page !== "prep" ? (
         <ClientLibrary />
       ) : page === "lan" ? (
         <ClientLibrary />
+      ) : page === "prep" ? (
+        <PrepView />
       ) : (
         <div className="client-main">
           <div className="client-stage">

@@ -44,8 +44,7 @@
         {
           "type": "talk",
           "entryId": "entry_8d47d958-d76e-46cd-b2a6-8a41610ef7f9",
-          "label": "STOP",
-          "notes": "KAHRAMANLIK"
+          "label": "STOP"
         },
         {
           "type": "song",
@@ -280,10 +279,10 @@
       "performanceMode": "FOLLOW_SONG_INFO",
       "stageNames": [
         "Serkan",
-        "",
-        "",
-        "",
-        "",
+        "Vedat",
+        "Yekta",
+        "Taner",
+        "Yaşar",
         ""
       ]
     }

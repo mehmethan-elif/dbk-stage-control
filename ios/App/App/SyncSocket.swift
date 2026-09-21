@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import AVFoundation
 import Capacitor
 
 final class LocalNetworkGate: NSObject, NetServiceDelegate, NetServiceBrowserDelegate {
@@ -52,7 +53,8 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "startHost", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "hostSend", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "drainHost", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "lanAddress", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "lanAddress", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "outputLatency", returnType: CAPPluginReturnPromise)
     ]
 
     private var client: NativeSyncClient?
@@ -92,6 +94,11 @@ public class SyncSocketPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func lanAddress(_ call: CAPPluginCall) {
         call.resolve(["address": StageSyncHub.lanIPv4() ?? ""])
+    }
+
+    @objc func outputLatency(_ call: CAPPluginCall) {
+        let session = AVAudioSession.sharedInstance()
+        call.resolve(["seconds": session.outputLatency + session.ioBufferDuration])
     }
 
     @objc func connect(_ call: CAPPluginCall) {

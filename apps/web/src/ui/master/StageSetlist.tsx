@@ -1,15 +1,13 @@
 import { DirectPassMark } from "./DirectPassMark";
-import { useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from "react";
+import { useLayoutEffect, useRef, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import {
   canInsertElifAfter,
   createId,
-  elifPlacementValid,
   insertElifAfterSelected,
   isLockedElif,
   isStopMarker,
   isTalkEntry,
   isSongEntry,
-  keepSkippedSongsInPlace,
   parseSongInfo,
   withKeyChangeElifs,
   PlaybackState,
@@ -29,7 +27,6 @@ import {
   stageConnectOn,
   useMasterStore
 } from "../../store/master-store";
-import { frozenElifs, withFrozenElifs, type FrozenElif } from "./drag-elifs";
 import { PlayModeMark } from "./play-mode-mark";
 import { findSongByRef, SONG_LIBRARY_GIG_ID } from "../../store/song-library";
 import { practiceEntryId } from "../../practice/gig";
@@ -38,8 +35,6 @@ import { AddIcon } from "../shared/icons";
 import { ConcertFinalBlock, ElifNote, StopLabel, StopNote, TalkLabel, TalkLeadIcon, setlistHasSongs } from "./setlist-marker";
 import { groupLibrarySongs } from "./library-groups";
 import { scrollStageToSongTitle } from "./stage-scroll";
-
-const DRAG_THRESHOLD = 8;
 
 let lastSetlistAction = 0;
 
@@ -54,33 +49,6 @@ function onSetlistAction(
   if (now - lastSetlistAction < 400) return;
   lastSetlistAction = now;
   action?.();
-}
-
-function idsOf(entries: Array<{ entryId: string }>): string[] {
-  return entries.map((entry) => entry.entryId);
-}
-
-function entriesOf(order: string[], lookup: Map<string, SetlistEntry>): SetlistEntry[] {
-  return order.flatMap((id) => {
-    const entry = lookup.get(id);
-    return entry ? [entry] : [];
-  });
-}
-
-function indexFromPointerY(list: HTMLElement, clientY: number): number {
-  const rows = [
-    ...list.querySelectorAll<HTMLElement>(
-      ".lyrics-set-block:not(.is-locked):not(.is-final):not(.is-elif-add)"
-    )
-  ];
-  if (rows.length === 0) return 0;
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row) continue;
-    const rect = row.getBoundingClientRect();
-    if (clientY < rect.top + rect.height / 2) return i;
-  }
-  return rows.length - 1;
 }
 
 export function StageSetlist(props: {
@@ -123,16 +91,6 @@ export function StageSetlist(props: {
   const pageEntry = useMasterStore(pageEntryId);
   const playingEntryId = useMasterStore(playingMarkEntryId) ?? undefined;
   const listRef = useRef<HTMLElement>(null);
-  const dragRef = useRef<{
-    id: string;
-    pointerId: number;
-    startY: number;
-    active: boolean;
-    order: string[];
-    elifs: FrozenElif[];
-  } | null>(null);
-  const [liveOrder, setLiveOrder] = useState<string[] | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   // Each top-row page (Nota, Chords, Drums, Lyrics, ...) renders its own StageSetlist, so
   // switching pages unmounts and remounts this list — this always fires on that first render.
@@ -149,21 +107,9 @@ export function StageSetlist(props: {
   // Annotated because dropping the locked ELIF KONUSMA rows leaves the spoken ones, and an
   // inferred predicate reads the filter as keeping songs only.
   const movable: SetlistEntry[] = props.entries.filter((entry) => !isLockedElif(entry));
-  const byId = new Map(movable.map((entry) => [entry.entryId, entry]));
-  const moved = (liveOrder ?? idsOf(movable))
-    .map((id) => byId.get(id))
-    .filter((entry): entry is SetlistEntry => Boolean(entry));
-  // A drag keeps the key change ELIF KONUSMA rows it started with — dropping them made the
-  // list jump the moment a drag began, and recomputing them mid-drag makes rows appear under
-  // the finger. Whether the new order needs a different set is settled on the render after
-  // mouse up, once `dragRef` is cleared. They are locked rows and `indexFromPointerY` skips
-  // those, so carrying them along does not shift the drop index.
-  const heldElifs = draggingId ? dragRef.current?.elifs : undefined;
-  const displayed = heldElifs
-    ? withFrozenElifs(moved, heldElifs)
-    : withKeyChangeElifs(moved, props.songs);
+  const displayed = withKeyChangeElifs(movable, props.songs);
   const entryBySongId = new Map(
-    moved.filter(isSongEntry).map((entry) => [entry.songId, entry] as const)
+    movable.filter(isSongEntry).map((entry) => [entry.songId, entry] as const)
   );
   const playModes: Record<string, PlayMode> = {};
   for (const song of props.songs) {
@@ -177,20 +123,6 @@ export function StageSetlist(props: {
       )
     : [];
   const groupedLibrarySongs = groupLibrarySongs(props.library, playModes, fileIndex);
-
-  const persistOrder = (order: string[]) => {
-    void updateGig((current) => {
-      const lookup = new Map(current.setlist.map((entry) => [entry.entryId, entry]));
-      const nextItems = keepSkippedSongsInPlace(current.setlist, entriesOf(order, lookup));
-      if (!elifPlacementValid(nextItems)) return current;
-      const kept = new Set(nextItems.map((entry) => entry.entryId));
-      const leftovers = current.setlist.filter((entry) => !kept.has(entry.entryId));
-      return { ...current, setlist: [...nextItems, ...leftovers] };
-    }).finally(() => {
-      setLiveOrder(null);
-      setDraggingId(null);
-    });
-  };
 
   const selectEntry = (entryId: string) => {
     props.onSelect(entryId);
@@ -206,62 +138,7 @@ export function StageSetlist(props: {
       return;
     }
     if (lockRows) return;
-    if (readOnly) {
-      selectEntry(entryId);
-      return;
-    }
     selectEntry(entryId);
-    if (target.closest(".lyrics-set-block.is-locked")) return;
-    dragRef.current = {
-      id: entryId,
-      pointerId: event.pointerId,
-      startY: event.clientY,
-      active: false,
-      order: idsOf(moved),
-      elifs: frozenElifs(displayed)
-    };
-  };
-
-  const onPointerMove = (event: PointerEvent<HTMLElement>) => {
-    const drag = dragRef.current;
-    if (!drag || event.pointerId !== drag.pointerId) return;
-    if (!drag.active && Math.abs(event.clientY - drag.startY) < DRAG_THRESHOLD) return;
-    if (!drag.active) {
-      drag.active = true;
-      setDraggingId(drag.id);
-      setLiveOrder(drag.order.slice());
-      props.onSelect(drag.id);
-      try {
-        listRef.current?.setPointerCapture(event.pointerId);
-      } catch {
-        // pointer already captured or not active
-      }
-    }
-    const list = listRef.current;
-    if (!list) return;
-    const from = drag.order.indexOf(drag.id);
-    const to = indexFromPointerY(list, event.clientY);
-    if (from < 0 || from === to) return;
-    const next = drag.order.slice();
-    const [item] = next.splice(from, 1);
-    if (!item) return;
-    next.splice(to, 0, item);
-    if (!elifPlacementValid(entriesOf(next, byId))) return;
-    drag.order = next;
-    setLiveOrder(next);
-  };
-
-  const onPointerUp = (event: PointerEvent<HTMLElement>) => {
-    const drag = dragRef.current;
-    if (!drag || event.pointerId !== drag.pointerId) return;
-    dragRef.current = null;
-    try {
-      listRef.current?.releasePointerCapture(event.pointerId);
-    } catch {
-      // already released
-    }
-    if (!drag.active) return;
-    persistOrder(drag.order);
   };
 
   const addElif = () => {
@@ -277,14 +154,12 @@ export function StageSetlist(props: {
   let songNumber = 0;
 
   const renderSongEntry = (entry: Extract<SetlistEntry, { type: "song" }>, item?: Song) => {
-    const on = draggingId ? draggingId === entry.entryId : entry.entryId === props.selectedEntryId;
+    const on = entry.entryId === props.selectedEntryId;
     songNumber += 1;
     return (
       <div
         key={entry.entryId}
-        className={`lyrics-set-block${on ? " on" : ""}${
-          draggingId === entry.entryId ? " dragging" : ""
-        }${lockRows ? " is-frozen" : ""}`}
+        className={`lyrics-set-block${on ? " on" : ""}${lockRows ? " is-frozen" : ""}`}
         onPointerDown={(event) => onPointerDown(entry.entryId, event)}
       >
         {!songLibrary && songNumber > 1 ? <DirectPassMark song={item} setlist /> : null}
@@ -311,10 +186,7 @@ export function StageSetlist(props: {
   return (
     <aside
       ref={listRef}
-      className={`lyrics-setlist${draggingId ? " is-reordering" : ""}${readOnly ? " is-readonly" : ""}`}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      className={`lyrics-setlist${readOnly ? " is-readonly" : ""}`}
     >
       {songLibrary ? (
         groupedSetlistSongs.map((group) => (
@@ -327,15 +199,13 @@ export function StageSetlist(props: {
           </div>
         ))
       ) : displayed.map((entry) => {
-        const on = draggingId ? draggingId === entry.entryId : entry.entryId === props.selectedEntryId;
+        const on = entry.entryId === props.selectedEntryId;
         if (isTalkEntry(entry)) {
           const locked = isLockedElif(entry);
           return (
             <div
               key={entry.entryId}
-              className={`lyrics-set-block${on ? " on" : ""}${
-                draggingId === entry.entryId ? " dragging" : ""
-              }${locked ? " is-locked" : ""}${lockRows ? " is-frozen" : ""}`}
+              className={`lyrics-set-block${on ? " on" : ""}${locked ? " is-locked" : ""}${lockRows ? " is-frozen" : ""}`}
               onPointerDown={(event) => onPointerDown(entry.entryId, event)}
             >
               <div
@@ -371,7 +241,7 @@ export function StageSetlist(props: {
         const item = findSongByRef(props.songs, entry.songId);
         return renderSongEntry(entry, item);
       })}
-      {!songLibrary && setlistHasSongs(moved) ? <ConcertFinalBlock variant="lyrics" /> : null}
+      {!songLibrary && setlistHasSongs(movable) ? <ConcertFinalBlock variant="lyrics" /> : null}
       {showAddElif ? (
         <div className="lyrics-set-block is-elif-add">
           <div className="lyrics-elif-item lyrics-elif-add-item">

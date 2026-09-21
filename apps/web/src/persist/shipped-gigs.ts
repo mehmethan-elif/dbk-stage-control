@@ -44,11 +44,13 @@ export function mergeShippedGigs(local: Gig[], shipped: Gig[], songs: readonly S
     })),
     songs
   ).filter((gig) => gig.setlist.some((entry) => isSongEntry(entry)));
-  const usable = local.filter((gig) => !isPlaceholderSetlist(gig, songs));
-  const haveIds = new Set(usable.map((gig) => gig.id));
-  const haveNames = new Set(usable.map((gig) => gig.name.trim().toLowerCase()));
-  const extra = remapped.filter(
-    (gig) => !haveIds.has(gig.id) && !haveNames.has(gig.name.trim().toLowerCase())
-  );
-  return [...usable, ...extra];
+  // The Mac library/gigs.json is the show. A matching iPad IndexedDB copy is last
+  // week's order, not a second setlist, so the shipped songs stay in Mac order.
+  const shippedIds = new Set(remapped.map((gig) => gig.id));
+  const shippedNames = new Set(remapped.map((gig) => gig.name.trim().toLowerCase()));
+  const extra = local.filter((gig) => {
+    if (isPlaceholderSetlist(gig, songs)) return false;
+    return !shippedIds.has(gig.id) && !shippedNames.has(gig.name.trim().toLowerCase());
+  });
+  return [...remapped, ...extra];
 }

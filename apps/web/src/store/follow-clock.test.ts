@@ -45,6 +45,15 @@ describe("followClockTime", () => {
     audioTime = 4.2;
     expect(followClockTime(1_400)).toBeCloseTo(4.2, 5);
   });
+
+  it("stays on the audio sample when the source is the engine clock", () => {
+    let audioTime = 8;
+    stopFollowClock(0, 0);
+    setFollowClockSource(() => audioTime, 1_000, { lock: true });
+    expect(followClockTime(1_250)).toBeCloseTo(8, 5);
+    audioTime = 8.04;
+    expect(followClockTime(1_400)).toBeCloseTo(8.04, 5);
+  });
 });
 
 describe("followPacketTime", () => {
