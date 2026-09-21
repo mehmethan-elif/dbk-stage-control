@@ -5,6 +5,7 @@ import { isNativeApp } from "./native/platform";
 import { ClientApp } from "./ui/client/ClientApp";
 import { MasterApp } from "./ui/master/MasterApp";
 import { RemoteApp } from "./ui/remote/RemoteApp";
+import { StageCrashGuard } from "./ui/shared/StageCrashGuard";
 import { useMasterStore } from "./store/master-store";
 
 function kindFromPath(pathname: string, publicClient: boolean): DeviceKind {
@@ -27,23 +28,27 @@ export function App() {
   }, [load, kind]);
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <Navigate
-            to={publicClient || kind === "client" ? "/client" : kind === "remote" ? "/remote" : "/master"}
-            replace
-          />
-        }
-      />
-      {publicClient ? null : <Route path="/master" element={<MasterApp />} />}
-      <Route path="/client" element={<ClientApp />} />
-      <Route path="/remote" element={<RemoteApp />} />
-      <Route
-        path="*"
-        element={<Navigate to={publicClient ? "/client" : kind === "remote" ? "/remote" : "/master"} replace />}
-      />
-    </Routes>
+    // The last line of defence. Each app guards its own pages, so this only catches a throw in
+    // the shell itself — but without it that throw is a white screen and a relaunch mid-show.
+    <StageCrashGuard label={kind} resetKey={location.pathname}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={publicClient || kind === "client" ? "/client" : kind === "remote" ? "/remote" : "/master"}
+              replace
+            />
+          }
+        />
+        {publicClient ? null : <Route path="/master" element={<MasterApp />} />}
+        <Route path="/client" element={<ClientApp />} />
+        <Route path="/remote" element={<RemoteApp />} />
+        <Route
+          path="*"
+          element={<Navigate to={publicClient ? "/client" : kind === "remote" ? "/remote" : "/master"} replace />}
+        />
+      </Routes>
+    </StageCrashGuard>
   );
 }

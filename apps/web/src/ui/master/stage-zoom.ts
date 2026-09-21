@@ -6,6 +6,13 @@ import {
 
 export const PDF_CANVAS_MAX = 4096;
 export const PDF_PAINT_DPR_CAP = 2;
+/**
+ * A ceiling on the bitmap itself: 8 megapixels is 32 MB of backing store per page. The width
+ * cap above cannot bound this on its own, because zoom grows both sides at once and the memory
+ * with the square of it — a pinch to 2x across a long setlist is what ran the desk iPad out of
+ * memory mid-show.
+ */
+export const PDF_CANVAS_MAX_PIXELS = 8_000_000;
 
 export function pinchZoomFromDistances(startZoom: number, startDist: number, nowDist: number): number {
   if (!(startDist > 0) || !(nowDist > 0)) return startZoom;
@@ -19,10 +26,19 @@ export function touchPairDistance(event: TouchEvent): number {
   return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 }
 
-export function pdfRenderScale(pageWidth: number, unscaledWidth: number, dpr: number): number {
+export function pdfRenderScale(
+  pageWidth: number,
+  unscaledWidth: number,
+  dpr: number,
+  unscaledHeight?: number
+): number {
   const width = Math.max(1, unscaledWidth);
   const raw = (pageWidth / width) * Math.min(Math.max(dpr, 1), PDF_PAINT_DPR_CAP);
-  return Math.min(raw, PDF_CANVAS_MAX / width);
+  const capped = Math.min(raw, PDF_CANVAS_MAX / width);
+  if (!unscaledHeight || unscaledHeight <= 0) return capped;
+  // Past this the extra device pixels are invisible on a score but they are exactly what
+  // exhausts the iPad, so the area gets the final say over the zoom.
+  return Math.min(capped, Math.sqrt(PDF_CANVAS_MAX_PIXELS / (width * unscaledHeight)));
 }
 
 /** Keep the same page under the middle of the view when the score grows or shrinks. */

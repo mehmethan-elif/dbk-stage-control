@@ -230,7 +230,12 @@ function clampStageZoom(value: number): number {
   return Math.min(STAGE_ZOOM_MAX, Math.max(STAGE_ZOOM_MIN, Math.round(value * 10) / 10));
 }
 
-const logger = createLogger();
+/**
+ * Playback and sync talk constantly, and on a built iPad every one of those lines was a
+ * `console.log` with a `JSON.stringify` behind it, on the same thread that draws the score.
+ * Failures still surface: they go through `console.error` where they happen.
+ */
+const logger = createLogger(import.meta.env.DEV ? undefined : () => undefined);
 const engine = new WebAudioEngine(logger);
 const beatListeners = new Set<(beat: MetronomeBeat) => void>();
 let lastMetronomeBeat: MetronomeBeat | null = null;

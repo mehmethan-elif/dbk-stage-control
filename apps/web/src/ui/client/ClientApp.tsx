@@ -1,4 +1,4 @@
-import { Component, useEffect, useRef, type ErrorInfo, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import {
   clientPracticeMode,
   clientStageLive,
@@ -24,26 +24,8 @@ import { PrepTransport, StageSetlistButton, StageViewTools } from "../master/Pre
 import { ClientLibrary } from "./ClientLibrary";
 import { ConcertTime } from "../shared/ConcertTime";
 import { LibraryLoading } from "../shared/LibraryLoading";
+import { StageCrashGuard } from "../shared/StageCrashGuard";
 import { useStagePinchZoom } from "../master/stage-zoom";
-
-class StageCrashGuard extends Component<{ children: ReactNode }, { message: string | null }> {
-  state = { message: null as string | null };
-
-  static getDerivedStateFromError(error: Error) {
-    return { message: error.message || "Score failed to render." };
-  }
-
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("Client stage crashed", error, info.componentStack);
-  }
-
-  render() {
-    if (this.state.message) {
-      return <div className="lyrics-empty meta">{this.state.message}</div>;
-    }
-    return this.props.children;
-  }
-}
 
 export function ClientApp() {
   usePdfWarmup();
@@ -205,16 +187,16 @@ export function ClientApp() {
           <PrepTransport />
         </div>
       ) : null}
-      {empty && page !== "lan" && page !== "prep" ? (
-        <ClientLibrary />
-      ) : page === "lan" ? (
-        <ClientLibrary />
-      ) : page === "prep" ? (
-        <PrepView />
-      ) : (
-        <div className="client-main">
-          <div className="client-stage">
-            <StageCrashGuard>
+      <StageCrashGuard label={page} resetKey={page}>
+        {empty && page !== "lan" && page !== "prep" ? (
+          <ClientLibrary />
+        ) : page === "lan" ? (
+          <ClientLibrary />
+        ) : page === "prep" ? (
+          <PrepView />
+        ) : (
+          <div className="client-main">
+            <div className="client-stage">
               {page === "chords" || page === "bass" ? (
                 <ChordView key={page} />
               ) : page === "nota" ? (
@@ -224,10 +206,10 @@ export function ClientApp() {
               ) : (
                 <LyricsView />
               )}
-            </StageCrashGuard>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </StageCrashGuard>
     </div>
   );
 }

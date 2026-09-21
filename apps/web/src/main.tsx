@@ -11,6 +11,16 @@ if (!root) {
   throw new Error("Root element missing");
 }
 
+// Nothing was listening for these, so an async failure on stage left no trace at all: a chart
+// simply stayed blank with nothing to look at afterwards. They are logged rather than shown —
+// the crash guards own what the player sees.
+window.addEventListener("error", (event) => {
+  console.error("Uncaught error", event.error ?? event.message);
+});
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled rejection", event.reason);
+});
+
 const pageBase = import.meta.env.BASE_URL;
 const routerBase =
   pageBase === "/" || pageBase === "./" ? undefined : pageBase.replace(/\/$/, "");

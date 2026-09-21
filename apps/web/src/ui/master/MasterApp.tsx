@@ -28,6 +28,7 @@ import { isNativeApp } from "../../native/platform";
 import { LibraryMissing } from "../native/LibraryMissing";
 import { ConcertTime } from "../shared/ConcertTime";
 import { holdLibraryLoading, LibraryLoading } from "../shared/LibraryLoading";
+import { StageCrashGuard } from "../shared/StageCrashGuard";
 import { useStagePinchZoom } from "./stage-zoom";
 
 export function MasterApp() {
@@ -188,23 +189,25 @@ export function MasterApp() {
       <div className="app-transport">
         <PrepTransport />
       </div>
-      {masterPage === "mixer" ? (
-        <MixerView />
-      ) : masterPage === "audio" ? (
-        <AudioView />
-      ) : masterPage === "lyrics" ? (
-        <LyricsView />
-      ) : masterPage === "chords" || masterPage === "bass" ? (
-        <ChordView key={masterPage} />
-      ) : masterPage === "nota" ? (
-        <NotaViewAsync layer="score" />
-      ) : masterPage === "drums" ? (
-        <DrumView />
-      ) : masterPage === "lan" ? (
-        <LanView />
-      ) : (
-        <PrepView />
-      )}
+      <StageCrashGuard label={masterPage} resetKey={masterPage}>
+        {masterPage === "mixer" ? (
+          <MixerView />
+        ) : masterPage === "audio" ? (
+          <AudioView />
+        ) : masterPage === "lyrics" ? (
+          <LyricsView />
+        ) : masterPage === "chords" || masterPage === "bass" ? (
+          <ChordView key={masterPage} />
+        ) : masterPage === "nota" ? (
+          <NotaViewAsync layer="score" />
+        ) : masterPage === "drums" ? (
+          <DrumView />
+        ) : masterPage === "lan" ? (
+          <LanView />
+        ) : (
+          <PrepView />
+        )}
+      </StageCrashGuard>
     </div>
   );
 }

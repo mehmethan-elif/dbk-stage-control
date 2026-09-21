@@ -1501,6 +1501,23 @@ function SectionRect(props: {
   );
 }
 
+/** An unscaled page box, kept so a page holds its place whether or not it is painted. */
+type NotaPageBox = { width: number; height: number };
+
+/**
+ * How far outside the view a song still counts as near. Two screens each way keeps the
+ * neighbours ready, so scrolling and setlist jumps land on a painted page while everything
+ * further off gives its bitmap back.
+ */
+const NOTA_NEAR_MARGIN = "200% 0px";
+
+/** Hands the backing store back. The CSS box is held by the aspect ratio, not by the bitmap. */
+function releaseNotaCanvas(canvas: HTMLCanvasElement | null | undefined): void {
+  if (!canvas || canvas.width === 0) return;
+  canvas.width = 0;
+  canvas.height = 0;
+}
+
 function NotaPages(props: {
   songId: string;
   file: string;
@@ -1509,14 +1526,19 @@ function NotaPages(props: {
   onLayout?: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const onLayoutRef = useRef(props.onLayout);
   onLayoutRef.current = props.onLayout;
   const canvases = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const docRef = useRef<PDFDocumentProxy | undefined>(undefined);
-  const [pageCount, setPageCount] = useState(0);
+  const [pageBoxes, setPageBoxes] = useState<NotaPageBox[]>([]);
   const [failed, setFailed] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
   const [paintWidth, setPaintWidth] = useState(0);
+  // Every song on the setlist mounts one of these, so painting them all kept a full-resolution
+  // bitmap alive for songs nobody was looking at. Only the ones near the view are painted.
+  const [near, setNear] = useState(false);
+  const pageCount = pageBoxes.length;
   const pageWidth = width > 0 ? Math.max(1, Math.round(width * props.zoom)) : 0;
   const painted = useRef(0);
 
@@ -1525,7 +1547,7 @@ function NotaPages(props: {
     if (!host) return;
     let cancelled = false;
     let doc: PDFDocumentProxy | undefined;
-    setPageCount(0);
+    setPageBoxes([]);
     setFailed(null);
     const load = async () => {
       try {
@@ -1536,8 +1558,17 @@ function NotaPages(props: {
           await doc.destroy();
           return;
         }
+        // Read once, so a page keeps a correct box even while its bitmap is released. Without
+        // it a released page collapses to nothing and the score jumps under the player.
+        const boxes: NotaPageBox[] = [];
+        for (let number = 1; number <= doc.numPages; number++) {
+          const page = await doc.getPage(number);
+          if (cancelled) return;
+          const viewport = page.getViewport({ scale: 1 });
+          boxes.push({ width: viewport.width, height: viewport.height });
+        }
         docRef.current = doc;
-        setPageCount(doc.numPages);
+        setPageBoxes(boxes);
       } catch (error) {
         if (!cancelled) {
           setFailed(error instanceof Error ? error.message : String(error));
@@ -1551,13 +1582,39 @@ function NotaPages(props: {
     observer.observe(host);
     setWidth(Math.round(host.clientWidth));
     void load();
+    const held = canvases.current;
     return () => {
       cancelled = true;
       observer.disconnect();
       docRef.current = undefined;
+      for (const canvas of held.values()) releaseNotaCanvas(canvas);
       void doc?.destroy();
     };
   }, [props.songId, props.file]);
+
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setNear(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) setNear(entry.isIntersecting);
+      },
+      { rootMargin: NOTA_NEAR_MARGIN }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // The boxes settle the layout on their own now, so whatever measures the overlays no longer
+  // has to wait for paint — a song far down the setlist is laid out before it is ever painted.
+  useEffect(() => {
+    if (pageCount === 0 || pageWidth < 8) return;
+    onLayoutRef.current?.();
+  }, [pageCount, pageWidth]);
 
   useEffect(() => {
     if (pageWidth < 8) return;
@@ -1576,7 +1633,15 @@ function NotaPages(props: {
   useLayoutEffect(() => {
     const doc = docRef.current;
     if (!doc || pageCount === 0 || paintWidth < 8) return;
+    if (!near) {
+      for (const canvas of canvases.current.values()) releaseNotaCanvas(canvas);
+      return;
+    }
     let cancelled = false;
+    // The task has to be cancelled, not just abandoned: pdfjs refuses a second render on a
+    // canvas whose first one is still running, and a zoom part way through a paint is exactly
+    // that. It used to reject into nothing and leave the score blank.
+    let running: { cancel: () => void } | null = null;
     const paint = async () => {
       const dpr = window.devicePixelRatio || 1;
       for (let number = 1; number <= pageCount; number++) {
@@ -1587,31 +1652,45 @@ function NotaPages(props: {
         if (cancelled) return;
         const unscaled = page.getViewport({ scale: 1 });
         const viewport = page.getViewport({
-          scale: pdfRenderScale(paintWidth, unscaled.width, dpr)
+          scale: pdfRenderScale(paintWidth, unscaled.width, dpr, unscaled.height)
         });
         canvas.width = Math.floor(viewport.width);
         canvas.height = Math.floor(viewport.height);
-        await page.render({
+        const task = page.render({
           canvasContext: context,
           viewport,
-          annotationMode: AnnotationMode.DISABLE
-        }).promise;
+          // Preview text boxes live as FreeText annotations, not page ink.
+          annotationMode: AnnotationMode.ENABLE
+        });
+        running = task;
+        try {
+          await task.promise;
+        } catch (error) {
+          // A cancelled render is the normal way a zoom interrupts this, not a failure.
+          if (!cancelled) throw error;
+          return;
+        } finally {
+          running = null;
+        }
         if (cancelled) return;
       }
       if (!cancelled) onLayoutRef.current?.();
     };
-    void paint();
+    void paint().catch((error: unknown) => {
+      if (!cancelled) console.error("Score paint failed", error);
+    });
     return () => {
       cancelled = true;
+      running?.cancel();
     };
-  }, [pageCount, paintWidth]);
+  }, [pageCount, paintWidth, near]);
 
   return (
     <>
       {failed ? <div className="lyrics-empty meta">No nota</div> : null}
-      <div className="nota-pages" hidden={Boolean(failed)}>
+      <div ref={rootRef} className="nota-pages" hidden={Boolean(failed)}>
         <div ref={hostRef} className="nota-pages-measure" aria-hidden="true" />
-        {Array.from({ length: pageCount }, (_, index) => (
+        {pageBoxes.map((box, index) => (
           <div
             key={index}
             className="nota-page-wrap"
@@ -1627,6 +1706,9 @@ function NotaPages(props: {
           >
             <canvas
               className="nota-page"
+              // The ratio, not the bitmap, is what gives this page its height. A released
+              // page keeps its place in the scroll instead of collapsing to a line.
+              style={{ aspectRatio: `${box.width} / ${box.height}` }}
               ref={(node) => {
                 if (node) canvases.current.set(index, node);
                 else canvases.current.delete(index);
