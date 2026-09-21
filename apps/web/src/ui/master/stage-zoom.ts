@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import {
   isStageContentPage,
+  stagePageCanZoom,
   useMasterStore
 } from "../../store/master-store";
 
@@ -69,12 +70,13 @@ export function useStagePinchZoom() {
     let startDist = 0;
     let startZoom = 1;
     const onStart = (event: TouchEvent) => {
-      if (!pinchStartedOnStage(event)) {
+      const state = useMasterStore.getState();
+      // The score is fixed at 100%, so a pinch there is left alone rather than swallowed.
+      if (!pinchStartedOnStage(event) || !stagePageCanZoom(state.masterPage)) {
         startDist = 0;
         return;
       }
       startDist = touchPairDistance(event);
-      const state = useMasterStore.getState();
       startZoom = isStageContentPage(state.masterPage) ? state.stageZooms[state.masterPage] : 1;
     };
     const onMove = (event: TouchEvent) => {

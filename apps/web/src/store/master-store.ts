@@ -226,6 +226,15 @@ export function isStageContentPage(page: MasterPage): page is StageContentPage {
   );
 }
 
+/**
+ * The score is read at 100% and does not zoom. Its pages are engraved to fill the width
+ * already, and every step of zoom repaints a bitmap that grows with the square of it.
+ * Everything that can change a zoom goes through `setStageZoom`, so this is the only gate.
+ */
+export function stagePageCanZoom(page: MasterPage): page is StageContentPage {
+  return isStageContentPage(page) && page !== "nota";
+}
+
 function clampStageZoom(value: number): number {
   return Math.min(STAGE_ZOOM_MAX, Math.max(STAGE_ZOOM_MIN, Math.round(value * 10) / 10));
 }
@@ -2952,7 +2961,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     toggleEditOpen: () => set((state) => ({ editOpen: !state.editOpen })),
     setStageZoom: (value) =>
       set((state) => {
-        if (!isStageContentPage(state.masterPage)) return {};
+        if (!stagePageCanZoom(state.masterPage)) return {};
         const page = state.masterPage;
         const zoom = clampStageZoom(value);
         if (zoom === state.stageZooms[page]) return {};

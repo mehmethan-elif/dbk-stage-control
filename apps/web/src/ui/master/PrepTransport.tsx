@@ -27,6 +27,7 @@ import {
   livePerformanceEntryId,
   liveSongIsBackingTracks,
   isStageContentPage,
+  stagePageCanZoom,
   panicBlocksFollow,
   practicePlaysMasterMix,
   songPlaying,
@@ -126,8 +127,12 @@ export function StageViewTools() {
   const zoom = useMasterStore((s) =>
     isStageContentPage(s.masterPage) ? s.stageZooms[s.masterPage] : 1
   );
+  const canZoom = useMasterStore((s) => stagePageCanZoom(s.masterPage));
   const setStageZoom = useMasterStore((s) => s.setStageZoom);
   const percent = Math.round(zoom * 100);
+
+  // The score does not zoom, so it carries no controls for it either.
+  if (!canZoom) return null;
 
   return (
     <div className="prep-transport-tools zoom-tools">
