@@ -68,6 +68,13 @@ function isFlacFile(value: unknown): value is FlacFile {
 const LIBRARY_SAMPLE_RATE = 44100;
 
 /**
+ * The ceiling on how far the visuals may be pulled back from the audio clock. Wide enough
+ * for a Bluetooth route, narrow enough that a nonsense reading cannot park the playhead in
+ * the middle of last bar.
+ */
+const MAX_OUTPUT_LATENCY = 0.5;
+
+/**
  * Runs the graph at the rate the stems are recorded at. Windows are decoded separately,
  * and a resampler tapers the edges of every buffer it is handed, so a context running at
  * some other rate would put a dip at each window join. At the stems' own rate
@@ -1003,22 +1010,35 @@ export class WebAudioEngine implements AudioEngine {
 
   private outputLatencyHint = 0;
 
-  /** iOS Web Audio reports no outputLatency; the session still has a real buffer. */
+  /**
+   * What the platform measured for the whole path to the speaker. On iOS this comes from
+   * AVAudioSession, which is the only thing that knows the real figure.
+   *
+   * A route past the ceiling is clamped, never dropped: a Bluetooth speaker sits at a few
+   * hundred milliseconds, and answering "no delay at all" for it is the largest error
+   * available rather than the safest one.
+   */
   setOutputLatencyHint(seconds: number): void {
     this.outputLatencyHint =
-      Number.isFinite(seconds) && seconds > 0 && seconds <= 0.25 ? seconds : 0;
+      Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, MAX_OUTPUT_LATENCY) : 0;
   }
 
   /** Seconds from graph time to the speaker. Zero when the context is not running. */
   getOutputLatency(): number {
     const ctx = this.ctx;
-    if (!ctx) return this.outputLatencyHint;
-    const output = "outputLatency" in ctx ? Number(ctx.outputLatency) : 0;
-    const base = "baseLatency" in ctx ? Number(ctx.baseLatency) : 0;
-    const reported = output > 0 ? output : base;
-    const value = reported > 0 ? reported : this.outputLatencyHint;
-    if (!Number.isFinite(value) || value <= 0 || value > 0.25) return 0;
-    return value;
+    const output = ctx && "outputLatency" in ctx ? Number(ctx.outputLatency) : 0;
+    const base = ctx && "baseLatency" in ctx ? Number(ctx.baseLatency) : 0;
+    const reported = Math.max(
+      Number.isFinite(output) ? output : 0,
+      Number.isFinite(base) ? base : 0
+    );
+    // The hint describes the whole path to the speaker; the context only ever describes its
+    // own graph buffer. Preferring the context meant the few milliseconds of the buffer
+    // stood in for the tens the speaker actually costs, and the playhead ran ahead of the
+    // music by the difference. The larger of the two is the one that can be true.
+    const value = Math.max(this.outputLatencyHint, reported);
+    if (!Number.isFinite(value) || value <= 0) return 0;
+    return Math.min(value, MAX_OUTPUT_LATENCY);
   }
 
   poll(): void {

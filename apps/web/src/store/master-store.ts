@@ -171,6 +171,9 @@ export type MasterPage =
 export type StageContentPage = Extract<MasterPage, "lyrics" | "nota" | "chords" | "bass" | "drums">;
 const AUDIO_DEVICE_KEY = "dbk-audio-device";
 const AUDIO_ROUTING_KEY = "dbk-audio-routing";
+const PLAYHEAD_TRIM_KEY = "dbk-playhead-trim";
+/** Half a second either way is far more than any real route, and enough rope to find it. */
+export const PLAYHEAD_TRIM_MAX_MS = 500;
 const ACTIVE_GIG_KEY = "dbk-active-gig";
 
 /**
@@ -195,6 +198,13 @@ function writeStored(key: string, value: string): void {
 
 function storedAudioDevice(): string {
   return readStored(AUDIO_DEVICE_KEY) || "default";
+}
+
+/** Seconds. Stored in milliseconds because that is what the player is asked to think in. */
+function storedPlayheadTrim(): number {
+  const ms = Number(readStored(PLAYHEAD_TRIM_KEY));
+  if (!Number.isFinite(ms)) return 0;
+  return Math.max(-PLAYHEAD_TRIM_MAX_MS, Math.min(PLAYHEAD_TRIM_MAX_MS, Math.round(ms))) / 1000;
 }
 
 function storedRoutingMode(): AudioRoutingMode {
@@ -288,7 +298,7 @@ export function takeRemoteMetronomeSeq(prev: number | null, seq: number | undefi
 const metronome = new Metronome(
   (running) => engine.setExternalCueActive(running),
   (beat) => {
-    const delay = audioBeatDelay(beat.at) + engine.getOutputLatency();
+    const delay = audioBeatDelay(beat.at) + visualLatency();
     notifyMetronomeBeat({ at: remoteMetronomeVisualAt(delay) });
     const state = useMasterStore.getState();
     if (state.deviceKind !== "master") return;
@@ -312,6 +322,15 @@ export function onMetronomeBeat(listener: (beat: MetronomeBeat) => void): () => 
   return () => {
     beatListeners.delete(listener);
   };
+}
+
+// Coming back to the foreground is the other moment a route can have changed under the app.
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (useMasterStore.getState().deviceKind !== "master") return;
+    void applyNativeOutputLatency();
+  });
 }
 
 function preloadMetroIntro() {
@@ -585,6 +604,8 @@ interface MasterState {
   audioDeviceId: string;
   audioOutputChannels: number;
   audioRoutingMode: AudioRoutingMode;
+  /** Seconds the visuals are pulled back from the audio clock on top of the measured route. */
+  playheadTrim: number;
   audioError: string | null;
   audioHint: string | null;
   load: (kind?: DeviceKind, options?: { syncHost?: string }) => Promise<void>;
@@ -618,6 +639,7 @@ interface MasterState {
   recheckAudioOutputs: () => Promise<void>;
   setAudioDevice: (deviceId: string, opts?: { recreateIfStereo?: boolean }) => Promise<void>;
   setAudioRoutingMode: (mode: AudioRoutingMode) => void;
+  setPlayheadTrim: (ms: number) => void;
   setGigId: (id: string) => Promise<void>;
   updateGig: (recipe: (gig: Gig) => Gig) => Promise<void>;
   saveSetlist: (name: string, initialSongId: string) => Promise<boolean>;
@@ -657,10 +679,24 @@ let applyPanicResume: (() => void) | null = null;
 
 const PLAYBACK_UI_MS = 80;
 
-function audibleEngineTime(): number {
-  return Math.max(0, (controller.getClock()?.time ?? 0) - engine.getOutputLatency());
+/**
+ * How far the visuals sit behind the audio clock: what the route costs, plus whatever the
+ * player has trimmed by ear. No API reports the last few milliseconds of a speaker
+ * honestly, so the trim is there to close whatever gap the measurement leaves.
+ */
+function visualLatency(): number {
+  return engine.getOutputLatency() + useMasterStore.getState().playheadTrim;
 }
 
+function audibleEngineTime(): number {
+  return Math.max(0, (controller.getClock()?.time ?? 0) - visualLatency());
+}
+
+/**
+ * The route decides this and the route changes — a lead goes into the desk, headphones come
+ * out, a speaker is paired — so it is read again whenever that can have happened rather than
+ * once at boot, when the audio session may not even be up yet to answer honestly.
+ */
 async function applyNativeOutputLatency(): Promise<void> {
   if (!isNativeApp()) return;
   try {
@@ -673,7 +709,7 @@ async function applyNativeOutputLatency(): Promise<void> {
 }
 
 function audibleMetronomeTime(): number {
-  return Math.max(0, metronome.time - engine.getOutputLatency());
+  return Math.max(0, metronome.time - visualLatency());
 }
 
 function playbackStoreNeedsWrite(
@@ -2382,6 +2418,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     audioDeviceId: storedAudioDevice(),
     audioOutputChannels: 2,
     audioRoutingMode: storedRoutingMode(),
+    playheadTrim: storedPlayheadTrim(),
     audioError: null,
     audioHint: null,
     metronomePlaying: false,
@@ -2957,6 +2994,14 @@ export const useMasterStore = create<MasterState>((set, get) => {
         set({ audioError: error instanceof Error ? error.message : String(error) });
       }
     },
+    setPlayheadTrim: (ms) => {
+      const clamped = Math.max(
+        -PLAYHEAD_TRIM_MAX_MS,
+        Math.min(PLAYHEAD_TRIM_MAX_MS, Math.round(Number.isFinite(ms) ? ms : 0))
+      );
+      writeStored(PLAYHEAD_TRIM_KEY, String(clamped));
+      set({ playheadTrim: clamped / 1000 });
+    },
     toggleSetlistOpen: () => set((state) => ({ setlistOpen: !state.setlistOpen })),
     toggleEditOpen: () => set((state) => ({ editOpen: !state.editOpen })),
     setStageZoom: (value) =>
@@ -3386,6 +3431,8 @@ export const useMasterStore = create<MasterState>((set, get) => {
 
     play: async () => {
       if (get().deviceKind === "client") return;
+      // Cheap, and the route is most likely to have moved since the last song.
+      void applyNativeOutputLatency();
       cancelFadeStop();
       const { gigId, gigs, selectedEntryId, playback } = get();
       const gig = gigs.find((item) => item.id === gigId);

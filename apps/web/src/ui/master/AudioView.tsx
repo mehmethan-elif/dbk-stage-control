@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { looksLikeMultiOutInterface, type AudioRoutingMode } from "@dbk/audio";
-import { useMasterStore } from "../../store/master-store";
+import { PLAYHEAD_TRIM_MAX_MS, useMasterStore } from "../../store/master-store";
 
 const ROUTING_MODES: Array<{
   mode: AudioRoutingMode;
@@ -55,6 +55,8 @@ export function AudioView() {
   const recheckOutputs = useMasterStore((state) => state.recheckAudioOutputs);
   const setDevice = useMasterStore((state) => state.setAudioDevice);
   const setRoutingMode = useMasterStore((state) => state.setAudioRoutingMode);
+  const trimMs = useMasterStore((state) => Math.round(state.playheadTrim * 1000));
+  const setPlayheadTrim = useMasterStore((state) => state.setPlayheadTrim);
 
   useEffect(() => {
     void refreshOutputs();
@@ -135,6 +137,41 @@ export function AudioView() {
         ) : null}
         {hint ? <div className="audio-device-hint">{hint}</div> : null}
         {error ? <div className="audio-device-error">{error}</div> : null}
+
+        <div className="audio-trim-row">
+          <span className="audio-trim-label">Playhead trim</span>
+          <button
+            type="button"
+            className="audio-trim-step"
+            aria-label="Playhead earlier"
+            onClick={() => setPlayheadTrim(trimMs - 5)}
+            disabled={trimMs <= -PLAYHEAD_TRIM_MAX_MS}
+          >
+            −5
+          </button>
+          <span className="audio-trim-value">{trimMs > 0 ? `+${trimMs}` : trimMs} ms</span>
+          <button
+            type="button"
+            className="audio-trim-step"
+            aria-label="Playhead later"
+            onClick={() => setPlayheadTrim(trimMs + 5)}
+            disabled={trimMs >= PLAYHEAD_TRIM_MAX_MS}
+          >
+            +5
+          </button>
+          <button
+            type="button"
+            className="audio-recheck"
+            onClick={() => setPlayheadTrim(0)}
+            disabled={trimMs === 0}
+          >
+            Reset
+          </button>
+        </div>
+        <div className="audio-device-hint">
+          On top of the delay the device reports. Raise it while the playhead runs ahead of
+          what you hear, until the two land together.
+        </div>
       </section>
     </main>
   );
