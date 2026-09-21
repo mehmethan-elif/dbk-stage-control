@@ -154,11 +154,13 @@ export interface NextSongMessage {
   setlistEntryId: string;
 }
 
-export interface ClientStatusMessage {
-  type: "ClientStatus";
-  deviceId: string;
-  ready: boolean;
-  missingAssets: string[];
+/**
+ * The master's pulse. It carries nothing: its only job is to give a follower something to
+ * miss, so a quiet stretch of a show can be told apart from a Wi-Fi link that has gone away
+ * without the socket ever closing.
+ */
+export interface HeartbeatMessage {
+  type: "Heartbeat";
 }
 
 export interface ErrorMessage {
@@ -219,11 +221,29 @@ export type SyncMessage =
   | MetronomeMessage
   | SectionChangedMessage
   | NextSongMessage
-  | ClientStatusMessage
+  | HeartbeatMessage
   | RemoteControlMessage
   | MixerStateMessage
   | RemoteMixerMessage
   | ErrorMessage;
+
+/**
+ * Whether a peer of this kind has any use for the message.
+ *
+ * The mixer lives only on the soundcheck remote — a band copy parses `MixerState` and drops
+ * it on the floor. It is also the largest routine packet, and the master sends one on every
+ * song selection and again on every fader move, so it is addressed rather than broadcast.
+ *
+ * An unknown kind is a peer that has not said Hello yet. It is left out: the master sends a
+ * fresh `MixerState` when one joins and on the next selection either way.
+ */
+export function syncMessageWantedBy(
+  message: SyncMessage,
+  kind: DeviceKind | undefined
+): boolean {
+  if (message.type !== "MixerState") return true;
+  return kind === "remote";
+}
 
 export function parseSyncMessage(raw: string): SyncMessage | null {
   try {

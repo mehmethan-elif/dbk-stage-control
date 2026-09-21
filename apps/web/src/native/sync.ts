@@ -4,7 +4,8 @@ import {
   PROTOCOL_VERSION,
   REMOTE_DEVICE_NAME,
   masterSessionUpdate,
-  parseSyncMessage
+  parseSyncMessage,
+  syncMessageWantedBy
 } from "@dbk/protocol";
 import { isNativeApp } from "./platform";
 import {
@@ -72,6 +73,22 @@ let nativeServerStarted = false;
 let hostPumpTimer = 0;
 /** Master to client is pushed straight out, so this only paces client to master. */
 const HOST_POLL_MS = 250;
+/** How often the master shows it is still there. */
+const HEARTBEAT_MS = 2000;
+/**
+ * Three missed pulses. Venue Wi-Fi drops a client without closing the socket, and a follower
+ * that only listens for `close` sits there looking connected with a frozen playhead.
+ */
+const LINK_STALE_MS = 7000;
+let heartbeatTimer = 0;
+let watchdogTimer = 0;
+let lastInboundAt = 0;
+/**
+ * The watchdog arms itself only once a pulse has actually been seen. The desk is a separate
+ * native build, so a band copy can be newer than the master it is following — and it must not
+ * reconnect in a loop against a master that has no pulse to give.
+ */
+let sawHeartbeat = false;
 let httpEpoch = 0;
 let httpSession: { root: string; id: string } | null = null;
 
@@ -119,6 +136,39 @@ export async function refreshJoinAddress(): Promise<string | null> {
 
 export function sendSyncMessage(message: SyncMessage): void {
   sendImpl(message);
+}
+
+function startHeartbeat(): void {
+  if (heartbeatTimer) return;
+  heartbeatTimer = window.setInterval(() => {
+    sendImpl({ type: "Heartbeat" });
+  }, HEARTBEAT_MS);
+}
+
+function stopHeartbeat(): void {
+  window.clearInterval(heartbeatTimer);
+  heartbeatTimer = 0;
+}
+
+function markInbound(): void {
+  lastInboundAt = Date.now();
+}
+
+function stopLinkWatchdog(): void {
+  window.clearInterval(watchdogTimer);
+  watchdogTimer = 0;
+}
+
+/** Watches for silence on a follower's link and rebuilds it rather than waiting for a close. */
+function startLinkWatchdog(onDead: () => void): void {
+  stopLinkWatchdog();
+  markInbound();
+  watchdogTimer = window.setInterval(() => {
+    if (!sawHeartbeat || !linkState.connected) return;
+    if (Date.now() - lastInboundAt < LINK_STALE_MS) return;
+    stopLinkWatchdog();
+    onDead();
+  }, 1000);
 }
 
 export function announceSyncHello(deviceKind: DeviceKind, deviceName: string): void {
@@ -217,6 +267,12 @@ function hookSyncHost(hooks: SyncHooks): string {
 }
 
 function handleIncoming(message: SyncMessage, hooks: SyncHooks, fromPeer = false): void {
+  // Every transport lands here, so this is the one place that knows the link is alive.
+  markInbound();
+  if (message.type === "Heartbeat") {
+    sawHeartbeat = true;
+    return;
+  }
   if (message.type === "Peers") {
     setLink({ peers: message.peers, peerCount: clientPeerCount(message.peers) });
     if (isFollowerKind(hooks.deviceKind())) {
@@ -400,9 +456,12 @@ async function startNativeMaster(hooks: SyncHooks): Promise<string | null> {
     const raw = JSON.stringify(message);
     rememberOutgoing(message, raw);
     for (const uuid of connections) {
+      // Addressed, not broadcast: the band's copies have no mixer to show it on.
+      if (!syncMessageWantedBy(message, nativePeers.get(uuid)?.deviceKind)) continue;
       void SyncSocket.hostSend({ uuid, message: raw });
     }
   };
+  startHeartbeat();
   hooks.onMasterOpen();
   try {
     await SyncSocket.advertise({ port: SYNC_PORT });
@@ -512,9 +571,38 @@ function sessionClientId(): string {
   return id;
 }
 
+/**
+ * Tears the current link down without standing the transport down for good, so the watchdog
+ * can rebuild it. `disconnectSyncTransport` is the deliberate version and clears `allowReconnect`.
+ */
+function dropCurrentLink(): void {
+  httpEpoch += 1;
+  releaseHttpSession();
+  void dropNativeClientListeners();
+  void import("./sync-socket")
+    .then(({ SyncSocket }) => SyncSocket.close())
+    .catch(() => undefined);
+  if (socket) {
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onclose = null;
+    try {
+      socket.close();
+    } catch {
+      // already closed
+    }
+    socket = null;
+  }
+  sendImpl = () => {};
+  setLink({ connected: false, hosting: false, peerCount: 0, peers: [] });
+}
+
 export function disconnectSyncTransport(): void {
   seenMasterSessionId = null;
   allowReconnect = false;
+  stopHeartbeat();
+  stopLinkWatchdog();
+  sawHeartbeat = false;
   httpEpoch += 1;
   releaseHttpSession();
   window.clearTimeout(reconnectTimer);
@@ -562,6 +650,16 @@ export async function connectSyncTransport(hooks: SyncHooks): Promise<string | n
     if (isFollowerKind(hooks.deviceKind()) && !hookSyncHost(hooks) && !practiceSharePageOrigin()) return;
     void connectSyncTransport(hooks);
   };
+  if (hooks.deviceKind() === "master") startHeartbeat();
+  else {
+    // A socket that is open but silent is the failure that strands a player mid-song, and it
+    // never fires `close`. Silence is treated as a drop and the link is rebuilt from scratch.
+    startLinkWatchdog(() => {
+      dropCurrentLink();
+      window.clearTimeout(reconnectTimer);
+      reconnectTimer = window.setTimeout(retry, 250);
+    });
+  }
   if (httpRoot) void connectPreferHttp(httpRoot, urls, hooks, retry);
   else connectFollower(urls, hooks, retry);
   return hostname ? `${hostname}:${SYNC_PORT}` : null;

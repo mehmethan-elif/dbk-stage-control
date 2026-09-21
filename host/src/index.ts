@@ -4,7 +4,13 @@ import { createReadStream, existsSync, readdirSync, readFileSync, statSync, writ
 import { extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
-import { masterSessionUpdate, parseSyncMessage, type DeviceKind } from "@dbk/protocol";
+import {
+  masterSessionUpdate,
+  parseSyncMessage,
+  syncMessageWantedBy,
+  type DeviceKind,
+  type SyncMessage
+} from "@dbk/protocol";
 import { publishClientGigs, publishClientLibrary } from "./publish-client-library";
 
 const PORT = Number(process.env.DBK_HOST_PORT ?? 8787);
@@ -590,9 +596,11 @@ let lastPosition = "";
 let lastShow = "";
 let lastMasterSessionId: string | null = null;
 
-function broadcastRaw(raw: string, except?: WebSocket): void {
+function broadcastRaw(raw: string, except?: WebSocket, message?: SyncMessage): void {
   for (const client of clients) {
     if (client === except || client.readyState !== client.OPEN) continue;
+    // Relayed only to the peers with a use for it — the same rule the iPad master applies.
+    if (message && !syncMessageWantedBy(message, peers.get(client)?.deviceKind)) continue;
     client.send(raw);
   }
 }
@@ -654,7 +662,7 @@ wss.on("connection", (socket) => {
       });
       sendRoster();
     }
-    broadcastRaw(raw, socket);
+    broadcastRaw(raw, socket, message);
   });
   socket.on("close", () => {
     const peer = peers.get(socket);
