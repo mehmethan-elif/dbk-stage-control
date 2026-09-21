@@ -19,7 +19,6 @@ import {
 import {
   clientPracticeMode,
   currentGig,
-  followsSharedPlayhead,
   pageEntryId,
   playingMarkEntryId,
   selectAddedSetlistEntry,
@@ -73,7 +72,6 @@ export function StageSetlist(props: {
   const frozen = useMasterStore(setlistLocked);
   const practice = useMasterStore(clientPracticeMode);
   const detached = useMasterStore(stageConnectOn);
-  const followPlayhead = useMasterStore(followsSharedPlayhead);
   const readOnly = Boolean(props.readOnly || songLibrary);
   // Offered on every page the setlist appears on, the same as the preparation list. It used to
   // wait for the stage to be connected, which hid it from the desk right up until show time.
@@ -126,9 +124,8 @@ export function StageSetlist(props: {
 
   const selectEntry = (entryId: string) => {
     props.onSelect(entryId);
-    if (followPlayhead) return;
-    if (!props.stageRef?.current || !props.songAttr) return;
-    scrollStageToSongTitle(props.stageRef.current, `[${props.songAttr}="${entryId}"]`);
+    // The page pin jumps the title into place. A second animated scroll through
+    // the full lyrics book on iPad delayed the setlist highlight itself.
   };
 
   const onPointerDown = (entryId: string, event: PointerEvent<HTMLDivElement>) => {

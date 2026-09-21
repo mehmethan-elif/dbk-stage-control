@@ -326,6 +326,7 @@ export function pinStageSongWhenReady(
   let lastTop = Number.NaN;
   const started = performance.now();
   const budget = Math.max(PIN_GROWTH_MS, tries * 16);
+  let stable = 0;
   const run = () => {
     if (cancelled) return;
     const stage = stageRef.current;
@@ -338,10 +339,15 @@ export function pinStageSongWhenReady(
       const height = article instanceof HTMLElement ? article.getBoundingClientRect().height : 0;
       const top =
         title.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop;
+      const pin = songTitlePinReady({ height, top, lastTop, stable });
+      stable = pin.nextStable;
       if (shouldRepinSongTitle({ height, top, lastTop })) {
         lastTop = top;
         scrollStageToNode(stage, title, 0);
       }
+      // Lyrics is already laid out, so two steady frames is enough. A 12s measure
+      // loop on that page is what made iPad setlist taps feel dead.
+      if (pin.ready) return;
     }
     if (performance.now() - started < budget) requestAnimationFrame(run);
   };

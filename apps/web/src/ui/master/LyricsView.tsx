@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { memo, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import {
   createId,
   currentLyricIndex,
@@ -96,7 +96,6 @@ export function LyricsView() {
   const updateGig = useMasterStore((s) => s.updateGig);
   const playback = useMasterStore((s) => s.playback);
   const storeTime = useMasterStore(stagePlayheadTime);
-  const followTime = useFollowPlayheadTime(storeTime);
   const readOnly = useMasterStore((s) => s.deviceKind === "client");
   const elifEdits = useMasterStore(elifCanEditSetlist);
   const selectPracticeSong = useMasterStore((s) => s.selectPracticeSong);
@@ -107,6 +106,11 @@ export function LyricsView() {
   // Someone reading a song out of the library is not watching the show, so nothing follows a
   // playhead until the master moves on and puts them back on it.
   const reading = useMasterStore(readingOffShow);
+  const followTime = useFollowPlayheadTime(
+    storeTime,
+    !reading &&
+      (playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning)
+  );
   const panicFollow = useMasterStore(panicBlocksFollow) && !reading;
   const detached = useMasterStore(followsSharedPlayhead);
   // The page opens where the master has the show, not where this device's selection is. They are
@@ -282,21 +286,19 @@ export function LyricsView() {
                 if (!isSongEntry(entry)) return null;
                 const item = findSongByRef(songs, entry.songId);
                 const live = playingEntryId === entry.entryId;
+                const followRall = live || (!playing && showEntry === entry.entryId);
+                const leadIn = upcoming?.entryId === entry.entryId;
                 return (
                   <SongLyrics
                     key={entry.entryId}
                     entryId={entry.entryId}
                     song={item}
-                    files={
-                      item
-                        ? [...(fileIndex[item.id] ?? []), ...(item.folder ? (fileIndex[item.folder] ?? []) : [])]
-                        : undefined
-                    }
+                    files={item ? fileIndex[item.id] : undefined}
                     live={live}
-                    followRall={live || (!playing && showEntry === entry.entryId)}
-                    time={liveTime}
+                    followRall={followRall}
+                    time={live || followRall || leadIn ? liveTime : 0}
                     smooth={readOnly && playing && live}
-                    leadIn={upcoming?.entryId === entry.entryId}
+                    leadIn={leadIn}
                     chainNext={Boolean(upcoming) && live}
                     showSections={songShowsSections(
                       entry,
@@ -317,7 +319,7 @@ export function LyricsView() {
   );
 }
 
-function SongLyrics(props: {
+const SongLyrics = memo(function SongLyrics(props: {
   entryId: string;
   song: Song | undefined;
   files?: string[];
@@ -426,7 +428,7 @@ function SongLyrics(props: {
       />
     </article>
   );
-}
+});
 
 function cueClass(current: number, index: number, chainNext = false): string {
   if (current < 0) return "";

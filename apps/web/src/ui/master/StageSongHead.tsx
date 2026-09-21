@@ -34,8 +34,11 @@ export function StageSongHead(props: {
   const frozen = useMasterStore(setlistLocked);
   const freeMode = useMasterStore(usesFreeMetroTransport);
   const followSound = useMasterStore(followsFreeMasterClicks);
-  const selectedEntryId = useMasterStore((s) => s.selectedEntryId);
+  const selectedEntryId = useMasterStore((s) =>
+    usesFreeMetroTransport(s) ? s.selectedEntryId : null
+  );
   const nextSongEntryId = useMasterStore((s) => {
+    if (!usesFreeMetroTransport(s)) return null;
     const gig = currentGig(s);
     const displayed = gig ? withKeyChangeElifs(gig.setlist, s.songs) : [];
     return (
