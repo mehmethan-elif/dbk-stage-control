@@ -2,10 +2,37 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 6958,
-    "hash": "11599b5d9cc702a62e40b4f02b8484a02d8be2593983296c86af2fd38ac99d44"
+    "size": 7864,
+    "hash": "89c590c1b6ad799c9f8d04e29761dbea84ab07ba47b6abaa05d74cc4968488b6"
   },
   "songs": [
+    {
+      "id": "ah_le_yar",
+      "folder": "ah_le_yar",
+      "title": "Ah Le Yar",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 4891375,
+          "hash": "cf08aa7ad8e75e5435ca017cd2f5d6a6a8f5dd7c69033ab3b463b53a1c0eb47c"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 35488,
+          "hash": "b7c778903c5ee2ac04dddfba5e6f88a7472483e276fa6316e0c683598ceb78fd"
+        },
+        {
+          "path": "settings.json",
+          "size": 28234,
+          "hash": "5451da653806d620bee6d34340031d3cf36607533811d12aec731fd990d738b2"
+        },
+        {
+          "path": "song.json",
+          "size": 73874,
+          "hash": "8eb6f7eef8401999e24480bb9996ea7ddf10856412021bd026c9a74cf7a77318"
+        }
+      ]
+    },
     {
       "id": "Altın Yüzüğüm Kırıldı",
       "folder": "altin_yuzugum_kirildi",
@@ -85,7 +112,7 @@
         {
           "path": "Master.mp3",
           "size": 2818297,
-          "hash": "6db6467b4eb23a430cd1f501ba18da63e616f3d4cf5ff125b7467872895b7feb"
+          "hash": "795c50f8990914d932f30ac2c1daa32376d1b422dc79d6b9734f26ead76a47ff"
         },
         {
           "path": "Nota.pdf",
@@ -337,6 +364,60 @@
           "path": "song.json",
           "size": 41596,
           "hash": "b03a1c35742ce597b095786e78c3a9de4b467574f2b7848a9781fbe5b8892086"
+        }
+      ]
+    },
+    {
+      "id": "esmerim_bic_im_bic_im",
+      "folder": "esmerim_bic_im_bic_im",
+      "title": "Esmerim Biçim Biçim",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 2547878,
+          "hash": "3e317034ab16d9f233dd51b83026780eb21da5f72424cf63b9d582a4d2ebd091"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 17627,
+          "hash": "3851607a0a6113cd3ba748f9a9353e5d4ffbe9f01b10185a6c40cb1387004a6e"
+        },
+        {
+          "path": "settings.json",
+          "size": 6004,
+          "hash": "7afa30234b83c39f0830a16fe608c7323358d9baa22d8cac20733d85ed3b699b"
+        },
+        {
+          "path": "song.json",
+          "size": 124171,
+          "hash": "e9e09d516c479f6968bc3adf067f595513cb3f1f6a8f731e19a3bb4b00d707fc"
+        }
+      ]
+    },
+    {
+      "id": "go_nlu_m_atas_lara_yand",
+      "folder": "go_nlu_m_atas_lara_yand",
+      "title": "Gönlüm Ataşlara Yandı",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3182340,
+          "hash": "17c2120e8c43d624075d540784818201bce75b48d57977ed9bd4e127cc680503"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 30588,
+          "hash": "5e288286ebc5b69faf4da85415b581c2159959a34002b1ed3116e9e306d1242a"
+        },
+        {
+          "path": "settings.json",
+          "size": 13299,
+          "hash": "caa6ac5582e2a549a663dde7e766faf08c628d678beba82facdbe62642187459"
+        },
+        {
+          "path": "song.json",
+          "size": 148073,
+          "hash": "0d28c092246ad75a3e1cd430ad9b82de9e110cb23fafbe5236e5d3c25003bb2f"
         }
       ]
     },
@@ -736,6 +817,33 @@
       ]
     },
     {
+      "id": "nemrudun_k_z",
+      "folder": "nemrudun_k_z",
+      "title": "Nemrudun Kızı",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3904155,
+          "hash": "868d01ed34ee7f3e5c195b844110b21d5b0d7a9d32d83734b7a8bddb4176720a"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 19722,
+          "hash": "c415fe3f29591f5e77aaea919336a7fde82b0db753ad1122e08c7d283235095e"
+        },
+        {
+          "path": "settings.json",
+          "size": 11553,
+          "hash": "2db6c4a516183b3c5db047e5b50e627b853e473321a3d7db7e754b23fb70af7b"
+        },
+        {
+          "path": "song.json",
+          "size": 72026,
+          "hash": "d4767ba4a23dc693e50a4bd2d969c57249dc48dac3bb77b94cf2a323e5ca5b78"
+        }
+      ]
+    },
+    {
       "id": "osman_ag_a",
       "folder": "osman_ag_a",
       "title": "Osman Ağa",
@@ -808,6 +916,33 @@
           "path": "song.json",
           "size": 921,
           "hash": "9661f1d5cebcf47f983217997760566f35bd6ca42077c89095580e5e953c9300"
+        }
+      ]
+    },
+    {
+      "id": "tanr_dan_diledim",
+      "folder": "tanr_dan_diledim",
+      "title": "Tanrıdan Diledim",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3063221,
+          "hash": "f40dc6a67c107a3752847156a63486f54db4c582716725e3ad809fb6e1ce8857"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 25340,
+          "hash": "42ec80822468acbec9309ac2d247fd784d12d73aced33d0841285d53b2313c35"
+        },
+        {
+          "path": "settings.json",
+          "size": 9751,
+          "hash": "1a3168f6c184445bd8caa0dcf75ded7b545b1b591540dab20d1dbde6b5080b28"
+        },
+        {
+          "path": "song.json",
+          "size": 69691,
+          "hash": "1bcffe1bb2806b732c55f54c6b61a698dcf1adb138ae20face5f46d385adadcc"
         }
       ]
     },

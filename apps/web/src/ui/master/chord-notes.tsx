@@ -20,6 +20,7 @@ import {
 const TIME_EPS = 0.02;
 const MAJ7 = /maj7/gi;
 const DIM = /dim/gi;
+const HALF_DIM = /m7b5/gi;
 
 export const STEPS_PER_BEAT = 4;
 export const STEPS_PER_MEASURE = STEPS_PER_BEAT * 4;
@@ -34,7 +35,7 @@ export function stepsFromTempoMap(map: TempoPoint[], measure: number): number {
 }
 
 export function displayChordText(text: string): string {
-  return text.replace(MAJ7, "Δ").replace(DIM, "°");
+  return text.replace(HALF_DIM, "ø").replace(MAJ7, "Δ").replace(DIM, "°");
 }
 
 export const NOTE_LANES = [
