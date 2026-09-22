@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formAt, formNextAt, songForm, type PatternEvent, type Song, type TempoPoint } from "@dbk/core";
-import { buildHits, drumBarSteps, drumFollowKey, nextDrumPatternRun, visitFillCue, writtenChart } from "./DrumView";
+import { buildHits, drumBarSteps, drumFollowKey, drumFollowTargets, nextDrumPatternRun, visitFillCue, writtenChart } from "./DrumView";
 
 const waltz: TempoPoint[] = [{ time: 0, measure: 1, bpm: 75, numerator: 3, denominator: 4 }];
 const common: TempoPoint[] = [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }];
@@ -163,6 +163,47 @@ describe("writtenChart", () => {
     });
   });
 
+  it("carries HALAY into the next ARA when the export only wrote the SENKOP", () => {
+    // Ayrıldım Güler miyim: each ARA is HALAY x5 + SENKOP x1, but the second ARA
+    // only has the SENKOP MIDI. The drummer still reads the same two rows.
+    const groove = (
+      text: string,
+      start: number,
+      end: number,
+      notes: number
+    ): PatternEvent => ({
+      text,
+      time: start,
+      end,
+      length: end - start,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: notes
+        ? [{ time: start, pitch: 48, numerator: 4, denominator: 4 }]
+        : []
+    });
+    const target: Song = {
+      ...song([
+        { name: "ARA", start: 0, end: 12 },
+        { name: "ARA", start: 12, end: 24 }
+      ]),
+      patterns: [groove("HALAY", 0, 2, 1), groove("SENKOP", 10, 12, 1), groove("SENKOP", 22, 24, 1)]
+    };
+    const rows = writtenChart(target, songForm(target, { identity: "drums" }));
+    expect(rows.map((row) => row.runs.map((run) => [run.name, run.repeats]))).toEqual([
+      [
+        ["HALAY", 5],
+        ["SENKOP", 1]
+      ],
+      [
+        ["HALAY", 5],
+        ["SENKOP", 1]
+      ]
+    ]);
+  });
+
   it("never draws FILL as a pattern when a section has only text FILL", () => {
     const groove = (text: string, start: number, end: number, notes: number): PatternEvent => ({
       text,
@@ -234,5 +275,35 @@ describe("nextDrumPatternRun", () => {
     const pos = formAt(form, 7.5);
     const nextPos = formNextAt(form, 7.5, 8);
     expect(nextDrumPatternRun(chart, pos, nextPos)?.name).toBe("TUS");
+  });
+});
+
+describe("drumFollowTargets", () => {
+  const pack = { id: "pack" };
+  const run = { closest: (selector: string) => (selector === ".drum-pack" ? pack : null) };
+  const nextPack = { id: "next" };
+  const firstPack = { id: "first" };
+  const song = { querySelector: () => firstPack };
+
+  it("aims at the played run and the next pack", () => {
+    expect(
+      drumFollowTargets({
+        currentRun: run,
+        currentPack: pack,
+        nextPack,
+        song
+      })
+    ).toEqual({ current: run, next: nextPack });
+  });
+
+  it("falls back to the first pack of the song, not the whole article", () => {
+    expect(
+      drumFollowTargets({
+        currentRun: null,
+        currentPack: null,
+        nextPack: null,
+        song
+      })
+    ).toEqual({ current: firstPack, next: null });
   });
 });

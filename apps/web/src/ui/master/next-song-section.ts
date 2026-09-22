@@ -87,6 +87,79 @@ export function songLeadInSection(song: Song | undefined): Section | undefined {
   return { name: song.title, start: 0, end: Math.max(song.duration, 1) };
 }
 
+const HANDOFF_SCROLL_PREFIX = "handoff:";
+
+/** Engine already opened the next song (time ≈ 0) while the page still names this one. */
+export function songHandoffRewind(prevTime: number, time: number, duration: number): boolean {
+  if (!(duration > 0) || !(prevTime > 0)) return false;
+  const late = Math.max(8, duration * 0.05);
+  return prevTime >= duration - late && time < 1 && time + 2 < prevTime;
+}
+
+export function outgoingSongHandoff(opts: {
+  playingEntryId: string | undefined;
+  clockEntryId: string | undefined;
+  prevTime: number;
+  time: number;
+  duration: number;
+  nextEntryId: string | undefined;
+}): string | undefined {
+  if (!opts.playingEntryId) return undefined;
+  const clockMoved =
+    Boolean(opts.clockEntryId) &&
+    opts.clockEntryId !== opts.playingEntryId &&
+    (opts.time < 2 || songHandoffRewind(opts.prevTime, opts.time, opts.duration));
+  if (clockMoved) return opts.clockEntryId;
+  if (songHandoffRewind(opts.prevTime, opts.time, opts.duration)) return opts.nextEntryId;
+  return undefined;
+}
+
+export function handoffScrollKey(entryId: string): string {
+  return `${HANDOFF_SCROLL_PREFIX}${entryId}`;
+}
+
+export function handoffScrollEntryId(key: string): string | undefined {
+  return key.startsWith(HANDOFF_SCROLL_PREFIX) ? key.slice(HANDOFF_SCROLL_PREFIX.length) || undefined : undefined;
+}
+
+/** Keep the next song until the playhead actually belongs to it — one wrap frame is not enough. */
+export function nextSongFollowId(opts: {
+  playingEntryId: string | undefined;
+  clockEntryId: string | undefined;
+  upcomingId: string | undefined;
+  latchedId: string | undefined;
+  prevTime: number;
+  time: number;
+  duration: number;
+  nextEntryId: string | undefined;
+}): string | undefined {
+  const detected =
+    outgoingSongHandoff({
+      playingEntryId: opts.playingEntryId,
+      clockEntryId: opts.clockEntryId,
+      prevTime: opts.prevTime,
+      time: opts.time,
+      duration: opts.duration,
+      nextEntryId: opts.nextEntryId
+    }) ?? opts.upcomingId;
+  if (opts.latchedId && (opts.clockEntryId === opts.latchedId || opts.playingEntryId === opts.latchedId)) {
+    return undefined;
+  }
+  if (detected) return detected;
+  if (opts.latchedId && opts.playingEntryId !== opts.latchedId) return opts.latchedId;
+  return undefined;
+}
+
+/** Outgoing song clock wrapped to bar 1 while the next song is already the follow target. */
+export function ignoreOutgoingPlayhead(
+  song: Song | undefined,
+  time: number,
+  chainNext: boolean
+): boolean {
+  if (!chainNext || !song) return false;
+  return time < 1;
+}
+
 export function upcomingSongLeadIn(
   entries: readonly SetlistEntry[],
   songs: readonly Song[],

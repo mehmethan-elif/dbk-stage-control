@@ -334,7 +334,16 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       previousBlock,
       runOffset(sections, index, key)
     );
-    if (!block && returned && !isCodaName(section.name) && alreadyWritten) {
+    const lastSection = index === sections.length - 1;
+    if (
+      !block &&
+      returned &&
+      !isCodaName(section.name) &&
+      (alreadyWritten || !lastSection)
+    ) {
+      // After D.S., the same named bars are that written row even when the return
+      // adds a layer (Osman Ağa SAN A picks up TERS KICK LATIN). A different groove
+      // on the last section is the ending, not another verse.
       block = matchAfterDs(blocks, key, passOffsetOf(sections, passStart, index, key), previousBlock);
     }
     if (!block) {
@@ -342,7 +351,7 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       // same name as the bars it replaces: a song that finishes on a rallentando leaves the
       // written NAK and lands on its own. Calling that a coda is what puts "to Coda" where the
       // band jumps and the sign over the bars they land on, so the ending reads off the page.
-      const ending = returned && sameNamed.length > 0 && !alreadyWritten;
+      const ending = returned && lastSection && sameNamed.length > 0 && !alreadyWritten;
       block = {
         id: `form_${blocks.length}`,
         name: section.name,

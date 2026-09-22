@@ -7705,7 +7705,7 @@
         {
           "time": 11.25,
           "end": 11.363636,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 7,
@@ -7716,7 +7716,7 @@
         {
           "time": 11.590909,
           "end": 11.704545,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 7,
@@ -7738,7 +7738,7 @@
         {
           "time": 12.272727,
           "end": 12.386364,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 7,
@@ -7749,7 +7749,7 @@
         {
           "time": 12.5,
           "end": 12.613636,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 7,
@@ -7860,7 +7860,7 @@
       "notes": []
     },
     {
-      "text": "DISCO",
+      "text": "DISCO KASNAK",
       "time": 32.727273,
       "end": 34.545455,
       "length": 1.818182,
@@ -8451,7 +8451,7 @@
         {
           "time": 98.522727,
           "end": 98.636364,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 55,
@@ -8462,7 +8462,7 @@
         {
           "time": 98.863636,
           "end": 98.977273,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 55,
@@ -8484,7 +8484,7 @@
         {
           "time": 99.545455,
           "end": 99.659091,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 55,
@@ -8495,7 +8495,7 @@
         {
           "time": 99.772727,
           "end": 99.886364,
-          "pitch": 53,
+          "pitch": 52,
           "channel": 0,
           "velocity": 96,
           "measure": 55,
@@ -8606,7 +8606,7 @@
       "notes": []
     },
     {
-      "text": "DISCO",
+      "text": "DISCO KASNAK",
       "time": 120,
       "end": 121.818182,
       "length": 1.818182,

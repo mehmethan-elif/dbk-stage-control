@@ -3,7 +3,6 @@
   "version": 1,
   "title": "Ayrıldım Güler miyim",
   "duration": 176.086957,
-  "clickDuration": 176.086957,
   "nextSongAt": 172.173913,
   "finalAt": 169.565217,
   "key": "B",
@@ -5446,8 +5445,8 @@
           "denominator": 4
         },
         {
-          "time": 37.663043,
-          "end": 37.826087,
+          "time": 37.5,
+          "end": 37.663043,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -5490,8 +5489,8 @@
           "denominator": 4
         },
         {
-          "time": 38.967391,
-          "end": 39.130435,
+          "time": 38.804348,
+          "end": 38.967391,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -5546,8 +5545,8 @@
           "denominator": 4
         },
         {
-          "time": 48.097826,
-          "end": 48.26087,
+          "time": 47.934783,
+          "end": 48.097826,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -5590,8 +5589,8 @@
           "denominator": 4
         },
         {
-          "time": 49.402174,
-          "end": 49.565217,
+          "time": 49.23913,
+          "end": 49.402174,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -6389,8 +6388,8 @@
           "denominator": 4
         },
         {
-          "time": 121.141304,
-          "end": 121.304348,
+          "time": 120.978261,
+          "end": 121.141304,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -6433,8 +6432,8 @@
           "denominator": 4
         },
         {
-          "time": 122.445652,
-          "end": 122.608696,
+          "time": 122.282609,
+          "end": 122.445652,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -6489,8 +6488,8 @@
           "denominator": 4
         },
         {
-          "time": 131.576087,
-          "end": 131.73913,
+          "time": 131.413043,
+          "end": 131.576087,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -6533,8 +6532,8 @@
           "denominator": 4
         },
         {
-          "time": 132.880435,
-          "end": 133.043478,
+          "time": 132.717391,
+          "end": 132.880435,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,

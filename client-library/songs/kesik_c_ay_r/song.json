@@ -3,7 +3,6 @@
   "version": 1,
   "title": "Kesik Çayır",
   "duration": 216.470588,
-  "clickDuration": 216.470588,
   "nextSongAt": 211.764706,
   "finalAt": 209.411765,
   "key": "B",
@@ -5392,6 +5391,17 @@
   ],
   "patterns": [
     {
+      "text": "1 2 3 4 - SON 2 3 4",
+      "time": 0,
+      "end": 4.705882,
+      "length": 4.705882,
+      "measure": 1,
+      "beat": 1,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": []
+    },
+    {
       "text": "HALAY TOM",
       "time": 4.705882,
       "end": 7.058824,
@@ -5448,7 +5458,7 @@
         {
           "time": 5.882353,
           "end": 6.029412,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 3,
@@ -5504,7 +5514,7 @@
         {
           "time": 7.058824,
           "end": 7.205882,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 4,
@@ -5648,7 +5658,7 @@
         {
           "time": 10.588235,
           "end": 10.735294,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 5,
@@ -5748,7 +5758,7 @@
         {
           "time": 15.294118,
           "end": 15.441176,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 7,
@@ -5804,7 +5814,7 @@
         {
           "time": 16.470588,
           "end": 16.617647,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 7,
@@ -5948,7 +5958,7 @@
         {
           "time": 20,
           "end": 20.147059,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 9,
@@ -6193,7 +6203,7 @@
         {
           "time": 34.117647,
           "end": 34.264706,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 15,
@@ -6249,7 +6259,7 @@
         {
           "time": 35.294118,
           "end": 35.441176,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 16,
@@ -6393,7 +6403,7 @@
         {
           "time": 38.823529,
           "end": 38.970588,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 17,
@@ -6504,7 +6514,7 @@
         {
           "time": 43.529412,
           "end": 43.676471,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 19,
@@ -6560,7 +6570,7 @@
         {
           "time": 44.705882,
           "end": 44.852941,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 19,
@@ -6704,7 +6714,7 @@
         {
           "time": 48.235294,
           "end": 48.382353,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 21,
@@ -6949,7 +6959,7 @@
         {
           "time": 62.352941,
           "end": 62.5,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 27,
@@ -7005,7 +7015,7 @@
         {
           "time": 63.529412,
           "end": 63.676471,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 28,
@@ -7149,7 +7159,7 @@
         {
           "time": 67.058824,
           "end": 67.205882,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 29,
@@ -7394,7 +7404,7 @@
         {
           "time": 81.176471,
           "end": 81.323529,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 35,
@@ -7450,7 +7460,7 @@
         {
           "time": 82.352941,
           "end": 82.5,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 35,
@@ -7594,7 +7604,7 @@
         {
           "time": 85.882353,
           "end": 86.029412,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 37,
@@ -7929,7 +7939,7 @@
         {
           "time": 98.823529,
           "end": 98.970588,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 42,
@@ -8140,7 +8150,7 @@
         {
           "time": 110.588235,
           "end": 110.735294,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 47,
@@ -8440,7 +8450,7 @@
         {
           "time": 120,
           "end": 120.147059,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 52,
@@ -8829,7 +8839,7 @@
         {
           "time": 137.647059,
           "end": 137.794118,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 59,
@@ -8885,7 +8895,7 @@
         {
           "time": 138.823529,
           "end": 138.970588,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 59,
@@ -9029,7 +9039,7 @@
         {
           "time": 142.352941,
           "end": 142.5,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 61,
@@ -9140,7 +9150,7 @@
         {
           "time": 147.058824,
           "end": 147.205882,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 63,
@@ -9196,7 +9206,7 @@
         {
           "time": 148.235294,
           "end": 148.382353,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 63,
@@ -9340,7 +9350,7 @@
         {
           "time": 151.764706,
           "end": 151.911765,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 65,
@@ -9585,7 +9595,7 @@
         {
           "time": 165.882353,
           "end": 166.029412,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 71,
@@ -9641,7 +9651,7 @@
         {
           "time": 167.058824,
           "end": 167.205882,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 72,
@@ -9785,7 +9795,7 @@
         {
           "time": 170.588235,
           "end": 170.735294,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 73,
@@ -10030,7 +10040,7 @@
         {
           "time": 184.705882,
           "end": 184.852941,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 79,
@@ -10086,7 +10096,7 @@
         {
           "time": 185.882353,
           "end": 186.029412,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 80,
@@ -10230,7 +10240,7 @@
         {
           "time": 189.411765,
           "end": 189.558824,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 81,
@@ -10565,7 +10575,7 @@
         {
           "time": 202.352941,
           "end": 202.5,
-          "pitch": 49,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 86,

@@ -4140,7 +4140,7 @@
       "notes": []
     },
     {
-      "text": "LATIN",
+      "text": "LATIN FAST BOSSA",
       "time": 5.052632,
       "end": 7.578947,
       "length": 2.526315,
@@ -4197,6 +4197,17 @@
           "time": 5.842105,
           "end": 6,
           "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 6.157895,
+          "end": 6.315789,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 3,
@@ -4269,6 +4280,17 @@
           "beat": 4,
           "numerator": 4,
           "denominator": 4
+        },
+        {
+          "time": 7.421053,
+          "end": 7.578947,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 3,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
         }
       ]
     },
@@ -4284,7 +4306,7 @@
       "notes": []
     },
     {
-      "text": "LATIN",
+      "text": "LATIN FAST BOSSA",
       "time": 15.157895,
       "end": 17.684211,
       "length": 2.526316,
@@ -4341,6 +4363,17 @@
           "time": 15.947368,
           "end": 16.105263,
           "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 7,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 16.263158,
+          "end": 16.421053,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 7,
@@ -4413,6 +4446,17 @@
           "beat": 4,
           "numerator": 4,
           "denominator": 4
+        },
+        {
+          "time": 17.526316,
+          "end": 17.684211,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 7,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
         }
       ]
     },
@@ -4460,17 +4504,6 @@
           "denominator": 4
         },
         {
-          "time": 25.736842,
-          "end": 25.894737,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 11,
-          "beat": 1,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
           "time": 25.894737,
           "end": 26.052632,
           "pitch": 48,
@@ -4507,17 +4540,6 @@
           "time": 26.526316,
           "end": 26.684211,
           "pitch": 50,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 11,
-          "beat": 3,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
-          "time": 27,
-          "end": 27.157895,
-          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 11,
@@ -4604,17 +4626,6 @@
           "denominator": 4
         },
         {
-          "time": 40.894737,
-          "end": 41.052632,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 17,
-          "beat": 1,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
           "time": 41.052632,
           "end": 41.210526,
           "pitch": 48,
@@ -4651,17 +4662,6 @@
           "time": 41.684211,
           "end": 41.842105,
           "pitch": 50,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 17,
-          "beat": 3,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
-          "time": 42.157895,
-          "end": 42.315789,
-          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 17,
@@ -4783,7 +4783,7 @@
       "notes": []
     },
     {
-      "text": "LATIN",
+      "text": "LATIN FAST BOSSA",
       "time": 65.684211,
       "end": 68.210526,
       "length": 2.526315,
@@ -4840,6 +4840,17 @@
           "time": 66.473684,
           "end": 66.631579,
           "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 66.789474,
+          "end": 66.947368,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 27,
@@ -4912,6 +4923,17 @@
           "beat": 4,
           "numerator": 4,
           "denominator": 4
+        },
+        {
+          "time": 68.052632,
+          "end": 68.210526,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 27,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
         }
       ]
     },
@@ -4927,7 +4949,7 @@
       "notes": []
     },
     {
-      "text": "LATIN",
+      "text": "LATIN FAST BOSSA",
       "time": 75.789474,
       "end": 78.315789,
       "length": 2.526315,
@@ -4984,6 +5006,17 @@
           "time": 76.578947,
           "end": 76.736842,
           "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 31,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 76.894737,
+          "end": 77.052632,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 31,
@@ -5056,6 +5089,17 @@
           "beat": 4,
           "numerator": 4,
           "denominator": 4
+        },
+        {
+          "time": 78.157895,
+          "end": 78.315789,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 31,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
         }
       ]
     },
@@ -5071,7 +5115,7 @@
       "notes": []
     },
     {
-      "text": "LATIN",
+      "text": "LATIN FAST BOSSA",
       "time": 85.894737,
       "end": 88.421053,
       "length": 2.526316,
@@ -5128,6 +5172,17 @@
           "time": 86.684211,
           "end": 86.842105,
           "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 35,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 87,
+          "end": 87.157895,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 35,
@@ -5200,6 +5255,17 @@
           "beat": 4,
           "numerator": 4,
           "denominator": 4
+        },
+        {
+          "time": 88.263158,
+          "end": 88.421053,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 35,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
         }
       ]
     },
@@ -5247,17 +5313,6 @@
           "denominator": 4
         },
         {
-          "time": 96.473684,
-          "end": 96.631579,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 39,
-          "beat": 1,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
           "time": 96.631579,
           "end": 96.789474,
           "pitch": 48,
@@ -5294,17 +5349,6 @@
           "time": 97.263158,
           "end": 97.421053,
           "pitch": 50,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 39,
-          "beat": 3,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
-          "time": 97.736842,
-          "end": 97.894737,
-          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 39,
@@ -5391,17 +5435,6 @@
           "denominator": 4
         },
         {
-          "time": 111.631579,
-          "end": 111.789474,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 45,
-          "beat": 1,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
           "time": 111.789474,
           "end": 111.947368,
           "pitch": 48,
@@ -5438,17 +5471,6 @@
           "time": 112.421053,
           "end": 112.578947,
           "pitch": 50,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 45,
-          "beat": 3,
-          "numerator": 4,
-          "denominator": 4
-        },
-        {
-          "time": 112.894737,
-          "end": 113.052632,
-          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 45,
@@ -5570,7 +5592,7 @@
       "notes": []
     },
     {
-      "text": "LATIN",
+      "text": "LATIN FAST BOSSA",
       "time": 136.421053,
       "end": 138.947368,
       "length": 2.526315,
@@ -5627,6 +5649,17 @@
           "time": 137.210526,
           "end": 137.368421,
           "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 55,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 137.526316,
+          "end": 137.684211,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 55,
@@ -5693,6 +5726,17 @@
           "time": 138.631579,
           "end": 138.789474,
           "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 55,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 138.789474,
+          "end": 138.947368,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 55,

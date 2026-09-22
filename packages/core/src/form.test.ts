@@ -330,6 +330,46 @@ describe("songForm", () => {
     expect(naks.map((block) => block.toCoda)).toEqual([true, false, false]);
   });
 
+  it("does not hang a coda on a mid-song SAN that only adds a drum layer after D.S.", () => {
+    const pattern = (text: string, time: number, end: number) => ({
+      text,
+      time,
+      end,
+      length: end - time,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: []
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "COUNT", start: 0, end: 2 },
+          { name: "ARA", start: 2, end: 10 },
+          { name: "SAN A", start: 10, end: 18 },
+          { name: "NAK", start: 18, end: 26 },
+          { name: "ARA", start: 26, end: 34 },
+          { name: "SAN A", start: 34, end: 42 },
+          { name: "NAK", start: 42, end: 50 }
+        ]),
+        patterns: [
+          pattern("HALAY TOM", 2, 4),
+          pattern("TUS", 10, 12),
+          pattern("TERS KICK", 12, 14),
+          pattern("HALAY TOM", 18, 20),
+          pattern("HALAY TOM", 26, 28),
+          pattern("TUS", 34, 36),
+          pattern("TERS KICK", 36, 38),
+          pattern("TERS KICK LATIN", 36, 38),
+          pattern("HALAY TOM", 42, 44)
+        ]
+      },
+      { identity: "drums" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual(["COUNT", "ARA", "SAN A", "NAK"]);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
+  });
+
   it("keeps a last NAK on the written bars when only the rall stretches its chords", () => {
     const chord = (time: number, text: string) => ({
       time,

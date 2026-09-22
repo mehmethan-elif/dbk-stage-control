@@ -3,7 +3,6 @@
   "version": 1,
   "title": "Osman Ağa",
   "duration": 129.056604,
-  "clickDuration": 129.056604,
   "nextSongAt": 126.545455,
   "finalAt": 124.363636,
   "key": "D",
@@ -3717,7 +3716,7 @@
       ]
     },
     {
-      "text": "TERS KICK LATIN",
+      "text": "TERS KICK",
       "time": 24,
       "end": 26.181818,
       "length": 2.181818,
@@ -3727,6 +3726,17 @@
       "denominator": 4,
       "notes": [
         {
+          "time": 24,
+          "end": 24.136364,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
           "time": 24.409091,
           "end": 24.545455,
           "pitch": 48,
@@ -3734,6 +3744,17 @@
           "velocity": 96,
           "measure": 12,
           "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 24.545455,
+          "end": 24.681818,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         },
@@ -3749,6 +3770,17 @@
           "denominator": 4
         },
         {
+          "time": 25.090909,
+          "end": 25.227273,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
           "time": 25.5,
           "end": 25.636364,
           "pitch": 48,
@@ -3756,6 +3788,17 @@
           "velocity": 96,
           "measure": 12,
           "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 25.636364,
+          "end": 25.772727,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 12,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         },
@@ -3784,7 +3827,7 @@
       "notes": []
     },
     {
-      "text": "TERS KICK LATIN",
+      "text": "TERS KICK",
       "time": 30.545455,
       "end": 32.727273,
       "length": 2.181818,
@@ -3794,9 +3837,31 @@
       "denominator": 4,
       "notes": [
         {
+          "time": 30.545455,
+          "end": 30.681818,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
           "time": 30.954545,
           "end": 31.090909,
           "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 31.090909,
+          "end": 31.227273,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 15,
@@ -3816,9 +3881,31 @@
           "denominator": 4
         },
         {
+          "time": 31.636364,
+          "end": 31.772727,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
           "time": 32.045455,
           "end": 32.181818,
           "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 15,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 32.181818,
+          "end": 32.318182,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 15,
@@ -3885,7 +3972,7 @@
       ]
     },
     {
-      "text": "TERS KICK LATIN",
+      "text": "SONGO",
       "time": 41.454545,
       "end": 43.636364,
       "length": 2.181819,
@@ -3894,6 +3981,17 @@
       "numerator": 4,
       "denominator": 4,
       "notes": [
+        {
+          "time": 41.727273,
+          "end": 41.863636,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
         {
           "time": 41.863636,
           "end": 42,
@@ -3906,13 +4004,46 @@
           "denominator": 4
         },
         {
-          "time": 42.272727,
-          "end": 42.409091,
+          "time": 42.136364,
+          "end": 42.272727,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 42.409091,
+          "end": 42.545455,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 20,
           "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 42.681818,
+          "end": 42.818182,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 42.818182,
+          "end": 42.954545,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -3928,8 +4059,19 @@
           "denominator": 4
         },
         {
-          "time": 43.363636,
-          "end": 43.5,
+          "time": 43.227273,
+          "end": 43.363636,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 20,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 43.5,
+          "end": 43.636364,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
@@ -4430,6 +4572,106 @@
       ]
     },
     {
+      "text": "TERS KICK",
+      "time": 85.090909,
+      "end": 87.272727,
+      "length": 2.181818,
+      "measure": 39,
+      "beat": 4,
+      "numerator": 4,
+      "denominator": 4,
+      "notes": [
+        {
+          "time": 85.090909,
+          "end": 85.227273,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 39,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 85.5,
+          "end": 85.636364,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 85.636364,
+          "end": 85.772727,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 85.909091,
+          "end": 86.045455,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 86.181818,
+          "end": 86.318182,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 86.590909,
+          "end": 86.727273,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 86.727273,
+          "end": 86.863636,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 87,
+          "end": 87.136364,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 40,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        }
+      ]
+    },
+    {
       "text": "TERS KICK LATIN",
       "time": 85.090909,
       "end": 87.272727,
@@ -4497,7 +4739,7 @@
       "notes": []
     },
     {
-      "text": "TERS KICK LATIN",
+      "text": "TERS KICK",
       "time": 91.636364,
       "end": 93.818182,
       "length": 2.181818,
@@ -4507,9 +4749,31 @@
       "denominator": 4,
       "notes": [
         {
+          "time": 91.636364,
+          "end": 91.772727,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
           "time": 92.045455,
           "end": 92.181818,
           "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 92.181818,
+          "end": 92.318182,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 43,
@@ -4529,9 +4793,31 @@
           "denominator": 4
         },
         {
+          "time": 92.727273,
+          "end": 92.863636,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
           "time": 93.136364,
           "end": 93.272727,
           "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 43,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 93.272727,
+          "end": 93.409091,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 43,
@@ -4598,7 +4884,7 @@
       ]
     },
     {
-      "text": "TERS KICK LATIN",
+      "text": "SONGO",
       "time": 102.545455,
       "end": 104.727273,
       "length": 2.181818,
@@ -4607,6 +4893,17 @@
       "numerator": 4,
       "denominator": 4,
       "notes": [
+        {
+          "time": 102.818182,
+          "end": 102.954545,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
         {
           "time": 102.954545,
           "end": 103.090909,
@@ -4619,13 +4916,46 @@
           "denominator": 4
         },
         {
-          "time": 103.363636,
-          "end": 103.5,
+          "time": 103.227273,
+          "end": 103.363636,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 103.5,
+          "end": 103.636364,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 48,
           "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 103.772727,
+          "end": 103.909091,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 103.909091,
+          "end": 104.045455,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 3,
           "numerator": 4,
           "denominator": 4
         },
@@ -4641,8 +4971,19 @@
           "denominator": 4
         },
         {
-          "time": 104.454545,
-          "end": 104.590909,
+          "time": 104.318182,
+          "end": 104.454545,
+          "pitch": 50,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 4,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 104.590909,
+          "end": 104.727273,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,

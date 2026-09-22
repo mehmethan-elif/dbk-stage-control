@@ -57,7 +57,14 @@ import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
 import { scrollStageToFollowedRows, stageLeadInNode } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
-import { upcomingSongLeadIn } from "./next-song-section";
+import {
+  handoffScrollEntryId,
+  handoffScrollKey,
+  ignoreOutgoingPlayhead,
+  nextSetlistSongEntry,
+  nextSongFollowId,
+  upcomingSongLeadIn
+} from "./next-song-section";
 import { ChordRepeatMark, FormSectionBar } from "./form-marks";
 import { hidesCountSection, isCountSection } from "./count-section";
 import { sectionBarClass } from "./section-color";
@@ -196,8 +203,10 @@ function paintChordLive(
     lastChordPaint.delete(root);
     return;
   }
-  const pos = formAt(form, time);
-  const head = chordPlayhead(chart, form, time, map, chainNext);
+  const pos = ignoreOutgoingPlayhead(song, time, chainNext) ? null : formAt(form, time);
+  const head = ignoreOutgoingPlayhead(song, time, chainNext)
+    ? undefined
+    : chordPlayhead(chart, form, time, map, chainNext);
   const visit = pos?.visit;
   const visitIndex = visit ? form.visits.indexOf(visit) : -1;
   const followingId = visitIndex >= 0 ? form.visits[visitIndex + 1]?.blockId : undefined;
@@ -341,6 +350,10 @@ export function ChordView() {
       : !detached && following
         ? (showEntry ?? playback.clock?.setlistEntryId ?? undefined)
         : undefined;
+  const liveEntryId =
+    following && playback.clock?.setlistEntryId
+      ? playback.clock.setlistEntryId
+      : playingEntryId;
   const visible = (
     readOnly || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries
   ).filter((entry) => !entry.skipped);
@@ -353,7 +366,14 @@ export function ChordView() {
   usePinSelectedSong(stageRef, "data-chord-song", {
     page: masterPage,
     scrollEntry,
-    skip: panicFollow || Boolean(autoScroll && playingEntryId)
+    skip:
+      panicFollow ||
+      Boolean(
+        autoScroll &&
+          (playingEntryId ||
+            playback.state === PlaybackState.Transitioning ||
+            Boolean(playback.endedToEntryId))
+      )
   });
 
   const addSong = (songId: string) => {
@@ -425,10 +445,14 @@ export function ChordView() {
                     key={entry.entryId}
                     entryId={entry.entryId}
                     song={item}
-                    live={playingEntryId === entry.entryId}
+                    live={liveEntryId === entry.entryId}
                     preview={showEntry === entry.entryId}
                     leadIn={leadInId === entry.entryId}
-                    chainNext={chainNext && playingEntryId === entry.entryId}
+                    chainNext={
+                      chainNext &&
+                      liveEntryId === entry.entryId &&
+                      leadInId !== entry.entryId
+                    }
                     grid={grid}
                   />
                 );
@@ -470,10 +494,8 @@ function ChordFollow(props: {
   const entries = props.bodySource.filter(isSongEntry);
   const playingSong = findSongByRef(
     props.songs,
-    props.detached
-      ? playback.clock?.songId
-      : (entries.find((entry) => entry.entryId === props.selectedEntryId)?.songId ??
-          playback.clock?.songId)
+    playback.clock?.songId ??
+      entries.find((entry) => entry.entryId === props.selectedEntryId)?.songId
   );
   const form = useMemo(() => songForm(playingSong, { identity: "chords" }), [playingSong]);
   const propsRef = useRef(props);
@@ -486,37 +508,69 @@ function ChordFollow(props: {
   useEffect(() => {
     if (!props.playingEntryId) {
       setScrollKey("");
-      setLeadInId(undefined);
-      props.onLeadIn(undefined, false);
+      const playback = useMasterStore.getState().playback;
+      if (playback.state !== PlaybackState.Transitioning && !playback.endedToEntryId) {
+        setLeadInId(undefined);
+        props.onLeadIn(undefined, false);
+      }
       return;
     }
     let handle = 0;
     let lastKey = "";
     let lastLead: string | undefined;
+    let lastHandoff: string | undefined;
+    let lastTime = Number.NaN;
     const loop = () => {
       const current = propsRef.current;
       const song = songRef.current;
-      const raw = followClockPlaying()
-        ? followClockTime()
-        : stagePlayheadTime(useMasterStore.getState());
+      const state = useMasterStore.getState();
+      const raw = followClockPlaying() ? followClockTime() : stagePlayheadTime(state);
       const time = song && song.duration > 0 ? Math.min(song.duration, raw) : raw;
+      const nextEntry = nextSetlistSongEntry(current.bodySource, current.playingEntryId);
+      const upcoming = current.playingEntryId
+        ? upcomingSongLeadIn(current.bodySource, current.songs, current.playingEntryId, song, time)
+        : undefined;
+      const followId = nextSongFollowId({
+        playingEntryId: current.playingEntryId,
+        clockEntryId: state.playback.clock?.setlistEntryId,
+        upcomingId: undefined,
+        latchedId: lastHandoff,
+        prevTime: lastTime,
+        time: raw,
+        duration: song?.duration ?? 0,
+        nextEntryId: nextEntry?.entryId
+      });
+      lastTime = raw;
+      lastHandoff = followId;
+      const leadId = followId ?? upcoming?.entryId;
+      if (followId) {
+        const key = handoffScrollKey(followId);
+        if (key !== lastKey) {
+          lastKey = key;
+          setScrollKey(key);
+        }
+        if (leadId !== lastLead) {
+          lastLead = leadId;
+          setLeadInId(leadId);
+          current.onLeadIn(leadId, true);
+        }
+        handle = requestAnimationFrame(loop);
+        return;
+      }
       const block =
         current.playingEntryId && song ? (formAt(formRef.current, time)?.block.id ?? "") : "";
       // Re-aim every bar, like the score page: a line holds for four bars, and until the key
       // changes a hand scroll away from the playhead is never corrected.
       const line = block ? chordLineKey(current.stageRef.current) || block : "";
       const key = line && song ? `${line}#${timeToMusical(song.tempoMap, time).measure}` : line;
-      const upcoming = current.playingEntryId
-        ? upcomingSongLeadIn(current.bodySource, current.songs, current.playingEntryId, song, time)
-        : undefined;
       if (key !== lastKey) {
         lastKey = key;
         setScrollKey(key);
       }
-      if (upcoming?.entryId !== lastLead) {
-        lastLead = upcoming?.entryId;
-        setLeadInId(upcoming?.entryId);
-        current.onLeadIn(upcoming?.entryId, Boolean(upcoming));
+      if (leadId !== lastLead) {
+        lastLead = leadId;
+        setLeadInId(leadId);
+        current.onLeadIn(leadId, Boolean(leadId));
       }
       handle = requestAnimationFrame(loop);
     };
@@ -528,6 +582,16 @@ function ChordFollow(props: {
     if (!props.autoScroll || !props.playingEntryId) return;
     const stage = props.stageRef.current;
     if (!stage) return;
+    const handoffId = handoffScrollEntryId(scrollKey) ?? leadInId;
+    const article = handoffId ? stage.querySelector(`[data-chord-song="${handoffId}"]`) : null;
+    const nextFirst =
+      (article instanceof HTMLElement
+        ? article.querySelector(".chord-section") ?? article
+        : null) ?? stageLeadInNode(stage, "data-chord-song", handoffId);
+    if (handoffScrollEntryId(scrollKey) && nextFirst instanceof HTMLElement) {
+      scrollStageToFollowedRows(stage, nextFirst, null);
+      return;
+    }
     const line = stage.querySelector("[data-chord-line].current");
     const section = stage.querySelector(".chord-section.current");
     const fallbackId = props.playingEntryId ?? props.selectedEntryId;

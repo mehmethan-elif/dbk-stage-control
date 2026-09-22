@@ -28,8 +28,9 @@ export function usePinSelectedSong(
    */
   const pinNonce = useMasterStore((s) => s.stagePinNonce);
   useEffect(() => {
+    if (opts.skip) return;
     stopStageScroll();
-    if (opts.skip || !opts.scrollEntry) return;
+    if (!opts.scrollEntry) return;
     return pinStageSongWhenReady(stageRef, `[${songAttr}="${opts.scrollEntry}"]`);
   }, [opts.page, opts.scrollEntry, opts.skip, songAttr, stageRef, setlistOpen, pinNonce]);
 }

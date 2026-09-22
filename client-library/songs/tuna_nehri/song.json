@@ -3545,7 +3545,7 @@
       "notes": []
     },
     {
-      "text": "ZıLLER",
+      "text": "3/4 DISCO",
       "time": 112.8,
       "end": 115.2,
       "length": 2.4,
@@ -3557,7 +3557,7 @@
         {
           "time": 112.8,
           "end": 113,
-          "pitch": 53,
+          "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 48,
@@ -3566,9 +3566,31 @@
           "denominator": 4
         },
         {
-          "time": 114.8,
-          "end": 115,
-          "pitch": 53,
+          "time": 113.6,
+          "end": 113.8,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 2,
+          "numerator": 3,
+          "denominator": 4
+        },
+        {
+          "time": 114.4,
+          "end": 114.6,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 48,
+          "beat": 3,
+          "numerator": 3,
+          "denominator": 4
+        },
+        {
+          "time": 114.4,
+          "end": 114.6,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 48,
@@ -3590,7 +3612,7 @@
       "notes": []
     },
     {
-      "text": "3/4 DISCO",
+      "text": "ZıLLER",
       "time": 124.8,
       "end": 127.2,
       "length": 2.4,
@@ -3602,7 +3624,7 @@
         {
           "time": 124.8,
           "end": 125,
-          "pitch": 48,
+          "pitch": 53,
           "channel": 0,
           "velocity": 96,
           "measure": 53,
@@ -3611,31 +3633,9 @@
           "denominator": 4
         },
         {
-          "time": 125.6,
-          "end": 125.8,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 53,
-          "beat": 2,
-          "numerator": 3,
-          "denominator": 4
-        },
-        {
-          "time": 126.4,
-          "end": 126.6,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 53,
-          "beat": 3,
-          "numerator": 3,
-          "denominator": 4
-        },
-        {
-          "time": 126.4,
-          "end": 126.6,
-          "pitch": 50,
+          "time": 126.8,
+          "end": 127,
+          "pitch": 53,
           "channel": 0,
           "velocity": 96,
           "measure": 53,

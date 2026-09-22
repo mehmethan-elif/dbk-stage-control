@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { ELIF_KONUSMA_LABEL, STOP_LABEL, withKeyChangeElifs, type SetlistEntry, type Song } from "@dbk/core";
 import {
+  handoffScrollEntryId,
+  handoffScrollKey,
+  ignoreOutgoingPlayhead,
   isPlayingLastSection,
   isUpcomingLeadInTime,
   nextSetlistSongEntry,
+  nextSongFollowId,
   nextTransportEntry,
   nextTransportSongEntry,
+  outgoingSongHandoff,
+  songHandoffRewind,
   songLeadInSection,
   upcomingSongLeadIn
 } from "./next-song-section";
@@ -152,5 +158,127 @@ describe("upcomingSongLeadIn", () => {
     const lead = upcomingSongLeadIn(setlist, [biz, kerkuk], "e1", biz, 171);
     expect(lead?.entryId).toBe("e2");
     expect(lead?.section).toEqual({ name: "kerkuk_zindani", start: 0, end: 1 });
+  });
+});
+
+describe("outgoingSongHandoff", () => {
+  it("does not treat a seek within the same song as a handoff", () => {
+    expect(songHandoffRewind(12, 0.2, 194)).toBe(false);
+    expect(
+      outgoingSongHandoff({
+        playingEntryId: "e1",
+        clockEntryId: "e1",
+        prevTime: 12,
+        time: 0.2,
+        duration: 194,
+        nextEntryId: "e2"
+      })
+    ).toBeUndefined();
+  });
+
+  it("hands off when follow time wraps from the end to bar 1 before the next row is selected", () => {
+    expect(songHandoffRewind(190.5, 0.05, 194.5)).toBe(true);
+    expect(
+      outgoingSongHandoff({
+        playingEntryId: "e1",
+        clockEntryId: "e1",
+        prevTime: 190.5,
+        time: 0.05,
+        duration: 194.5,
+        nextEntryId: "e2"
+      })
+    ).toBe("e2");
+  });
+
+  it("hands off as soon as the engine clock already names the next song at bar 1", () => {
+    expect(
+      outgoingSongHandoff({
+        playingEntryId: "e1",
+        clockEntryId: "e2",
+        prevTime: 190.5,
+        time: 0.04,
+        duration: 194.5,
+        nextEntryId: "e2"
+      })
+    ).toBe("e2");
+    expect(
+      outgoingSongHandoff({
+        playingEntryId: "e2",
+        clockEntryId: "e1",
+        prevTime: 190.5,
+        time: 190.5,
+        duration: 194.5,
+        nextEntryId: "e2"
+      })
+    ).toBeUndefined();
+    expect(handoffScrollEntryId(handoffScrollKey("e2"))).toBe("e2");
+  });
+
+  it("keeps the next song after the wrap frame so the view does not snap back", () => {
+    const first = nextSongFollowId({
+      playingEntryId: "e1",
+      clockEntryId: "e1",
+      upcomingId: undefined,
+      latchedId: undefined,
+      prevTime: 190.5,
+      time: 0.05,
+      duration: 194.5,
+      nextEntryId: "e2"
+    });
+    expect(first).toBe("e2");
+    expect(
+      nextSongFollowId({
+        playingEntryId: "e1",
+        clockEntryId: "e1",
+        upcomingId: undefined,
+        latchedId: first,
+        prevTime: 0.05,
+        time: 0.08,
+        duration: 194.5,
+        nextEntryId: "e2"
+      })
+    ).toBe("e2");
+    expect(
+      nextSongFollowId({
+        playingEntryId: "e2",
+        clockEntryId: "e2",
+        upcomingId: undefined,
+        latchedId: "e2",
+        prevTime: 0.08,
+        time: 0.2,
+        duration: 176,
+        nextEntryId: undefined
+      })
+    ).toBeUndefined();
+    expect(
+      nextSongFollowId({
+        playingEntryId: "e1",
+        clockEntryId: "e2",
+        upcomingId: undefined,
+        latchedId: "e2",
+        prevTime: 0.08,
+        time: 0.2,
+        duration: 176,
+        nextEntryId: "e2"
+      })
+    ).toBeUndefined();
+  });
+
+  it("does not light the outgoing song's first section after the clock wraps", () => {
+    const outgoing = {
+      id: "turk_kizi",
+      version: 1,
+      title: "Türk Kızı",
+      duration: 194,
+      assets: [],
+      tempoMap: [],
+      sections: [
+        { name: "COUNT", start: 0, end: 2 },
+        { name: "NAK", start: 169, end: 188 }
+      ]
+    };
+    expect(ignoreOutgoingPlayhead(outgoing, 0.05, true)).toBe(true);
+    expect(ignoreOutgoingPlayhead(outgoing, 1.2, true)).toBe(false);
+    expect(ignoreOutgoingPlayhead(outgoing, 0.05, false)).toBe(false);
   });
 });

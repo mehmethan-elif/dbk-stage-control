@@ -55,7 +55,14 @@ import { StageSongHead } from "./StageSongHead";
 import { SongTitleMeta } from "./stage-title-meta";
 import { scrollStageToFollowedRows, stageLeadInNode } from "./stage-scroll";
 import { usePinSelectedSong } from "./stage-pin";
-import { upcomingSongLeadIn } from "./next-song-section";
+import {
+  handoffScrollEntryId,
+  handoffScrollKey,
+  ignoreOutgoingPlayhead,
+  nextSetlistSongEntry,
+  nextSongFollowId,
+  upcomingSongLeadIn
+} from "./next-song-section";
 import { FormSectionBar } from "./form-marks";
 import { hidesCountSection, isCountSection } from "./count-section";
 import { sectionBarClass } from "./section-color";
@@ -299,6 +306,36 @@ function sectionChart(song: Song | undefined): SectionChart[] {
       const spanEnd = Math.min(next?.time ?? song.duration, section.end);
       runs.push(patternRun(pattern, spanEnd, song.tempoMap, runCue(texts, pattern.time, spanEnd, song.tempoMap)));
     }
+    // Ayrıldım writes HALAY once, then only the SENKOP at the end of the next ARA.
+    // The second ARA is still HALAY x5 + SENKOP x1 — the export just omitted the
+    // opening bars. A few milliseconds of drift is not a missing groove.
+    const firstMidi = midi.find(
+      (item) => item.time >= section.start - TIME_EPS && item.time < section.end - TIME_EPS
+    );
+    const openingGap = firstMidi
+      ? firstMidi.time - section.start
+      : 0;
+    const bar = secondsPerMeasure(tempoAt(song.tempoMap, section.start));
+    if (firstMidi && openingGap > Math.max(TIME_EPS, bar * 0.5)) {
+      const lateName = firstMidi.text.trim().toUpperCase();
+      const carried = [...midi].reverse().find((item) => {
+        if (item.time >= section.start - TIME_EPS) return false;
+        const text = item.text.trim().toUpperCase();
+        if (!text || text === "FILL") return false;
+        return text !== lateName;
+      });
+      if (carried) {
+        runs.unshift(
+          patternRun(
+            carried,
+            firstMidi.time,
+            song.tempoMap,
+            runCue(texts, section.start, firstMidi.time, song.tempoMap),
+            section.start
+          )
+        );
+      }
+    }
     if (runs.length === 0) {
       const inSection = (item: PatternEvent) =>
         item.time >= section.start - TIME_EPS && item.time < section.end - TIME_EPS;
@@ -382,6 +419,22 @@ function drumRowKey(stage: HTMLElement | null): string {
   return `${row.dataset.blockId ?? ""}@${row.dataset.runStart ?? ""}`;
 }
 
+/**
+ * Played run (or its pack), plus the next pack. Lead-in of the next song is a next pack —
+ * not a replacement for the row the playhead is on. Exclusive next-song scroll is only
+ * for a wrap handoff, same as the chord page.
+ */
+export function drumFollowTargets(opts: {
+  currentRun: Element | null;
+  currentPack: Element | null;
+  nextPack: Element | null;
+  song: Element | null;
+}): { current: Element | null; next: Element | null } {
+  const pack = opts.currentRun?.closest(".drum-pack") ?? opts.currentPack;
+  const firstPack = opts.song?.querySelector(".drum-pack") ?? opts.song;
+  return { current: opts.currentRun ?? pack ?? firstPack, next: opts.nextPack };
+}
+
 function sectionFill(
   live: boolean,
   time: number,
@@ -429,7 +482,7 @@ function paintDrumLive(
   preview: boolean,
   chainNext: boolean
 ): void {
-  const pos = live ? formAt(form, time) : null;
+  const pos = live && !ignoreOutgoingPlayhead(song, time, chainNext) ? formAt(form, time) : null;
   const writtenTime = pos?.originTime ?? time;
   const currentRun = pos
     ? chart
@@ -563,6 +616,10 @@ export function DrumView() {
     : !detached && following
       ? (showEntry ?? playback.clock?.setlistEntryId ?? undefined)
       : undefined;
+  const liveEntryId =
+    following && playback.clock?.setlistEntryId
+      ? playback.clock.setlistEntryId
+      : playingEntryId;
   const visible = (readOnly || isSongLibraryGig(gig) ? bodySource.filter(isSongEntry) : entries).filter(
     (entry) => !entry.skipped
   );
@@ -575,7 +632,14 @@ export function DrumView() {
   usePinSelectedSong(stageRef, "data-drum-song", {
     page: masterPage,
     scrollEntry,
-    skip: panicFollow || Boolean(autoScroll && playingEntryId)
+    skip:
+      panicFollow ||
+      Boolean(
+        autoScroll &&
+          (playingEntryId ||
+            playback.state === PlaybackState.Transitioning ||
+            Boolean(playback.endedToEntryId))
+      )
   });
 
   const addSong = (songId: string) => {
@@ -647,10 +711,14 @@ export function DrumView() {
                     key={entry.entryId}
                     entryId={entry.entryId}
                     song={item}
-                    live={playingEntryId === entry.entryId}
+                    live={liveEntryId === entry.entryId}
                     preview={showEntry === entry.entryId}
                     leadIn={leadInId === entry.entryId}
-                    chainNext={chainNext && playingEntryId === entry.entryId}
+                    chainNext={
+                      chainNext &&
+                      liveEntryId === entry.entryId &&
+                      leadInId !== entry.entryId
+                    }
                   />
                 );
               })}
@@ -691,10 +759,8 @@ function DrumFollow(props: {
   const entries = props.bodySource.filter(isSongEntry);
   const playingSong = findSongByRef(
     props.songs,
-    props.detached
-      ? playback.clock?.songId
-      : (entries.find((entry) => entry.entryId === props.selectedEntryId)?.songId ??
-        playback.clock?.songId)
+    playback.clock?.songId ??
+      entries.find((entry) => entry.entryId === props.selectedEntryId)?.songId
   );
   const form = useMemo(() => songForm(playingSong, { identity: "drums" }), [playingSong]);
   const propsRef = useRef(props);
@@ -707,21 +773,60 @@ function DrumFollow(props: {
   useEffect(() => {
     if (!props.playingEntryId) {
       setScrollKey("");
-      setLeadInId(undefined);
-      props.onLeadIn(undefined, false);
+      const playback = useMasterStore.getState().playback;
+      if (
+        playback.state !== PlaybackState.Transitioning &&
+        !playback.endedToEntryId
+      ) {
+        setLeadInId(undefined);
+        props.onLeadIn(undefined, false);
+      }
       return;
     }
     let handle = 0;
     let lastKey = "";
     let lastLead: string | undefined;
+    let lastHandoff: string | undefined;
+    let lastTime = Number.NaN;
     const loop = () => {
       const current = propsRef.current;
       const song = songRef.current;
-      const raw = followClockPlaying()
-        ? followClockTime()
-        : stagePlayheadTime(useMasterStore.getState());
+      const state = useMasterStore.getState();
+      const raw = followClockPlaying() ? followClockTime() : stagePlayheadTime(state);
       const time = song && song.duration > 0 ? Math.min(song.duration, raw) : raw;
-      const block = current.playingEntryId && song ? drumFollowKey(formRef.current, time) : "";
+      const entryId = state.playback.clock?.setlistEntryId ?? current.playingEntryId;
+      const nextEntry = nextSetlistSongEntry(current.bodySource, entryId);
+      const upcoming = entryId
+        ? upcomingSongLeadIn(current.bodySource, current.songs, entryId, song, time)
+        : undefined;
+      const followId = nextSongFollowId({
+        playingEntryId: entryId,
+        clockEntryId: state.playback.clock?.setlistEntryId,
+        upcomingId: undefined,
+        latchedId: lastHandoff,
+        prevTime: lastTime,
+        time: raw,
+        duration: song?.duration ?? 0,
+        nextEntryId: nextEntry?.entryId
+      });
+      lastTime = raw;
+      lastHandoff = followId;
+      const leadId = followId ?? upcoming?.entryId;
+      if (followId) {
+        const key = handoffScrollKey(followId);
+        if (key !== lastKey) {
+          lastKey = key;
+          setScrollKey(key);
+        }
+        if (leadId !== lastLead) {
+          lastLead = leadId;
+          setLeadInId(leadId);
+          current.onLeadIn(leadId, true);
+        }
+        handle = requestAnimationFrame(loop);
+        return;
+      }
+      const block = entryId && song ? drumFollowKey(formRef.current, time) : "";
       // A section lasts several bars, so keying the scroll on it alone let the playhead run
       // off the bottom of the view before anything moved. The row is the scroll target, but
       // the measure is what re-aims: a row of eight repeats holds one row key for eight bars,
@@ -730,17 +835,14 @@ function DrumFollow(props: {
       // "no move" when the target is already in view, so this costs one layout read a bar.
       const row = block ? drumRowKey(current.stageRef.current) || block : "";
       const key = row && song ? `${row}#${timeToMusical(song.tempoMap, time).measure}` : row;
-      const upcoming = current.playingEntryId
-        ? upcomingSongLeadIn(current.bodySource, current.songs, current.playingEntryId, song, time)
-        : undefined;
       if (key !== lastKey) {
         lastKey = key;
         setScrollKey(key);
       }
-      if (upcoming?.entryId !== lastLead) {
-        lastLead = upcoming?.entryId;
-        setLeadInId(upcoming?.entryId);
-        current.onLeadIn(upcoming?.entryId, Boolean(upcoming));
+      if (leadId !== lastLead) {
+        lastLead = leadId;
+        setLeadInId(leadId);
+        current.onLeadIn(leadId, Boolean(leadId));
       }
       handle = requestAnimationFrame(loop);
     };
@@ -752,18 +854,39 @@ function DrumFollow(props: {
     if (!props.autoScroll || !props.playingEntryId) return;
     const stage = props.stageRef.current;
     if (!stage) return;
-    const row = stage.querySelector(".drum-run.current");
-    const pack = row?.closest(".drum-pack") ?? stage.querySelector(".drum-pack.current");
+    const wrapId = handoffScrollEntryId(scrollKey);
+    const article = wrapId ? stage.querySelector(`[data-drum-song="${wrapId}"]`) : null;
+    const nextFirst =
+      (article instanceof HTMLElement
+        ? article.querySelector(".drum-pack") ?? article
+        : null) ?? stageLeadInNode(stage, "data-drum-song", wrapId);
+    if (wrapId && nextFirst instanceof HTMLElement) {
+      scrollStageToFollowedRows(stage, nextFirst, null);
+      return;
+    }
+    const liveId = playback.clock?.setlistEntryId ?? props.playingEntryId ?? props.selectedEntryId;
+    const song = liveId ? stage.querySelector(`[data-drum-song="${liveId}"]`) : null;
+    const root = song instanceof HTMLElement ? song : stage;
+    const { current, next } = drumFollowTargets({
+      currentRun: root.querySelector(".drum-run.current"),
+      currentPack: root.querySelector(".drum-pack.current"),
+      nextPack: stage.querySelector(".drum-pack.scroll-next"),
+      song
+    });
     const leadIn = stageLeadInNode(stage, "data-drum-song", leadInId);
-    const fallbackId = props.playingEntryId ?? props.selectedEntryId;
-    const fallback = fallbackId ? stage.querySelector(`[data-drum-song="${fallbackId}"]`) : null;
-    const current = row ?? pack ?? fallback;
-    const next = stage.querySelector(".drum-pack.scroll-next");
     if (!(current instanceof HTMLElement) && !(leadIn instanceof HTMLElement) && !(next instanceof HTMLElement)) {
       return;
     }
     scrollStageToFollowedRows(stage, current, next, leadIn);
-  }, [props.autoScroll, scrollKey, props.playingEntryId, props.selectedEntryId, props.zoom, leadInId]);
+  }, [
+    props.autoScroll,
+    scrollKey,
+    props.playingEntryId,
+    props.selectedEntryId,
+    props.zoom,
+    leadInId,
+    playback.clock?.setlistEntryId
+  ]);
 
   return null;
 }
