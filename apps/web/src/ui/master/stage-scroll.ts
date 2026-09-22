@@ -315,7 +315,26 @@ export function shouldRepinSongTitle(opts: { height: number; top: number; lastTo
   return !Number.isFinite(opts.lastTop) || Math.abs(opts.top - opts.lastTop) > 1;
 }
 
+/**
+ * The scroll landed at the bottom of what exists so far, short of where the song will be.
+ * On the score that is the normal state for a while: every song loads its own PDF, and until
+ * the ones *below* the selected song have theirs the page is nowhere near tall enough to
+ * scroll that far. Scrolling below clamps silently, and nothing about the selected song moves
+ * afterwards, so growth alone never corrects it — this is what tells the pin to try again.
+ */
+export function pinFellShort(opts: {
+  scrollTop: number;
+  scrollHeight: number;
+  clientHeight: number;
+  target: number;
+}): boolean {
+  const max = Math.max(0, opts.scrollHeight - opts.clientHeight);
+  return opts.target > max + 1 && opts.scrollTop >= max - 1;
+}
+
 const PIN_GROWTH_MS = 12000;
+/** A full setlist of scores can take this long to load on the band's iPads. */
+const PIN_SHORT_MS = 30000;
 
 export function pinStageSongWhenReady(
   stageRef: { current: HTMLElement | null },
@@ -324,9 +343,9 @@ export function pinStageSongWhenReady(
 ): () => void {
   let cancelled = false;
   let lastTop = Number.NaN;
+  let lastHeight = Number.NaN;
   const started = performance.now();
-  const budget = Math.max(PIN_GROWTH_MS, tries * 16);
-  let stable = 0;
+  let budget = Math.max(PIN_GROWTH_MS, tries * 16);
   const run = () => {
     if (cancelled) return;
     const stage = stageRef.current;
@@ -339,15 +358,25 @@ export function pinStageSongWhenReady(
       const height = article instanceof HTMLElement ? article.getBoundingClientRect().height : 0;
       const top =
         title.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop;
-      const pin = songTitlePinReady({ height, top, lastTop, stable });
-      stable = pin.nextStable;
-      if (shouldRepinSongTitle({ height, top, lastTop })) {
+      const pad = Number.parseFloat(getComputedStyle(stage).paddingTop) || 0;
+      // Only while the page is still getting taller. The last song on the setlist can never
+      // reach the top however long we wait, and chasing that would hold the player at the
+      // bottom and fight every scroll they make.
+      const grew = !Number.isFinite(lastHeight) || stage.scrollHeight > lastHeight + 1;
+      lastHeight = stage.scrollHeight;
+      const short =
+        grew &&
+        pinFellShort({
+          scrollTop: stage.scrollTop,
+          scrollHeight: stage.scrollHeight,
+          clientHeight: stage.clientHeight,
+          target: top - pad
+        });
+      if (short) budget = Math.max(budget, performance.now() - started + 2000, PIN_SHORT_MS);
+      if (short || shouldRepinSongTitle({ height, top, lastTop })) {
         lastTop = top;
         scrollStageToNode(stage, title, 0);
       }
-      // Lyrics is already laid out, so two steady frames is enough. A 12s measure
-      // loop on that page is what made iPad setlist taps feel dead.
-      if (pin.ready) return;
     }
     if (performance.now() - started < budget) requestAnimationFrame(run);
   };
