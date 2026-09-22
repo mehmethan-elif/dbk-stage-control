@@ -591,6 +591,8 @@ interface MasterState {
   practiceLibraryRev: number;
   masterPage: MasterPage;
   setlistOpen: boolean;
+  /** Bumped when a page button is pressed for the page already showing. See `setMasterPage`. */
+  stagePinNonce: number;
   autoScroll: boolean;
   editOpen: boolean;
   stageZooms: Record<StageContentPage, number>;
@@ -2402,6 +2404,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
     practiceLibraryRev: 0,
     masterPage: "prep",
     setlistOpen: setlistStartsOpen(),
+    stagePinNonce: 0,
     autoScroll: true,
     editOpen: false,
     stageZooms: {
@@ -2890,7 +2893,15 @@ export const useMasterStore = create<MasterState>((set, get) => {
       if (address) set({ joinAddress: address });
     },
 
-    setMasterPage: (page) => set({ masterPage: page }),
+    setMasterPage: (page) =>
+      set((state) =>
+        // Pressing the page you are already on is how a player asks to be taken back to the
+        // song they are on, after reading ahead. Nothing about the page changes, so there is
+        // nothing for the stage to react to — this gives it something.
+        state.masterPage === page
+          ? { stagePinNonce: state.stagePinNonce + 1 }
+          : { masterPage: page }
+      ),
     refreshAudioOutputs: async () => {
       try {
         const channels = engine.refreshOutputChannels();
