@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formAt, formNextAt, songForm, type PatternEvent, type Song, type TempoPoint } from "@dbk/core";
-import { buildHits, drumBarSteps, drumFollowKey, drumFollowTargets, nextDrumPatternRun, visitFillCue, writtenChart } from "./DrumView";
+import { buildHits, drumBarSteps, drumFollowKey, drumFollowTargets, drumVisitCopy, nextDrumPatternRun, visitFillCue, writtenChart } from "./DrumView";
 
 const waltz: TempoPoint[] = [{ time: 0, measure: 1, bpm: 75, numerator: 3, denominator: 4 }];
 const common: TempoPoint[] = [{ time: 0, measure: 1, bpm: 120, numerator: 4, denominator: 4 }];
@@ -227,6 +227,51 @@ describe("writtenChart", () => {
     expect(rows.find((row) => row.section.name === "SAN B")?.runs.map((run) => [run.name, run.repeats, run.cue?.text])).toEqual([
       ["Pattern C", 8, "FILL"]
     ]);
+  });
+
+  it("writes the second CEV and NAK of a replayed pair", () => {
+    // Yolcu plays SAN CEV NAK CEV NAK. The two CEV NAK passes share a groove, and the
+    // drum page has no repeat sign, so both passes have to be on the page. D.S. sits on
+    // the second NAK, where the band actually leaves for the segno.
+    const groove = (start: number, text = "DISCO"): PatternEvent => ({
+      text,
+      time: start,
+      end: start + 2,
+      length: 2,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: [{ time: start, pitch: 48, numerator: 4, denominator: 4 }]
+    });
+    const sections = [
+      { name: "SAN", start: 0, end: 4 },
+      { name: "CEV", start: 4, end: 8 },
+      { name: "NAK", start: 8, end: 12 },
+      { name: "CEV", start: 12, end: 16 },
+      { name: "NAK", start: 16, end: 20 },
+      { name: "SAN", start: 20, end: 24 }
+    ];
+    const target: Song = {
+      ...song(sections),
+      patterns: sections.map((section) => groove(section.start))
+    };
+    const form = songForm(target, { identity: "drums" });
+    const rows = writtenChart(target, form);
+    expect(rows.map((row) => [row.section.name, row.copy, row.block.ds])).toEqual([
+      ["SAN", 0, false],
+      ["CEV", 0, false],
+      ["NAK", 0, false],
+      ["CEV", 1, false],
+      ["NAK", 1, true]
+    ]);
+    const copyAt = (time: number) => {
+      const pos = formAt(form, time);
+      return drumVisitCopy(form, form.visits.indexOf(pos!.visit));
+    };
+    expect(copyAt(5)).toBe(0);
+    expect(copyAt(13)).toBe(1);
+    expect(copyAt(21)).toBe(0);
   });
 });
 

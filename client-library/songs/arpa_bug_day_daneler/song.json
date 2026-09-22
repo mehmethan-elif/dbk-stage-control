@@ -4538,7 +4538,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY",
       "time": 67.924528,
       "end": 70.188679,
       "length": 2.264151,
@@ -4583,7 +4583,7 @@
         {
           "time": 68.773585,
           "end": 68.915094,
-          "pitch": 53,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 31,
@@ -4627,7 +4627,7 @@
         {
           "time": 69.90566,
           "end": 70.04717,
-          "pitch": 53,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 31,
@@ -5239,7 +5239,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY",
       "time": 140.377358,
       "end": 142.641509,
       "length": 2.264151,
@@ -5284,7 +5284,7 @@
         {
           "time": 141.226415,
           "end": 141.367925,
-          "pitch": 53,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 63,
@@ -5328,7 +5328,7 @@
         {
           "time": 142.358491,
           "end": 142.5,
-          "pitch": 53,
+          "pitch": 50,
           "channel": 0,
           "velocity": 96,
           "measure": 63,

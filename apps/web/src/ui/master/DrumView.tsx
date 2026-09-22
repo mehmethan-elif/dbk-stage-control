@@ -107,7 +107,7 @@ interface SectionChart {
   runs: PatternRun[];
 }
 
-type WrittenRow = SectionChart & { block: FormBlock };
+type WrittenRow = SectionChart & { block: FormBlock; copy: number };
 
 function hasNotes(pattern: PatternEvent): boolean {
   return pattern.notes.length > 0;
@@ -368,13 +368,14 @@ function sectionChart(song: Song | undefined): SectionChart[] {
 
 export function writtenChart(song: Song | undefined, form: SongForm): WrittenRow[] {
   const linear = sectionChart(song);
-  return form.blocks.flatMap((block) => {
+  const rows = form.blocks.flatMap((block) => {
     const row = linear[block.originIndex];
     if (!row) return [];
     return [
       {
         ...row,
         block,
+        copy: 0,
         runs: row.runs
           .filter((run) => run.start < block.originEnd - TIME_EPS)
           .map((run) => {
@@ -385,6 +386,96 @@ export function writtenChart(song: Song | undefined, form: SongForm): WrittenRow
       }
     ];
   });
+  return spellReplayedSpans(rows, form);
+}
+
+/**
+ * A repeat the drum page can walk twice in a row is written twice. The page does not draw
+ * repeat signs, so folding CEV NAK back onto itself dropped the second pair: Yolcu plays
+ * SAN CEV NAK CEV NAK, and the drummer was left reading SAN CEV NAK. A repeat that does
+ * not actually replay its own span (Gönlüm returns to CEVAP and then a different SAN B)
+ * stays written once.
+ */
+function spellReplayedSpans(rows: WrittenRow[], form: SongForm): WrittenRow[] {
+  const ranges = replayedSpanRanges(form);
+  if (ranges.length === 0) return rows;
+  const out: WrittenRow[] = [];
+  let cursor = 0;
+  for (const range of ranges) {
+    const ids = form.blocks.slice(range.start, range.end + 1).map((block) => block.id);
+    const at = rows.findIndex(
+      (row, index) => index >= cursor && ids.every((id, offset) => rows[index + offset]?.block.id === id)
+    );
+    if (at < 0) {
+      out.push(...rows.slice(cursor));
+      return out;
+    }
+    out.push(...rows.slice(cursor, at));
+    const span = rows.slice(at, at + ids.length);
+    out.push(...span.map((row) => spelledCopy(row, 0)));
+    out.push(...span.map((row) => spelledCopy(row, 1)));
+    cursor = at + ids.length;
+  }
+  out.push(...rows.slice(cursor));
+  return out;
+}
+
+function spelledCopy(row: WrittenRow, copy: number): WrittenRow {
+  return {
+    ...row,
+    copy,
+    block: {
+      ...row.block,
+      repeatStart: false,
+      repeatEnd: false,
+      // D.S. is where the spelled pair finishes, on the second pass.
+      ds: copy === 1 ? row.block.ds : false,
+      toCoda: copy === 1 ? row.block.toCoda : false
+    }
+  };
+}
+
+function replayedSpanRanges(form: SongForm): { start: number; end: number }[] {
+  const ranges: { start: number; end: number }[] = [];
+  const blocks = form.blocks;
+  for (let start = 0; start < blocks.length; start++) {
+    if (!blocks[start]?.repeatStart) continue;
+    let end = start;
+    while (end < blocks.length && !blocks[end]?.repeatEnd) end += 1;
+    if (!blocks[end]?.repeatEnd) continue;
+    const ids = blocks.slice(start, end + 1).map((block) => block.id);
+    if (spanPlayedTwice(form, ids)) ranges.push({ start, end });
+    start = end;
+  }
+  return ranges;
+}
+
+function spanPlayedTwice(form: SongForm, ids: string[]): boolean {
+  if (ids.length === 0) return false;
+  const seq = form.visits.map((visit) => visit.blockId);
+  for (let index = 0; index + ids.length * 2 <= seq.length; index++) {
+    if (sameIds(seq, index, ids) && sameIds(seq, index + ids.length, ids)) return true;
+  }
+  return false;
+}
+
+function sameIds(seq: string[], index: number, ids: string[]): boolean {
+  return ids.every((id, offset) => seq[index + offset] === id);
+}
+
+/** Which written copy of a replayed span this visit is on. 0 after a D.S. starts the chart again. */
+export function drumVisitCopy(form: SongForm, visitIndex: number): number {
+  if (visitIndex < 0) return 0;
+  for (const range of replayedSpanRanges(form)) {
+    const ids = form.blocks.slice(range.start, range.end + 1).map((block) => block.id);
+    const seq = form.visits.map((visit) => visit.blockId);
+    for (let index = 0; index + ids.length * 2 <= seq.length; index++) {
+      if (!sameIds(seq, index, ids) || !sameIds(seq, index + ids.length, ids)) continue;
+      if (visitIndex >= index && visitIndex < index + ids.length) return 0;
+      if (visitIndex >= index + ids.length && visitIndex < index + ids.length * 2) return 1;
+    }
+  }
+  return 0;
 }
 
 export function drumFollowKey(form: SongForm, time: number): string {
@@ -395,10 +486,11 @@ export function drumFollowKey(form: SongForm, time: number): string {
 export function nextDrumPatternRun(
   chart: WrittenRow[],
   pos: { block: { id: string } } | null,
-  nextPos: { block: { id: string }; originTime: number } | null
+  nextPos: { block: { id: string }; originTime: number } | null,
+  copy = 0
 ): PatternRun | undefined {
   if (!nextPos) return undefined;
-  const nextRow = chart.find((row) => row.block.id === nextPos.block.id);
+  const nextRow = chart.find((row) => row.block.id === nextPos.block.id && row.copy === copy);
   if (!nextRow) return undefined;
   const covering = nextRow.runs.find(
     (run) => nextPos.originTime >= run.start - TIME_EPS && nextPos.originTime < run.end
@@ -484,9 +576,11 @@ function paintDrumLive(
 ): void {
   const pos = live && !ignoreOutgoingPlayhead(song, time, chainNext) ? formAt(form, time) : null;
   const writtenTime = pos?.originTime ?? time;
+  const visitIndex = pos ? form.visits.indexOf(pos.visit) : -1;
+  const activeCopy = drumVisitCopy(form, visitIndex);
   const currentRun = pos
     ? chart
-        .find((row) => row.block.id === pos.block.id)
+        .find((row) => row.block.id === pos.block.id && row.copy === activeCopy)
         ?.runs.find((run) => pos.originTime >= run.start && pos.originTime < run.end)
     : undefined;
   const actualMeasureEnd = pos ? measureEndAt(map, time) : 0;
@@ -500,50 +594,55 @@ function paintDrumLive(
       ? pos.block.originEnd
       : originMeasureEnd;
   const nextPos = chainNext ? null : pos ? formNextAt(form, time, afterOriginTime) : null;
-  const nextRun = nextDrumPatternRun(chart, pos, nextPos);
-  const visitIndex = pos ? form.visits.indexOf(pos.visit) : -1;
-  const followingBlockId = visitIndex >= 0 ? form.visits[visitIndex + 1]?.blockId : undefined;
+  const nextCopy = nextPos ? drumVisitCopy(form, form.visits.indexOf(nextPos.visit)) : 0;
+  const nextRun = nextDrumPatternRun(chart, pos, nextPos, nextCopy);
+  const followingVisit = visitIndex >= 0 ? form.visits[visitIndex + 1] : undefined;
+  const followingCopy = followingVisit ? drumVisitCopy(form, visitIndex + 1) : 0;
+  const onCopy = (row: WrittenRow, blockId: string | undefined, copy: number) =>
+    Boolean(blockId) && row.block.id === blockId && row.copy === copy;
 
   root.querySelectorAll<HTMLElement>("[data-drum-pack]").forEach((el, packIndex) => {
     const written = packs[packIndex];
     if (!written) return;
-    const packCurrent = written.some((row) => pos?.block.id === row.block.id);
+    const packCurrent = written.some((row) => onCopy(row, pos?.block.id, activeCopy));
     const packLeadIn = el.hasAttribute("data-lead-in");
     el.classList.toggle("current", packCurrent);
     el.classList.toggle(
       "next",
-      packLeadIn || (!packCurrent && written.some((row) => nextPos?.block.id === row.block.id))
+      packLeadIn || (!packCurrent && written.some((row) => onCopy(row, nextPos?.block.id, nextCopy)))
     );
     el.classList.toggle(
       "scroll-next",
-      packLeadIn || (!packCurrent && written.some((row) => row.block.id === followingBlockId))
+      packLeadIn ||
+        (!packCurrent && written.some((row) => onCopy(row, followingVisit?.blockId, followingCopy)))
     );
   });
 
   for (const row of chart) {
-    const visit = pos?.block.id === row.block.id ? pos.visit : null;
+    const rowCurrent = onCopy(row, pos?.block.id, activeCopy);
+    const rowNext = onCopy(row, nextPos?.block.id, nextCopy);
+    const visit = rowCurrent && pos ? pos.visit : null;
     const fill = visit ? sectionFill(live, time, visit.start, visit.end, song?.tempoMap) : 0;
-    for (const el of root.querySelectorAll<HTMLElement>(`[data-drum-section="${row.block.id}"]`)) {
+    const copyAttr = `[data-drum-copy="${row.copy}"]`;
+    for (const el of root.querySelectorAll<HTMLElement>(
+      `[data-drum-section="${row.block.id}"]${copyAttr}`
+    )) {
       const packLeadIn = Boolean(el.closest("[data-lead-in]"));
       el.classList.toggle("current", Boolean(live && visit));
-      el.classList.toggle(
-        "next",
-        packLeadIn || (pos?.block.id !== row.block.id && nextPos?.block.id === row.block.id)
-      );
+      el.classList.toggle("next", packLeadIn || (!rowCurrent && rowNext));
       el.style.setProperty("--playhead", String(fill));
     }
 
-    for (const el of root.querySelectorAll<HTMLElement>(`[data-block-id="${row.block.id}"][data-run-start]`)) {
+    for (const el of root.querySelectorAll<HTMLElement>(
+      `[data-block-id="${row.block.id}"]${copyAttr}[data-run-start]`
+    )) {
       const start = Number(el.dataset.runStart);
       const run = row.runs.find((item) => Math.abs(item.start - start) < 1e-6);
       if (!run) continue;
-      const current = currentRun === run && pos?.block.id === row.block.id;
+      const current = rowCurrent && currentRun === run;
       el.classList.toggle("current", current);
-      el.classList.toggle(
-        "next",
-        currentRun !== run && nextRun === run && nextPos?.block.id === row.block.id
-      );
-      const runLive = live && pos?.block.id === row.block.id;
+      el.classList.toggle("next", !current && rowNext && nextRun === run);
+      const runLive = live && rowCurrent;
       const visitCue = visitFillCue(song, visit);
       const liveCue = visitCue ?? run.cue;
       const phase = liveCue ? cuePhase(liveCue, visitCue ? time : writtenTime, map, runLive) : "hidden";
@@ -1012,25 +1111,31 @@ export const DrumChartBody = memo(function DrumChartBody(props: {
         const pair = written.length === 2;
         return (
           <div
-            key={written.map((row) => row.block.id).join("+")}
-            data-drum-pack={written.map((row) => row.block.id).join("+")}
+            key={written.map((row) => `${row.block.id}:${row.copy}`).join("+")}
+            data-drum-pack={written.map((row) => `${row.block.id}:${row.copy}`).join("+")}
             data-lead-in={props.leadIn && packIndex === 0 ? "" : undefined}
             className={`drum-pack wide${pair ? " pair" : ""}`}
           >
             <div className={`drum-pack-titles${spanRow ? " span" : ""}`}>
               {written.map((row) => (
-                <DrumSectionTitle key={row.block.id} row={row} song={props.song} block={row.block} />
+                <DrumSectionTitle
+                  key={`${row.block.id}:${row.copy}`}
+                  row={row}
+                  song={props.song}
+                  block={row.block}
+                />
               ))}
             </div>
             {showGrids ? (
               <div className="drum-pack-grids">
                 {written.map((row) =>
                   isCountSection(props.song, row.section) ? (
-                    <div key={row.block.id} />
+                    <div key={`${row.block.id}:${row.copy}`} />
                   ) : (
                     <div
-                      key={row.block.id}
+                      key={`${row.block.id}:${row.copy}`}
                       data-drum-section={row.block.id}
+                      data-drum-copy={row.copy}
                       className="drum-section-runs"
                     >
                       {row.runs.map((run) => (
@@ -1038,6 +1143,7 @@ export const DrumChartBody = memo(function DrumChartBody(props: {
                             key={`${run.name}-${run.start}`}
                             run={run}
                             blockId={row.block.id}
+                            copy={row.copy}
                           />
                         ))}
                     </div>
@@ -1071,6 +1177,7 @@ function DrumSectionTitle(props: {
   return (
     <div
       data-drum-section={props.block.id}
+      data-drum-copy={props.row.copy}
       className={`lyrics-section drum-section-name playhead-green${sectionBarClass(props.row.section.name)}`}
     >
       <span className="lyrics-playhead" aria-hidden="true" />
@@ -1089,6 +1196,7 @@ function DrumSectionTitle(props: {
 function DrumRunView(props: {
   run: PatternRun;
   blockId: string;
+  copy: number;
 }) {
   const barSteps = Math.max(STEPS_PER_BEAT, props.run.barSteps);
   return (
@@ -1096,6 +1204,7 @@ function DrumRunView(props: {
       className="drum-run"
       data-drum-row={`${props.run.name}-${props.run.start}`}
       data-block-id={props.blockId}
+      data-drum-copy={props.copy}
       data-run-start={String(props.run.start)}
       style={
         {
