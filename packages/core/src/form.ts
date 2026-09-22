@@ -250,35 +250,46 @@ function matchWrittenBlock(
 /**
  * Where a section on a later pass belongs, once the running order alone has stopped deciding.
  *
- * Context has to answer to the groove here, the same as it does in `matchWrittenBlock`. Gönlüm
- * writes two SAN B — one on TERS KICK KASNAK, one on HALAY — and both passes play them in that
- * order; taking whichever was written after CEVAP put the repeat's HALAY bars on the TERS KICK
- * KASNAK block. That is the wrong row to be reading from, and it also cost the song its D.S.:
- * the block before FINAL was then no longer the one carrying the sign, so the ending read as a
- * coda jump and hung "to Coda" on bars the band never jumps from.
+ * Counting is what settles it: the second SAN of the repeat is the second SAN on the page,
+ * whatever groove it happens to be played on. The groove cannot be the judge here — a pass
+ * that plays written bars a different way is a variation, not new music, and sending the
+ * reader to whichever block matches the groove takes them off the bars they are on.
+ *
+ * Nor can "the block written after the one just played": where an intervening section is
+ * written once but played twice, every later section looks like it follows that same block.
+ * Gönlüm writes one CEVAP and two SAN B, so both SAN B appear to follow CEVAP, and the
+ * repeat's second SAN B was landing on the first SAN B's bars. That also cost the song its
+ * D.S. — the block before FINAL was no longer the one carrying the sign, so the ending read
+ * as a coda jump and hung "to Coda" on bars the band never jumps from.
  */
 function matchAfterDs(
   blocks: FormBlock[],
-  grooves: Map<string, string>,
   key: string,
-  groove: string,
+  passOffset: number,
   previousBlock: FormBlock | undefined
 ): FormBlock | undefined {
   const same = sameNamedBlocks(blocks, key);
   if (same.length === 0) return undefined;
-  const fitsGroove = (block: FormBlock): boolean =>
-    !groove || groovesMatch(grooves.get(block.id), groove);
+  const byCount = same[passOffset];
+  if (byCount) return byCount;
   if (previousBlock) {
     const byContext = same.find((block) => {
       const blockIndex = blocks.indexOf(block);
-      return blocks[blockIndex - 1]?.id === previousBlock.id && fitsGroove(block);
+      return blocks[blockIndex - 1]?.id === previousBlock.id;
     });
     if (byContext) return byContext;
   }
-  // Nothing sits in the right place on the page, so what the band is playing decides it.
-  const byGroove = same.find(fitsGroove);
-  if (byGroove) return byGroove;
   return same[0];
+}
+
+/** How many sections of this name the current pass has already been through. */
+function passOffsetOf(sections: Section[], from: number, index: number, key: string): number {
+  let offset = 0;
+  for (let cursor = Math.max(0, from); cursor < index; cursor++) {
+    const section = sections[cursor];
+    if (section && blockKey(section, cursor) === key) offset += 1;
+  }
+  return offset;
 }
 
 export function isCodaName(name: string): boolean {
@@ -297,6 +308,8 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
   const grooves = new Map<string, string>();
   const visits: FormVisit[] = [];
   const passById = new Map<string, number>();
+  /** The section the current pass began at, so a repeat can be counted from its own start. */
+  let passStart = 0;
 
   for (let index = 0; index < sections.length; index++) {
     const section = sections[index];
@@ -322,7 +335,7 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       runOffset(sections, index, key)
     );
     if (!block && returned && !isCodaName(section.name) && alreadyWritten) {
-      block = matchAfterDs(blocks, grooves, key, groove, previousBlock);
+      block = matchAfterDs(blocks, key, passOffsetOf(sections, passStart, index, key), previousBlock);
     }
     if (!block) {
       // A later pass playing something written nowhere is an ending, even when it carries the
@@ -356,6 +369,9 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
     else if (block.coda) fromJump = "coda";
     else if (pass > 1 && pairRepeat) fromJump = "repeat";
     else if (pass > 1) fromJump = "ds";
+    // A return to the sign starts the count over: the sections of this pass are counted from
+    // here, not from the top of the song.
+    if (fromJump === "ds") passStart = index;
     visits.push({
       blockId: block.id,
       start: section.start,
