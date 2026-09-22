@@ -247,20 +247,37 @@ function matchWrittenBlock(
   return same[0];
 }
 
+/**
+ * Where a section on a later pass belongs, once the running order alone has stopped deciding.
+ *
+ * Context has to answer to the groove here, the same as it does in `matchWrittenBlock`. Gönlüm
+ * writes two SAN B — one on TERS KICK KASNAK, one on HALAY — and both passes play them in that
+ * order; taking whichever was written after CEVAP put the repeat's HALAY bars on the TERS KICK
+ * KASNAK block. That is the wrong row to be reading from, and it also cost the song its D.S.:
+ * the block before FINAL was then no longer the one carrying the sign, so the ending read as a
+ * coda jump and hung "to Coda" on bars the band never jumps from.
+ */
 function matchAfterDs(
   blocks: FormBlock[],
+  grooves: Map<string, string>,
   key: string,
+  groove: string,
   previousBlock: FormBlock | undefined
 ): FormBlock | undefined {
   const same = sameNamedBlocks(blocks, key);
   if (same.length === 0) return undefined;
+  const fitsGroove = (block: FormBlock): boolean =>
+    !groove || groovesMatch(grooves.get(block.id), groove);
   if (previousBlock) {
     const byContext = same.find((block) => {
       const blockIndex = blocks.indexOf(block);
-      return blocks[blockIndex - 1]?.id === previousBlock.id;
+      return blocks[blockIndex - 1]?.id === previousBlock.id && fitsGroove(block);
     });
     if (byContext) return byContext;
   }
+  // Nothing sits in the right place on the page, so what the band is playing decides it.
+  const byGroove = same.find(fitsGroove);
+  if (byGroove) return byGroove;
   return same[0];
 }
 
@@ -305,7 +322,7 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       runOffset(sections, index, key)
     );
     if (!block && returned && !isCodaName(section.name) && alreadyWritten) {
-      block = matchAfterDs(blocks, key, previousBlock);
+      block = matchAfterDs(blocks, grooves, key, groove, previousBlock);
     }
     if (!block) {
       // A later pass playing something written nowhere is an ending, even when it carries the
