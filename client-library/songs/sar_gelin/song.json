@@ -5,8 +5,8 @@
   "duration": 184.006993,
   "nextSongAt": 180.734266,
   "key": "D",
-  "scale": "MINOR",
-  "style": "AZERI",
+  "scale": "HICAZ",
+  "style": "ANKARA",
   "kita": 2,
   "tags": [
     "reaper-export"
@@ -1053,51 +1053,6 @@
       "numerator": 6,
       "denominator": 8,
       "notes": []
-    },
-    {
-      "text": "KASNAK 2",
-      "time": 52.615385,
-      "end": 55.384615,
-      "length": 2.76923,
-      "measure": 20,
-      "beat": 1,
-      "numerator": 6,
-      "denominator": 8,
-      "notes": [
-        {
-          "time": 52.615385,
-          "end": 52.846154,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 20,
-          "beat": 1,
-          "numerator": 6,
-          "denominator": 8
-        },
-        {
-          "time": 54,
-          "end": 54.230769,
-          "pitch": 50,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 20,
-          "beat": 4,
-          "numerator": 6,
-          "denominator": 8
-        },
-        {
-          "time": 54.923077,
-          "end": 55.153846,
-          "pitch": 48,
-          "channel": 0,
-          "velocity": 96,
-          "measure": 20,
-          "beat": 6,
-          "numerator": 6,
-          "denominator": 8
-        }
-      ]
     },
     {
       "text": "KASNAK 2",
