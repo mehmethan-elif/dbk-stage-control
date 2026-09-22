@@ -45,6 +45,9 @@ import { ConcertFinalBlock, ElifNote, StopNote, TalkLabel, setlistHasSongs } fro
 
 const DRAG_THRESHOLD = 8;
 
+/** How far a finger may travel and still count as choosing the row it landed on. */
+const TAP_SLOP = 10;
+
 function uniqueFacet(songs: Song[], facet: SongFacet): string[] {
   const values: string[] = [];
   for (const song of songs) {
@@ -122,6 +125,13 @@ export function PrepSongList(props: {
   const [scales, setScales] = useState<string[]>([]);
   const [styles, setStyles] = useState<string[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
+  const tapRef = useRef<{
+    id: string;
+    pointerId: number;
+    x: number;
+    y: number;
+    scrollTop: number;
+  } | null>(null);
   const dragRef = useRef<{
     id: string;
     pointerId: number;
@@ -216,7 +226,17 @@ export function PrepSongList(props: {
     const target = event.target as HTMLElement;
     const onControl = target.closest("button, select, input");
     if (frozen) return;
-    if (!target.closest(".prep-cell.actions")) selectSetlist(entryId);
+    if (!target.closest(".prep-cell.actions")) {
+      // Remembered rather than chosen — see `onPointerUp`. Putting a finger down to move the
+      // list used to take the selection with it.
+      tapRef.current = {
+        id: entryId,
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        scrollTop: listRef.current?.scrollTop ?? 0
+      };
+    }
     if (onControl) return;
     if (target.closest(".set-block.is-locked")) return;
     dragRef.current = {
@@ -230,6 +250,14 @@ export function PrepSongList(props: {
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const tap = tapRef.current;
+    if (
+      tap &&
+      event.pointerId === tap.pointerId &&
+      (Math.abs(event.clientX - tap.x) > TAP_SLOP || Math.abs(event.clientY - tap.y) > TAP_SLOP)
+    ) {
+      tapRef.current = null;
+    }
     const drag = dragRef.current;
     if (!drag || event.pointerId !== drag.pointerId) return;
     if (!drag.active && Math.abs(event.clientY - drag.startY) < DRAG_THRESHOLD) return;
@@ -255,16 +283,30 @@ export function PrepSongList(props: {
   };
 
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const tap = tapRef.current;
+    tapRef.current = null;
     const drag = dragRef.current;
-    if (!drag || event.pointerId !== drag.pointerId) return;
-    dragRef.current = null;
-    try {
-      listRef.current?.releasePointerCapture(event.pointerId);
-    } catch {
-      // already released
+    const dragged = Boolean(drag && event.pointerId === drag.pointerId && drag.active);
+    if (drag && event.pointerId === drag.pointerId) {
+      dragRef.current = null;
+      try {
+        listRef.current?.releasePointerCapture(event.pointerId);
+      } catch {
+        // already released
+      }
+      if (drag.active) persistOrder(drag.order);
     }
-    if (!drag.active) return;
-    persistOrder(drag.order);
+    if (dragged) return;
+    if (!tap || event.pointerId !== tap.pointerId) return;
+    if (Math.abs(event.clientX - tap.x) > TAP_SLOP || Math.abs(event.clientY - tap.y) > TAP_SLOP) return;
+    // The list having moved under the finger is a scroll however still the finger was held.
+    if (Math.abs((listRef.current?.scrollTop ?? 0) - tap.scrollTop) > 2) return;
+    selectSetlist(tap.id);
+  };
+
+  const onPointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+    tapRef.current = null;
+    onPointerUp(event);
   };
 
   const addSong = (songId: string) => {
@@ -324,7 +366,7 @@ export function PrepSongList(props: {
         className={`panel-body prep-list${draggingId ? " is-reordering" : ""}`}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerCancel={onPointerCancel}
       >
         <div className="prep-cols" aria-hidden="true">
           <span>#</span>

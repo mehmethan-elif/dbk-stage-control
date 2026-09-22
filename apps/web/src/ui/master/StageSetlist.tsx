@@ -35,6 +35,13 @@ import { ConcertFinalBlock, ElifNote, StopLabel, StopNote, TalkLabel, TalkLeadIc
 import { groupLibrarySongs } from "./library-groups";
 import { scrollStageToSongTitle } from "./stage-scroll";
 
+/**
+ * How far a finger may travel and still count as choosing the row it landed on. Anything
+ * beyond this was moving the list: picking the row on the way down meant every attempt to
+ * scroll took the show to whichever song happened to be under the thumb.
+ */
+const TAP_SLOP = 10;
+
 let lastSetlistAction = 0;
 
 function onSetlistAction(
@@ -89,6 +96,13 @@ export function StageSetlist(props: {
   const pageEntry = useMasterStore(pageEntryId);
   const playingEntryId = useMasterStore(playingMarkEntryId) ?? undefined;
   const listRef = useRef<HTMLElement>(null);
+  const tapRef = useRef<{
+    id: string;
+    pointerId: number;
+    x: number;
+    y: number;
+    scrollTop: number;
+  } | null>(null);
 
   // Each top-row page (Nota, Chords, Drums, Lyrics, ...) renders its own StageSetlist, so
   // switching pages unmounts and remounts this list — this always fires on that first render.
@@ -135,7 +149,38 @@ export function StageSetlist(props: {
       return;
     }
     if (lockRows) return;
-    selectEntry(entryId);
+    // Remembered, not chosen. A finger landing on a row is just as likely to be the start of
+    // a scroll, and the row is only taken on lift, below.
+    tapRef.current = {
+      id: entryId,
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      scrollTop: listRef.current?.scrollTop ?? 0
+    };
+  };
+
+  const cancelTap = () => {
+    tapRef.current = null;
+  };
+
+  const tapTravelled = (tap: { x: number; y: number }, event: PointerEvent<HTMLElement>): boolean =>
+    Math.abs(event.clientX - tap.x) > TAP_SLOP || Math.abs(event.clientY - tap.y) > TAP_SLOP;
+
+  const onPointerMove = (event: PointerEvent<HTMLElement>) => {
+    const tap = tapRef.current;
+    if (!tap || event.pointerId !== tap.pointerId) return;
+    if (tapTravelled(tap, event)) cancelTap();
+  };
+
+  const onPointerUp = (event: PointerEvent<HTMLElement>) => {
+    const tap = tapRef.current;
+    cancelTap();
+    if (!tap || event.pointerId !== tap.pointerId) return;
+    if (tapTravelled(tap, event)) return;
+    // The list having moved under the finger is a scroll however still the finger was held.
+    if (Math.abs((listRef.current?.scrollTop ?? 0) - tap.scrollTop) > 2) return;
+    selectEntry(tap.id);
   };
 
   const addElif = () => {
@@ -184,6 +229,11 @@ export function StageSetlist(props: {
     <aside
       ref={listRef}
       className={`lyrics-setlist${readOnly ? " is-readonly" : ""}`}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      // The browser taking the gesture for a scroll arrives as a cancel, and that is the
+      // clearest word it has for "this was never a tap".
+      onPointerCancel={cancelTap}
     >
       {songLibrary ? (
         groupedSetlistSongs.map((group) => (

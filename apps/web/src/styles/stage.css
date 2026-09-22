@@ -2941,7 +2941,12 @@ button {
   padding: 0;
   font-weight: 700;
   cursor: inherit;
-  touch-action: none;
+  /*
+   * The stage setlist has no drag of its own to protect any more, so the name gives the
+   * gesture back to the list. Held at `none` it swallowed every scroll that began on a song
+   * title — which is most of them, the title being nearly the whole row.
+   */
+  touch-action: pan-y;
 }
 
 /* The setlist rail is a proportion of the window, which is fine in landscape but leaves a tablet
