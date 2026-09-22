@@ -5869,6 +5869,9 @@
     "scale": "HICAZ",
     "style": "HALAY",
     "kita": 3,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }

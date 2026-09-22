@@ -3970,17 +3970,15 @@
     "bpm": 75,
     "numerator": 3,
     "denominator": 4,
-    "beats": [
-      true,
-      false,
-      false
-    ],
     "duration": 177.540659,
     "startMode": "COUNT",
     "key": "B",
     "scale": "KURDI",
     "style": "TURKCU",
+    "kita": 2,
     "playMode": "PLAYBACK",
-    "kita": 2
+    "pageNotes": {
+      "score": "Toplu  San 1 ve 2 cevaplar arpej Bağlama"
+    }
   }
 }

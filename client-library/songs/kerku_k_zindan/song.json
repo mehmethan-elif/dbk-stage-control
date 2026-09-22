@@ -6350,17 +6350,14 @@
     "bpm": 120,
     "numerator": 4,
     "denominator": 4,
-    "beats": [
-      true,
-      false,
-      false,
-      false
-    ],
     "duration": 201.176471,
     "key": "B",
     "scale": "KURDI",
     "style": "MID",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }

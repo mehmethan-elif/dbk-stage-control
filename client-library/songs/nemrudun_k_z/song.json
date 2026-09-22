@@ -3513,6 +3513,9 @@
     "scale": "HICAZ",
     "style": "SLOW",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "1.Kaval SOLO 2.Toplu"
+    }
   }
 }

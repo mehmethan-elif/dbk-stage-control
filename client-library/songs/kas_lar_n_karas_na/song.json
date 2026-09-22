@@ -5735,6 +5735,9 @@
     "style": "SLOW",
     "kita": 2,
     "playMode": "PLAYBACK",
-    "startAt": 0
+    "startAt": 0,
+    "pageNotes": {
+      "score": "1.Bağlama 2.Toplu"
+    }
   }
 }

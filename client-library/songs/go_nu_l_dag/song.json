@@ -7360,6 +7360,9 @@
     "scale": "HICAZ",
     "style": "SLOW",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "ARA A:Bağlama SOLO Ara B: Toplu"
+    }
   }
 }

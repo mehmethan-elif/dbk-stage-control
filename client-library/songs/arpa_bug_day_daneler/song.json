@@ -5260,6 +5260,9 @@
     "style": "ANKARA",
     "kita": 2,
     "playMode": "PLAYBACK",
-    "startAt": 0
+    "startAt": 0,
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }

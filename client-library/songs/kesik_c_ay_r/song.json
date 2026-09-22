@@ -10781,6 +10781,9 @@
     "scale": "KURDI",
     "style": "ANKARA",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Riff: Toplu. Ara: Bağlama SOLO"
+    }
   }
 }

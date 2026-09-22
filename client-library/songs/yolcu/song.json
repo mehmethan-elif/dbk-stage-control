@@ -7909,6 +7909,9 @@
     "scale": "KURDI",
     "style": "MID",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Intro: Toplu  Ara A: Bağlama SOLO. Diğer Bölümler: Toplu"
+    }
   }
 }

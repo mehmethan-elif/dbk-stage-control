@@ -6642,6 +6642,9 @@
     "style": "SLOW",
     "kita": 2,
     "playMode": "PLAYBACK",
-    "startAt": 0
+    "startAt": 0,
+    "pageNotes": {
+      "score": "Intro: Bağlama 1.Kaval SOLO 2.Toplu"
+    }
   }
 }

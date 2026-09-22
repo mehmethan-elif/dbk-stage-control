@@ -7148,6 +7148,9 @@
     "scale": "KURDI",
     "style": "ANKARA",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Intro: Toplu 1.Kaval SOLO 2.Toplu"
+    }
   }
 }

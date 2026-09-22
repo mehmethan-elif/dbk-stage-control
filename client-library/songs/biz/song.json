@@ -9136,6 +9136,9 @@
     "scale": "MINOR",
     "style": "BESTE",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "1.2. Toplu"
+    }
   }
 }

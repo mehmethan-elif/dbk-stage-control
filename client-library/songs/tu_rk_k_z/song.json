@@ -4304,6 +4304,9 @@
     "scale": "USSAK",
     "style": "TURKCU",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }

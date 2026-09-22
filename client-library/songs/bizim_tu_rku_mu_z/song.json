@@ -7351,6 +7351,9 @@
     "scale": "KURDI",
     "style": "TURKCU",
     "kita": 3,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }

@@ -4827,6 +4827,9 @@
     "scale": "HICAZ",
     "style": "ANKARA",
     "kita": 2,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "1.Bağlama 2.Toplu (5.ölçü)"
+    }
   }
 }
