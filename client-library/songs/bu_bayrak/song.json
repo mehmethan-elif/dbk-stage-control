@@ -8,7 +8,7 @@
   "key": "D",
   "scale": "MINOR",
   "style": "TURKCU",
-  "kita": 2,
+  "kita": 3,
   "tags": [
     "reaper-export"
   ],
@@ -8667,7 +8667,7 @@
     "key": "D",
     "scale": "MINOR",
     "style": "TURKCU",
-    "kita": 2,
+    "kita": 3,
     "playMode": "PLAYBACK"
   }
 }
