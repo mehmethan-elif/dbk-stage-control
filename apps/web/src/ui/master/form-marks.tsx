@@ -12,21 +12,6 @@ export function SegnoIcon() {
   );
 }
 
-export function CodaIcon() {
-  return (
-    <svg className="form-cue-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="6.4" fill="none" stroke="currentColor" strokeWidth="2.15" />
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.15"
-        strokeLinecap="round"
-        d="M12 3.4v17.2M3.4 12h17.2"
-      />
-    </svg>
-  );
-}
-
 export function DalSegnoIcon() {
   return (
     <span className="form-ds-mark">
@@ -36,49 +21,31 @@ export function DalSegnoIcon() {
   );
 }
 
-export function DalSegnoAlCodaIcon() {
-  return (
-    <span className="form-ds-mark">
-      <span className="form-ds-letters">D.S.</span>
-      <SegnoIcon />
-      <CodaIcon />
-    </span>
-  );
-}
-
-function formCue(kind: "segno" | "coda" | "to-coda" | "ds" | "ds-al-coda"): {
+function formCue(kind: "segno" | "ds"): {
   className: string;
   label: string;
   icon: ReactNode;
 } {
   if (kind === "segno") return { className: "form-senyo", label: "Segno", icon: <SegnoIcon /> };
-  if (kind === "coda") return { className: "form-coda", label: "Coda", icon: <CodaIcon /> };
-  if (kind === "to-coda") return { className: "form-ds", label: "To coda", icon: <CodaIcon /> };
-  if (kind === "ds-al-coda") return { className: "form-ds", label: "Dal segno al coda", icon: <DalSegnoAlCodaIcon /> };
   return { className: "form-ds", label: "Dal segno", icon: <DalSegnoIcon /> };
 }
 
 export function formStartCue(block: FormBlock) {
   if (block.segno) return formCue("segno");
-  if (block.coda) return formCue("coda");
   return null;
 }
 
-export function formEndCue(block: FormBlock, toCodaInBar = true) {
-  if (block.ds && block.toCoda) return formCue("ds-al-coda");
+export function formEndCue(block: FormBlock) {
   if (block.ds) return formCue("ds");
-  if (toCodaInBar && block.toCoda) return formCue("to-coda");
   return null;
 }
 
 export function formInlineCue(
-  block: FormBlock,
-  atSectionStart: boolean,
-  atSectionEnd: boolean,
-  atToCoda = atSectionEnd
+  _block: FormBlock,
+  _atSectionStart: boolean,
+  _atSectionEnd: boolean,
+  _atToCoda = false
 ) {
-  if (atToCoda && block.toCoda && !block.ds) return formCue("to-coda");
-  if (atSectionStart || atSectionEnd) return null;
   return null;
 }
 
@@ -120,12 +87,11 @@ export function FormSectionBar(props: {
   extraClass?: string;
   showRepeats?: boolean;
   showJumps?: boolean;
-  toCodaInBar?: boolean;
 }) {
   const showRepeats = props.showRepeats !== false;
   const showJumps = props.showJumps !== false;
   const startCue = showJumps ? formStartCue(props.block) : null;
-  const endCue = showJumps ? formEndCue(props.block, props.toCodaInBar !== false) : null;
+  const endCue = showJumps ? formEndCue(props.block) : null;
   return (
     <div className="form-section-bar">
       <span className="form-section-lead">

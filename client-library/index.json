@@ -3,7 +3,7 @@
   "gigs": {
     "path": "gigs.json",
     "size": 8143,
-    "hash": "d54c2ffd3f7137e7de06ca54a5bfe7792539c17f44ea34fe56e60e2e00e2088f"
+    "hash": "a27b45d4aa7e45a64a7b7ed0c169d3e27f2ce64818141d653dff03366d33ab23"
   },
   "songs": [
     {
@@ -782,8 +782,8 @@
         },
         {
           "path": "song.json",
-          "size": 106962,
-          "hash": "e32bb6d2059840789e2caa9937a18d34228204a5ce54f214168499e189f698ef"
+          "size": 108442,
+          "hash": "5f3abdbc017d421d2f3adf2aaec451a20fb4884d9e25f3881149f2e0efa90b7d"
         }
       ]
     },
@@ -1065,24 +1065,29 @@
       ]
     },
     {
-      "id": "Toycular",
-      "folder": "Toycular",
+      "id": "toycular",
+      "folder": "toycular",
       "title": "Toycular",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 2718405,
+          "hash": "155665d46aa732990e27a315b4e49911d3f30b04330ddfeebd1237872685726d"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 31887,
-          "hash": "23c934f379516e98e826fdfec634b3157ec98354557d1aa7f2f6fea920e2e197"
+          "size": 15245,
+          "hash": "12f41630ed950d56a6720b4f41f0ddf8f0dc802ebc888cfc5b33943f409715c2"
         },
         {
           "path": "settings.json",
-          "size": 429,
-          "hash": "9731f80420c139d9d6245504a15aa711f010cb29aa0fff4b3d304d7a934e7daf"
+          "size": 7084,
+          "hash": "1d8ad45d458a112fbb0fa83e26409b3c83e4e9de41179de8650b39ce2d73398c"
         },
         {
           "path": "song.json",
-          "size": 713,
-          "hash": "bee21881bef5440c750761d21fd50cf1f381eab9052fa53e3437107debae67a4"
+          "size": 190012,
+          "hash": "c67cdd39684158d42879e2c6a2d1247d6b77754ff0c44c8890fe224c54a11e4d"
         }
       ]
     },

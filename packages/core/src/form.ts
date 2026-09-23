@@ -165,7 +165,10 @@ function grooveAlreadyWritten(
   groove: string
 ): boolean {
   if (!groove) return true;
-  return same.some((block) => groovesMatch(grooves.get(block.id), groove));
+  return same.some((block) => {
+    const written = grooves.get(block.id);
+    return groovesMatch(written, groove) || sameDrumPattern(written, groove);
+  });
 }
 
 /**
@@ -191,6 +194,26 @@ function chordShape(groove: string): string | undefined {
     .join("|");
 }
 
+/**
+ * The pattern names in a drum groove, without the note grid. A repeat that plays HALAY TOM II
+ * with a different sticking is still that bar. A different pattern name is new music.
+ */
+function drumPattern(groove: string | undefined): string | undefined {
+  if (!groove?.startsWith("p:")) return undefined;
+  const names = groove
+    .slice(2)
+    .split("|")
+    .map((part) => part.replace(/\[[^\]]*\]/g, ""))
+    .join("|");
+  return names || undefined;
+}
+
+function sameDrumPattern(written: string | undefined, current: string): boolean {
+  const left = drumPattern(written);
+  const right = drumPattern(current);
+  return Boolean(left && right && left === right);
+}
+
 function groovesMatch(written: string | undefined, current: string): boolean {
   if (!written) return false;
   if (written === current) return true;
@@ -211,7 +234,9 @@ function matchWrittenBlock(
   groove: string,
   previousKey: string | undefined,
   previousBlock: FormBlock | undefined,
-  offset: number
+  offset: number,
+  sections: Section[],
+  index: number
 ): FormBlock | undefined {
   const same = sameNamedBlocks(blocks, key);
   if (previousKey === key) {
@@ -227,7 +252,7 @@ function matchWrittenBlock(
         (!groove || groovesMatch(grooves.get(block.id), groove))
       );
     });
-    if (byContext) return byContext;
+    if (byContext) return phraseStart(blocks, byContext, sections, index);
 
     const contextAlreadyWritten = same.some((block) => {
       const blockIndex = blocks.indexOf(block);
@@ -241,10 +266,71 @@ function matchWrittenBlock(
   }
   if (groove) {
     const byGroove = same.find((block) => groovesMatch(grooves.get(block.id), groove));
-    if (byGroove) return byGroove;
+    if (byGroove) return phraseStart(blocks, byGroove, sections, index);
+    // No grid matches. The same pattern name is still the written bar: Lorke's repeat
+    // plays the NAK sticking on the ARA, and the last NAK is another sticking of HALAY TOM II.
+    const byPattern = same.find((block) => sameDrumPattern(grooves.get(block.id), groove));
+    if (byPattern) return phraseStart(blocks, byPattern, sections, index);
     return undefined;
   }
   return same[0];
+}
+
+/**
+ * The block a repeat goes back to, when a groove match lands in the middle of a run.
+ *
+ * Toycular writes two ARAs. The repeat opens on the second ARA's drum pattern, so a groove
+ * match hangs the segno there. The names that follow still line up with the first ARA.
+ */
+function phraseStart(
+  blocks: FormBlock[],
+  candidate: FormBlock,
+  sections: Section[],
+  index: number
+): FormBlock {
+  const run = sameNameRun(blocks, candidate);
+  if (run.length < 2) return candidate;
+  let best = candidate;
+  let bestLength = nameRunLength(sections, candidate.originIndex, index);
+  for (const block of run) {
+    const length = nameRunLength(sections, block.originIndex, index);
+    if (length > bestLength) {
+      best = block;
+      bestLength = length;
+    }
+  }
+  return best;
+}
+
+function sameNameRun(blocks: FormBlock[], block: FormBlock): FormBlock[] {
+  const key = nameKey(block.name, block.originIndex);
+  const at = blocks.indexOf(block);
+  let start = at;
+  let end = at;
+  while (start > 0) {
+    const previous = blocks[start - 1];
+    if (!previous || nameKey(previous.name, previous.originIndex) !== key) break;
+    start -= 1;
+  }
+  while (end + 1 < blocks.length) {
+    const next = blocks[end + 1];
+    if (!next || nameKey(next.name, next.originIndex) !== key) break;
+    end += 1;
+  }
+  return blocks.slice(start, end + 1);
+}
+
+/** How far the written names from `from` keep agreeing with the names from `index`. */
+function nameRunLength(sections: Section[], from: number, index: number): number {
+  let length = 0;
+  while (from + length < sections.length && index + length < sections.length) {
+    const written = sections[from + length];
+    const current = sections[index + length];
+    if (!written || !current) break;
+    if (blockKey(written, from + length) !== blockKey(current, index + length)) break;
+    length += 1;
+  }
+  return length;
 }
 
 /**
@@ -298,10 +384,6 @@ export function isCodaName(name: string): boolean {
   return n === "CODA" || n.startsWith("CODA ");
 }
 
-function isFinalName(name: string): boolean {
-  return name.trim().toUpperCase() === "FINAL";
-}
-
 export function songForm(song: Song | undefined, options: SongFormOptions = {}): SongForm {
   if (!song) return { blocks: [], visits: [] };
   const sections = sectionList(song);
@@ -333,7 +415,9 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       groove,
       previousKey,
       previousBlock,
-      runOffset(sections, index, key)
+      runOffset(sections, index, key),
+      sections,
+      index
     );
     const lastSection = index === sections.length - 1;
     if (
@@ -348,11 +432,8 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
       block = matchAfterDs(blocks, key, passOffsetOf(sections, passStart, index, key), previousBlock);
     }
     if (!block) {
-      // A later pass playing something written nowhere is an ending, even when it carries the
-      // same name as the bars it replaces: a song that finishes on a rallentando leaves the
-      // written NAK and lands on its own. Calling that a coda is what puts "to Coda" where the
-      // band jumps and the sign over the bars they land on, so the ending reads off the page.
-      const ending = returned && lastSection && sameNamed.length > 0 && !alreadyWritten;
+      // A later pass playing something written nowhere is still its own row: a song that
+      // finishes on a rallentando leaves the written NAK. It is not a coda jump.
       block = {
         id: `form_${blocks.length}`,
         name: section.name,
@@ -360,7 +441,7 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
         originStart: section.start,
         originEnd: section.end,
         segno: false,
-        coda: isCodaName(section.name) || ending,
+        coda: false,
         toCoda: false,
         ds: false,
         repeatStart: false,
@@ -376,7 +457,6 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
     const pairRepeat = prevIndex >= 0 && Math.abs(prevIndex - thisIndex) === 1;
     let fromJump: FormJump = "none";
     if (prev?.blockId === block.id) fromJump = "repeat";
-    else if (block.coda) fromJump = "coda";
     else if (pass > 1 && pairRepeat) fromJump = "repeat";
     else if (pass > 1) fromJump = "ds";
     // A return to the sign starts the count over: the sections of this pass are counted from
@@ -391,54 +471,13 @@ export function songForm(song: Song | undefined, options: SongFormOptions = {}):
     });
   }
 
-  // A FINAL in the middle of the first pass is a tag, not a landing. Kara Gözün
-  // Ay Badan plays FINAL, then goes back to the INTRO; that is D.S., and the
-  // last NAK must not carry "to Coda".
-  for (const block of blocks) {
-    if (!block.coda || !isCodaName(block.name)) continue;
-    const returnsAfter = visits.some((visit, index) => {
-      if (visit.blockId !== block.id) return false;
-      const next = visits[index + 1];
-      return Boolean(next && (next.fromJump === "ds" || next.fromJump === "repeat"));
-    });
-    if (!returnsAfter) continue;
-    block.coda = false;
-    for (const visit of visits) {
-      if (visit.blockId === block.id && visit.fromJump === "coda") visit.fromJump = "none";
-    }
-  }
-
   const firstReturn = visits.find((visit) => visit.fromJump === "ds");
   if (firstReturn) {
     const segno = blocks.find((block) => block.id === firstReturn.blockId);
     if (segno) segno.segno = true;
     const fromIndex = visits.indexOf(firstReturn) - 1;
     const from = fromIndex >= 0 ? blocks.find((block) => block.id === visits[fromIndex]?.blockId) : undefined;
-    if (from && !from.coda) from.ds = true;
-  }
-
-  const codaVisit = visits.find((visit) => blocks.some((block) => block.id === visit.blockId && block.coda));
-  if (codaVisit) {
-    const codaBlock = blocks.find((block) => block.id === codaVisit.blockId);
-    const fromIndex = visits.indexOf(codaVisit) - 1;
-    const fromVisit = fromIndex >= 0 ? visits[fromIndex] : undefined;
-    const from = fromVisit
-      ? blocks.find((block) => block.id === fromVisit.blockId)
-      : undefined;
-    // D.S. already played through to its last section; FINAL just follows. That is
-    // Fine, not a coda jump — Kerkük replays SAN D, then FINAL, and must not read
-    // D.S. al Coda on those bars.
-    if (from?.ds && codaBlock && isFinalName(codaBlock.name)) {
-      codaBlock.coda = false;
-      const visit = visits[visits.indexOf(codaVisit)];
-      if (visit) visit.fromJump = "none";
-    } else if (from && fromVisit) {
-      from.toCoda = true;
-      from.toCodaAt = Math.min(
-        from.originEnd,
-        from.originStart + Math.max(0, fromVisit.end - fromVisit.start)
-      );
-    }
+    if (from) from.ds = true;
   }
 
   markRepeatBars(blocks, visits);

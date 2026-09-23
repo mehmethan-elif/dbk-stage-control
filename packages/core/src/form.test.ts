@@ -42,15 +42,15 @@ describe("songForm", () => {
     expect(form.blocks.find((block) => block.name === "FINAL")?.coda).toBe(false);
   });
 
-  it("marks a section named CODA as the landing", () => {
+  it("does not mark a section named CODA as a jump", () => {
     const form = songForm(
       song([
         { name: "ARA", start: 0, end: 8 },
         { name: "CODA", start: 8, end: 16 }
       ])
     );
-    expect(form.blocks.find((block) => block.name === "ARA")?.toCoda).toBe(true);
-    expect(form.blocks.find((block) => block.name === "CODA")?.coda).toBe(true);
+    expect(form.blocks.map((block) => block.name)).toEqual(["ARA", "CODA"]);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
   });
 
   it("writes consecutive same-name sections separately and jumps later visits back", () => {
@@ -347,9 +347,7 @@ describe("songForm", () => {
     const naks = form.blocks.filter((block) => block.name === "NAK");
     expect(naks.map((block) => block.originStart)).toEqual([16, 30, 72]);
     expect(formAt(form, 84)?.block.originStart).toBe(72);
-    // The band leaves the written NAK and lands on the ending, which is a coda.
-    expect(naks.map((block) => block.coda)).toEqual([false, false, true]);
-    expect(naks.map((block) => block.toCoda)).toEqual([true, false, false]);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
   });
 
   it("does not hang a coda on a mid-song SAN that only adds a drum layer after D.S.", () => {
@@ -699,6 +697,122 @@ describe("songForm", () => {
     expect(form.blocks.find((block) => block.name === "ARA")?.segno).toBe(true);
     expect(form.blocks.find((block) => block.name === "SAN A")?.segno).toBe(false);
     expect(form.blocks.find((block) => block.name === "NAK")?.ds).toBe(true);
+  });
+
+  it("puts the segno on the first ARA when the repeat opens on the second ARA's drums", () => {
+    const hit = (time: number, step: number) => ({
+      time: time + step * 0.25,
+      end: time + step * 0.25 + 0.1,
+      pitch: 48,
+      channel: 0,
+      velocity: 96,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4
+    });
+    const pattern = (text: string, time: number, steps: number[]) => ({
+      text,
+      time,
+      end: time + 4,
+      length: 4,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: steps.map((step) => hit(time, step))
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "ARA", start: 0, end: 4 },
+          { name: "ARA", start: 4, end: 8 },
+          { name: "SAN", start: 8, end: 12 },
+          { name: "NAK", start: 12, end: 16 },
+          { name: "ARA", start: 16, end: 20 },
+          { name: "ARA", start: 20, end: 24 },
+          { name: "SAN", start: 24, end: 28 },
+          { name: "NAK", start: 28, end: 32 }
+        ]),
+        patterns: [
+          pattern("HALAY", 0, [0, 2]),
+          pattern("HALAY", 4, [1, 3]),
+          pattern("KICK", 8, [0]),
+          pattern("HALAY", 12, [0]),
+          pattern("HALAY", 16, [1, 3]),
+          pattern("HALAY", 20, [0, 2]),
+          pattern("KICK", 24, [0]),
+          pattern("HALAY", 28, [0])
+        ]
+      },
+      { identity: "drums" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual(["ARA", "ARA", "SAN", "NAK"]);
+    expect(form.blocks[0]?.segno).toBe(true);
+    expect(form.blocks[1]?.segno).toBe(false);
+    expect(form.blocks.find((block) => block.name === "NAK")?.ds).toBe(true);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
+  });
+
+  it("keeps Lorke's repeat as a D.S. when the sticking changes", () => {
+    const hit = (time: number, step: number) => ({
+      time: time + step * 0.25,
+      end: time + step * 0.25 + 0.1,
+      pitch: 48,
+      channel: 0,
+      velocity: 96,
+      measure: 1,
+      beat: 1,
+      numerator: 4,
+      denominator: 4
+    });
+    const pattern = (text: string, time: number, steps: number[]) => ({
+      text,
+      time,
+      end: time + 4,
+      length: 4,
+      measure: 1,
+      numerator: 4,
+      denominator: 4,
+      notes: steps.map((step) => hit(time, step))
+    });
+    const form = songForm(
+      {
+        ...song([
+          { name: "ARA", start: 0, end: 4 },
+          { name: "ARA", start: 4, end: 8 },
+          { name: "SAN", start: 8, end: 12 },
+          { name: "NAK", start: 12, end: 16 },
+          { name: "NAK", start: 16, end: 20 },
+          { name: "ARA", start: 20, end: 24 },
+          { name: "ARA", start: 24, end: 28 },
+          { name: "SAN", start: 28, end: 32 },
+          { name: "NAK", start: 32, end: 36 },
+          { name: "NAK", start: 36, end: 40 }
+        ]),
+        patterns: [
+          pattern("HALAY TOM II", 0, [0, 2]),
+          pattern("HALAY TOM II", 4, [0, 2]),
+          pattern("KICK", 8, [0]),
+          pattern("HALAY TOM II", 12, [1, 3]),
+          pattern("HALAY TOM II", 16, [1, 3]),
+          pattern("HALAY TOM II", 20, [1, 3]),
+          pattern("HALAY TOM II", 24, [1, 3]),
+          pattern("KICK", 28, [0]),
+          pattern("HALAY TOM II", 32, [0, 4]),
+          pattern("HALAY TOM II", 36, [2, 6])
+        ]
+      },
+      { identity: "drums" }
+    );
+    expect(form.blocks.map((block) => block.name)).toEqual(["ARA", "ARA", "SAN", "NAK", "NAK"]);
+    expect(form.blocks[0]?.segno).toBe(true);
+    expect(form.blocks[1]?.segno).toBe(false);
+    expect(form.blocks.find((block) => block.name === "NAK" && block.ds)?.ds).toBe(true);
+    expect(form.blocks.filter((block) => block.name === "NAK").map((block) => block.ds)).toEqual([
+      false,
+      true
+    ]);
+    expect(form.blocks.some((block) => block.coda || block.toCoda)).toBe(false);
   });
 
   it("writes a second pass when the same section names have different drum grids", () => {
