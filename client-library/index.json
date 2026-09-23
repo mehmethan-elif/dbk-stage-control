@@ -3,7 +3,7 @@
   "gigs": {
     "path": "gigs.json",
     "size": 8143,
-    "hash": "03be2af53165a34137c767b59d47df76f794d0676cc4913bc0361d427683a0b3"
+    "hash": "d54c2ffd3f7137e7de06ca54a5bfe7792539c17f44ea34fe56e60e2e00e2088f"
   },
   "songs": [
     {
@@ -761,24 +761,29 @@
       ]
     },
     {
-      "id": "Lorke",
-      "folder": "Lorke",
+      "id": "lorke",
+      "folder": "lorke",
       "title": "Lorke",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 1632965,
+          "hash": "e19f779719c886d995aa092abc1f50e4b686f105fbb91b07660100d3ba3d9629"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 30124,
-          "hash": "d0fd877a7d46189f2e58bff169c6b8168f9cad836ec5eb26ba7c667aa935e032"
+          "size": 14636,
+          "hash": "260e54cb4256109dfd400e87b6b5fa25983804704bf17cae9046fd1be9ee4497"
         },
         {
           "path": "settings.json",
-          "size": 505,
-          "hash": "50075f70a4de62bd12cbe2a9c9b2d6a4e1e235fd5b78f013cd0fbffc55c7f1b8"
+          "size": 4272,
+          "hash": "cef4e6306fef60b800b1af1da3f464ba7a8f9bd27a58ced4669d646de3aa69ba"
         },
         {
           "path": "song.json",
-          "size": 755,
-          "hash": "c485b6f082537bf3eafd7ac4c10aece11cb10e3e8dad47a56e36c2750c88d060"
+          "size": 106913,
+          "hash": "0a6536314a1b6febb4778d0c7e5e0fa09da3b45275b2c086affc2800f83508f8"
         }
       ]
     },
