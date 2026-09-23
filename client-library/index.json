@@ -497,8 +497,8 @@
         },
         {
           "path": "song.json",
-          "size": 94290,
-          "hash": "93375c5021cb6581435cf49b09eddf5b0de8ff4786908601a1bb7fca587d52dc"
+          "size": 94339,
+          "hash": "078f49b4c676b5dc04c854db2cdad8c999d560cf1d339a4dbe7b99263ee73085"
         }
       ]
     },
@@ -782,8 +782,8 @@
         },
         {
           "path": "song.json",
-          "size": 106913,
-          "hash": "0a6536314a1b6febb4778d0c7e5e0fa09da3b45275b2c086affc2800f83508f8"
+          "size": 106962,
+          "hash": "e32bb6d2059840789e2caa9937a18d34228204a5ce54f214168499e189f698ef"
         }
       ]
     },
@@ -853,8 +853,8 @@
         },
         {
           "path": "song.json",
-          "size": 94360,
-          "hash": "c6932636a46dd998ee29f545eaf1c9f7a80a6583ef1703673d21bcbc2118fbe2"
+          "size": 94409,
+          "hash": "9a1fe8a7f8234e56d18932f5a7c386e287f5d7b84b195a3a078b4098a735eacd"
         }
       ]
     },
@@ -880,8 +880,8 @@
         },
         {
           "path": "song.json",
-          "size": 96438,
-          "hash": "ecb4cb4427d3027032e9ff6b925c7cf45a69704768d0d22e71e8aca1c9604fe8"
+          "size": 96487,
+          "hash": "7515224702d0246290af9ced0f97c3d905c2f6abf1142d996e01873517e9ede1"
         }
       ]
     },
@@ -1081,8 +1081,8 @@
         },
         {
           "path": "song.json",
-          "size": 664,
-          "hash": "2c0f6634a412854df7e222404d27ab52a372ce56ba06c8ab0921852ea1db275c"
+          "size": 713,
+          "hash": "bee21881bef5440c750761d21fd50cf1f381eab9052fa53e3437107debae67a4"
         }
       ]
     },
@@ -1185,7 +1185,7 @@
         {
           "path": "song.json",
           "size": 166666,
-          "hash": "a0f0fdd4b17cd8d1f99cf487e78cdef999749538bdcfa2e147ff89bc3c587143"
+          "hash": "84bf65e40505e19f17c61d752f22ec008482313bd997f212275e4719a62222aa"
         }
       ]
     },
@@ -1211,8 +1211,8 @@
         },
         {
           "path": "song.json",
-          "size": 149593,
-          "hash": "828113e56e126ff5cec5202f24610a3b3bf5afee54ca9d544fb63ab21d958194"
+          "size": 149654,
+          "hash": "416c881e14200c96f892eb41abc3ff8b7afc1915e9fb404050a2345e370cba5b"
         }
       ]
     }

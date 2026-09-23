@@ -4572,6 +4572,9 @@
     "style": "HALAY",
     "kita": 3,
     "playMode": "PLAYBACK",
-    "startAt": 4
+    "startAt": 4,
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }

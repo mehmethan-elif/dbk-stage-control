@@ -3,7 +3,6 @@
   "version": 1,
   "title": "Zap Suyu",
   "duration": 152,
-  "clickDuration": 152,
   "nextSongAt": 148,
   "finalAt": 146,
   "key": "D",
@@ -4226,7 +4225,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 4,
       "end": 8,
       "length": 4,
@@ -4425,7 +4424,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 12,
       "end": 16,
       "length": 4,
@@ -4769,7 +4768,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 36,
       "end": 40,
       "length": 4,
@@ -4968,7 +4967,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 44,
       "end": 48,
       "length": 4,
@@ -5167,7 +5166,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 52,
       "end": 56,
       "length": 4,
@@ -5366,7 +5365,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 60,
       "end": 64,
       "length": 4,
@@ -5710,7 +5709,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 84,
       "end": 88,
       "length": 4,
@@ -5909,7 +5908,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 92,
       "end": 96,
       "length": 4,
@@ -6108,7 +6107,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 100,
       "end": 104,
       "length": 4,
@@ -6307,7 +6306,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 108,
       "end": 112,
       "length": 4,
@@ -6651,7 +6650,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 132,
       "end": 136,
       "length": 4,
@@ -6850,7 +6849,7 @@
       "notes": []
     },
     {
-      "text": "HALAY TOM",
+      "text": "HALAY TOM II",
       "time": 140,
       "end": 144,
       "length": 4,
@@ -7167,6 +7166,9 @@
     "style": "HALAY",
     "kita": 3,
     "playMode": "PLAYBACK",
-    "startAt": 4
+    "startAt": 4,
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }

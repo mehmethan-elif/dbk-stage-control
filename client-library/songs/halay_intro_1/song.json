@@ -4503,6 +4503,9 @@
     "scale": "USSAK",
     "style": "HALAY",
     "kita": 0,
-    "playMode": "PLAYBACK"
+    "playMode": "PLAYBACK",
+    "pageNotes": {
+      "score": "Toplu"
+    }
   }
 }
