@@ -194,18 +194,23 @@
         },
         {
           "type": "song",
+          "entryId": "entry_28e05bb9-37db-4dec-8726-e95c25f4fa2b",
+          "songId": "halay_intro_1"
+        },
+        {
+          "type": "song",
           "entryId": "entry_690e5209-78eb-45aa-adc8-aee5b2708714",
-          "songId": "Menşure Hanım"
+          "songId": "mens_ure_han_m"
         },
         {
           "type": "song",
           "entryId": "entry_30c93834-f006-493a-affe-2e86e0db17a7",
-          "songId": "Zap Suyu"
+          "songId": "zap_suyu"
         },
         {
           "type": "song",
-          "entryId": "entry_c97dd00b-4e34-476f-8ffe-314acf25484e",
-          "songId": "Nare Esvab Yıkıyor"
+          "entryId": "entry_a456f806-7ba6-419c-af50-f44fe0f70e5e",
+          "songId": "nare_esvab_y_k_yor"
         },
         {
           "type": "song",

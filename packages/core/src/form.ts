@@ -292,9 +292,10 @@ function passOffsetOf(sections: Section[], from: number, index: number, key: str
   return offset;
 }
 
+/** A coda is a section the band jumps to. FINAL is the last section they play, not that jump. */
 export function isCodaName(name: string): boolean {
   const n = name.trim().toUpperCase();
-  return n === "FINAL" || n === "CODA" || n.startsWith("CODA ");
+  return n === "CODA" || n.startsWith("CODA ");
 }
 
 function isFinalName(name: string): boolean {

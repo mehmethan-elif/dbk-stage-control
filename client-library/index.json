@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 7997,
-    "hash": "3392d34074b23d4bd185df0c3ded395d5c755b3cf491873e3436378d6bd4ead0"
+    "size": 8143,
+    "hash": "03be2af53165a34137c767b59d47df76f794d0676cc4913bc0361d427683a0b3"
   },
   "songs": [
     {
@@ -476,6 +476,33 @@
       ]
     },
     {
+      "id": "halay_intro_1",
+      "folder": "halay_intro_1",
+      "title": "Halay Intro 1",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 1408939,
+          "hash": "5fa0f08f7aac1c4fc4d13c28caf98ad63c762a5a563e78d2bb57912d149b4c71"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 23959,
+          "hash": "e408693a10f2e4c562e9b080e1e8d4dbf69e44c3b831a5db9a69e2a6a8746199"
+        },
+        {
+          "path": "settings.json",
+          "size": 13809,
+          "hash": "1fc157418ab7d36a9a1fa35112f3878205373984128e225d2616eb756c6e7c5c"
+        },
+        {
+          "path": "song.json",
+          "size": 94290,
+          "hash": "93375c5021cb6581435cf49b09eddf5b0de8ff4786908601a1bb7fca587d52dc"
+        }
+      ]
+    },
+    {
       "id": "i_ndim_dere_irmag_a",
       "folder": "i_ndim_dere_irmag_a",
       "title": "İndim Dere Irmağa",
@@ -800,46 +827,56 @@
       ]
     },
     {
-      "id": "Menşure Hanım",
-      "folder": "mensure_hanim",
-      "title": "Menşure Hanım",
+      "id": "mens_ure_han_m",
+      "folder": "mens_ure_han_m",
+      "title": "Menşure Hanım",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 1632965,
+          "hash": "f9090fd98c5145b55455e6f5bdbf94f1d8a9aa400f29f7c2b213de6c7f1a1a4d"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 27752,
-          "hash": "7fff3dd19131d83e010b2b29afa2a8670de706425b75730a036bb1669c7ebf21"
+          "size": 15416,
+          "hash": "d7dbf28e4994eae5afa0a8e07b7bff59a643205785bc7ebe20f905edfafa0e43"
         },
         {
           "path": "settings.json",
-          "size": 236,
-          "hash": "3ee3f12fd9b45a1102351f0167a957614f4b2e338dda36755ad54027c1826bcb"
+          "size": 4331,
+          "hash": "476a15c5d4108647487b60a613d6746b4b2c3754383fd9552839aa3ab804e53e"
         },
         {
           "path": "song.json",
-          "size": 507,
-          "hash": "75dbd3637e403890f41156f935e9dfcf6fb8b6841a5a875c8f7df8a125c743e2"
+          "size": 94318,
+          "hash": "39c2c392e858cc2366a19cf0cac76a925eb921ffe62ccc25e45f7e663196d520"
         }
       ]
     },
     {
-      "id": "Nare Esvab Yıkıyor",
-      "folder": "nare_esvab_yikiyor",
+      "id": "nare_esvab_y_k_yor",
+      "folder": "nare_esvab_y_k_yor",
       "title": "Nare Esvab Yıkıyor",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 2432939,
+          "hash": "a588719557cf63833b9c391bca3f6715e1fd6adcdb51fac6e96b7236f8ca47b9"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 28359,
-          "hash": "396a8e00a31a49ec72288497b4c121a235d16eb9fd6dca47309482594e11d2b5"
+          "size": 17318,
+          "hash": "221b7a2e72efd96d2652e2f64ce5c24b2ab469b86695fb1bb469ab3051e25a33"
         },
         {
           "path": "settings.json",
-          "size": 489,
-          "hash": "d73469d6910b8f8b7e915182d61d96964ae139f853cc91da6c918e6cd87c76a6"
+          "size": 11562,
+          "hash": "9dfff31795e144ce20f885035172fda2597c0d0ddba286ac64577ed2ddb68e0b"
         },
         {
           "path": "song.json",
-          "size": 769,
-          "hash": "325e79b967f47cea71fd473c6632ff11d971864a1e65808277c7e38c63dceeff"
+          "size": 96438,
+          "hash": "ecb4cb4427d3027032e9ff6b925c7cf45a69704768d0d22e71e8aca1c9604fe8"
         }
       ]
     },
@@ -1148,24 +1185,29 @@
       ]
     },
     {
-      "id": "Zap Suyu",
+      "id": "zap_suyu",
       "folder": "zap_suyu",
       "title": "Zap Suyu",
       "files": [
         {
+          "path": "Master.mp3",
+          "size": 2432939,
+          "hash": "a8556b31f35a4133726b5ccf2b68490f902ea7eb688d2f1b828d9048ed65ff75"
+        },
+        {
           "path": "Nota.pdf",
-          "size": 32045,
-          "hash": "60faca99eb8dc383031770dfe2fc5ecbcb735e25baa68cc8fceb68a56987ab5f"
+          "size": 17112,
+          "hash": "e60d72235e698926c28715e59798fd848cf1d1be5cd781d9253806ff51a3f2a3"
         },
         {
           "path": "settings.json",
-          "size": 706,
-          "hash": "ba0b49549c59aa2bd84d5fb1b8be291d9e0143d71f8d2c3ac12c787f4837f5d7"
+          "size": 7103,
+          "hash": "cb178a768b2cca2746ece249bb094a33517512a2476ccb3d633823646dac391e"
         },
         {
           "path": "song.json",
-          "size": 962,
-          "hash": "dcd274e0aa1af3c338b8e70b0d17cd348c1d0ef33473c279afefc46ae1ab05b0"
+          "size": 149593,
+          "hash": "828113e56e126ff5cec5202f24610a3b3bf5afee54ca9d544fb63ab21d958194"
         }
       ]
     }

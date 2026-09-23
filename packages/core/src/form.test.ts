@@ -31,6 +31,28 @@ const biz = song([
 ]);
 
 describe("songForm", () => {
+  it("does not hang a coda on a section named FINAL", () => {
+    const form = songForm(
+      song([
+        { name: "ARA C", start: 0, end: 8 },
+        { name: "FINAL", start: 8, end: 16 }
+      ])
+    );
+    expect(form.blocks.find((block) => block.name === "ARA C")?.toCoda).toBe(false);
+    expect(form.blocks.find((block) => block.name === "FINAL")?.coda).toBe(false);
+  });
+
+  it("marks a section named CODA as the landing", () => {
+    const form = songForm(
+      song([
+        { name: "ARA", start: 0, end: 8 },
+        { name: "CODA", start: 8, end: 16 }
+      ])
+    );
+    expect(form.blocks.find((block) => block.name === "ARA")?.toCoda).toBe(true);
+    expect(form.blocks.find((block) => block.name === "CODA")?.coda).toBe(true);
+  });
+
   it("writes consecutive same-name sections separately and jumps later visits back", () => {
     const form = songForm(biz);
     expect(form.blocks.map((block) => block.name)).toEqual(["COUNT", "ARA", "ARA", "SAN", "CEV", "FINAL"]);
@@ -51,8 +73,8 @@ describe("songForm", () => {
     expect(cev?.repeatStart).toBe(false);
     expect(cev?.repeatEnd).toBe(true);
     expect(cev?.ds).toBe(true);
-    expect(san?.toCoda).toBe(true);
-    expect(final?.coda).toBe(true);
+    expect(san?.toCoda).toBe(false);
+    expect(final?.coda).toBe(false);
   });
 
   it("keeps the last pass on the written bars when its first chord lands a hair early", () => {
@@ -537,8 +559,8 @@ describe("songForm", () => {
     expect(form.blocks.map((block) => block.name)).toEqual(["SAN", "CEV", "FINAL"]);
     expect(formAt(form, 12)?.block.originStart).toBe(0);
     const san = form.blocks.find((block) => block.name === "SAN");
-    expect(san?.toCoda).toBe(true);
-    expect(san?.toCodaAt).toBe(4);
+    expect(san?.toCoda).toBe(false);
+    expect(form.blocks.find((block) => block.name === "FINAL")?.coda).toBe(false);
   });
 
   it("folds a 4+4 inner repeat only when the view enables it", () => {
