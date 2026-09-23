@@ -112,6 +112,11 @@
           "songId": "bizim_tu_rku_mu_z"
         },
         {
+          "type": "song",
+          "entryId": "entry_d68a031c-3c02-4537-98c3-dd6ae6ce0896",
+          "songId": "bu_bayrak"
+        },
+        {
           "type": "talk",
           "entryId": "entry_130ea669-734f-4dcb-b993-837f579b2585",
           "label": "STOP"

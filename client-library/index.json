@@ -2,8 +2,8 @@
   "name": "DBK Stage Control",
   "gigs": {
     "path": "gigs.json",
-    "size": 7851,
-    "hash": "bb3ccf0b26845777f4055c96d4fd13c1f0710a8639b472a33763633b60773b88"
+    "size": 7997,
+    "hash": "3392d34074b23d4bd185df0c3ded395d5c755b3cf491873e3436378d6bd4ead0"
   },
   "songs": [
     {
@@ -283,6 +283,33 @@
           "path": "song.json",
           "size": 156176,
           "hash": "234f124cff1b53ebe5703431fd8f2eb9f082d8aa4553b1a9ee10ac833e824304"
+        }
+      ]
+    },
+    {
+      "id": "bu_bayrak",
+      "folder": "bu_bayrak",
+      "title": "Bu Bayrak",
+      "files": [
+        {
+          "path": "Master.mp3",
+          "size": 3072834,
+          "hash": "6a83a5a0f6f54d3c596a2a7716d818d6a3258d2585ca95ba1c82fe5d1abaae6a"
+        },
+        {
+          "path": "Nota.pdf",
+          "size": 33690,
+          "hash": "881aa8cb82fee5efb8b6d36d695042ad487b11f818e642b54c91094f5854fd40"
+        },
+        {
+          "path": "settings.json",
+          "size": 12316,
+          "hash": "0ba71588d6919d4edc6794018cbc74f20627cf3d38d6caad79852abd307654f1"
+        },
+        {
+          "path": "song.json",
+          "size": 184515,
+          "hash": "299a9f18204752444929fe004f6295fc558ee37e275a17a540842ebf8a1232f4"
         }
       ]
     },
