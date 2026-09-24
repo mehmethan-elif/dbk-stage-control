@@ -947,7 +947,7 @@
         {
           "path": "Master.mp3",
           "size": 2944939,
-          "hash": "de177a5279e1be67536996cbe15c127510deda631388e8d3e66fe25a19a56cc3"
+          "hash": "823658f361dd2885b415c169f4c35b83c86af3ac35264fb93b39724d90a11487"
         },
         {
           "path": "Nota.pdf",
@@ -961,8 +961,8 @@
         },
         {
           "path": "song.json",
-          "size": 31580,
-          "hash": "b52df120b86af62eb852f308bed3d72f6addd7efcf585894c301b3ce677d0a3d"
+          "size": 31611,
+          "hash": "29503fd80b9edeb6245634d13d8e5f20746b2fbfff7a6e8f658f8a0109d790a1"
         }
       ]
     },
