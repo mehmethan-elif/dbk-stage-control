@@ -4654,6 +4654,28 @@
           "beat": 1,
           "numerator": 4,
           "denominator": 4
+        },
+        {
+          "time": 198.391568,
+          "end": 198.522003,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 100,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 198.782873,
+          "end": 198.913308,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 100,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
         }
       ]
     },
@@ -4665,13 +4687,24 @@
       "text": "C",
       "notes": [
         {
-          "time": 199.043478,
-          "end": 199.173913,
+          "time": 199.304348,
+          "end": 199.434783,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 100,
-          "beat": 2,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 199.695652,
+          "end": 199.826087,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 100,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -4686,12 +4719,34 @@
       "notes": [
         {
           "time": 200.086957,
-          "end": 200.22304,
+          "end": 200.223596,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 101,
           "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 200.496323,
+          "end": 200.632687,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 101,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 200.905414,
+          "end": 201.041778,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 101,
+          "beat": 2,
           "numerator": 4,
           "denominator": 4
         }
@@ -4705,13 +4760,24 @@
       "text": "Am",
       "notes": [
         {
-          "time": 201.177841,
-          "end": 201.272727,
+          "time": 201.450593,
+          "end": 201.586957,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 101,
-          "beat": 2,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 201.859684,
+          "end": 201.996047,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 101,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }
@@ -4726,12 +4792,56 @@
       "notes": [
         {
           "time": 202.268775,
-          "end": 202.416087,
+          "end": 202.411921,
           "pitch": 48,
           "channel": 0,
           "velocity": 96,
           "measure": 102,
           "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 202.697635,
+          "end": 202.840492,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 1,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 203.126207,
+          "end": 203.269064,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 2,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 203.697635,
+          "end": 203.840492,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 3,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "time": 204.126207,
+          "end": 204.269064,
+          "pitch": 48,
+          "channel": 0,
+          "velocity": 96,
+          "measure": 102,
+          "beat": 4,
           "numerator": 4,
           "denominator": 4
         }

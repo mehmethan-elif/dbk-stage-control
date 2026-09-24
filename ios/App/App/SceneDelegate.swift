@@ -1,5 +1,4 @@
 import UIKit
-import AVFoundation
 import Capacitor
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -11,25 +10,34 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = StageBridgeViewController()
         window?.makeKeyAndVisible()
-        activatePlaybackSession()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 
+    private var audioHandoff: UIBackgroundTaskIdentifier = .invalid
+
     func sceneDidBecomeActive(_ scene: UIScene) {
-        activatePlaybackSession()
+        UIApplication.shared.isIdleTimerDisabled = true
     }
 
-    private func activatePlaybackSession() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.playback, mode: .default, options: [])
-            try session.setPreferredSampleRate(44100)
-            try session.setPreferredIOBufferDuration(0.005)
-            try session.setActive(true)
-        } catch {
-            NSLog("DBK audio session failed: \(error.localizedDescription)")
+    /// Queue the rest of the song while JavaScript can still run. After this, scheduled
+    /// audio keeps playing with the app in the background.
+    func sceneWillResignActive(_ scene: UIScene) {
+        guard audioHandoff == .invalid else { return }
+        audioHandoff = UIApplication.shared.beginBackgroundTask(withName: "dbk-audio") { [weak self] in
+            self?.endAudioHandoff()
         }
+        let webView = (window?.rootViewController as? StageBridgeViewController)?.webView
+        webView?.evaluateJavaScript("window.__dbkContinueAudio&&window.__dbkContinueAudio()", completionHandler: nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+            self?.endAudioHandoff()
+        }
+    }
+
+    private func endAudioHandoff() {
+        guard audioHandoff != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(audioHandoff)
+        audioHandoff = .invalid
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {

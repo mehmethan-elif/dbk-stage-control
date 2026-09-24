@@ -647,7 +647,10 @@ interface MasterState {
   saveSetlist: (name: string, initialSongId: string) => Promise<boolean>;
   renameSetlist: (name: string) => Promise<boolean>;
   deleteCurrentSetlist: () => Promise<void>;
-  selectSetlistEntry: (entryId: string, options?: { playNext?: boolean; land?: boolean }) => void;
+  selectSetlistEntry: (
+    entryId: string,
+    options?: { playNext?: boolean; land?: boolean; fromStart?: boolean }
+  ) => void;
   seek: (time: number) => void;
   play: () => Promise<void>;
   playSelected: () => Promise<void>;
@@ -3243,6 +3246,39 @@ export const useMasterStore = create<MasterState>((set, get) => {
     },
 
     selectSetlistEntry: (entryId, options) => {
+      const pressedCurrent = get().selectedEntryId === entryId;
+      // A setlist tap on a song cues that song at time zero. Other callers keep the
+      // position they already had.
+      const cuePressedSong = () => {
+        if (!options?.fromStart) return;
+        const gig = currentGig(get());
+        const entry = gig?.setlist.find((item) => item.entryId === entryId);
+        if (!gig || !entry || !isSongEntry(entry)) return;
+        if (get().deviceKind === "client") {
+          if (clientPracticeMode(get()) && practicePlaysMasterMix(get())) get().seekPractice(0);
+          else set({ previewTime: 0 });
+          return;
+        }
+        const snap = controller.getSnapshot();
+        const live =
+          snap.state === PlaybackState.Playing || snap.state === PlaybackState.Transitioning;
+        const thisSong = snap.clock?.setlistEntryId === entryId;
+        if (!live && get().metronomePlaying && pressedCurrent) {
+          get().startMetronome(0);
+          return;
+        }
+        set({ previewTime: 0 });
+        const index = gig.setlist.findIndex((item) => item.entryId === entryId);
+        const deckOnThis = index >= 0 && snap.currentIndex === index;
+        if ((live && thisSong) || (!live && deckOnThis)) controller.seek(0);
+        if (
+          (!live || thisSong) &&
+          !isFreeSetlistMode(gig.performanceMode) &&
+          !songEntryIsFree(get(), entryId)
+        ) {
+          sendSync({ type: "Seek", time: 0, sent: Date.now() });
+        }
+      };
       if (
         stageConnectOn(get()) &&
         !isFreeSetlistMode(currentGig(get())?.performanceMode) &&
@@ -3262,6 +3298,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
         }
         set({ selectedEntryId: entryId, readingEntryId: null });
         if (get().deviceKind === "master") broadcastSelection();
+        cuePressedSong();
         syncFreeVisualMetronome();
         return;
       }
@@ -3280,25 +3317,32 @@ export const useMasterStore = create<MasterState>((set, get) => {
         set({
           selectedEntryId: entryId,
           readingEntryId: null,
-          previewTime: startAtOf(gig, entryId, get().songs)
+          previewTime: options?.fromStart ? 0 : startAtOf(gig, entryId, get().songs)
         });
         if (clientPracticeMode(get()) && entry && isSongEntry(entry) && practicePlaysMasterMix(get())) {
           queuePracticeAudio(get(), findSongByRef(get().songs, entry.songId));
         }
+        cuePressedSong();
         return;
       }
       cancelFadeStop();
       const currentId = get().selectedEntryId;
       if (currentId === entryId) {
         set({ selectedEntryId: entryId });
+        if (options?.fromStart) broadcastSelection();
+        cuePressedSong();
         return;
       }
       const playback = get().playback;
       const playing =
         playback.state === PlaybackState.Playing || playback.state === PlaybackState.Transitioning;
       if (playing && playback.clock?.setlistEntryId === entryId) {
-        set({ selectedEntryId: entryId, previewTime: playback.clock.time });
+        set({
+          selectedEntryId: entryId,
+          previewTime: options?.fromStart ? 0 : playback.clock.time
+        });
         broadcastSelection();
+        cuePressedSong();
         return;
       }
       if (playing || get().playbackPaused) {
@@ -3320,7 +3364,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       set({
         selectedEntryId: entryId,
         librarySongId,
-        previewTime: startAtOf(gig, entryId, get().songs),
+        previewTime: options?.fromStart ? 0 : startAtOf(gig, entryId, get().songs),
         metronomePlaying: false,
         playbackPaused: false,
         panicActive: false,
@@ -3328,6 +3372,7 @@ export const useMasterStore = create<MasterState>((set, get) => {
       });
       controller.replaceSongs(engineSongs());
       broadcastSelection();
+      cuePressedSong();
       syncFreeVisualMetronome();
     },
 

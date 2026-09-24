@@ -126,8 +126,8 @@
         },
         {
           "path": "song.json",
-          "size": 148711,
-          "hash": "c304d7052671f2a75cc6a3d79134c7bdea12283c2a8ca806fc31848f6cf7e83b"
+          "size": 147713,
+          "hash": "9f5b9d260dba3656e77e04b9ac69953dbbe56f44fc1708ab514559f7ef37c7af"
         }
       ]
     },
@@ -701,8 +701,8 @@
         },
         {
           "path": "song.json",
-          "size": 117576,
-          "hash": "7d588a4fd4e8ec4a5fa8db37e470a11d6786e45fcd348af39a6224e18cfa4d39"
+          "size": 120107,
+          "hash": "769670049efc366d7b216e43f2382cacfba5ef99b40b850766c6a052f4db9b2e"
         }
       ]
     },
@@ -714,7 +714,7 @@
         {
           "path": "Master.mp3",
           "size": 3149321,
-          "hash": "55859a1b0bf7bac1cd283a361cfa6eba92c380b56e85abebba13f897ccbe2114"
+          "hash": "8e48dd4631f2b741f7f428735ce45144a846407cb7b579703248462cd0050b0d"
         },
         {
           "path": "Nota.pdf",
@@ -728,8 +728,8 @@
         },
         {
           "path": "song.json",
-          "size": 132973,
-          "hash": "aae9ea312876a7b718ee1f48935e7424b22680560c3f5691bf9f212453c7380a"
+          "size": 130620,
+          "hash": "db7f0b445140958276cd48d5b6bf14d35d3e92a937756471740e96882f4010c0"
         }
       ]
     },
@@ -755,8 +755,8 @@
         },
         {
           "path": "song.json",
-          "size": 231453,
-          "hash": "ee495a9f7f9f18c89dbd2108d918765ceb66d34ebe721e768f2e430092465cb9"
+          "size": 230945,
+          "hash": "699add26f42fcd729beaedb1cd21540d251565421dcd825cfd66bdfc1f1f103f"
         }
       ]
     },
@@ -782,8 +782,8 @@
         },
         {
           "path": "song.json",
-          "size": 108442,
-          "hash": "5f3abdbc017d421d2f3adf2aaec451a20fb4884d9e25f3881149f2e0efa90b7d"
+          "size": 102437,
+          "hash": "a268d01a0d48b864f58f9aeddc864f8f7d50e5fc6d626dcb9580e6a75d86ede3"
         }
       ]
     },
@@ -880,8 +880,8 @@
         },
         {
           "path": "song.json",
-          "size": 96487,
-          "hash": "7515224702d0246290af9ced0f97c3d905c2f6abf1142d996e01873517e9ede1"
+          "size": 111285,
+          "hash": "dbc39d11457a15e63579c6ba83ab55285d81ead25db2c9f3dd079f772e56db42"
         }
       ]
     },
@@ -1140,8 +1140,8 @@
         },
         {
           "path": "song.json",
-          "size": 76743,
-          "hash": "4212d7b233a0befc24246c5142a818adee8d64c342333cbafa4cd79ebcd78396"
+          "size": 78890,
+          "hash": "6ec0e54aabbdb47a323309316790361a0fe17ab9a6bd1b327587340b45a3d9d8"
         }
       ]
     },

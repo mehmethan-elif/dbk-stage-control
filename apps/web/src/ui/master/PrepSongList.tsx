@@ -219,7 +219,7 @@ export function PrepSongList(props: {
 
   const selectSetlist = (entryId: string) => {
     props.onLibraryFocus(null);
-    selectSetlistEntry(entryId);
+    selectSetlistEntry(entryId, { fromStart: true });
   };
 
   const onPointerDown = (entryId: string, event: PointerEvent<HTMLDivElement>) => {

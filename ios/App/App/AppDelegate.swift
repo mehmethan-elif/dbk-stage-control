@@ -9,7 +9,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        activatePlaybackSession()
+        UIApplication.shared.isIdleTimerDisabled = true
+        PlaybackSession.start()
         PracticeShareServer.shared.start()
         StageSyncHub.shared.listen()
         LocalNetworkGate.shared.advertise(port: 8787)
@@ -17,19 +18,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        activatePlaybackSession()
-    }
-
-    private func activatePlaybackSession() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.playback, mode: .default, options: [])
-            try session.setPreferredSampleRate(44100)
-            try session.setPreferredIOBufferDuration(0.005)
-            try session.setActive(true)
-        } catch {
-            NSLog("DBK audio session failed: \(error.localizedDescription)")
-        }
+        UIApplication.shared.isIdleTimerDisabled = true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -40,10 +29,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-    }
-
-    func applicationWillEnterForeground(_ application: UIApplication) {
-        activatePlaybackSession()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -57,6 +42,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                                           sessionRole: connectingSceneSession.role)
         config.delegateClass = SceneDelegate.self
         return config
+    }
+}
+
+/// Playback category, and the stem rate, once at launch. Nothing reads or sets the
+/// rate again: doing that restarts the sound card.
+enum PlaybackSession {
+    static func start() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playback, mode: .default, options: [])
+            try session.setPreferredSampleRate(44100)
+            try session.setActive(true)
+            NSLog("DBK audio session rate %.0f", session.sampleRate)
+        } catch {
+            NSLog("DBK audio session failed: \(error.localizedDescription)")
+        }
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: session,
+            queue: .main
+        ) { note in
+            guard
+                let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                let type = AVAudioSession.InterruptionType(rawValue: raw),
+                type == .ended
+            else { return }
+            do {
+                try AVAudioSession.sharedInstance().setActive(true)
+            } catch {
+                NSLog("DBK audio session failed: \(error.localizedDescription)")
+            }
+        }
     }
 }
 

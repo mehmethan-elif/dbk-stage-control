@@ -75,16 +75,13 @@ const LIBRARY_SAMPLE_RATE = 44100;
 const MAX_OUTPUT_LATENCY = 0.5;
 
 /**
- * Runs the graph at the rate the stems are recorded at. Windows are decoded separately,
- * and a resampler tapers the edges of every buffer it is handed, so a context running at
- * some other rate would put a dip at each window join. At the stems' own rate
- * `decodeAudioData` copies the samples through untouched and the joins are exact.
+ * The stems are 44.1 kHz. The context stays there too, so each window is copied through
+ * and the joins stay clean. The sound card keeps whatever rate it opened at.
  */
 function createContext(options: AudioContextOptions = {}): AudioContext {
   try {
     return new AudioContext({ ...options, sampleRate: LIBRARY_SAMPLE_RATE });
   } catch {
-    // A device that refuses that rate still has to play; windowing backs off instead.
     return new AudioContext(options);
   }
 }
@@ -162,6 +159,8 @@ export class WebAudioDeck implements AudioDeck {
   private nextWindow = 0;
   /** Bumped whenever playback is torn down, to drop decodes that are no longer wanted. */
   private epoch = 0;
+  /** While the app is in the background, queue the rest of the song. Timers stop there. */
+  private throughEnd = false;
   private readonly pending = new Map<number, Promise<void>>();
 
   applyMixer(): void {
@@ -278,6 +277,7 @@ export class WebAudioDeck implements AudioDeck {
     this.longestFired = false;
     this.playFrom = offset;
     this.nextWindow = Math.floor(offset / WINDOW_SECONDS);
+    this.throughEnd = typeof document !== "undefined" && document.visibilityState === "hidden";
     for (const track of this.tracks) {
       if (!track.buffer) continue;
       const source = ctx.createBufferSource();
@@ -391,6 +391,12 @@ export class WebAudioDeck implements AudioDeck {
     return Math.ceil(longest / WINDOW_SECONDS);
   }
 
+  /** Queue every remaining window. The background has no timers to keep doing this. */
+  armThroughEnd(): void {
+    this.throughEnd = true;
+    this.ensureWindows();
+  }
+
   /**
    * Arms windows so the next one is always scheduled before the playhead reaches it.
    * Driven from `poll`, which the engine calls while the transport runs.
@@ -399,9 +405,10 @@ export class WebAudioDeck implements AudioDeck {
     if (!this.playing || this.startedAt === null) return;
     const windows = this.windowCount();
     const position = this.getPosition();
+    const lead = this.throughEnd ? Number.POSITIVE_INFINITY : WINDOW_LEAD_SECONDS;
     while (
       this.nextWindow < windows &&
-      this.nextWindow * WINDOW_SECONDS - position <= WINDOW_LEAD_SECONDS
+      this.nextWindow * WINDOW_SECONDS - position <= lead
     ) {
       const index = this.nextWindow;
       this.nextWindow += 1;
@@ -488,10 +495,11 @@ export class WebAudioDeck implements AudioDeck {
     if (start >= end) return;
 
     const bufferStart = frameStartTime(file, frameAtTime(file, index * WINDOW_SECONDS));
+    const when = Math.max(ctx.currentTime, at);
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(track.gain);
-    source.start(Math.max(ctx.currentTime, at), start - bufferStart, end - start);
+    source.start(when, start - bufferStart, end - start);
     source.onended = () => {
       source.disconnect();
       const found = this.sources.indexOf(source);
@@ -522,6 +530,44 @@ export class WebAudioDeck implements AudioDeck {
       this.engine.syncTransportGate();
       for (const cb of this.listeners.longest_eof) cb();
     }
+    this.recoverIfSilent(now);
+  }
+
+  /**
+   * A route change or an alert can end the scheduled buffers while the deck still says
+   * it is playing. After a short silence, start the song again from the position the
+   * clock already has, so the show does not stay mute.
+   */
+  private silentSince: number | null = null;
+
+  private recoverIfSilent(now: number): void {
+    if (!this.playing || this.startedAt === null || now < this.startedAt) {
+      this.silentSince = null;
+      return;
+    }
+    if (this.engine.context.state !== "running") return;
+    if (this.sources.length > 0 || this.pending.size > 0 || this.tracks.length === 0) {
+      this.silentSince = null;
+      return;
+    }
+    const position = this.getPosition();
+    if (this.longestDuration > 0 && position >= this.longestDuration - 0.05) {
+      this.silentSince = null;
+      return;
+    }
+    if (this.silentSince === null) {
+      this.silentSince = now;
+      return;
+    }
+    if (now - this.silentSince < 0.3) return;
+    this.silentSince = null;
+    this.engine.logger?.audio("deck_restarted", {
+      deck: this.id,
+      songId: this.song?.id,
+      position
+    });
+    this.pausedAt = position;
+    this.play();
   }
 
   private applyMix(): void {
@@ -587,6 +633,15 @@ export class WebAudioEngine implements AudioEngine {
 
   constructor(logger?: Logger) {
     this.logger = logger;
+    if (typeof document === "undefined") return;
+    const arm = () => {
+      for (const deck of this.decks.values()) deck.armThroughEnd();
+    };
+    (globalThis as { __dbkContinueAudio?: () => void }).__dbkContinueAudio = arm;
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") arm();
+    });
+    document.addEventListener("pagehide", arm);
   }
 
   get context(): AudioContext {
@@ -826,13 +881,14 @@ export class WebAudioEngine implements AudioEngine {
   }
 
   /**
-   * iOS parks the context as "interrupted" for a phone call, an alarm or a route change.
+   * iOS parks the context as "interrupted" for an alert or a route change.
    * Nothing else notices: the transport keeps reporting Playing while currentTime stops
-   * advancing, so the show looks frozen until somebody taps something. Nothing in this app
-   * ever suspends the context deliberately, so any non-running state here is a fault to
-   * recover from. If the OS refuses the resume no further statechange fires, so this
-   * cannot spin.
+   * advancing. Nothing in this app suspends the context deliberately, so any non-running
+   * state here is a fault to recover from. `poll` keeps trying, because one `resume()`
+   * can be refused while the session is still down.
    */
+  private resumeInFlight = false;
+
   private watchContextState(ctx: AudioContext): void {
     ctx.addEventListener("statechange", () => {
       this.logger?.audio("engine_state_changed", { state: ctx.state });
@@ -843,14 +899,16 @@ export class WebAudioEngine implements AudioEngine {
 
   private async resumeContext(): Promise<void> {
     const ctx = this.ctx;
-    if (!ctx || ctx.state === "running") return;
+    if (!ctx || ctx.state === "running" || ctx.state === "closed" || this.resumeInFlight) return;
+    this.resumeInFlight = true;
     try {
       await ctx.resume();
     } catch (error) {
       this.logger?.audio("engine_resume_failed", { error: String(error), state: ctx.state });
       return;
+    } finally {
+      this.resumeInFlight = false;
     }
-    // `resume()` flips the state, which TypeScript cannot see through the narrowing above.
     if ((ctx.state as AudioContextState) === "running") {
       this.logger?.audio("engine_resumed", {});
     }
@@ -1042,6 +1100,10 @@ export class WebAudioEngine implements AudioEngine {
   }
 
   poll(): void {
+    const ctx = this.ctx;
+    if (ctx && ctx.state !== "running" && ctx.state !== "closed") {
+      void this.resumeContext();
+    }
     const now = this.getContextTime();
     for (const deck of this.decks.values()) deck.poll(now);
   }

@@ -394,6 +394,36 @@ describe("chordChart", () => {
       ]);
     });
 
+    it("stacks the NAKs in pairs when D.S. sits on the second", () => {
+      // Tuna Nehri: NAK 1 and NAK 2 are the same bars, NAK 2 sends the band back, and
+      // NAK 3 and NAK 4 are the same bars again after that. The sign splits the pairs.
+      const other = song(
+        [
+          { name: "NAK 1", start: 0, end: 8 },
+          { name: "NAK 2", start: 8, end: 16 },
+          { name: "NAK 3", start: 16, end: 24 },
+          { name: "NAK 4", start: 24, end: 32 }
+        ],
+        run(1, ["Em", "D", "C", "G"])
+          .concat(run(5, ["Em", "D", "C", "G"]))
+          .concat(run(9, ["Em", "D", "C", "G"]))
+          .concat(run(13, ["Em", "D", "C", "G"]))
+      );
+      const form = spelledOut(other);
+      const marked = {
+        ...form,
+        blocks: form.blocks.map((block, index) => (index === 1 ? { ...block, ds: true } : block))
+      };
+      const rows = chordChart(other, marked).rows;
+      expect(rows.map((row) => row.heads.map((head) => head.section.name))).toEqual([
+        ["NAK 1", "NAK 2"],
+        ["NAK 3", "NAK 4"]
+      ]);
+      expect(rows[0]?.heads[1]?.block.ds).toBe(true);
+      expect(rows[0]?.spans[0]?.closes).toBe(2);
+      expect(rows[1]?.spans[0]?.closes).toBe(2);
+    });
+
     it("gathers every pass of a run onto one set of bars", () => {
       const other = song(
         [

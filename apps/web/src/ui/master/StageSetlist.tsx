@@ -65,7 +65,7 @@ export function StageSetlist(props: {
   readOnly?: boolean;
   stageRef?: RefObject<HTMLElement | null>;
   songAttr?: "data-lyric-song" | "data-chord-song" | "data-drum-song" | "data-nota-song";
-  onSelect: (entryId: string) => void;
+  onSelect: (entryId: string, options?: { fromStart?: boolean }) => void;
   onRemove: (entryId: string) => void;
   onAdd: (songId: string) => void;
   onSelectLibrary?: (songId: string) => void;
@@ -137,9 +137,9 @@ export function StageSetlist(props: {
   const groupedLibrarySongs = groupLibrarySongs(props.library, playModes, fileIndex);
 
   const selectEntry = (entryId: string) => {
-    props.onSelect(entryId);
-    // The page pin jumps the title into place. A second animated scroll through
-    // the full lyrics book on iPad delayed the setlist highlight itself.
+    const entry = props.entries.find((item) => item.entryId === entryId);
+    // A song row always cues the top of that song. Talk and stop rows only change the selection.
+    props.onSelect(entryId, entry && isSongEntry(entry) ? { fromStart: true } : undefined);
   };
 
   const onPointerDown = (entryId: string, event: PointerEvent<HTMLDivElement>) => {

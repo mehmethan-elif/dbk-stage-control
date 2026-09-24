@@ -377,6 +377,9 @@ function foldRepeatedRuns(written: Written[]): Written[] {
         const from = index + length * passes;
         const next = written.slice(from, from + length);
         if (next.length < length || !foldable(first, next)) break;
+        // A D.S. ends the cycle. What is written after it is the ending, not another pass,
+        // so Tuna stacks NAK 1 with NAK 2 and then NAK 3 with NAK 4, the sign on NAK 2.
+        if (first.some((item) => item.heads.some((head) => head.block.ds))) break;
         first.forEach((item, at) => {
           const source = next[at];
           if (source) stack(item, source);
