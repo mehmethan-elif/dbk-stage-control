@@ -93,31 +93,6 @@
         },
         {
           "type": "talk",
-          "entryId": "entry_5c1ab6db-7a54-4b31-957c-ec69c4573722",
-          "label": "STOP"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_3cb353d9-5a66-47db-89cd-2cecd4822744",
-          "songId": "c_rp_n_rd_karadeniz"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_b7cdce18-0d41-458a-ae26-d9ba7b79a7d2",
-          "songId": "tu_rk_k_z"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_1fda07b3-181b-4c18-83a7-66559a2b98fa",
-          "songId": "bizim_tu_rku_mu_z"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_d68a031c-3c02-4537-98c3-dd6ae6ce0896",
-          "songId": "bu_bayrak"
-        },
-        {
-          "type": "talk",
           "entryId": "entry_130ea669-734f-4dcb-b993-837f579b2585",
           "label": "STOP"
         },
@@ -128,18 +103,8 @@
         },
         {
           "type": "song",
-          "entryId": "entry_877a6d1f-2822-4975-ab1b-ef04d1af8c7d",
-          "songId": "kas_lar_n_karas_na"
-        },
-        {
-          "type": "song",
           "entryId": "entry_887c647c-f18f-4599-bb7b-9764c9590a8c",
           "songId": "doyulur_mu"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_0b431938-7ae9-4766-868e-f66b01b188cf",
-          "songId": "arpa_bug_day_daneler"
         },
         {
           "type": "song",
@@ -168,11 +133,6 @@
         },
         {
           "type": "song",
-          "entryId": "entry_25dc2f62-7a9d-4ac5-afa9-44b5b28394ae",
-          "songId": "dut_ag_ac_boyunca"
-        },
-        {
-          "type": "song",
           "entryId": "entry_19b9cca4-852c-4e57-96b2-88ef6bb7c50e",
           "songId": "bahc_esi_var_bag_var"
         },
@@ -187,17 +147,6 @@
           "songId": "kag_zmana_ismarlad_m"
         },
         {
-          "type": "talk",
-          "entryId": "entry_8abdb2f2-7ed9-4e75-b09e-0385238087de",
-          "label": "STOP",
-          "notes": "2/4 HALAYLAR"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_28e05bb9-37db-4dec-8726-e95c25f4fa2b",
-          "songId": "halay_intro_1"
-        },
-        {
           "type": "song",
           "entryId": "entry_690e5209-78eb-45aa-adc8-aee5b2708714",
           "songId": "mens_ure_han_m"
@@ -206,11 +155,6 @@
           "type": "song",
           "entryId": "entry_30c93834-f006-493a-affe-2e86e0db17a7",
           "songId": "zap_suyu"
-        },
-        {
-          "type": "song",
-          "entryId": "entry_a456f806-7ba6-419c-af50-f44fe0f70e5e",
-          "songId": "nare_esvab_y_k_yor"
         },
         {
           "type": "song",
